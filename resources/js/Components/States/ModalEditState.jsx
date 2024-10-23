@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography } from "antd";
-import { EditFilled, PlusOutlined } from "@ant-design/icons";
-import { validate, format } from 'rut.js';
+import { Button, Divider, Form, Input, Modal, Select } from "antd";
+import { validate } from 'rut.js';
 import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import axios from "axios";
@@ -16,7 +15,6 @@ export default function ModalEditState({ data }) {
 
   const [form] = Form.useForm();
   //form?.setFieldsValue(data)
-  const [formValues, setFormValues] = useState();
   const { successMsg, errorMsg } = useMessage();
 
   useEffect(() => {
@@ -501,8 +499,6 @@ export default function ModalEditState({ data }) {
           </Form.Item>
         </div>
       </Modal>
-
-
     </>
   );
 }

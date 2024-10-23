@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined, EditOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { useState } from "react";
+import { Button, Form, Input, Modal, Select } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
 
@@ -34,8 +34,6 @@ export default function ModalEditUser({ data, roles, branches, companies, states
     }
   };
 
-
-
   const handleCloseModal = () => {
     setLoading(false)
     setSelectCompany(null)
@@ -47,8 +45,7 @@ export default function ModalEditUser({ data, roles, branches, companies, states
   }
 
   return (
-    <>
-      
+    <> 
       <Button onClick={handleOpenModal} icon={<EditOutlined />} />
       <Modal
         style={{ top: 20 }}
@@ -185,8 +182,6 @@ export default function ModalEditUser({ data, roles, branches, companies, states
           )}
         </Form.Item> */}
       </Modal>
-
-
     </>
   );
 }

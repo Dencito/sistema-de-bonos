@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker, Tag } from "antd";
-import { CloseOutlined, EditOutlined, EyeOutlined, MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { Button, Divider, Form, Input, message, Modal, Select, Space,  Card,Tag } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { days } from "./days";
 
 export default function ModalViewBranch({ data, states, companies }) {
@@ -76,51 +76,7 @@ export default function ModalViewBranch({ data, states, companies }) {
     }
     getCountries()
     getRegion()
-
-
   }, [showModal, country])
-
-
-  const onCreate = async (values) => {
-    console.log('Received values of form: ', values);
-    const token = Cookies.get("user");
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/branches`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(values),
-    });
-    const data = await response?.json();
-    !response.ok && errorMsg(data?.message || 'Error al editar la sucursal')
-    response.ok && successMsg()
-    console.log(data)
-    setFormValues(values);
-    //setShowModal(false);
-  };
-
-
-  const handleDaySelection = (day) => {
-    // Si el día ya está seleccionado, lo eliminamos
-    if (selectedDays?.includes(day)) {
-      setSelectedDays(selectedDays?.filter(d => d !== day));
-      form.setFieldValue('availableBonusDays', form?.getFieldValue('availableBonusDays')?.filter(shift => shift?.day !== day));
-    } else {
-      // Si no está seleccionado, lo añadimos
-      setSelectedDays([...selectedDays, day]);
-      form.setFieldValue('availableBonusDays', [...(form.getFieldValue('availableBonusDays') || []), { day, schedule: [null] }]);
-    }
-  };
-
-
-  const handleAlert = (type, message) => {
-    setShowAlerts({ ...showAlerts, [type]: { state: true, message } });
-    return setTimeout(() => {
-      setShowAlerts({ ...showAlerts, [type]: { state: false, message: "" } });
-    }, 2500);
-  };
-
 
   const handleCloseModal = () => {
     setCountry('')
@@ -186,8 +142,6 @@ export default function ModalViewBranch({ data, states, companies }) {
         >
           <Input type="number" />
         </Form.Item>
-
-
         <Form.Item
           name="company_id"
           label="Seleccione la empresa"
@@ -201,7 +155,6 @@ export default function ModalViewBranch({ data, states, companies }) {
             }
           </Select>
         </Form.Item>
-
         <Form.Item
           name="state_id"
           label="Seleccione el estado"
@@ -215,9 +168,7 @@ export default function ModalViewBranch({ data, states, companies }) {
             }
           </Select>
         </Form.Item>
-
         <Divider className="font-bold text-3xl">Dirección</Divider>
-
         <div className="flex gap-5">
           <Form.Item
             className="w-6/12"
@@ -300,10 +251,7 @@ export default function ModalViewBranch({ data, states, companies }) {
           </Form.Item>
 
         </div>
-
         <Divider className="font-bold text-3xl">Turnos</Divider>
-
-
         <Form.List name="shifts">
           {(fields, { add, remove }) => (
             <div
@@ -340,7 +288,6 @@ export default function ModalViewBranch({ data, states, companies }) {
                       </Select>
                     </Form.Item>
                   </div>
-
                   <Form.Item label="Horarios">
                     <Form.List name={[field.name, 'schedules']}>
                       {(subFields, subOpt) => (
@@ -386,7 +333,6 @@ export default function ModalViewBranch({ data, states, companies }) {
             ))}
           </div>
         </Form.Item>
-
         <Form.List name="available_bonus_days">
           {(fields, { add, remove }) => (
             <div

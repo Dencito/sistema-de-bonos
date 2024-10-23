@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography } from "antd";
+import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { validate, format } from 'rut.js';
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
-import { router, usePage } from '@inertiajs/react'
+import { validate } from 'rut.js';
+import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { router } from '@inertiajs/react'
 import { useMessage } from "@/Contexts/MessageShow";
 
 export default function ModalCreateCompany() {
@@ -19,7 +19,6 @@ export default function ModalCreateCompany() {
     })
 
     const [form] = Form.useForm();
-    const [formValues, setFormValues] = useState();
     const { successMsg, errorMsg } = useMessage();
 
     useEffect(() => {

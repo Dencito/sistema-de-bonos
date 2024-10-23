@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { useState } from "react";
+import { Button, Form, Input, message, Modal } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 
 export default function ModalViewCategoryBono({data, states, roles}) {
@@ -35,27 +35,6 @@ export default function ModalViewCategoryBono({data, states, roles}) {
       },
     });
   };
-
-
-  const onCreate = async (values) => {
-    console.log('Received values of form: ', values);
-    try {
-      setLoading(true)
-      const { data } = await axios.post(`/users`, values);
-      router.visit('/users', {
-        preserveState: true, // Mantener el estado actual
-      });
-      data && successMsg(data?.message)
-      setLoading(false)
-      handleCloseModal()
-    } catch (error) {
-      const { response: { data: dataError } } = error
-      setLoading(false)
-      return errorMsg(dataError?.message)
-    }
-  };
-
-
 
   const handleCloseModal = () => {
     setLoading(false)
@@ -116,8 +95,6 @@ export default function ModalViewCategoryBono({data, states, roles}) {
           <Input name="base_amount" onChange={onlyNumberInput} showCount maxLength={10} />
         </Form.Item>
       </Modal>
-
-
     </>
   );
 }

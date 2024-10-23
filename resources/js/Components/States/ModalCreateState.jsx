@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography } from "antd";
+import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { validate, format } from 'rut.js';
+import { validate } from 'rut.js';
 import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
-import { router, usePage } from '@inertiajs/react'
+import { router } from '@inertiajs/react'
 import { useMessage } from "@/Contexts/MessageShow";
 
 export default function ModalCreateState() {
@@ -14,7 +14,6 @@ export default function ModalCreateState() {
     const [regions, setRegions] = useState()
 
     const [form] = Form.useForm();
-    const [formValues, setFormValues] = useState();
     const { successMsg, errorMsg } = useMessage();
     useEffect(() => {
         const getCountries = async () => {
@@ -43,10 +42,7 @@ export default function ModalCreateState() {
         }
         getCountries()
         getRegion()
-
-
     }, [showModal, country])
-
 
     const onCreate = async (values) => {
         console.log('Received values of form: ', values);

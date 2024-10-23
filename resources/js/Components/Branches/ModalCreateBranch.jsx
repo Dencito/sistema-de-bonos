@@ -4,25 +4,17 @@ import {
   Divider,
   Form,
   Input,
-  message,
   Modal,
   Select,
   Space,
-  Typography,
   Card,
-  TimePicker,
   Tag,
 } from "antd";
 import {
   CloseOutlined,
-  MinusCircleOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import {
-  getValidationEmailMessage,
-  getValidationNumbersMessage,
-  getValidationRequiredMessage,
-} from "../../Utils/messagesValidationes";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { days } from "./days";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
@@ -31,17 +23,12 @@ export default function ModalCreateBranch({ companies }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedDays, setSelectedDays] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showAlerts, setShowAlerts] = useState({
-    success: { state: false, message: "" },
-    error: { state: false, message: "" },
-  });
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
   const [countries, setCountries] = useState();
   const [regions, setRegions] = useState();
 
   const [form] = Form.useForm();
-  const [formValues, setFormValues] = useState();
   const { successMsg, errorMsg } = useMessage();
   useEffect(() => {
     const getCountries = async () => {

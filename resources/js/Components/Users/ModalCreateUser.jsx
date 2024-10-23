@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { Button, Form, Input, Modal, Select } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
 
@@ -9,9 +9,7 @@ export default function ModalCreateUser({ roles, states, branches, companies }) 
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const [selectCompany, setSelectCompany] = useState(null)
-
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
   const { successMsg, errorMsg } = useMessage();
 
 
@@ -34,8 +32,6 @@ export default function ModalCreateUser({ roles, states, branches, companies }) 
     }
   };
 
-
-
   const handleCloseModal = () => {
     setLoading(false)
     setSelectCompany(null)
@@ -51,9 +47,7 @@ export default function ModalCreateUser({ roles, states, branches, companies }) 
   const handleChange = (value) => {
     console.log(`selected ${value}`);
   };
-
-
-
+  
   return (
     <>
 

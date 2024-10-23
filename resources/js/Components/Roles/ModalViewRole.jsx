@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, List, message, Modal, Select, Space, Typography } from "antd";
-import { EditFilled, EyeFilled, PlusOutlined } from "@ant-design/icons";
-import { validate, format } from 'rut.js';
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { useState } from "react";
+import { Button, Form, List, Modal } from "antd";
 
 export default function ModalViewRole({ data }) {
   const [showModal, setShowModal] = useState(false);

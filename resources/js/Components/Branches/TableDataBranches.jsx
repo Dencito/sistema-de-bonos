@@ -1,11 +1,9 @@
-import { useForm } from '@inertiajs/react';
 import React from 'react'
 import ModalCreateBranch from './ModalCreateBranch';
-import { Button, Input, Select, Table, Tag } from 'antd';
+import { Table } from 'antd';
 import ModalViewBranch from './ModalViewBranch';
 import ModalEditBranch from './ModalEditBranch';
 import ModalDeleteBranch from './ModalDeleteBranch';
-import { SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import moment from 'moment';
 import FilterModal from './FilterModal';
 

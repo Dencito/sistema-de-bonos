@@ -90,6 +90,7 @@ class CompanyController extends Controller
             'companyAddressCommune' => 'required|string',
             'companyAddressStreet' => 'required|string',
             'companyAddressNumber' => 'required|string',
+            'max_branches' => 'required|string',
         ]);
         /* return response()->json([
             'data' => $foundRut,

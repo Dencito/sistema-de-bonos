@@ -85,6 +85,17 @@ class BranchController extends Controller
         if (!auth()->user()->hasAnyRole(1, 2)) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
+
+        $company = Company::find($request->company_id);
+        $currentBranches = $company->branches()->count();
+
+        if ($currentBranches >= $company->max_branches) {
+            return response()->json([
+                'message' => 'Se ha alcanzado el número máximo de sucursales. Por favor, comuníquese con un administrador.',
+                'status' => 400,
+                'error' => true
+            ], 400);
+        }
         try {
             $found = $this->getBranchByName($request->name);
             if ($found) {

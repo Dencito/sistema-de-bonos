@@ -36,6 +36,7 @@ class Company extends Model
         'companyAddressCommune',
         'companyAddressStreet',
         'companyAddressNumber',
+        'max_branches',
         'db_name',
         'state_id'
     ];

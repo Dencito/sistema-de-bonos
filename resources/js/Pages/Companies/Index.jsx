@@ -70,6 +70,7 @@ const index = ({ auth, companies, states, filters, alert }) => {
                         <Table className='overflow-auto' dataSource={companies.map(company => ({ ...company, key: company.id }))}>
                             <Column title="Nombre" dataIndex="name" key="id" />
                             <Column title="Rut" dataIndex="rutNumbers" render={(_, record) => `${record.rutNumbers}-${record.rutDv}`} key="rutVerification" />
+                            <Column title="Max. sucursales" dataIndex="max_branches" key="max_branches" />
                             <Column
                                 title="Sucursales"
                                 key="branches"

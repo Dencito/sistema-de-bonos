@@ -237,6 +237,13 @@ export default function ModalCreateCompany() {
                 >
                     <Input showCount maxLength={50} />
                 </Form.Item>
+                <Form.Item
+                    name="max_branches"
+                    label="Cantidad maxima de sucursales"
+                    rules={[{ required: true, message: getValidationRequiredMessage }]}
+                >
+                    <Input name="max_branches" onChange={onlyNumberInput} showCount maxLength={2} />
+                </Form.Item>
                 <div className="flex gap-3 relative">
                     <Form.Item
                         className="w-10/12"

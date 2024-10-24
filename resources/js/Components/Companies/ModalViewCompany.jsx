@@ -152,7 +152,7 @@ export default function ModalViewCompany({ data }) {
   return (
     <>
       {contextHolder}
-      <Button onClick={handleOpenModal} icon={<EyeOutlined/>}/>
+      <Button onClick={handleOpenModal} icon={<EyeOutlined />} />
       <Modal
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Datos de {data?.name}</p>}
@@ -195,6 +195,14 @@ export default function ModalViewCompany({ data }) {
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Input />
+        </Form.Item>
+        <Form.Item
+          name="max_branches"
+          initialValue={data?.max_branches}
+          label="Cantidad maxima de sucursales"
+          rules={[{ required: true, message: getValidationRequiredMessage }]}
+        >
+          <Input  showCount maxLength={2} />
         </Form.Item>
         <div className="flex gap-3">
           <Form.Item

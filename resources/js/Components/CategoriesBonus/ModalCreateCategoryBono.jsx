@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { Button, Form, Input, Modal } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
 
@@ -32,8 +32,6 @@ export default function ModalCreateCategoryBono({ roles, states, branches, compa
     }
   };
 
-
-
   const handleCloseModal = () => {
     setLoading(false)
     setSelectCompany(null)
@@ -48,8 +46,6 @@ export default function ModalCreateCategoryBono({ roles, states, branches, compa
     const cleanedValue = e.target.value.replace(/\D/g, '');
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }
-
-  
 
   return (
     <>
@@ -120,8 +116,6 @@ export default function ModalCreateCategoryBono({ roles, states, branches, compa
           <Input name="base_amount" onChange={onlyNumberInput} showCount maxLength={10} />
         </Form.Item>
       </Modal>
-
-
     </>
   );
 }

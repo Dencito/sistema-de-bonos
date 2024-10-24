@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker, DatePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { Button, Form, Input, Modal, Select, DatePicker } from "antd";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
-import moment from "moment";
-import dayjs from "dayjs";
 import { useMessage } from "@/Contexts/MessageShow";
 
 const EnumTypes = {
@@ -57,8 +54,6 @@ export default function ModalCreateBonus() {
     }
   };
 
-
-
   const handleCloseModal = () => {
     setLoading(false)
     setSelectCompany(null)
@@ -74,8 +69,6 @@ export default function ModalCreateBonus() {
     const cleanedValue = e.target.value.replace(/\D/g, '');
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }
-
-  console.log(selectType)
 
   return (
     <>
@@ -200,12 +193,7 @@ export default function ModalCreateBonus() {
             </Form.Item>
           </div>
         }
-
-
-
       </Modal>
-
-
     </>
   );
 }

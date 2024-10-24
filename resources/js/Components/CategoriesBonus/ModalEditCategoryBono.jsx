@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined, EditOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { useState } from "react";
+import { Button, Form, Input, Modal } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
 
@@ -9,10 +9,10 @@ export default function ModalEditCategoryBono({ data, roles, states }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const { successMsg, errorMsg } = useMessage();
-  const [showAlerts, setShowAlerts] = useState({
-    success: { state: false, message: "" },
-    error: { state: false, message: "" },
-  });
+  // const [showAlerts, setShowAlerts] = useState({
+  //   success: { state: false, message: "" },
+  //   error: { state: false, message: "" },
+  // });
 
   const [form] = Form.useForm();
 
@@ -36,8 +36,6 @@ export default function ModalEditCategoryBono({ data, roles, states }) {
       return errorMsg(dataError?.message)
     }
   };
-
-
 
   const handleCloseModal = () => {
     setLoading(false)
@@ -120,8 +118,6 @@ export default function ModalEditCategoryBono({ data, roles, states }) {
           <Input name="base_amount" onChange={onlyNumberInput} showCount maxLength={10} />
         </Form.Item>
       </Modal>
-
-
     </>
   );
 }

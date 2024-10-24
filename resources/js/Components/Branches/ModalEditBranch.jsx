@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Card, Typography, Tag } from "antd";
-import { EditFilled, PlusOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons";
-import { validate, format } from 'rut.js';
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { Button, Divider, Form, Input, Modal, Select, Space, Card, Tag } from "antd";
+import { CloseOutlined, EditOutlined } from "@ant-design/icons";
+import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import axios from "axios";
 import { days } from "./days";
@@ -20,15 +19,12 @@ export default function ModalEditBranch({ data, states, companies }) {
   const [selectedDays, setSelectedDays] = useState(data?.available_bonus_days?.map((bonusDays) => bonusDays?.day));
 
   const [form] = Form.useForm();
-  const [formShifts] = Form.useForm();
-  const [formValues, setFormValues] = useState();
   const { successMsg, errorMsg } = useMessage();
 
   const onlyNumberInput = (e) => {
     const cleanedValue = e.target.value.replace(/\D/g, '');
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }
-
 
   useEffect(() => {
     const getCountries = async () => {
@@ -952,8 +948,6 @@ export default function ModalEditBranch({ data, states, companies }) {
           )}
         </Form.Item> */}
       </Modal>
-
-
     </>
   );
 }

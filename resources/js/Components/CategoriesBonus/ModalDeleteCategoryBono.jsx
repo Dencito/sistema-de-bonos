@@ -1,8 +1,8 @@
 import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
-import { Button, message, Modal } from 'antd'
+import { Button, Modal } from 'antd'
 import axios from 'axios';
-import React, { useEffect } from 'react'
+import React from 'react'
 import { DeleteOutlined } from '@ant-design/icons';
 
 const ModalDeleteCategoryBono = ({ data }) => {
@@ -19,7 +19,6 @@ const ModalDeleteCategoryBono = ({ data }) => {
             return errorMsg(dataError?.message)
         }
     };
-
 
     const showDeleteConfirm = () => {
         Modal.confirm({

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Boxes, CircleX, Menu, Package } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { CircleX, Menu } from 'lucide-react';
 import { Links } from './Links';
 
 export const MobileButton = ({role, roles}) => {

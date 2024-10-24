@@ -1,17 +1,12 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography, Card, TimePicker } from "antd";
-import { CloseOutlined, MinusCircleOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { useState } from "react";
+import { Button, Form, Input, message, Modal, Select } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 
 export default function ModalViewUser({data, states, roles}) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
-  const [showAlerts, setShowAlerts] = useState({
-    success: { state: false, message: "" },
-    error: { state: false, message: "" },
-  });
-
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const successMsg = () => {
@@ -35,27 +30,6 @@ export default function ModalViewUser({data, states, roles}) {
       },
     });
   };
-
-
-  const onCreate = async (values) => {
-    console.log('Received values of form: ', values);
-    try {
-      setLoading(true)
-      const { data } = await axios.post(`/users`, values);
-      router.visit(window.location.href, {
-        preserveState: true, // Mantener el estado actual
-      });
-      data && successMsg(data?.message)
-      setLoading(false)
-      handleCloseModal()
-    } catch (error) {
-      const { response: { data: dataError } } = error
-      setLoading(false)
-      return errorMsg(dataError?.message)
-    }
-  };
-
-
 
   const handleCloseModal = () => {
     setLoading(false)
@@ -168,8 +142,6 @@ export default function ModalViewUser({data, states, roles}) {
           )}
         </Form.Item> */}
       </Modal>
-
-
     </>
   );
 }

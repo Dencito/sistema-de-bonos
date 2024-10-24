@@ -1,5 +1,4 @@
-import { Link, useForm } from '@inertiajs/react';
-import { Collapse } from 'antd';
+import { Link } from '@inertiajs/react';
 import { Building2, ChartBarStacked, Home, LogOut, MapPinHouse, SquareStack, Users, ChevronDown, ChevronRight  } from 'lucide-react';
 import { useState } from 'react';
 
@@ -7,10 +6,6 @@ export const Links = ({ role, roles }) => {
     const path = window.location.pathname
     const [select, setSelect] = useState(path)
     const [isOpen, setIsOpen] = useState(false);
-
-    const { data, setData, get } = useForm({
-        role: ''
-    });
 
     return (
         <>
@@ -121,9 +116,6 @@ export const Links = ({ role, roles }) => {
                             </div>
                         </div>
                     }
-
-
-
                 </>
             ))}
             <Link className='border-red-300 border hover:bg-red-400 hover:text-white transition-all w-full py-3 ps-3 rounded-lg duration-300 flex gap-2 text-base font-light items-center space-x-2' as="button" href={route('logout')} method="post">

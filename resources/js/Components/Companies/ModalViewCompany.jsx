@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space, Typography } from "antd";
-import { EditFilled, EyeFilled, PlusOutlined, EyeOutlined } from "@ant-design/icons";
-import { validate, format } from 'rut.js';
+import { Button, Divider, Form, Input, message, Modal, Select } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
+import { validate } from 'rut.js';
 import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 
 export default function ModalViewCompany({ data }) {
   const [showModal, setShowModal] = useState(false);
   const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
   const [form] = Form.useForm();
@@ -62,32 +61,7 @@ export default function ModalViewCompany({ data }) {
     }
     getCountries()
     getRegion()
-
-
   }, [showModal, country])
-
-
-  const onEdit = async (values) => {
-    console.log('Received values of form: ', values);
-    const token = Cookies.get("user");
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/companies/${data?.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(values),
-    });
-    const dataEdit = await response?.json();
-    !response.ok && errorMsg(dataEdit?.message || 'Error al editar la empresa')
-    console.log(dataEdit)
-    if (dataEdit?.changes?.length === 0) {
-      return errorMsg("Usted no modifico ningun dato.")
-    }
-    response.ok && successMsg()
-    setFormValues(values);
-    response.ok && setShowModal(false);
-  };
 
   const validateRutNumbers = (_, value) => {
     if (form.getFieldsValue().rutNumbers !== "" && form.getFieldsValue().rutDv !== "") {
@@ -136,8 +110,6 @@ export default function ModalViewCompany({ data }) {
     }
   };
 
-
-
   const handleCloseModal = () => {
     setShowModal(false)
   }
@@ -166,7 +138,6 @@ export default function ModalViewCompany({ data }) {
 
       initialValue={data?.prefixContact} name="prefixContact" rules={[{ required: true, message: getValidationRequiredMessage }]} noStyle>
       <Select
-
         showSearch
         style={{
           width: 100,
@@ -335,9 +306,7 @@ export default function ModalViewCompany({ data }) {
             <Input maxLength={1} />
           </Form.Item>
         </div>
-
         <Divider className="font-bold text-3xl">Contacto</Divider>
-
         <Form.Item
           initialValue={data?.contactNames}
           name="contactNames"

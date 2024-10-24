@@ -1,8 +1,8 @@
 import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
-import { Button, message, Modal } from 'antd'
+import { Button, Modal } from 'antd'
 import axios from 'axios';
-import React, { useEffect } from 'react'
+import React from 'react'
 import { DeleteOutlined } from '@ant-design/icons';
 
 const ModalDeleteBranch = ({ data }) => {
@@ -22,8 +22,6 @@ const ModalDeleteBranch = ({ data }) => {
         }
     };
 
-
-
     const showDeleteConfirm = () => {
         Modal.confirm({
             title: `¿Estás seguro de que quieres eliminar la sucursal ${data.name}?`,
@@ -38,7 +36,6 @@ const ModalDeleteBranch = ({ data }) => {
     };
     return (
         <div>
-
             <Button danger onClick={() => showDeleteConfirm()} icon={<DeleteOutlined />} />
         </div>
     )

@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Button, Form, Input, Modal, Select, DatePicker } from "antd";
+import { Form, Input, Select, DatePicker } from "antd";
 import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
+import { ModalForm } from "@components-v2/ModalForm";
+import { CustomButton } from "@components-v2/CustomButton";
 
 const EnumTypes = {
   basic: 'basic',
@@ -70,61 +72,145 @@ export default function ModalCreateBonus() {
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }
 
+  // return (
+  //   <>
+  //     <Button onClick={handleOpenModal} className="my-5">
+  //       Crear bono
+  //     </Button>
+  //     <Modal
+  //       style={{ top: 20 }}
+  //       title={<p className="text-bold text-3xl">Crear bono</p>}
+  //       open={showModal}
+  //       onCancel={() => !loading && Modal.confirm({
+  //         title: '¿Estás seguro de que quieres salir?',
+  //         content: 'Se borrarán todos los datos no guardados.',
+  //         okText: 'Sí',
+  //         okType: 'danger',
+  //         cancelText: 'No',
+  //         onOk() {
+  //           handleCloseModal();
+  //         },
+  //       })}
+  //       okText='Crear'
+  //       cancelText="Cancelar"
+  //       okButtonProps={{
+  //         autoFocus: true,
+  //         htmlType: 'submit',
+  //         loading: loading, // Estado de carga del botón
+  //         disabled: loading, // Deshabilitar cuando está cargando
+  //       }}
+  //       cancelButtonProps={{
+  //         disabled: loading, // Deshabilitar cuando está cargando
+  //       }}
+  //       destroyOnClose={() => Modal.confirm({
+  //         title: '¿Estás seguro de que quieres salir?',
+  //         content: 'Se borrarán todos los datos no guardados.',
+  //         okText: 'Sí',
+  //         okType: 'danger',
+  //         cancelText: 'No',
+  //         onOk() {
+  //           handleCloseModal();
+  //         },
+  //       })}
+  //       modalRender={(dom) => (
+  //         <Form
+  //           layout="vertical"
+  //           form={form}
+  //           name="form_in_modal"
+  //           initialValues={{
+  //             modifier: 'public',
+  //           }}
+  //           disabled={loading}
+  //           clearOnDestroy
+  //           onFinish={(values) => onCreate(values)}
+  //         >
+  //           {dom}
+  //         </Form>
+  //       )}
+  //     >
+  //       <Form.Item
+  //         name="name"
+  //         label="Nombre del bono"
+  //         rules={[{ required: true, message: getValidationRequiredMessage }]}
+  //       >
+  //         <Input showCount maxLength={30} />
+  //       </Form.Item>
+  //       <Form.Item
+  //         name="amount"
+  //         label="Monto"
+  //         rules={[{ required: true, message: getValidationRequiredMessage }]}
+  //       >
+  //         <Input name="amount" onChange={onlyNumberInput} showCount maxLength={10} />
+  //       </Form.Item>
+
+  //       <Form.Item
+  //         name="type"
+  //         rules={[{ required: true, message: getValidationRequiredMessage }]}
+  //         label="Tipo de bono">
+  //         <Select onChange={value => setSelectType(value)} placeholder="Seleccionar dia">
+  //           {
+  //             [
+  //               {
+  //                 id: 1,
+  //                 name: 'basic',
+  //               },
+  //               {
+  //                 id: 2,
+  //                 name: 'birthday',
+  //               },
+  //               {
+  //                 id: 3,
+  //                 name: 'today'
+  //               },
+  //             ]?.map(type => (
+  //               <Select.Option key={type?.id} value={type?.name}>{type?.name}</Select.Option>
+  //             ))
+  //           }
+  //         </Select>
+  //       </Form.Item>
+
+  //       {
+  //         selectType === EnumTypes.basic &&
+  //         <div className="flex justify-between">
+  //           <Form.Item
+  //             name='start_datetime'
+  //             label="Fecha y hora de inicio"
+  //             rules={[{ required: selectType === EnumTypes.basic, message: 'Por favor, seleccione la fecha y hora de inicio.' }]}
+  //           >
+  //             <DatePicker
+  //               showTime
+  //               format="YYYY-MM-DD HH:mm:ss"
+  //               placeholder="Seleccionar fecha y hora"
+  //             />
+  //           </Form.Item>
+  //           <Form.Item
+  //             name='end_datetime'
+  //             label="Fecha y hora de fin"
+  //           >
+  //             <DatePicker
+  //               showTime
+  //               format="YYYY-MM-DD HH:mm:ss"
+  //               placeholder="Seleccionar fecha y hora"
+  //             />
+  //           </Form.Item>
+  //         </div>
+  //       }
+  //     </Modal>
+  //   </>
+  // );
+
   return (
     <>
-      <Button onClick={handleOpenModal} className="my-5">
+      <CustomButton onClick={handleOpenModal} className="my-5">
         Crear bono
-      </Button>
-      <Modal
-        style={{ top: 20 }}
-        title={<p className="text-bold text-3xl">Crear bono</p>}
-        open={showModal}
-        onCancel={() => !loading && Modal.confirm({
-          title: '¿Estás seguro de que quieres salir?',
-          content: 'Se borrarán todos los datos no guardados.',
-          okText: 'Sí',
-          okType: 'danger',
-          cancelText: 'No',
-          onOk() {
-            handleCloseModal();
-          },
-        })}
-        okText='Crear'
-        cancelText="Cancelar"
-        okButtonProps={{
-          autoFocus: true,
-          htmlType: 'submit',
-          loading: loading, // Estado de carga del botón
-          disabled: loading, // Deshabilitar cuando está cargando
-        }}
-        cancelButtonProps={{
-          disabled: loading, // Deshabilitar cuando está cargando
-        }}
-        destroyOnClose={() => Modal.confirm({
-          title: '¿Estás seguro de que quieres salir?',
-          content: 'Se borrarán todos los datos no guardados.',
-          okText: 'Sí',
-          okType: 'danger',
-          cancelText: 'No',
-          onOk() {
-            handleCloseModal();
-          },
-        })}
-        modalRender={(dom) => (
-          <Form
-            layout="vertical"
-            form={form}
-            name="form_in_modal"
-            initialValues={{
-              modifier: 'public',
-            }}
-            disabled={loading}
-            clearOnDestroy
-            onFinish={(values) => onCreate(values)}
-          >
-            {dom}
-          </Form>
-        )}
+      </CustomButton>
+      <ModalForm
+        title="Crear bono"
+        showModal={showModal}
+        loading={loading}
+        onClose={handleCloseModal}
+        onSubmit={onCreate}
+        initialValues={{}}
       >
         <Form.Item
           name="name"
@@ -140,40 +226,23 @@ export default function ModalCreateBonus() {
         >
           <Input name="amount" onChange={onlyNumberInput} showCount maxLength={10} />
         </Form.Item>
-
         <Form.Item
           name="type"
+          label="Tipo de bono"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
-          label="Tipo de bono">
-          <Select onChange={value => setSelectType(value)} placeholder="Seleccionar dia">
-            {
-              [
-                {
-                  id: 1,
-                  name: 'basic',
-                },
-                {
-                  id: 2,
-                  name: 'birthday',
-                },
-                {
-                  id: 3,
-                  name: 'today'
-                },
-              ]?.map(type => (
-                <Select.Option key={type?.id} value={type?.name}>{type?.name}</Select.Option>
-              ))
-            }
+        >
+          <Select onChange={value => setSelectType(value)} placeholder="Seleccionar tipo">
+            {Object.values(EnumTypes).map((type, index) => (
+              <Select.Option key={index} value={type}>{type}</Select.Option>
+            ))}
           </Select>
         </Form.Item>
-
-        {
-          selectType === EnumTypes.basic &&
+        {selectType === EnumTypes.basic && (
           <div className="flex justify-between">
             <Form.Item
               name='start_datetime'
               label="Fecha y hora de inicio"
-              rules={[{ required: selectType === EnumTypes.basic, message: 'Por favor, seleccione la fecha y hora de inicio.' }]}
+              rules={[{ required: true, message: 'Por favor, seleccione la fecha y hora de inicio.' }]}
             >
               <DatePicker
                 showTime
@@ -192,8 +261,8 @@ export default function ModalCreateBonus() {
               />
             </Form.Item>
           </div>
-        }
-      </Modal>
+        )}
+      </ModalForm>
     </>
   );
 }

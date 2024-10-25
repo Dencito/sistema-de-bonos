@@ -16,101 +16,12 @@ use Carbon\Carbon;
 use App\Models\Company;
 use App\Models\CategoryBonus;
 
-/* Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-}); */
-
 Route::get('/', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
 Route::middleware('auth')->group(function () {
-
-
-    /* Route::get('/total-amounts', function (Request $request) 
-    {
-        $user = auth()->user();
-
-        // Sumar todos los montos de los bonos asignados al usuario
-        $totalBonuses = $user->bonuses()->sum('amount');
-
-        // Obtener el monto de la categoría de bonos asignada
-        $categoryBonus = CategoryBonus::with('bonuses')->find($user->category_bonus_id); // Asegúrate de que $user->category_bonus_id sea el campo correcto
-
-        $categoryBonusAmount = $categoryBonus ? $categoryBonus->base_amount : 0;
-
-        // Sumar el monto de los bonos relacionados con la categoría de bonos
-        $relatedBonuses = $categoryBonus ? $categoryBonus->bonuses->sum('amount') : 0;
-
-        // Calcular el total general (bonos + base de categoría + bonos relacionados)
-        $totalAmount = $totalBonuses + $categoryBonusAmount + $relatedBonuses;
-
-        $data = [
-            'total_bonuses' => '$ ' . number_format($totalBonuses, 2, ',', '.'),
-            'category_bonus' => '$ ' . number_format($categoryBonusAmount, 2, ',', '.'),
-            'related_bonuses' => '$ ' . number_format($relatedBonuses, 2, ',', '.'),
-            'total_amount' => '$ ' . number_format($totalAmount, 2, ',', '.'),
-        ];
-
-        return Inertia::render('TotalAmounts/Index', $data);
-    })->name('totalAmounts.index'); */
-
-
-    //segundo intento
-    /* Route::get('/total-amounts', function (Request $request) 
-    {
-        $user = auth()->user();
-
-        // Sumar todos los montos de los bonos asignados al usuario
-        $totalBonuses = $user->bonuses()->sum('amount');
-
-        // Obtener el monto de la categoría de bonos asignada
-        $categoryBonus = CategoryBonus::with('bonuses')->find($user->category_bonus_id); 
-
-        $categoryBonusAmount = $categoryBonus ? $categoryBonus->base_amount : 0;
-
-        // Sumar el monto de los bonos relacionados con la categoría de bonos
-        $relatedBonuses = 0;
-        
-        if ($categoryBonus) {
-            // Obtener la fecha y hora actual
-            $currentDateTime = Carbon::now();
-
-            // Iterar sobre los bonos relacionados a la categoría
-            $relatedBonuses = $categoryBonus->bonuses->sum(function ($bonus) use ($currentDateTime) {
-                // Si el bono es de tipo 'basic', verificar las fechas
-                if ($bonus->type === 'basic') {
-                    if ($bonus->start_datetime <= $currentDateTime && $bonus->end_datetime >= $currentDateTime) {
-                        // Si está dentro del rango de fechas, incluir el monto
-                        return $bonus->amount;
-                    } else {
-                        return 0;
-                    }
-                } else {
-                    // Si no es de tipo 'basic', el bono se considera infinito
-                    return $bonus->amount;
-                }
-            });
-        }
-
-        // Calcular el total general (bonos + base de categoría + bonos relacionados)
-        $totalAmount = $totalBonuses + $categoryBonusAmount + $relatedBonuses;
-
-        $data = [
-            'total_bonuses' => '$ ' . number_format($totalBonuses, 2, ',', '.'),
-            'category_bonus' => '$ ' . number_format($categoryBonusAmount, 2, ',', '.'),
-            'related_bonuses' => '$ ' . number_format($relatedBonuses, 2, ',', '.'),
-            'total_amount' => '$ ' . number_format($totalAmount, 2, ',', '.'),
-        ];
-
-        return Inertia::render('TotalAmounts/Index', $data);
-    })->name('totalAmounts.index'); */
 
     Route::get('/total-amounts', function (Request $request) 
     {

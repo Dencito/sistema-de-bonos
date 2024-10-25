@@ -29,6 +29,6 @@ class StateController extends Controller
             'total' => $states->count(),
         ];
 
-        return Inertia::render('States/Index', $data);
+        return Inertia::render('States/index', $data);
     }
 }

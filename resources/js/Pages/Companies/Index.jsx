@@ -1,50 +1,17 @@
-import ModalChangeCompany from '@/Components/Companies/ModalChangeCompany.jsx';
 import ModalCreateCompany from '@/Components/Companies/ModalCreateCompany';
 import ModalDeleteCompany from '@/Components/Companies/ModalDeleteCompany';
 import ModalEditCompany from '@/Components/Companies/ModalEditCompany';
 import ModalViewBranchesCompany from '@/Components/Companies/ModalViewBranchesCompany';
 import ModalViewCompany from '@/Components/Companies/ModalViewCompany';
-import useBranchValidateSchedules from '@/Hooks/useBranchValidateSchedules';
-import useCompanySelection from '@/Hooks/useCompanySelection';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
-import { Breadcrumb, Button, Input, Select, Spin, Table, Tag, Typography } from 'antd';
-import { useEffect, useState } from 'react';
-import { SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { Head } from '@inertiajs/react';
+import { Table } from 'antd';
 import { MobileButton } from '@/Components/MobileButton';
 import FilterModal from '@/Components/Companies/FilterModal';
-const { Column, ColumnGroup, } = Table;
+const { Column } = Table;
 
 
-const index = ({ auth, companies, states, filters, alert }) => {
-    const { companySelect, loading, changeCompany } = useCompanySelection();
-    const canLogin = useBranchValidateSchedules(auth?.branch?.shifts);
-    const InitForm = {
-        name: filters.name || '',
-        state: filters.state || ''
-    }
-    const { data, setData, get } = useForm(InitForm);
-
-    const handleFilter = () => {
-        get(route('companies.index'));
-    };
-
-
-    /* if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Head title="Empresas" />
-                <Spin size="large" />
-            </div>
-        );
-    } */
-
-    /* if (!canLogin && (auth?.role !== "Dueño" && auth?.role !== "Super Admin" && auth?.role !== "Admin")) {
-        return <div className="flex justify-center items-center min-h-screen">
-            <Head title="Empresas" />
-            <h1 className='text-3xl font-bold'>Usted esta fuera de su horario laboral</h1>
-        </div>
-    } */
+export default function CompanyPage({ auth, companies, states, filters, alert }) {
 
     return (
         <AuthenticatedLayout
@@ -99,15 +66,9 @@ const index = ({ auth, companies, states, filters, alert }) => {
                                 )}
                             />
                         </Table>
-                        {/* <Typography>
-                            <pre>{JSON.stringify(companies, null, 2)}</pre>
-                        </Typography> */}
                     </div>
-
                 </div>
             </div>
         </AuthenticatedLayout>
     )
 }
-
-export default index

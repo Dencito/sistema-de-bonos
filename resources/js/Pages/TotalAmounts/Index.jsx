@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useForm, Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Table, Input, Select, Button, Spin, Typography, Dropdown } from 'antd';
+import { Table, Select } from 'antd';
 
 import { parse, isAfter, isBefore, isValid } from 'date-fns';
 import moment from 'moment';
@@ -9,7 +9,7 @@ import moment from 'moment';
 const { Column } = Table;
 const { Option } = Select;
 
-const Index = ({ auth, total_bonuses, category_bonus, related_bonuses, total_amount, bonuses, categoryBonus }) => {
+export default function TotalAmountPage({ auth, total_bonuses, category_bonus, related_bonuses, total_amount, bonuses, categoryBonus }) {
     const [validBonuses, setValidBonuses] = useState([]);
     const [invalidBonuses, setInvalidBonuses] = useState([]);
 
@@ -84,7 +84,6 @@ const Index = ({ auth, total_bonuses, category_bonus, related_bonuses, total_amo
         >
             <Head title="Montos totales" />
             <h1 className='text-3xl font-bold'>Fecha y hora actual: {moment(now).format('DD-MM-YYYY HH:mm:ss')}</h1>
-
             <div>
                 <h3 className='text-2xl font-bold text-green-500'>Bonos Válidos</h3>
                 <Table dataSource={validBonuses} rowKey="id">
@@ -103,13 +102,11 @@ const Index = ({ auth, total_bonuses, category_bonus, related_bonuses, total_amo
                     )} key="end_datetime" />
                 </Table>
             </div>
-
             <div className="mb-20">
                 <h2>Total bonos válidos: ${totalValidBonusesAmount} +</h2>
                 <h2>Total categoría: ${totalAdditionalAmount} +</h2>
                 <h2>Total total: {totalAmount}</h2>
             </div>
-
             <div>
                 <h3 className='text-2xl font-bold text-red-500'>Bonos Inválidos</h3>
                 <Table dataSource={invalidBonuses} rowKey="id">
@@ -131,5 +128,3 @@ const Index = ({ auth, total_bonuses, category_bonus, related_bonuses, total_amo
         </AuthenticatedLayout>
     );
 };
-
-export default Index;

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 const useBranchValidateSchedules = (shifts) => {
   const [canLogin, setCanLogin] = useState(false);
-  console.log('shifts', shifts)
 
   const dayOfWeekToNumber = {
     "Lunes": 1,

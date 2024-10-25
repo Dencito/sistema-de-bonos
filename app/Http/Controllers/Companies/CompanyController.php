@@ -52,7 +52,7 @@ class CompanyController extends Controller
             'filters' => $request->only(['name', 'state'])
         ];
 
-        return Inertia::render('Companies/Index', $data);
+        return Inertia::render('Companies/index', $data);
     }
 
     /**

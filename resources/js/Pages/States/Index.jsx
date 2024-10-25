@@ -1,38 +1,13 @@
-import ModalCreateCompany from '@/Components/Companies/ModalCreateCompany';
 import { MobileButton } from '@/Components/MobileButton';
-import ModalCreateState from '@/Components/States/ModalCreateState';
-import ModalDeleteState from '@/Components/States/ModalDeleteState';
-import ModalEditState from '@/Components/States/ModalEditState';
 import ModalViewBranchStates from '@/Components/States/ModalViewBranchStates';
 import ModalViewUserStates from '@/Components/States/ModalViewUserStates';
-import useBranchValidateSchedules from '@/Hooks/useBranchValidateSchedules';
-import useCompanySelection from '@/Hooks/useCompanySelection';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage } from '@inertiajs/react';
-import { Breadcrumb, Button, Select, Spin, Table, Typography } from 'antd';
-import { useEffect, useState } from 'react';
-const { Column, ColumnGroup, } = Table;
+import { Head } from '@inertiajs/react';
+import { Table } from 'antd';
+const { Column } = Table;
 
-const index = ({ auth, states, alert }) => {
-    const { companySelect, loading, changeCompany } = useCompanySelection();
-    const canLogin = useBranchValidateSchedules(auth?.branch?.shifts);
-
-    /* if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Head title="Estados" />
-                <Spin size="large" />
-            </div>
-        );
-    } */
-
-    /* if (!canLogin && (auth?.role !== "Dueño" && auth?.role !== "Super Admin" && auth?.role !== "Admin")) {
-        return <div className="flex justify-center items-center min-h-screen">
-            <Head title="Estados" />
-            <h1 className='text-3xl font-bold'>Usted esta fuera de su horario laboral</h1>
-        </div>
-    } */
-
+export default function StatePage({ auth, states, alert }) {
+    
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -77,5 +52,3 @@ const index = ({ auth, states, alert }) => {
         </AuthenticatedLayout>
     )
 }
-
-export default index

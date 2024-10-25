@@ -74,7 +74,7 @@ class BranchController extends Controller
             'total' => $branches->count(),
             'filters' => $request->only(['name', 'state'])
         ];
-        return Inertia::render('Branches/Index', $data);
+        return Inertia::render('Branches/index', $data);
     }
 
     /**

@@ -19,7 +19,7 @@ class CategoryBonusController extends Controller
             'categoriesBonus' => $categoryBonuses,
             'total' => $categoryBonuses->count()
         ];
-        return Inertia::render('CategoriesBonus/Index', $data);
+        return Inertia::render('CategoriesBonus/index', $data);
     }
 
     public function create(Request $request)

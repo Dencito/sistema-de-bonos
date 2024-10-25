@@ -79,7 +79,7 @@ class UserController extends Controller
             abort(403, 'No tienes permiso para acceder a esta página. Debe existir al menos una categoria.');
         }
 
-        return Inertia::render('Users/Index', [
+        return Inertia::render('Users/index', [
             'users' => $users,
             'roles' => $roles,
             'states' => $states,

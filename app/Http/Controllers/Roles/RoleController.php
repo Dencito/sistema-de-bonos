@@ -30,6 +30,6 @@ class RoleController extends Controller
             'total' => $roles->count(),
         ];
 
-        return Inertia::render('Roles/Index', $data);
+        return Inertia::render('Roles/index', $data);
     }
 }

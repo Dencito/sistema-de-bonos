@@ -96,72 +96,114 @@ class UserController extends Controller
     {
 
         try {
-            $existingUser = User::where('username', $request->username)
-                                ->first();
-            if ($existingUser) {
-                return response()->json(['message' => 'El nombre de usuario ya existe', 'error' => true], 400);
+            // Validar si 'username' no es null antes de la consulta
+            if (!is_null($request->username)) {
+                $existingUser = User::where('username', $request->username)->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El nombre de usuario ya existe', 'error' => true], 400);
+                }
+            }
+        
+            // Validar si 'email' no es null antes de la consulta
+            if (!is_null($request->email)) {
+                $existingUser = User::where('email', $request->email)->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El correo electrónico ya existe', 'error' => true], 400);
+                }
+            }
+        
+            // Validar si 'phone' no es null antes de la consulta
+            if (!is_null($request->phone)) {
+                $existingUser = User::where('phone', $request->phone)->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El Número de teléfono ya existe', 'error' => true], 400);
+                }
             }
         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error al verificar el nombre de usuario', 'error' => true], 500);
+            return response()->json(['message' => 'Error al verificar los datos del usuario', 'error' => true], 500);
         }
-
-        try {
-            $existingUser = User::where('email', $request->username)
-                                ->first();
-            if ($existingUser) {
-                return response()->json(['message' => 'El correo electrónico ya existe', 'error' => true], 400);
-            }
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error al verificar el nombre de usuario', 'error' => true], 500);
-        }
-
         $request->validate([
-            'username' => 'required|string|unique:users,username',
-            'email' => 'nullable',
-            'password' => 'required|string',
-            'role' => 'required|string|exists:roles,name',
-            'phone' => 'string',
-            'state_id' => 'required|exists:states,id',
-            'branch_id' => 'required|exists:branches,id',
-            'company_id' => 'required|exists:companies,id',
-            'branches' => 'required|array',
-            'branches.*' => 'exists:branches,id',
+            'first_name' => 'nullable|string',
+            'second_name' => 'nullable|string',
+            'first_last_name' => 'nullable|string',
+            'second_last_name' => 'nullable|string',
+            'prefix' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'rutNumbers' => 'nullable',
+            'rutDv' => 'nullable|string',
+            'birth_date' => 'nullable|date',
+            'email' => 'nullable|email',
+            'nationality' => 'nullable|string',
+            'address' => 'nullable|string',
+            'marital_status' => 'nullable|string',
+            'pension' => 'nullable|string',
+            'health' => 'nullable|string',
+            'afp' => 'nullable|string',
+            'childrens' => 'nullable|string',
+            'username' => 'nullable|string|unique:users,username',
+            'password' => 'nullable|string',
+            'branch_id' => 'nullable|exists:branches,id',
+            'state_id' => 'nullable|exists:states,id',
+            'category_bonus_id' => 'nullable|exists:category_bonuses,id',
+            'role' => 'nullable|exists:roles,name',
+            'branches' => 'nullable|array',
+            'branches.*' => 'nullable|exists:branches,id',
         ]);
+
 
         
         DB::beginTransaction();
         try {
+            $company = Company::first();
             // Comenzar una transacción para asegurar atomicidad
             $user = User::create([
-                'username' => $request->username,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'first_name' => $request->first_name,
+                'second_name' => $request->second_name,
+                'first_last_name' => $request->first_last_name,
+                'second_last_name' => $request->second_last_name,
+                'prefix' => $request->prefix,
                 'phone' => $request->phone,
-                'state_id' => $request->state_id,
+                'rutNumbers' => $request->rutNumbers,
+                'rutDv' => $request->rutDv,
+                'birth_date' => $request->birth_date,
+                'email' => $request->email,
+                'nationality' => $request->nationality,
+                'address' => $request->address,
+                'marital_status' => $request->marital_status,
+                'pension' => $request->pension,
+                'health' => $request->health,
+                'afp' => $request->afp,
+                'childrens' => $request->childrens,
+                'username' => $request->username,
+                'password' => $request->password ? Hash::make($request->password) : null,
                 'branch_id' => $request->branch_id,
-                'company_id' => $request->company_id,
+                'state_id' => 1,
+                'company_id' => $company ? $company->id : null,
+                'category_bonus_id' => $request->category_bonus_id,
             ]);
+
             
             $user->assignRole($request->role);
 
             $userId = $user->id;
-            $branchIds = $request->branches;
-            // Iterar sobre los IDs de las sucursales para insertarlos en la tabla `user_branches`
-            foreach ($branchIds as $branchId) {
-                // Verificar si la relación ya existe para evitar duplicados
-                $existingUserBranch = UserBranches::where('user_id', $userId)
-                                                ->where('branch_id', $branchId)
-                                                ->first();
-    
-                if (!$existingUserBranch) {
-                    // Crear una nueva relación en `user_branches`
-                    UserBranches::create([
-                        'user_id' => $userId,
-                        'branch_id' => $branchId,
-                    ]);
-                }
+            if($request->branches) {
+                $branchIds = $request->branches;
+                // Iterar sobre los IDs de las sucursales para insertarlos en la tabla `user_branches`
+                foreach ($branchIds as $branchId) {
+                    // Verificar si la relación ya existe para evitar duplicados
+                    $existingUserBranch = UserBranches::where('user_id', $userId)
+                                                    ->where('branch_id', $branchId)
+                                                    ->first();
+        
+                    if (!$existingUserBranch) {
+                        // Crear una nueva relación en `user_branches`
+                        UserBranches::create([
+                            'user_id' => $userId,
+                            'branch_id' => $branchId,
+                        ]);
+                    }
+                }            
             }
-    
             // Confirmar la transacción
             DB::commit();
         } catch (\Throwable $e) {
@@ -202,23 +244,92 @@ class UserController extends Controller
             return response()->json(['message' => 'Error al verificar el nombre de usuario', 'error' => true], 500);
         }
 
+        try {
+            // Validar si 'username' no es null antes de la consulta
+            if (!is_null($request->username)) {
+                $existingUser = User::where('username', $request->username)
+                ->where('id', '!=', $user->id)
+                ->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El nombre de usuario ya existe', 'error' => true], 400);
+                }
+            }
+        
+            // Validar si 'email' no es null antes de la consulta
+            if (!is_null($request->email)) {
+                $existingUser = User::where('email', $request->email)
+                ->where('id', '!=', $user->id)
+                ->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El correo electrónico ya existe', 'error' => true], 400);
+                }
+            }
+        
+            // Validar si 'phone' no es null antes de la consulta
+            if (!is_null($request->phone)) {
+                $existingUser = User::where('phone', $request->phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El Número de teléfono ya existe', 'error' => true], 400);
+                }
+            }
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error al verificar los datos del usuario', 'error' => true], 500);
+        }
+
         $validatedData = $request->validate([
-            'username' => 'required|string',
-            'email' => 'nullable|email',
-            'password' => 'nullable|string',
-            'role' => 'required|string|exists:roles,name',
+            'first_name' => 'nullable|string',
+            'second_name' => 'nullable|string',
+            'first_last_name' => 'nullable|string',
+            'second_last_name' => 'nullable|string',
+            'prefix' => 'nullable|string',
             'phone' => 'nullable|string',
-            'state_id' => 'required',
-            'branch_id' => 'required',
+            'rutNumbers' => 'nullable',
+            'rutDv' => 'nullable|string',
+            'birth_date' => 'nullable|date',
+            'email' => 'nullable|email',
+            'nationality' => 'nullable|string',
+            'address' => 'nullable|string',
+            'marital_status' => 'nullable|string',
+            'pension' => 'nullable|string',
+            'health' => 'nullable|string',
+            'afp' => 'nullable|string',
+            'childrens' => 'nullable|integer',
+            'username' => 'nullable|string',
+            'password' => 'nullable|string',
+            'branch_id' => 'nullable|exists:branches,id',
+            'state_id' => 'required|exists:states,id',
+            'company_id' => 'nullable|exists:companies,id',
+            'category_bonus_id' => 'nullable|exists:category_bonuses,id',
+            'role' => 'nullable|string|exists:roles,name',
+            'branches' => 'nullable|array',
+            'branches.*' => 'nullable|exists:branches,id',
         ]);
 
         $user->update([
-            'username' => $validatedData['username'],
-            'email' => $validatedData['email'],
+            'first_name' => $request->first_name,
+            'second_name' => $request->second_name,
+            'first_last_name' => $request->first_last_name,
+            'second_last_name' => $request->second_last_name,
+            'prefix' => $request->prefix,
+            'phone' => $request->phone,
+            'rutNumbers' => $request->rutNumbers,
+            'rutDv' => $request->rutDv,
+            'birth_date' => $request->birth_date,
+            'email' => $request->email,
+            'nationality' => $request->nationality,
+            'address' => $request->address,
+            'marital_status' => $request->marital_status,
+            'pension' => $request->pension,
+            'health' => $request->health,
+            'afp' => $request->afp,
+            'childrens' => $request->childrens,
+            'username' => $request->username,
             'password' => $request->filled('password') ? Hash::make($validatedData['password']) : $user->password,
-            'phone' => $validatedData['phone'],
-            'state_id' => $validatedData['state_id'],
-            'branch_id' => $validatedData['branch_id'],
+            'branch_id' => $request->branch_id,
+            'state_id' => $request->state_id,
+            'category_bonus_id' => $request->category_bonus_id,
         ]);
 
         $user->syncRoles([$validatedData['role']]);

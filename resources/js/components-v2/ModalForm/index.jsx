@@ -5,13 +5,14 @@ export function ModalForm({
   showModal,
   loading,
   onClose,
+  form,
   onSubmit,
   children,
   okText = 'Guardar',
   cancelText = 'Cancelar',
   initialValues = {},
+  disabled = false
 }) {
-  const [form] = Form.useForm();
 
   return (
     <Modal
@@ -42,10 +43,10 @@ export function ModalForm({
           layout="vertical"
           form={form}
           name="form_in_modal"
+          disabled={disabled}
           initialValues={initialValues}
           onFinish={(values) => {
             onSubmit(values);
-            form.resetFields();
           }}
         >
           {dom}

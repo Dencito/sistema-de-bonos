@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class RoleController extends Controller
+
+//TODO: Arreglar el tema de los roles, sin espacios y estandarizarlo.
 {
     public function index()
     {

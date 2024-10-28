@@ -247,7 +247,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         <Form.Item
           name="phone"
           label="Número de teléfono"
-          initialValue={data?.phone?.split('+56')[0]}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Input
@@ -265,7 +264,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
             className="w-10/12"
             name="rutNumbers"
             label="Números del RUT"
-            initialValue={data?.rut?.split('-')[0]}
             rules={[{ required: true, message: getValidationRequiredMessage }]}
           >
             <Input name="rutNumbers" showCount maxLength={10} />
@@ -276,7 +274,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           <Form.Item
             name="rutDv"
             label="Cod. Verificación"
-            initialValue={data?.rut?.split('-')[1]}
             rules={[
               { required: true, message: 'El campo debe ser un código de verificación de un RUT' },
             ]}
@@ -395,20 +392,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
     "JUGADOR": (
       <>
         <Form.Item
-          name="username"
-          label="Nombre de usuario"
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
-        >
-          <Input showCount maxLength={15} />
-        </Form.Item>
-        <Form.Item
-          name="password"
-          label="Contraseña"
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
-        >
-          <Input.Password showCount maxLength={20} />
-        </Form.Item>
-        <Form.Item
           name="first_name"
           label="Primer Nombre"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
@@ -441,7 +424,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         <Form.Item
           name="phone"
           label="Número de teléfono"
-          initialValue={data?.phone?.split('+56')[1]}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Input
@@ -459,7 +441,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
             className="w-10/12"
             name="rutNumbers"
             label="Números del RUT"
-            initialValue={data?.rut?.split('-')[0]}
             rules={[
               { required: true, message: getValidationRequiredMessage },
             ]}
@@ -472,7 +453,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           <Form.Item
             name="rutDv"
             label="Cod. Verificación"
-            initialValue={data?.rut?.split('-')[1]}
             rules={[
               { required: true, message: 'El campo debe ser un código de verificación de un RUT' },
             ]}

@@ -9,10 +9,6 @@ export default function ModalEditCategoryBono({ data, roles, states }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const { successMsg, errorMsg } = useMessage();
-  // const [showAlerts, setShowAlerts] = useState({
-  //   success: { state: false, message: "" },
-  //   error: { state: false, message: "" },
-  // });
 
   const [form] = Form.useForm();
 
@@ -21,12 +17,10 @@ export default function ModalEditCategoryBono({ data, roles, states }) {
     console.log('Received values of form: ', values);
     try {
       setLoading(true)
-      console.log(data.id)
       const { data: dataUpdate } = await axios.put(`/categories-bonus/${data.id}`, values);
       router.visit('/categories-bonus', {
         preserveState: true, // Mantener el estado actual
       });
-      console.log(dataUpdate)
       dataUpdate && successMsg(dataUpdate?.message)
       setLoading(false)
       handleCloseModal()

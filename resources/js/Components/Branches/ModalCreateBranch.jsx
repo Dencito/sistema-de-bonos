@@ -678,7 +678,6 @@ export default function ModalCreateBranch({ companies }) {
                     !loading && (
                       <CloseOutlined
                         onClick={() => {
-                          console.log(fields, index)
                           handleDaySelection(day); // Eliminar el día y su información asociada
                         }}
                       />

@@ -8,7 +8,7 @@ export const Links = ({ role, roles }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <>
+        <div>
             {[
                 {
                     key: '0',
@@ -70,7 +70,7 @@ export const Links = ({ role, roles }) => {
                     autorized: false
                 },
             ].map(item => (
-                <>
+                <div key={item.key}>
                     {item.autorized && item?.link !== '/users' &&
                         <Link className={`transition-all duration-300 ${select === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`} href={item?.link} selected>
                             {item.icon} <span className={`text-base ${select === item?.link && 'font-bold'}`}>{item.label}</span>
@@ -116,11 +116,11 @@ export const Links = ({ role, roles }) => {
                             </div>
                         </div>
                     }
-                </>
+                </div>
             ))}
             <Link className='border-red-300 border hover:bg-red-400 hover:text-white transition-all w-full py-3 ps-3 rounded-lg duration-300 flex gap-2 text-base font-light items-center space-x-2' as="button" href={route('logout')} method="post">
                 <LogOut /> <span className='text-base'>Salir</span>
             </Link>
-        </>
+        </div>
     )
 }

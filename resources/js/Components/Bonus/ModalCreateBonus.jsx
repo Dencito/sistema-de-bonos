@@ -48,6 +48,7 @@ export default function ModalCreateBonus() {
             });
             data && successMsg(data?.message);
             setLoading(false);
+            form.resetFields();
             handleCloseModal();
         } catch (error) {
             const {
@@ -83,6 +84,7 @@ export default function ModalCreateBonus() {
                 title="Crear bono"
                 showModal={showModal}
                 loading={loading}
+                form={form}
                 onClose={handleCloseModal}
                 onSubmit={onCreate}
                 initialValues={{}}

@@ -197,14 +197,6 @@ export default function ModalCreateRole() {
                     </Form>
                 )}
             >
-
-                {/* <Form.Item noStyle shouldUpdate>
-          {() => (
-            <Typography>
-              <pre>{JSON.stringify(form.getFieldsValue(), null, 2)}</pre>
-            </Typography>
-          )}
-        </Form.Item> */}
                 <Form.Item
                     name="creationDate"
                     label="Fecha de creacion"

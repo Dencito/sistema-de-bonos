@@ -15,7 +15,6 @@ export const SelectAssignBonuses = ({ setSelectedRowKeys, selectedRowKeys, bonus
             router.visit('/users', {
                 preserveState: false,
             });
-            console.log(data)
             data && successMsg(data?.message)
             setSelectBonusId(null)
             setSelectedRowKeys([])
@@ -32,7 +31,6 @@ export const SelectAssignBonuses = ({ setSelectedRowKeys, selectedRowKeys, bonus
             router.visit('/users', {
                 preserveState: true,
             });
-            console.log(data)
             data && successMsg(data?.message)
             setSelectBonusId(null)
             setSelectedRowKeys([])

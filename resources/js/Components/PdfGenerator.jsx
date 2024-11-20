@@ -45,8 +45,6 @@ const PdfGenerator = ({ user }) => {
     doc.save("receipt.pdf");
   };
 
-  console.log(user)
-
   const generateQRCode = () => {
     const qr = new QRious({
       element: document.getElementById("qr-code"),

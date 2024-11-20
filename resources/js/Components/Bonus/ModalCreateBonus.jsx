@@ -42,7 +42,6 @@ export default function ModalCreateBonus() {
                 sendData.start_datetime = startDataTime;
                 sendData.endDataTime = endDataTime;
             }
-            console.log(sendData);
             const { data } = await axios.post(`/bonuses`, sendData);
             router.visit("/users", {
                 preserveState: true, // Mantener el estado actual
@@ -52,7 +51,6 @@ export default function ModalCreateBonus() {
             form.resetFields();
             handleCloseModal();
         } catch (error) {
-            console.log(error);
             const {
                 response: { data: dataError },
             } = error;

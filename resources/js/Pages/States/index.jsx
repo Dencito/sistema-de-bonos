@@ -36,16 +36,10 @@ export default function StatePage({ auth, states, alert }) {
                                     <div className='flex flex-wrap gap-3'>
                                         <ModalViewUserStates data={state.users} state={state.name} />
                                         <ModalViewBranchStates data={state.branches} state={state.name} />
-                                        {/* <ModalEditState data={State} />
-                                        <ModalDeleteState data={State}/> */}
                                     </div>
                                 )}
                             />
-
                         </Table>
-                        {/* <Typography>
-                            <pre>{JSON.stringify(companies, null, 2)}</pre>
-                        </Typography> */}
                     </div>
                 </div>
             </div>

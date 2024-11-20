@@ -36,6 +36,10 @@ export default defineConfig({
                 __dirname,
                 "resources/js/layouts/"
             ),
+            "@contexts": path.resolve(
+                __dirname,
+                "resources/js/contexts/"
+            ),
         },
     },
 });

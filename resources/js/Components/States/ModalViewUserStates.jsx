@@ -84,13 +84,6 @@ export default function ModalViewUserStates({ data, state }) {
             </div>
           </List.Item>}
         />
-        {/* <Form.Item noStyle shouldUpdate>
-          {() => (
-            <Typography>
-              <pre>{JSON.stringify(data.users, null, 2)}</pre>
-            </Typography>
-          )}
-        </Form.Item> */}
       </Modal>
     </>
   );

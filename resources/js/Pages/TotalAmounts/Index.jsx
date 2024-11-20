@@ -47,8 +47,6 @@ export default function TotalAmountPage({ auth, total_bonuses, category_bonus, r
         setInvalidBonuses(invalid);
     };
 
-    console.log(categoryBonus)
-
     useEffect(() => {
         categorizeBonuses(bonuses); // Clasificar los bonos cuando se cargue el componente
     }, [bonuses]);

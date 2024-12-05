@@ -5,7 +5,7 @@
 </head>
 <body>
     <p>El usuario: {{ $username }} creó una sucursal para la empresa: {{ $companyName }}.</p>
-    <p>Nombre de la sucursal: {{ $branch->name }}</p>
+    <p>Nombre de la sucursal: {{ $branch }}</p>
     <p>Gracias por usar nuestra aplicación!</p>
 </body>
 </html>

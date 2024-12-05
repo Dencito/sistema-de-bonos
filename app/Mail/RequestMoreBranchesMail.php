@@ -6,12 +6,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class BranchCreatedMail extends Mailable
+class RequestMoreBranchesMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $branch;
-    public $companyName;
+
+    public $company;
+    public $qty;
     public $username;
 
     /**
@@ -19,10 +20,9 @@ class BranchCreatedMail extends Mailable
      *
      * @return void
      */
-    public function __construct($branch, $companyName, $username)
-    {
-        $this->branchName = $branch;
-        $this->companyName = $companyName;
+    public function __construct($company,$qty, $username) {
+        $this->company = $company;
+        $this->qty = $qty;
         $this->username = $username;
     }
 
@@ -33,11 +33,11 @@ class BranchCreatedMail extends Mailable
      */
     public function build()
     {
-        return $this->subject("El usuario: $this->username creó una nueva sucursal para la empresa: $this->companyName")
-                    ->view('emails.branch_created')
+        return $this->subject("El usuario: $this->username de la empresa: $this->company solicito $this->qty sucursales mas")
+                    ->view('emails.request_more_branches')
                     ->with([
-                        'branch' => $this->branchName,
-                        'companyName' => $this->companyName,
+                        'company' => $this->company,
+                        'qty' => $this->qty,
                         'username' => $this->username,
                     ]);
     }

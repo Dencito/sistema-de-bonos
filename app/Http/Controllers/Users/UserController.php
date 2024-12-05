@@ -22,7 +22,7 @@ class UserController extends Controller
     {
         $userRoleId = auth()->user()->roles->first()->id;
 
-        $users = User::with(['state', 'roles', 'bonuses', 'categoryBonus', 'branches'])
+        $users = User::with(['state', 'roles', 'bonuses', 'categoryBonus', 'branches', 'branch'])
             ->when($request->username, function ($query, $username) {
                 $query->where('username', 'like', "%{$username}%");
             })
@@ -75,10 +75,6 @@ class UserController extends Controller
             ];
         });
 
-        if ($categories->isEmpty()) {
-            abort(403, 'No tienes permiso para acceder a esta página. Debe existir al menos una categoria.');
-        }
-
         return Inertia::render('Users/index', [
             'users' => $users,
             'roles' => $roles,
@@ -112,11 +108,13 @@ class UserController extends Controller
                 }
             }
         
-            // Validar si 'phone' no es null antes de la consulta
-            if (!is_null($request->phone)) {
-                $existingUser = User::where('phone', $request->phone)->first();
+            if (!is_null($request->rutNumbers) && !is_null($request->rutDv)) {
+                $existingUser = User::where('rutNumbers', $request->rutNumbers)
+                    ->where('rutDv', $request->rutDv)
+                    ->first();
+                
                 if ($existingUser) {
-                    return response()->json(['message' => 'El Número de teléfono ya existe', 'error' => true], 400);
+                    return response()->json(['message' => 'El RUT ya esta en uso.', 'error' => true], 400);
                 }
             }
         } catch (\Throwable $th) {
@@ -131,6 +129,7 @@ class UserController extends Controller
             'phone' => 'nullable|string',
             'rutNumbers' => 'nullable',
             'rutDv' => 'nullable|string',
+            'code' => 'nullable',
             'birth_date' => 'nullable|date',
             'email' => 'nullable|email',
             'nationality' => 'nullable|string',
@@ -165,6 +164,7 @@ class UserController extends Controller
                 'phone' => $request->phone,
                 'rutNumbers' => $request->rutNumbers,
                 'rutDv' => $request->rutDv,
+                'code' =>  $this->generateUniqueCode(),
                 'birth_date' => $request->birth_date,
                 'email' => $request->email,
                 'nationality' => $request->nationality,
@@ -181,7 +181,6 @@ class UserController extends Controller
                 'company_id' => $company ? $company->id : null,
                 'category_bonus_id' => $request->category_bonus_id,
             ]);
-
             
             $user->assignRole($request->role);
 
@@ -218,6 +217,17 @@ class UserController extends Controller
     }
 
 
+    private function generateUniqueCode()
+{
+    do {
+        // Generar un número de 9 dígitos
+        $code = random_int(100000000, 999999999);
+    } while (User::where('code', $code)->exists());
+
+    return $code;
+}
+
+
     public function update(Request $request, User $user)
     {
         // Obtener el ID del rol del usuario autenticado
@@ -231,17 +241,6 @@ class UserController extends Controller
                 'error' => true,
                 'message' => 'No tienes permiso para editar usuarios con roles superiores o iguales.',
             ], 403);
-        }
-
-        try {
-            $existingUser = User::where('username', $request->username)
-                                ->where('id', '!=', $user->id)  // Aquí está la corrección
-                                ->first();
-            if ($existingUser) {
-                return response()->json(['message' => 'El nombre de usuario ya existe', 'error' => true], 400);
-            }
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error al verificar el nombre de usuario', 'error' => true], 500);
         }
 
         try {
@@ -264,14 +263,25 @@ class UserController extends Controller
                     return response()->json(['message' => 'El correo electrónico ya existe', 'error' => true], 400);
                 }
             }
-        
-            // Validar si 'phone' no es null antes de la consulta
-            if (!is_null($request->phone)) {
-                $existingUser = User::where('phone', $request->phone)
+
+            // Validar si 'email' no es null antes de la consulta
+            if (!is_null($request->code)) {
+                $existingUser = User::where('code', $request->code)
                 ->where('id', '!=', $user->id)
                 ->first();
                 if ($existingUser) {
-                    return response()->json(['message' => 'El Número de teléfono ya existe', 'error' => true], 400);
+                    return response()->json(['message' => 'El codigo de usuario ya existe', 'error' => true], 400);
+                }
+            }
+        
+            if (!is_null($request->rutNumbers) && !is_null($request->rutDv)) {
+                $existingUser = User::where('rutNumbers', $request->rutNumbers)
+                    ->where('rutDv', $request->rutDv)
+                    ->where('id', '!=', $user->id)
+                    ->first();
+                
+                if ($existingUser) {
+                    return response()->json(['message' => 'El RUT ya esta en uso.', 'error' => true], 400);
                 }
             }
         } catch (\Throwable $th) {
@@ -287,6 +297,7 @@ class UserController extends Controller
             'phone' => 'nullable|string',
             'rutNumbers' => 'nullable',
             'rutDv' => 'nullable|string',
+            'code' => 'nullable',
             'birth_date' => 'nullable|date',
             'email' => 'nullable|email',
             'nationality' => 'nullable|string',
@@ -316,6 +327,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'rutNumbers' => $request->rutNumbers,
             'rutDv' => $request->rutDv,
+            'code' => $request->code,
             'birth_date' => $request->birth_date,
             'email' => $request->email,
             'nationality' => $request->nationality,
@@ -333,12 +345,16 @@ class UserController extends Controller
         ]);
 
         $user->syncRoles([$validatedData['role']]);
+        
+        if ($request->has('branches')) {
+            $user->branches()->sync($request->branches);
+        }
 
-        return response()->json([
-            'error' => false,
-            'message' => 'Usuario actualizado exitosamente',
-        ]);
-    }
+            return response()->json([
+                'error' => false,
+                'message' => 'Usuario actualizado exitosamente',
+            ]);
+        }
 
     public function destroy(User $user)
     {

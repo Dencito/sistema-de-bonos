@@ -56,8 +56,12 @@ class LoginRequest extends FormRequest
             return;
         }
 
-        // Intentar autenticación con número de teléfono
-        if (Auth::attempt(['phone' => $login, 'password' => $password], $this->boolean('remember'))) {
+        // Obtén el último carácter como `rutDv` y el resto como `rutNumber`
+        $rutDv = strtolower(substr($login, -1));  // Último carácter
+        $rutNumber = substr($login, 0, -1);  // Resto del login
+
+        // Intenta autenticación con `rutNumber` y `rutDv`
+        if (Auth::attempt(['rutNumbers' => $rutNumber, 'rutDv' => $rutDv, 'password' => $password], $this->boolean('remember'))) {
             RateLimiter::clear($this->throttleKey());
             return;
         }

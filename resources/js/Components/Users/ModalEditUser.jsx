@@ -7,6 +7,7 @@ import { useMessage } from "@/Contexts/MessageShow";
 import { ModalForm } from "@/components-v2/ModalForm";
 import { CustomButton } from "@/components-v2/CustomButton";
 import { validate } from "rut.js";
+import moment from "moment";
 
 export default function ModalEditUser({ data, roles, branches, states, userType }) {
   const [showModal, setShowModal] = useState(false);
@@ -66,6 +67,13 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }
 
+
+  const validateAge = (dateString) => {
+    const selectedDate = moment(dateString, "YYYY-MM-DD");
+    const currentDate = moment();
+    const age = currentDate.diff(selectedDate, 'years');
+    return age >= 16;
+  };
 
   const prefixSelector = (
     <Form.Item name="prefix" rules={[{ required: true, message: getValidationRequiredMessage }]} noStyle>
@@ -338,9 +346,14 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
         <Form.Item
           name="birth_date"
           label="Fecha de Nacimiento"
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
+          rules={[
+            {
+              validator: (_, value) =>
+                validateAge(value) ? Promise.resolve() : Promise.reject("Debe ser mayor de 16 años")
+            }
+          ]}
         >
-          <Input type="date" placeholder="dd/mm/aaaa" />
+          <Input type="date" placeholder="dd/mm/aaaa" onChange={validateAge} />
         </Form.Item>
 
         <Form.Item
@@ -417,7 +430,7 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
             { required: true, message: getValidationRequiredMessage },
           ]}
         >
-          <Input name='childrens' onChange={onlyNumberInput} showCount maxLength={20} />
+          <Input name='childrens' onChange={onlyNumberInput} showCount maxLength={2} />
         </Form.Item>
         <Form.Item
           name="branch_id"
@@ -508,9 +521,6 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
             className="w-10/12"
             name="rutNumbers"
             label="Números del RUT"
-            rules={[
-              { required: true, message: getValidationRequiredMessage },
-            ]}
           >
             <Input name="rutNumbers" style={{ borderColor: errorRuts?.user && "#ff4d4f" }} onChange={validateRutNumbers} showCount maxLength={10} />
           </Form.Item>
@@ -520,9 +530,6 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           <Form.Item
             name="rutDv"
             label="Cod. Verificación"
-            rules={[
-              { required: true, message: 'El campo debe ser un código de verificación de un RUT' },
-            ]}
           >
             <Input style={{ borderColor: errorRuts.user && "#ff4d4f" }} onChange={validateRutNumbers} showCount maxLength={1} />
           </Form.Item>
@@ -534,11 +541,26 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           </span>
         }
         <Form.Item
+          name="code"
+          label="Codigo de usuario"
+        >
+          <Input
+            name="code"
+            onChange={onlyNumberInput}
+            showCount maxLength={10}
+          />
+        </Form.Item>
+        <Form.Item
           name="birth_date"
           label="Fecha de Nacimiento"
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
+          rules={[
+            {
+              validator: (_, value) =>
+                validateAge(value) ? Promise.resolve() : value === undefined ? Promise.resolve() : Promise.reject("Debe ser mayor de 16 años")
+            }
+          ]}
         >
-          <Input type="date" placeholder="dd/mm/aaaa" />
+          <Input type="date" placeholder="dd/mm/aaaa" onChange={validateAge} />
         </Form.Item>
 
         <Form.Item
@@ -568,13 +590,13 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           <Input placeholder="Ciudad, calle, numero y ETC." showCount maxLength={100} />
         </Form.Item>
         <Form.Item
-          name="branch_id"
-          label="Sucursal"
+          name="branches"
+          label="Sucursales"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
-          <Select placeholder="Seleccione la sucursal">
+          <Select mode="multiple" placeholder="Seleccione las sucursales">
             {branches?.map(branch => (
-              <Select.Option key={branch.id} value={branch.id}>{branch.name}</Select.Option>
+              <Select.Option key={branch.id} value={branch.id}>{branch?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

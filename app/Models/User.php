@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone',
         'rutNumbers',
         'rutDv',
+        'code',
         'birth_date',
         'email',
         'nationality',

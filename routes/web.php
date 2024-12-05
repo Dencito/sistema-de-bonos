@@ -15,6 +15,8 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\Company;
 use App\Models\CategoryBonus;
+use App\Mail\RequestMoreBranchesMail;
+use Illuminate\Support\Facades\Mail;
 
 Route::get('/', function () {
     return Inertia::render('Dashboard');
@@ -83,7 +85,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/branches/schedule/{shift_id}', [BranchController::class, 'addSchedule'])->name('branches.addSchedule');
     Route::delete('/branches/schedule/{id}', [BranchController::class, 'deleteSchedule'])->name('branches.deleteSchedule');
     Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
-
+    Route::post('/branches/request_more_branches', function(Request $request) {
+        $company = Company::first();
+        try {
+            Mail::to(env('MAIL_TO_SEND'))
+                ->send(new RequestMoreBranchesMail($company->name, $request->qty, auth()->user()->username));
+                return response()->json(['message' => 'Se envio correctamente la solicitud.']);
+        } catch (\Throwable $th) {
+            abort(403, 'Error al enviar la solicitud');
+        }
+    })->name('branches.request_more_branches');
+    
     //users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -115,6 +127,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');
 
 
 

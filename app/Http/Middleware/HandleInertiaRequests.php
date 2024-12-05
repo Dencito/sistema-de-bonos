@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
             return [
                 'id' => $company->id,
                 'name' => $company->name,
+                'max_branches' => $company->max_branches,
             ];
         });
 
@@ -120,7 +121,7 @@ class HandleInertiaRequests extends Middleware
             return [
                 ...parent::share($request),
                 'auth' => [
-                    
+                    'users' => $users->count(),
                 ],
             ];
         }
@@ -132,6 +133,7 @@ class HandleInertiaRequests extends Middleware
                 'role' => $user->getRoleNames()->first(),
                 'roles' => $roles = Role::where('id', '>', $userRoleId)->get(),
                 'companies' => $companies,
+                'create_more_branches' => $companies->first(),
                 'branch' => $user->branch_id ? Branch::with(['shifts', 'shifts.schedules', 'state'])
                     ->where('id', $user->branch_id)
                     ->firstOrFail(): null,

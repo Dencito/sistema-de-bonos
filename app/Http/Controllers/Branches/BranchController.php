@@ -118,7 +118,7 @@ class BranchController extends Controller
                 'branchAddressLocal' => $request->branchAddressLocal,
                 'branchAddressDeptOrHouse' => $request->branchAddressDeptOrHouse,
                 'company_id' => $request->company_id,
-                'state_id' => 3,
+                'state_id' => 1,
             ]);
     
             // Crear los turnos y horarios
@@ -151,7 +151,7 @@ class BranchController extends Controller
             }
     
             Mail::to(env('MAIL_TO_SEND'))
-            ->send(new BranchCreatedMail($branch, Company::find($branch->company_id)->name, auth()->user()->username));
+            ->send(new BranchCreatedMail($branch->name, Company::find($branch->company_id)->name, auth()->user()->username));
 
             return response()->json(['message' => 'Sucursal creada exitosamente'], 201);
         }

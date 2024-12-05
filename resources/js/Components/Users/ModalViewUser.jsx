@@ -351,7 +351,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           name="childrens"
           label="Hijos / Cargas"
         >
-          <Input name='childrens' showCount maxLength={20} />
+          <Input name='childrens' showCount maxLength={2} />
         </Form.Item>
         <Form.Item
           name="branch_id"
@@ -460,6 +460,15 @@ export default function ModalViewUser({data, states, roles, branches, userType})
             <Input showCount maxLength={1} />
           </Form.Item>
         </div>
+        <Form.Item
+          name="code"
+          label="Codigo de usuario"
+        >
+          <Input
+            name="code"
+            showCount maxLength={10}
+          />
+        </Form.Item>
         <Form.Item
           name="birth_date"
           label="Fecha de Nacimiento"

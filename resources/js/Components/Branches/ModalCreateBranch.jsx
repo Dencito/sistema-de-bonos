@@ -104,22 +104,6 @@ export default function ModalCreateBranch({ companies }) {
         );
       }
 
-      const findAvailableBonusScheduleUndefined =
-        values?.availableBonusDays?.some(
-          (availableBonusDay) =>
-            !availableBonusDay?.schedule ||
-            availableBonusDay?.schedule?.length === 0
-        );
-
-      if (
-        values?.availableBonusDays?.length === 0 ||
-        findAvailableBonusScheduleUndefined ||
-        values?.availableBonusDays === undefined
-      ) {
-        return errorMsg(
-          "La sucursal debe contar con al menos un horario para los bonos definido"
-        );
-      }
       setLoading(true);
       //Seleccionarlo directo en el back
       values.company_id = companies?.[0]?.id;

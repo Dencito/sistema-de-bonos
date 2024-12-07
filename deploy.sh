@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Change to the project directory (if necessary)
-cd /path/to/your/project
-
 # Perform git pull
 echo "Performing git pull..."
 git pull origin develop

@@ -1,21 +1,19 @@
 import { useState } from "react";
 import { Button, Form, Input, Modal } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
-import { useMessage } from "@/Contexts/MessageShow";
+import { useMessage } from "@contexts/MessageShow";
 
-export default function ModalCreateCategoryBono({ roles, states, branches, companies }) {
+export default function ModalCreateCategoryBono() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
-  const [selectCompany, setSelectCompany] = useState(null)
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
 
 
   const onCreate = async (values) => {
-    console.log('Received values of form: ', values);
     try {
       setLoading(true)
       const { data } = await axios.post(`/categories-bonus`, values);
@@ -34,7 +32,6 @@ export default function ModalCreateCategoryBono({ roles, states, branches, compa
 
   const handleCloseModal = () => {
     setLoading(false)
-    setSelectCompany(null)
     setShowModal(false)
   }
 

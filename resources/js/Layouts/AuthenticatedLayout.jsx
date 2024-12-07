@@ -1,18 +1,13 @@
-import { Layout, theme } from 'antd';
-import { Links } from '@/Components/Links';
+import { theme } from 'antd';
+import { Links } from '@components/Links';
 
-export default function Authenticated({ auth, user, role, notShow, header, children }) {
+export default function Authenticated({ auth, user, role, children }) {
     const {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
 
     const { roles } = auth
-
-    console.log(roles)
-
-
     const nameCompanySelect = window.localStorage.getItem('companySelect');
-
 
     return (
         <div className='flex h-screen'>

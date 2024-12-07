@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Table, Select } from 'antd';
+import { Table } from 'antd';
 
 import { parse, isAfter, isBefore, isValid } from 'date-fns';
 import moment from 'moment';
 
 const { Column } = Table;
-const { Option } = Select;
 
-export default function TotalAmountPage({ auth, total_bonuses, category_bonus, related_bonuses, total_amount, bonuses, categoryBonus }) {
+export default function TotalAmountPage({ auth, bonuses, categoryBonus }) {
     const [validBonuses, setValidBonuses] = useState([]);
     const [invalidBonuses, setInvalidBonuses] = useState([]);
 

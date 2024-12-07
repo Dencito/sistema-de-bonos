@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
-import { useMessage } from "@/Contexts/MessageShow";
+import { useMessage } from "@contexts/MessageShow";
 import { validate } from "rut.js";
 import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
 import moment from "moment";
 
-export default function ModalCreateUser({ userType, roles, states, branches, companies }) {
+export default function ModalCreateUser({ userType, branches }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm();
@@ -20,7 +20,6 @@ export default function ModalCreateUser({ userType, roles, states, branches, com
 
 
   const onCreate = async (values) => {
-    console.log('Received values of form: ', values);
     const { rutNumbers, rutDv } = form.getFieldsValue(['rutNumbers', 'rutDv']);
     if (values.rutNumbers) {
       values.rut = `${rutNumbers}-${rutDv}`
@@ -55,7 +54,6 @@ export default function ModalCreateUser({ userType, roles, states, branches, com
 
 
   const onlyNumberInput = (e) => {
-    console.log(e.target.name)
     const cleanedValue = e.target.value.replace(/\D/g, '');
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }
@@ -538,4 +536,4 @@ export default function ModalCreateUser({ userType, roles, states, branches, com
       </ModalForm>
     </>
   );
-}
+};

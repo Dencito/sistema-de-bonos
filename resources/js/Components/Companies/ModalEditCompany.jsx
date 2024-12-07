@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { validate } from 'rut.js';
-import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from '@inertiajs/react'
-import { useMessage } from "@/Contexts/MessageShow";
+import { useMessage } from "@contexts/MessageShow";
 import { EditOutlined } from '@ant-design/icons';
 
 export default function ModalEditCompany({ data }) {
   const [showModal, setShowModal] = useState(false);
   const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
   const [errorRuts, setErrorRuts] = useState({
@@ -24,7 +23,7 @@ export default function ModalEditCompany({ data }) {
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch("https://restfulcountries.com/api/v1/countries", {
+        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -36,7 +35,7 @@ export default function ModalEditCompany({ data }) {
     }
     const getRegion = async () => {
       if (country !== '' && showModal) {
-        const response = await fetch(`https://restfulcountries.com/api/v1/countries/${country}/states`, {
+        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -64,7 +63,6 @@ export default function ModalEditCompany({ data }) {
         return errorMsg(`Uno de los ruts es invalido`)
       }
       const { data: dataUpdate } = await axios.put(`/companies`, { id: data?.id, ...values });
-      console.log(dataUpdate)
       if (dataUpdate?.changes?.length === 0) {
         return errorMsg("Usted no modifico ningun dato.")
       }
@@ -126,7 +124,6 @@ export default function ModalEditCompany({ data }) {
 
   const handleCloseModal = () => {
     setCountry('')
-    setRegion('')
     setErrorRuts({
       company: false,
       legalRepresentative: false,

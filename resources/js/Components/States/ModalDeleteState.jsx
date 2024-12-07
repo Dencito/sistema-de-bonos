@@ -4,9 +4,8 @@ import { Button, Modal } from 'antd'
 import axios from 'axios';
 import React from 'react'
 
-const ModalDeleteState = ({ data }) => {
+export default function ModalDeleteState ({ data }) {
     const { successMsg, errorMsg } = useMessage();
-
 
     const handleDelete = async () => {
         try {
@@ -21,7 +20,6 @@ const ModalDeleteState = ({ data }) => {
         }
     };
     
-
     const showDeleteConfirm = () => {
         Modal.confirm({
             title: `¿Estás seguro de que quieres eliminar la empresa ${data.name}?`,
@@ -36,12 +34,9 @@ const ModalDeleteState = ({ data }) => {
     };
     return (
         <div>
-            
             <Button danger onClick={() => showDeleteConfirm()}>
                 Eliminar
             </Button>
         </div>
     )
-}
-
-export default ModalDeleteState
+};

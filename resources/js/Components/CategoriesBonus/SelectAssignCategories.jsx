@@ -1,21 +1,20 @@
-import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
 import { Button, Select } from 'antd';
 import React, { useState } from 'react'
+import { useMessage } from '@contexts/MessageShow';
 
 const { Option } = Select
 
 export const SelectAssignCategories = ({ setSelectedRowKeys, selectedRowKeys, categories }) => {
     const { successMsg, errorMsg } = useMessage();
     const [selectCategoryId, setSelectCategoryId] = useState(null)
+    
     const handleAssignCategories = async () => {
-        console.log({ users: selectedRowKeys, category_bonus_id: selectCategoryId })
         try {
             const { data } = await axios.post(`/categories-bonus/assign-multiple-users`, { users: selectedRowKeys, category_bonus_id: selectCategoryId });
             router.visit('/users', {
                 preserveState: false,
             });
-            console.log(data)
             data && successMsg(data?.message)
             setSelectCategoryId(null)
             setSelectedRowKeys([])

@@ -2,17 +2,15 @@ import { useEffect } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useMessage } from '@/Contexts/MessageShow';
+import { useMessage } from '@contexts/MessageShow';
 
-export default function Login({ status, canResetPassword, auth }) {
+export default function Login({ status, auth }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         login: '',
         password: '',
         remember: false,
     });
     const { successMsg, errorMsg } = useMessage();
-
-    console.log(auth)
 
     useEffect(() => {
         return () => {

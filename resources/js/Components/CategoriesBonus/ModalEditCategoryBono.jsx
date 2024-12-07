@@ -5,16 +5,14 @@ import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@/Contexts/MessageShow";
 
-export default function ModalEditCategoryBono({ data, roles, states }) {
+export default function ModalEditCategoryBono({ data }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const { successMsg, errorMsg } = useMessage();
 
   const [form] = Form.useForm();
 
-
   const onUpdate = async (values) => {
-    console.log('Received values of form: ', values);
     try {
       setLoading(true)
       const { data: dataUpdate } = await axios.put(`/categories-bonus/${data.id}`, values);

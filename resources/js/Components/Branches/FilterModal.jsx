@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 const { Option } = Select;
 
-const FilterModal = ({ filters, states }) => {
+export default function FilterModal ({ filters, states }) {
   const [showModal, setShowModal] = useState(false);
   const InitForm = {
     name: filters.name || '',
@@ -80,4 +80,3 @@ const FilterModal = ({ filters, states }) => {
   );
 };
 
-export default FilterModal;

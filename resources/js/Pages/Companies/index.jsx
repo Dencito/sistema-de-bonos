@@ -11,7 +11,7 @@ import FilterModal from '@/Components/Companies/FilterModal';
 const { Column } = Table;
 
 
-export default function CompanyPage({ auth, companies, states, filters, alert }) {
+export default function CompanyPage({ auth, companies, states, filters }) {
 
     return (
         <AuthenticatedLayout

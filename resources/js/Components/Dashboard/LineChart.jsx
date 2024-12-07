@@ -13,7 +13,7 @@ import {
     TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { filterByToday, filterByThisWeek, filterByThisMonth } from '@/Utils/filterDates'; // Asegúrate de tener estas funciones implementadas
+import { filterByToday, filterByThisWeek, filterByThisMonth } from '@/Utils/filterDates'; 
 
 const { Option } = Select;
 
@@ -28,7 +28,7 @@ ChartJS.register(
     TimeScale
 );
 
-function LineChart({ info }) {
+export default function LineChart({ info }) {
     const [filter, setFilter] = useState('today');
 
     const handleFilterChange = (value) => {
@@ -114,6 +114,4 @@ function LineChart({ info }) {
             <Line data={data} options={options} />
         </div>
     );
-}
-
-export default LineChart;
+};

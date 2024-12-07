@@ -21,10 +21,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
 
 
   const onUpdate = async (values) => {
-    console.log('Received values of form: ', values);
     try {
       setLoading(true)
-      console.log(data.id)
       const { data: dataUpdate } = await axios.put(`/users/${data.id}`, values);
       router.visit(window.location.href, {
         preserveState: false,
@@ -62,7 +60,6 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
   };
 
   const onlyNumberInput = (e) => {
-    console.log(e.target.name)
     const cleanedValue = e.target.value.replace(/\D/g, '');
     form.setFieldsValue({ [e.target.name]: cleanedValue });
   }

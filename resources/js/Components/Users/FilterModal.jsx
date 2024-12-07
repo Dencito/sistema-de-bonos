@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 const { Option } = Select;
 
-const FilterModal = ({ filters, states, roles }) => {
+export default function FilterModal ({ filters, states, roles }) {
   const [showModal, setShowModal] = useState(false);
   const InitForm = {
     username: filters.username || '',
@@ -96,5 +96,3 @@ const FilterModal = ({ filters, states, roles }) => {
     </>
   );
 };
-
-export default FilterModal;

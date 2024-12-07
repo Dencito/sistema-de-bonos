@@ -5,8 +5,9 @@ import axios from 'axios';
 import React from 'react'
 import { DeleteOutlined } from '@ant-design/icons';
 
-const ModalDeleteCategoryBono = ({ data }) => {
+export default function ModalDeleteCategoryBono ({ data }) {
     const { successMsg, errorMsg } = useMessage();
+  
     const handleDelete = async () => {
         try {
             const { data: dataDelete } = await axios.delete(`/categories-bonus/${data?.id}`,);
@@ -37,6 +38,4 @@ const ModalDeleteCategoryBono = ({ data }) => {
             <Button danger onClick={() => showDeleteConfirm()} icon={<DeleteOutlined />} />
         </div>
     )
-}
-
-export default ModalDeleteCategoryBono
+};

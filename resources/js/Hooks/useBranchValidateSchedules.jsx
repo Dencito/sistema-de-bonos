@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const useBranchValidateSchedules = (shifts) => {
+export default function useBranchValidateSchedules (shifts) {
   const [canLogin, setCanLogin] = useState(false);
 
   const dayOfWeekToNumber = {
@@ -41,14 +41,12 @@ const useBranchValidateSchedules = (shifts) => {
     for (const shift of shifts) {
       const dayInit = dayOfWeekToNumber[shift?.day_init];
       const dayEnd = dayOfWeekToNumber[shift?.day_end];
-      console.log(dayInit, dayEnd);
 
       // Verificar si el día actual está dentro del rango de días
       if (
         (dayInit <= currentDay && currentDay <= dayEnd) ||
         (dayEnd < dayInit && (currentDay >= dayInit || currentDay <= dayEnd)) // Días que cruzan de una semana a otra
       ) {
-        console.log('schedules' ,shift.schedules)
         // Verificar los horarios dentro del día
         for (const schedule of shift?.schedules) {
           if (isTimeInRange(currentTime, schedule?.start, schedule?.end)) {
@@ -73,5 +71,3 @@ const useBranchValidateSchedules = (shifts) => {
 
   return canLogin;
 };
-
-export default useBranchValidateSchedules;

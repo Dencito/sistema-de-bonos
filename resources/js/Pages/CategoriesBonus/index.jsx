@@ -9,7 +9,7 @@ import { Head } from '@inertiajs/react';
 import { Table } from 'antd';
 const { Column } = Table;
 
-export default function CategoryBonusPage({ auth, categoriesBonus, filters, alert }) {
+export default function CategoryBonusPage({ auth, categoriesBonus }) {
     const role = auth.role
     
     return (

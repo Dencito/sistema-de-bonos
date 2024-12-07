@@ -474,10 +474,6 @@ export default function UserPage({
             },
         ]
     };
-    console.log(users?.map((user) => ({
-        ...user,
-        key: user?.id,
-    })))
 
     return (
         <AuthenticatedLayout

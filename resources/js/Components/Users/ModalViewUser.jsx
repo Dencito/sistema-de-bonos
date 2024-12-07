@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, Form, Input, Modal, Select } from "antd";
+import { Form, Input, Select } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { CustomButton } from "@/components-v2/CustomButton";
 import { ModalForm } from "@/components-v2/ModalForm";
 
@@ -560,4 +560,4 @@ export default function ModalViewUser({data, states, roles, branches, userType})
       </ModalForm>
     </>
   );
-}
+};

@@ -6,7 +6,7 @@ import { Head } from '@inertiajs/react';
 import { Table } from 'antd';
 const { Column } = Table;
 
-export default function StatePage({ auth, states, alert }) {
+export default function StatePage({ auth, states }) {
     
     return (
         <AuthenticatedLayout

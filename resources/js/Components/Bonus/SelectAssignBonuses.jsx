@@ -1,7 +1,7 @@
-import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
 import { Button, Select } from 'antd';
 import React, { useState } from 'react'
+import { useMessage } from '@contexts/MessageShow';
 
 const { Option } = Select
 
@@ -64,4 +64,4 @@ export const SelectAssignBonuses = ({ setSelectedRowKeys, selectedRowKeys, bonus
                 </div>}
         </>
     )
-}
+};

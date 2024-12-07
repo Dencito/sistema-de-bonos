@@ -14,17 +14,16 @@ import {
   CloseOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { days } from "./days";
 import { router } from "@inertiajs/react";
-import { useMessage } from "@/Contexts/MessageShow";
+import { useMessage } from "@contexts/MessageShow";
 
 export default function ModalCreateBranch({ companies }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedDays, setSelectedDays] = useState([]);
   const [loading, setLoading] = useState(false);
   const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
   const [countries, setCountries] = useState();
   const [regions, setRegions] = useState();
 
@@ -34,7 +33,7 @@ export default function ModalCreateBranch({ companies }) {
     const getCountries = async () => {
       if (showModal) {
         const response = await fetch(
-          "https://restfulcountries.com/api/v1/countries",
+          `${impor.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`,
           {
             method: "GET",
             headers: {
@@ -50,7 +49,7 @@ export default function ModalCreateBranch({ companies }) {
     const getRegion = async () => {
       if (country !== "" && showModal) {
         const response = await fetch(
-          `https://restfulcountries.com/api/v1/countries/${country}/states`,
+          `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`,
           {
             method: "GET",
             headers: {
@@ -88,7 +87,6 @@ export default function ModalCreateBranch({ companies }) {
   };
 
   const onCreate = async (values) => {
-    console.log("Received values of form: ", values);
     try {
       const findScheduleUndefined = values?.shifts?.some(
         (shift) => !shift?.schedule || shift?.schedule?.length === 0
@@ -125,7 +123,6 @@ export default function ModalCreateBranch({ companies }) {
 
   const handleCloseModal = () => {
     setCountry("");
-    setRegion("");
     setSelectedDays([]);
     setLoading(false);
     setShowModal(false);
@@ -789,16 +786,6 @@ export default function ModalCreateBranch({ companies }) {
             </div>
           )}
         </Form.List>
-
-        {/* <Form.Item noStyle shouldUpdate>
-          {() => (
-            <Typography>
-              <pre>
-                {JSON.stringify(form.getFieldsValue(), null, 2)}
-              </pre>
-            </Typography>
-          )}
-        </Form.Item> */}
       </Modal>
     </>
   );

@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
 import { Button, Divider, Form, Input, Modal, Select, Space, Card, Tag } from "antd";
 import { CloseOutlined, EditOutlined } from "@ant-design/icons";
-import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import axios from "axios";
 import { days } from "./days";
-import { useMessage } from "@/Contexts/MessageShow";
+import { getValidationRequiredMessage } from "@utils/messagesValidationes";
+import { useMessage } from "@contexts/MessageShow";
 
-export default function ModalEditBranch({ data, states, companies }) {
+export default function ModalEditBranch({ data, states }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const [isEditable, setIsEditable] = useState(false);
   const [isEditableAvailableBonusDays, setIsEditableAvailableBonusDays] = useState(false);
   const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
   const [selectedDays, setSelectedDays] = useState(data?.available_bonus_days?.map((bonusDays) => bonusDays?.day));
@@ -29,7 +28,7 @@ export default function ModalEditBranch({ data, states, companies }) {
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch("https://restfulcountries.com/api/v1/countries", {
+        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -41,7 +40,7 @@ export default function ModalEditBranch({ data, states, companies }) {
     }
     const getRegion = async () => {
       if (country !== '' && showModal) {
-        const response = await fetch(`https://restfulcountries.com/api/v1/countries/${country}/states`, {
+        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -53,17 +52,13 @@ export default function ModalEditBranch({ data, states, companies }) {
     }
     getCountries()
     getRegion()
-
-
   }, [showModal, country])
 
 
   const onEdit = async (values) => {
-    console.log('Received values of form: ', values);
     try {
       setLoading(true)
       const { data: dataUpdate } = await axios.put(`/branches`, { id: data?.id, ...values });
-      console.log(dataUpdate)
       if (dataUpdate?.changes?.length === 0) {
         setLoading(false)
         return errorMsg("Usted no modifico ningun dato.")
@@ -79,20 +74,15 @@ export default function ModalEditBranch({ data, states, companies }) {
       setLoading(false)
       return errorMsg(dataError?.message)
     }
-    /* 
-    setFormValues(values); */
-
   };
 
   const deleteShift = async (shiftIndex, remove) => {
     const shift = form.getFieldValue(['shifts', shiftIndex]);
-    console.log(shift)
     if (!shift?.id) {
       return remove(shiftIndex)
     }
     try {
       const { data: dataUpdate } = await axios.delete(`/branches/shifts/${shift?.id}`);
-      console.log(dataUpdate)
       router.visit('/branches', {
         preserveState: true,
       });
@@ -128,7 +118,6 @@ export default function ModalEditBranch({ data, states, companies }) {
         branch_id: data?.id,
         shifts: form.getFieldValue('shifts'),
       });
-      console.log("shifst update", form.getFieldValue('shifts'))
       router.visit('/branches', {
         preserveState: true,
       });
@@ -163,13 +152,11 @@ export default function ModalEditBranch({ data, states, companies }) {
         branch_id: data?.id,
         available_bonus_days: form.getFieldValue('available_bonus_days'),
       });
-      console.log("shifst update", form.getFieldValue('shifts'))
       router.visit('/branches', {
         preserveState: true,
       });
       dataUpdate && successMsg(dataUpdate?.message);
     } catch (error) {
-      console.log(error)
       const { response: { data: dataError } } = error;
       return errorMsg(dataError?.message);
     }
@@ -179,13 +166,11 @@ export default function ModalEditBranch({ data, states, companies }) {
 
   const deleteShiftAvailableBonus = async (shiftIndex, remove) => {
     const shift = form.getFieldValue(['available_bonus_days', shiftIndex]);
-    console.log(shift)
     if (!shift?.id) {
       return remove(shiftIndex)
     }
     try {
       const { data: dataUpdate } = await axios.delete(`/branches/shifts-available-bonus-days/${shift?.id}`);
-      console.log(dataUpdate)
       router.visit('/branches', {
         preserveState: true,
       });
@@ -204,7 +189,6 @@ export default function ModalEditBranch({ data, states, companies }) {
 
   const handleCloseModal = () => {
     setCountry('')
-    setRegion('')
     setIsEditable(false)
     setIsEditableAvailableBonusDays(false)
     setSelectedDays(data?.available_bonus_days?.map((bonusDays) => bonusDays?.day))
@@ -238,18 +222,14 @@ export default function ModalEditBranch({ data, states, companies }) {
           schedules: [{ start: null, end: null }] // Inicializamos con valores por defecto
         }
       ];
-
       form.setFieldValue("available_bonus_days", updatedBonusDays);
     }
-
-    console.log(form.getFieldsValue()?.available_bonus_days);
   };
 
 
 
   return (
     <>
-
       <Button onClick={handleOpenModal} icon={<EditOutlined />} />
       <Modal
         style={{ top: 20 }}
@@ -460,7 +440,6 @@ export default function ModalEditBranch({ data, states, companies }) {
                       isEditable && (
                         <CloseOutlined
                           onClick={() => {
-                            console.log(form.getFieldValue('shifts').length <= 1)
                             if (form.getFieldValue('shifts').length <= 1) {
                               errorMsg("La sucursal debe tener al menos un turno.")
                             } else {
@@ -778,7 +757,6 @@ export default function ModalEditBranch({ data, states, companies }) {
                       isEditableAvailableBonusDays && (
                         <CloseOutlined
                           onClick={() => {
-                            console.log(form.getFieldValue('available_bonus_days').length <= 1)
                             if (form.getFieldValue('available_bonus_days').length <= 1) {
                               errorMsg("La sucursal debe tener al menos un turno.")
                             } else {
@@ -939,15 +917,7 @@ export default function ModalEditBranch({ data, states, companies }) {
             </Button>
           )}
         </Card>
-
-        {/* <Form.Item noStyle shouldUpdate>
-          {() => (
-            <Typography>
-              <pre>{JSON.stringify(data?.available_bonus_days, null, 2)}</pre>
-            </Typography>
-          )}
-        </Form.Item> */}
       </Modal>
     </>
   );
-}
+};

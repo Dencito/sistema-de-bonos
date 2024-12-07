@@ -1,5 +1,3 @@
-// Utils/filterDates.js
-
 export function filterByToday(data) {
     const today = new Date().setHours(0, 0, 0, 0);
     return data.filter(item => {

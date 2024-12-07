@@ -18,7 +18,11 @@ export default defineConfig({
         alias: {
             "@pages": path.resolve(
                 __dirname,
-                "resources/js/pages/"
+                "resources/js/Pages/"
+            ),
+            "@components": path.resolve(
+                __dirname,
+                "resources/js/Components/"
             ),
             "@components-v2": path.resolve(
                 __dirname,
@@ -26,19 +30,19 @@ export default defineConfig({
             ),
             "@hooks": path.resolve(
                 __dirname,
-                "resources/js/hooks/"
+                "resources/js/Hooks/"
             ),
             "@utils": path.resolve(
                 __dirname,
-                "resources/js/utils/"
+                "resources/js/Utils/"
             ),
             "@layouts": path.resolve(
                 __dirname,
-                "resources/js/layouts/"
+                "resources/js/Layouts/"
             ),
             "@contexts": path.resolve(
                 __dirname,
-                "resources/js/contexts/"
+                "resources/js/Contexts/"
             ),
         },
     },

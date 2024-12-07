@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { message } from 'antd';
 
-// Crear el contexto
 const MessageContext = createContext();
 
-// Proveedor del contexto
 export const MessageProvider = ({ children }) => {
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -38,7 +36,7 @@ export const MessageProvider = ({ children }) => {
   );
 };
 
-// Hook para utilizar los mensajes en cualquier parte de la app
 export const useMessage = () => {
   return useContext(MessageContext);
 };
+0

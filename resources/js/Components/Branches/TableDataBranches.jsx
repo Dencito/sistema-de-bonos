@@ -8,10 +8,9 @@ import moment from 'moment';
 import FilterModal from './FilterModal';
 import ModalRequestMoreBranches from './ModalRequestMoreBranches';
 
-const { Column, ColumnGroup, } = Table;
+const { Column } = Table;
 
 export const TableDataBranches = ({ auth, branches, states, companies, filters }) => {
-    console.log(auth?.create_more_branches?.max_branches)
     return (
         <div className="bg-white shadow-sm sm:rounded-lg">
             <div className="text-gray-900 my-3">
@@ -49,4 +48,4 @@ export const TableDataBranches = ({ auth, branches, states, companies, filters }
             </Table>
         </div>
     )
-}
+};

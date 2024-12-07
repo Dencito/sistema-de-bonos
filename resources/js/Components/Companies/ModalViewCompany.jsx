@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Divider, Form, Input, message, Modal, Select } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { validate } from 'rut.js';
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 
 export default function ModalViewCompany({ data }) {
   const [showModal, setShowModal] = useState(false);
@@ -10,34 +10,12 @@ export default function ModalViewCompany({ data }) {
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
   const [form] = Form.useForm();
-  const [formValues, setFormValues] = useState();
   const [messageApi, contextHolder] = message.useMessage();
-  const successMsg = () => {
-    messageApi.open({
-      type: 'success',
-      content: 'Empresa editada exitosamente.',
-      style: {
-        fontSize: '18px',
-        marginLeft: 'auto'
-      },
-    });
-  };
-
-  const errorMsg = (content) => {
-    messageApi.open({
-      type: 'error',
-      content,
-      style: {
-        fontSize: '18px',
-        marginLeft: 'auto'
-      },
-    });
-  };
-
+  
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch("https://restfulcountries.com/api/v1/countries", {
+        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -47,6 +25,7 @@ export default function ModalViewCompany({ data }) {
         setCountries(data?.data)
       }
     }
+  
     const getRegion = async () => {
       if (country !== '' && showModal) {
         const response = await fetch(`https://restfulcountries.com/api/v1/countries/${country}/states`, {

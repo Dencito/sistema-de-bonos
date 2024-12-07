@@ -1,13 +1,12 @@
-import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
 import { Button, Modal } from 'antd'
 import axios from 'axios';
 import React from 'react'
 import { DeleteOutlined } from '@ant-design/icons';
+import { useMessage } from '@contexts/MessageShow';
 
-const ModalDeleteBranch = ({ data }) => {
+export default function ModalDeleteBranch ({ data }) {
     const { successMsg, errorMsg } = useMessage();
-
 
     const handleDelete = async () => {
         try {
@@ -39,6 +38,4 @@ const ModalDeleteBranch = ({ data }) => {
             <Button danger onClick={() => showDeleteConfirm()} icon={<DeleteOutlined />} />
         </div>
     )
-}
-
-export default ModalDeleteBranch
+};

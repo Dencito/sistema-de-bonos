@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Divider, Dropdown, Form, List, Modal, Space } from "antd";
+import { Button, Dropdown, Form, List, Modal, Space } from "antd";
 
 export default function ModalViewBranchStates({ data, state }) {
   const [showModal, setShowModal] = useState(false);
@@ -84,14 +84,7 @@ export default function ModalViewBranchStates({ data, state }) {
             </div>
           </List.Item>}
         />
-        {/* <Form.Item noStyle shouldUpdate>
-          {() => (
-            <Typography>
-              <pre>{JSON.stringify(data.users, null, 2)}</pre>
-            </Typography>
-          )}
-        </Form.Item> */}
       </Modal>
     </>
   );
-}
+};

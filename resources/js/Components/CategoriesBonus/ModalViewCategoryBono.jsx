@@ -2,40 +2,14 @@ import { useState } from "react";
 import { Button, Form, Input, message, Modal } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
-import { router } from "@inertiajs/react";
 
-export default function ModalViewCategoryBono({data, states, roles}) {
+export default function ModalViewCategoryBono({data }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
-  const [showAlerts, setShowAlerts] = useState({
-    success: { state: false, message: "" },
-    error: { state: false, message: "" },
-  });
 
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
-  const successMsg = () => {
-    messageApi.open({
-      type: 'success',
-      content: 'usuario creada exitosamente.',
-      style: {
-        fontSize: '18px',
-        marginLeft: 'auto'
-      },
-    });
-  };
-
-  const errorMsg = (content) => {
-    messageApi.open({
-      type: 'error',
-      content,
-      style: {
-        fontSize: '18px',
-        marginLeft: 'auto'
-      },
-    });
-  };
-
+  
   const handleCloseModal = () => {
     setLoading(false)
     setShowModal(false)

@@ -1,58 +1,28 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select, Space,  Card,Tag } from "antd";
+import { Button, Divider, Form, Input, Modal, Select, Space,  Card,Tag } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
-import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { days } from "./days";
 
 export default function ModalViewBranch({ data, states, companies }) {
-  console.log(data, data?.available_bonus_days?.map((bonusDays) => bonusDays?.day))
   const [showModal, setShowModal] = useState(false);
   const [selectedDays, setSelectedDays] = useState(data?.available_bonus_days?.map((bonusDays) => bonusDays.day));
-  const [errors, setErrors] = useState([]);
   const [errorsNameRut, setErrorsNameRut] = useState({
     nombre: false,
     rut: false
   });
-  const [showAlerts, setShowAlerts] = useState({
-    success: { state: false, message: "" },
-    error: { state: false, message: "" },
-  });
   const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
 
   const [form] = Form.useForm();
   //change later
   form?.setFieldsValue(data)
-  const [formValues, setFormValues] = useState();
-  const [messageApi, contextHolder] = message.useMessage();
-  const successMsg = () => {
-    messageApi.open({
-      type: 'success',
-      content: 'Sucursal editada exitosamente.',
-      style: {
-        fontSize: '18px',
-        marginLeft: 'auto'
-      },
-    });
-  };
-
-  const errorMsg = () => {
-    messageApi.open({
-      type: 'error',
-      content: 'Ocurrio un error al editar la sucursal, revise los campos.',
-      style: {
-        fontSize: '18px',
-        marginLeft: 'auto'
-      },
-    });
-  };
 
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch("https://restfulcountries.com/api/v1/countries", {
+        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -80,8 +50,6 @@ export default function ModalViewBranch({ data, states, companies }) {
 
   const handleCloseModal = () => {
     setCountry('')
-    setRegion('')
-    setErrors([])
     setErrorsNameRut({
       nombre: false,
       rut: false
@@ -381,15 +349,7 @@ export default function ModalViewBranch({ data, states, companies }) {
               ))}
             </div>
           )}
-        </Form.List>
-
-        {/* <Form.Item noStyle shouldUpdate>
-          {() => (
-            <Typography>
-              <pre>{JSON.stringify(form.getFieldsValue(), null, 2)}</pre>
-            </Typography>
-          )}
-        </Form.Item> */}
+        </Form.List> 
       </Modal>
     </>
   );

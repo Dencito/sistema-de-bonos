@@ -4,9 +4,8 @@ import QRious from "qrious";
 import moment from "moment";
 import { Button } from "antd";
 
-const PdfGenerator = ({ user }) => {
+export default function PdfGenerator ({ user }) {
   const [qrData, setQrData] = useState("Juanito Perez");
-  // Datos que deseas mostrar
   const nombre = user?.username || user?.first_name;
   const local = user?.branch?.name || 'Sin sucursal';
   const fecha = moment().format('DD-MM-YYYY HH:mm:ss');
@@ -16,32 +15,23 @@ const PdfGenerator = ({ user }) => {
   const generatePDF = () => {
     const doc = new jsPDF('p', 'pt', [200, 300] );
 
-
-    // Configuración del texto
     doc.setFontSize(30);
-    doc.text(nombre, 10, 30); // Nombre
-
+    doc.text(nombre, 10, 30); 
     doc.setFontSize(14);
-    doc.text(`Local: ${local}`, 10, 50); // Local
-    doc.text(`Fecha: ${fecha}`, 10, 65); // Fecha
-    doc.text(`Categoría: ${categoria?.name}`, 10, 80); // Categoría
-    doc.text(`Monto categoria: ${categoria?.base_amount}`, 10, 95); // Monto
-    doc.text(`Bonos: ${bonos}`, 10, 110); // Bonos
-    doc.text(`Monto de Bonos: ${montoBonos}`, 10, 125); // Monto de Bonos
+    doc.text(`Local: ${local}`, 10, 50); 
+    doc.text(`Fecha: ${fecha}`, 10, 65); 
+    doc.text(`Categoría: ${categoria?.name}`, 10, 80);
+    doc.text(`Monto categoria: ${categoria?.base_amount}`, 10, 95); 
+    doc.text(`Bonos: ${bonos}`, 10, 110);
+    doc.text(`Monto de Bonos: ${montoBonos}`, 10, 125);
 
-    // Generación del código QR
     const qr = new QRious({
-      //value: `${nombre}, ${local}, ${fecha}`,
       value: 'https://rentamania.cl',
       size: 200,
     });
 
     const qrImg = qr.toDataURL();
-
-    // Insertar el QR en el PDF
     doc.addImage(qrImg, "PNG", 10, 150, 120, 120);
-
-    // Descargar el PDF
     doc.save("receipt.pdf");
   };
 
@@ -64,8 +54,8 @@ const PdfGenerator = ({ user }) => {
         style={{
           padding: "20px",
           fontFamily: "Arial, sans-serif",
-          width: "300px", // Ajuste del ancho
-          height: "auto", // Altura automática
+          width: "300px",
+          height: "auto", 
         }}
       >
 
@@ -91,5 +81,3 @@ const PdfGenerator = ({ user }) => {
     </div>
   );
 };
-
-export default PdfGenerator;

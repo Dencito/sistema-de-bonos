@@ -1,12 +1,11 @@
-import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
 import { Button, Modal } from 'antd'
 import axios from 'axios';
 import React from 'react'
+import { useMessage } from '@contexts/MessageShow';
 
-const ModalChangeCompany = ({ data }) => {
+export default function ModalChangeCompany ({ data }) {
     const { successMsg, errorMsg } = useMessage();
-
 
     const handleDelete = async () => {
         try {
@@ -21,7 +20,6 @@ const ModalChangeCompany = ({ data }) => {
         }
     };
     
-
     const showDeleteConfirm = () => {
         Modal.confirm({
             title: `¿Estás seguro de que deseas cambiar a la empresa ${data.name}?`,
@@ -35,13 +33,10 @@ const ModalChangeCompany = ({ data }) => {
         });
     };
     return (
-        <div>
-            
+        <div>          
             <Button danger onClick={() => showDeleteConfirm()}>
                 Cambiar
             </Button>
         </div>
     )
-}
-
-export default ModalChangeCompany
+};

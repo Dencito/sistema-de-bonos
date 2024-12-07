@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { validate } from 'rut.js';
-import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router  } from '@inertiajs/react'
-import { useMessage } from "@/Contexts/MessageShow";
+import { useMessage } from "@contexts/MessageShow";
 
 export default function ModalCreateRole() {
     const [showModal, setShowModal] = useState(false);
     const [country, setCountry] = useState("");
-    const [region, setRegion] = useState("");
     const [countries, setCountries] = useState()
     const [regions, setRegions] = useState()
 
@@ -19,7 +18,7 @@ export default function ModalCreateRole() {
     useEffect(() => {
         const getCountries = async () => {
             if (showModal) {
-                const response = await fetch("https://restfulcountries.com/api/v1/countries", {
+                const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -31,7 +30,7 @@ export default function ModalCreateRole() {
         }
         const getRegion = async () => {
             if (country !== '' && showModal) {
-                const response = await fetch(`https://restfulcountries.com/api/v1/countries/${country}/states`, {
+                const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`, {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
@@ -43,12 +42,9 @@ export default function ModalCreateRole() {
         }
         getCountries()
         getRegion()
-
-
     }, [showModal, country])
 
     const onCreate = async (values) => {
-        console.log('Received values of form: ', values);
         try {
             const { data } = await axios.post(`/companies`, values);
             router.visit('/companies', {
@@ -111,7 +107,6 @@ export default function ModalCreateRole() {
 
     const handleCloseModal = () => {
         setCountry('')
-        setRegion('')
         setShowModal(false)
     }
 

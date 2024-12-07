@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Form, Input, Select, DatePicker } from "antd";
-import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
-import { useMessage } from "@/Contexts/MessageShow";
+import { useMessage } from "@contexts/MessageShow";
 import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
 
@@ -21,7 +21,6 @@ export default function ModalCreateBonus() {
     const { successMsg, errorMsg } = useMessage();
 
     const onCreate = async (values) => {
-        console.log("Received values of form: ", values);
         try {
             const startDataTime = form
                 .getFieldValue("start_datetime")

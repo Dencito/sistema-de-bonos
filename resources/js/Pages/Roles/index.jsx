@@ -6,7 +6,7 @@ import { Head } from '@inertiajs/react';
 import { Table } from 'antd';
 const { Column } = Table;
 
-export default function RolePage({ auth, roles, alert }) {
+export default function RolePage({ auth, roles }) {
     const canLogin = useBranchValidateSchedules(auth?.branch?.shifts);
 
     if (!canLogin && (auth?.role !== "Dueño" && auth?.role !== "Super Admin" && auth?.role !== "Admin")) {

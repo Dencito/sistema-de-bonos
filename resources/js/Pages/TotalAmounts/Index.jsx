@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AuthenticatedLayout from '@layouts/AuthenticatedLayout';
 import { Table } from 'antd';
 
 import { parse, isAfter, isBefore, isValid } from 'date-fns';
-import moment from 'moment';
+import { formatDateTime, getCurrentDateTime } from '@utils/date';
 
 const { Column } = Table;
 
@@ -80,7 +80,7 @@ export default function TotalAmountPage({ auth, bonuses, categoryBonus }) {
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Panel</h2>}
         >
             <Head title="Montos totales" />
-            <h1 className='text-3xl font-bold'>Fecha y hora actual: {moment(now).format('DD-MM-YYYY HH:mm:ss')}</h1>
+            <h1 className='text-3xl font-bold'>Fecha y hora actual: {getCurrentDateTime()}</h1>
             <div>
                 <h3 className='text-2xl font-bold text-green-500'>Bonos Válidos</h3>
                 <Table dataSource={validBonuses} rowKey="id">
@@ -89,12 +89,12 @@ export default function TotalAmountPage({ auth, bonuses, categoryBonus }) {
                     <Column title="Fecha de Inicio"
                         render={(_, bono) => (
                             <div className='flex flex-wrap gap-3'>
-                                <p>{moment(bono.start_datetime).format('DD-MM-YYYY HH:mm:ss')}</p>
+                                <p>{formatDateTime(bono.start_datetime)}</p>
                             </div>
                         )} key="start_datetime" />
                     <Column title="Fecha de Fin" render={(_, bono) => (
                         <div className='flex flex-wrap gap-3'>
-                            <p>{bono?.end_datetime ? moment(bono.end_datetime).format('DD-MM-YYYY HH:mm:ss'): ''}</p>
+                            <p>{bono?.end_datetime ? formatDateTime(bono?.end_datetime): ''}</p>
                         </div>
                     )} key="end_datetime" />
                 </Table>
@@ -112,12 +112,12 @@ export default function TotalAmountPage({ auth, bonuses, categoryBonus }) {
                     <Column title="Fecha de Inicio"
                         render={(_, bono) => (
                             <div className='flex flex-wrap gap-3'>
-                                <p>{moment(bono?.start_datetime).format('DD-MM-YYYY HH:mm:ss')}</p>
+                                <p>{formatDateTime(bono?.start_datetime)}</p>
                             </div>
                         )} key="start_datetime" />
                     <Column title="Fecha de Fin" render={(_, bono) => (
                         <div className='flex flex-wrap gap-3'>
-                            <p>{bono?.end_datetime ? moment(bono?.end_datetime).format('DD-MM-YYYY HH:mm:ss'): ''}</p>
+                            <p>{bono?.end_datetime ? formatDateTime(bono?.end_datetime): ''}</p>
                         </div>
                     )} key="end_datetime" />
                 </Table>

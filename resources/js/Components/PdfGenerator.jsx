@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 import QRious from "qrious";
-import moment from "moment";
+import { getCurrentDateTime } from '@utils/date'; 
 import { Button } from "antd";
 
 export default function PdfGenerator ({ user }) {
   const [qrData, setQrData] = useState("Juanito Perez");
   const nombre = user?.username || user?.first_name;
   const local = user?.branch?.name || 'Sin sucursal';
-  const fecha = moment().format('DD-MM-YYYY HH:mm:ss');
+  const fecha = getCurrentDateTime();
   const categoria = user?.category_bonus || 'Sin Categoria';
   const bonos = "BonoAmigo";
   const montoBonos = 2000;

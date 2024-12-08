@@ -6,9 +6,9 @@ import { useMessage } from "@contexts/MessageShow";
 
 export default function ModalRequestMoreBranches() {
     const [showModal, setShowModal] = useState(false);
-    const [selectedDays, setSelectedDays] = useState([]);
     const [loading, setLoading] = useState(false);
     const [country, setCountry] = useState("");
+    const [countries, setCountries] = useState();
 
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
@@ -51,26 +51,6 @@ export default function ModalRequestMoreBranches() {
         getRegion();
     }, [showModal, country]);
 
-    const handleDaySelection = (day) => {
-        // Si el día ya está seleccionado, lo eliminamos
-        if (selectedDays.includes(day)) {
-            setSelectedDays(selectedDays.filter((d) => d !== day));
-            form.setFieldValue(
-                "availableBonusDays",
-                form
-                    .getFieldValue("availableBonusDays")
-                    ?.filter((shift) => shift?.day !== day)
-            );
-        } else {
-            // Si no está seleccionado, lo añadimos
-            setSelectedDays([...selectedDays, day]);
-            form.setFieldValue("availableBonusDays", [
-                ...(form.getFieldValue("availableBonusDays") || []),
-                { day, schedule: [null] },
-            ]);
-        }
-    };
-
     const onCreate = async (values) => {
         try {
             setLoading(true);
@@ -95,7 +75,6 @@ export default function ModalRequestMoreBranches() {
 
     const handleCloseModal = () => {
         setCountry("");
-        setSelectedDays([]);
         setLoading(false);
         setShowModal(false);
     };

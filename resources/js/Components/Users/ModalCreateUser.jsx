@@ -7,7 +7,7 @@ import { useMessage } from "@contexts/MessageShow";
 import { validate } from "rut.js";
 import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
-import moment from "moment";
+import { formatDate } from '@utils/date';  
 
 export default function ModalCreateUser({ userType, branches }) {
   const [showModal, setShowModal] = useState(false);
@@ -72,8 +72,8 @@ export default function ModalCreateUser({ userType, branches }) {
   };
 
   const validateAge = (dateString) => {
-    const selectedDate = moment(dateString, "YYYY-MM-DD");
-    const currentDate = moment();
+    const selectedDate = formatDate(dateString, "YYYY-MM-DD");
+    const currentDate = formatDate(new Date(), "YYYY-MM-DD");
     const age = currentDate.diff(selectedDate, 'years');
     return age >= 16;
   };

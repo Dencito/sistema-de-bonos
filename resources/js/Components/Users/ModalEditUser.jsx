@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Button, Form, Input, Modal, Select } from "antd";
+import { Form, Input, Select } from "antd";
 import { EditOutlined } from "@ant-design/icons";
-import { getValidationEmailMessage, getValidationRequiredMessage } from "../../Utils/messagesValidationes";
+import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
-import { useMessage } from "@/Contexts/MessageShow";
-import { ModalForm } from "@/components-v2/ModalForm";
-import { CustomButton } from "@/components-v2/CustomButton";
+import { useMessage } from "@contexts/MessageShow";
+import { ModalForm } from "@components-v2/ModalForm";
+import { CustomButton } from "@components-v2/CustomButton";
 import { validate } from "rut.js";
-import moment from "moment";
+import { formatDate } from "@utils/date";
 
 export default function ModalEditUser({ data, roles, branches, states, userType }) {
   const [showModal, setShowModal] = useState(false);
@@ -66,8 +66,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
 
 
   const validateAge = (dateString) => {
-    const selectedDate = moment(dateString, "YYYY-MM-DD");
-    const currentDate = moment();
+    const selectedDate = formatDate(dateString, "YYYY-MM-DD");
+    const currentDate = formatDate(new Date(), "YYYY-MM-DD");
     const age = currentDate.diff(selectedDate, 'years');
     return age >= 16;
   };

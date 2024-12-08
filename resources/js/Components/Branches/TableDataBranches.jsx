@@ -4,7 +4,7 @@ import { Table } from 'antd';
 import ModalViewBranch from './ModalViewBranch';
 import ModalEditBranch from './ModalEditBranch';
 import ModalDeleteBranch from './ModalDeleteBranch';
-import moment from 'moment';
+import { formatDate } from '@utils/date';
 import FilterModal from './FilterModal';
 import ModalRequestMoreBranches from './ModalRequestMoreBranches';
 
@@ -25,7 +25,7 @@ export const TableDataBranches = ({ auth, branches, states, companies, filters }
                     <p>{branch.numberOfEmployees}</p>
                 )} />
                 <Column title="Fecha de creación" key="creationDate" render={(_, branch) => (
-                    <p>{moment(branch.created_at).format('DD-MM-YYYY')}</p>
+                    <p>{formatDate(branch.created_at)}</p>
                 )} />
                 <Column title="Estado" key="state" render={(_, branch) => (
                     <div className={`${branch?.state?.name === 'Activo' && 'bg-green-300' ||

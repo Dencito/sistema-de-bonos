@@ -22,13 +22,11 @@ export default function ModalViewUserCategories({ data, category }) {
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Usuarios: {category}</p>}
         open={showModal}
-        okText="Ok"
-        cancelText="Salir"
+        cancelText="Cancelar"
         onCancel={() => handleCloseModal()}
-        destroyOnClose={() => handleCloseModal()}
+        destroyOnClose={true}
         okButtonProps={{
-          autoFocus: true,
-          htmlType: 'submit',
+          style: { display: 'none'}
         }}
         modalRender={(dom) => (
           <Form
@@ -40,7 +38,6 @@ export default function ModalViewUserCategories({ data, category }) {
               modifier: 'public',
             }}
             clearOnDestroy
-            onFinish={() => handleCloseModal()}
           >
             {dom}
           </Form>

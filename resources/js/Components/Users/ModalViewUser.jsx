@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { Form, Input, Select } from "antd";
+import { Form, Input, Select, Modal } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { CustomButton } from "@/components-v2/CustomButton";
-import { ModalForm } from "@/components-v2/ModalForm";
 
 export default function ModalViewUser({data, states, roles, branches, userType}) {
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false)
   const [form] = Form.useForm();
 
   const handleCloseModal = () => {
-    setLoading(false)
     setShowModal(false)
   }
 
@@ -19,7 +16,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
     setShowModal(true)
   }
 
-  
   const prefixSelector = (
     <Form.Item name="prefix" rules={[{ required: true, message: getValidationRequiredMessage }]} noStyle>
       <Select placeholder="Prefijo">
@@ -544,7 +540,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
   return (
     <>
       <CustomButton onClick={handleOpenModal} icon={<EyeOutlined />} />
-      <ModalForm
+      {/* <ModalForm
         title={`Ver Usuario ${data?.username || data?.firt_name}`}
         showModal={showModal}
         loading={loading}
@@ -557,7 +553,32 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         <>
           {formFieldsByUserType[userType?.toUpperCase()]}
         </>
-      </ModalForm>
+      </ModalForm> */}
+      <Modal
+        style={{ top: 20 }}
+        title={`Ver Usuario ${data?.username || data?.firt_name}`}
+        open={showModal}
+        cancelText="Cancelar"
+        onCancel={() => handleCloseModal()}
+        destroyOnClose={true}
+        okButtonProps={{
+          style:{ display: 'none'}
+        }}
+        modalRender={(dom) => (
+          <Form
+            layout="vertical"
+            form={form}
+            disabled
+            name="form_in_modal"
+            initialValues={data}
+            clearOnDestroy
+          >
+            {dom}
+          </Form>
+        )}
+      >
+           {formFieldsByUserType[userType?.toUpperCase()]}
+      </Modal>
     </>
   );
 };

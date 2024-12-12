@@ -3,7 +3,7 @@ import { MobileButton } from '@/Components/MobileButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
-export default function BranchPage({ auth, branches, states, companies, filters, alert }){ 
+export default function BranchPage({ auth, branches, states, companies, filters }){ 
   return (
     <AuthenticatedLayout
       user={auth.user}

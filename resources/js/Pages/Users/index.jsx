@@ -5,7 +5,7 @@ import ModalCreateUser from "@/Components/Users/ModalCreateUser";
 import ModalDeleteUser from "@/Components/Users/ModalDeleteUser";
 import ModalEditUser from "@/Components/Users/ModalEditUser";
 import ModalViewUser from "@/Components/Users/ModalViewUser";
-import { Dropdown, Menu, Typography } from "antd";
+import { Dropdown, Menu } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import ModalCreateBonus from "@/Components/Bonus/ModalCreateBonus";
 import FilterModal from "@/Components/Users/FilterModal";

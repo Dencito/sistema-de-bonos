@@ -32,13 +32,11 @@ export default function ModalViewCategoryBono({data }) {
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Datos de {data?.name}</p>}
         open={showModal}
-        okText="Ok"
-        cancelText="Salir"
+        cancelText="Cancelar"
         onCancel={() => handleCloseModal()}
-        destroyOnClose={() => handleCloseModal()}
+        destroyOnClose={true}
         okButtonProps={{
-          autoFocus: true,
-          htmlType: 'submit',
+          style:{ display: 'none'}
         }}
         modalRender={(dom) => (
           <Form
@@ -48,7 +46,6 @@ export default function ModalViewCategoryBono({data }) {
             name="form_in_modal"
             initialValues={data}
             clearOnDestroy
-            onFinish={() => handleCloseModal()}
           >
             {dom}
           </Form>

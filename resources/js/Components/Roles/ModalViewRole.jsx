@@ -29,13 +29,11 @@ export default function ModalViewRole({ data }) {
                     </p>
                 }
                 open={showModal}
-                okText="Ok"
-                cancelText="Salir"
+                cancelText="Cerrar"
                 onCancel={() => handleCloseModal()}
-                destroyOnClose={() => handleCloseModal()}
+                destroyOnClose={true}
                 okButtonProps={{
-                    autoFocus: true,
-                    htmlType: "submit",
+                    style: { display: 'none'},
                 }}
                 modalRender={(dom) => (
                     <Form

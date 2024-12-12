@@ -15,9 +15,10 @@ export default function useBranchValidateSchedules (shifts) {
 
   // Función que verifica si la hora actual está dentro del rango
   const isTimeInRange = (currentTime, startTime, endTime) => {
-    const [currentHour, currentMinute] = currentTime?.split(':').map(Number);
-    const [startHour, startMinute] = startTime?.split(':').map(Number);
-    const [endHour, endMinute] = endTime?.split(':').map(Number);
+  const [currentHour, currentMinute] = (currentTime?.split(':') ?? ['0', '0']).map(Number);
+  const [startHour, startMinute] = (startTime?.split(':') ?? ['0', '0']).map(Number);
+  const [endHour, endMinute] = (endTime?.split(':') ?? ['0', '0']).map(Number);
+
 
     const current = currentHour * 60 + currentMinute;
     const start = startHour * 60 + startMinute;
@@ -27,7 +28,6 @@ export default function useBranchValidateSchedules (shifts) {
     if (end < start) {
       return current >= start || current <= end;
     }
-
     return current >= start && current <= end;
   };
 
@@ -48,14 +48,13 @@ export default function useBranchValidateSchedules (shifts) {
         (dayEnd < dayInit && (currentDay >= dayInit || currentDay <= dayEnd)) // Días que cruzan de una semana a otra
       ) {
         // Verificar los horarios dentro del día
-        for (const schedule of shift?.schedules) {
+        for (const schedule of shift?.schedules ?? []) {
           if (isTimeInRange(currentTime, schedule?.start, schedule?.end)) {
             return true; // Puede iniciar sesión
           }
         }
       }
     }
-
     return false; // No puede iniciar sesión
   };
 
@@ -68,6 +67,6 @@ export default function useBranchValidateSchedules (shifts) {
       setCanLogin(false);
     }
   }, [shifts]);
-
+  
   return canLogin;
 };

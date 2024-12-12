@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export const Links = ({ role, roles }) => {
     const path = window.location.pathname
-    const [select, setSelect] = useState(path)
+    //const [select, setSelect] = useState(path)
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -72,8 +72,8 @@ export const Links = ({ role, roles }) => {
             ].map(item => (
                 <div key={item.key}>
                     {item.autorized && item?.link !== '/users' &&
-                        <Link className={`transition-all duration-300 ${select === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`} href={item?.link} selected>
-                            {item.icon} <span className={`text-base ${select === item?.link && 'font-bold'}`}>{item.label}</span>
+                        <Link className={`transition-all duration-300 ${path === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`} href={item?.link} selected>
+                            {item.icon} <span className={`text-base ${path === item?.link && 'font-bold'}`}>{item.label}</span>
                         </Link>
                     }
                     {
@@ -82,14 +82,14 @@ export const Links = ({ role, roles }) => {
                             {/* Etiqueta que despliega el colapso */}
                             <div
                                 onClick={() => setIsOpen(!isOpen)} // Alterna el colapso al hacer clic
-                                className={`transition-all duration-300 ${select === item?.link
+                                className={`transition-all duration-300 ${path === item?.link
                                     ? 'bg-cyan-300'
                                     : 'hover:bg-cyan-300'
                                     } flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2 cursor-pointer`}
                             >
                                 {/* Contenido principal del menú */}
                                 <span
-                                    className={`text-base flex gap-2 rounded-lg  ${select === item?.link ? 'font-bold' : ''
+                                    className={`text-base flex gap-2 rounded-lg  ${path === item?.link ? 'font-bold' : ''
                                         }`}
                                 >
                                     {item.icon}  {item.label}  {isOpen ? <ChevronRight /> : <ChevronDown />}

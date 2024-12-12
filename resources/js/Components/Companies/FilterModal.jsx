@@ -37,6 +37,7 @@ export default function FilterModal({ filters, states }) {
                 onCancel={handleCloseModal}
                 footer={[
                     <Button
+                        key="close"
                         danger
                         onClick={() => {
                             setData(InitForm);
@@ -85,4 +86,4 @@ export default function FilterModal({ filters, states }) {
             </Modal>
         </>
     );
-};
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Form, Input, Modal } from "antd";
 import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
@@ -7,49 +7,50 @@ import { useMessage } from "@contexts/MessageShow";
 export default function ModalRequestMoreBranches() {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [country, setCountry] = useState("");
-    const [countries, setCountries] = useState();
+    // const [country, setCountry] = useState("");
+    // const [countries, setCountries] = useState();
 
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
-    useEffect(() => {
-        const getCountries = async () => {
-            if (showModal) {
-                const response = await fetch(
-                    `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${
-                                import.meta.env.VITE_API_KEY_COUNTRYS
-                            }`,
-                        },
-                    }
-                );
-                const data = await response.json();
-                setCountries(data?.data);
-            }
-        };
-        const getRegion = async () => {
-            if (country !== "" && showModal) {
-                const response = await fetch(
-                    `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${
-                                import.meta.env.VITE_API_KEY_COUNTRYS
-                            }`,
-                        },
-                    }
-                );
-                const data = await response.json();
-                setRegions(data?.data);
-            }
-        };
-        getCountries();
-        getRegion();
-    }, [showModal, country]);
+
+    // useEffect(() => {
+    //     const getCountries = async () => {
+    //         if (showModal) {
+    //             const response = await fetch(
+    //                 `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`,
+    //                 {
+    //                     method: "GET",
+    //                     headers: {
+    //                         Authorization: `Bearer ${
+    //                             import.meta.env.VITE_API_KEY_COUNTRYS
+    //                         }`,
+    //                     },
+    //                 }
+    //             );
+    //             const data = await response.json();
+    //             setCountries(data?.data);
+    //         }
+    //     };
+    //     const getRegion = async () => {
+    //         if (country !== "" && showModal) {
+    //             const response = await fetch(
+    //                 `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`,
+    //                 {
+    //                     method: "GET",
+    //                     headers: {
+    //                         Authorization: `Bearer ${
+    //                             import.meta.env.VITE_API_KEY_COUNTRYS
+    //                         }`,
+    //                     },
+    //                 }
+    //             );
+    //             const data = await response.json();
+    //             setRegions(data?.data);
+    //         }
+    //     };
+    //     getCountries();
+    //     getRegion();
+    // }, [showModal, country]);
 
     const onCreate = async (values) => {
         try {
@@ -74,7 +75,7 @@ export default function ModalRequestMoreBranches() {
     };
 
     const handleCloseModal = () => {
-        setCountry("");
+        //setCountry("");
         setLoading(false);
         setShowModal(false);
     };
@@ -84,8 +85,8 @@ export default function ModalRequestMoreBranches() {
     };
 
     const onlyNumberInput = (e) => {
-        const cleanedValue = e.target.value.replace(/\D/g, "");
-        form.setFieldsValue({ [e.target.name]: cleanedValue });
+        //const cleanedValue = e.target.value.replace(/\D/g, "");
+        form.setFieldsValue({ [e.target.name]: e.target.value.replace(/\D/g, "") });
     };
 
     return (

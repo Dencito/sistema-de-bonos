@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { Button, Form, Input, message, Modal } from "antd";
+import { Button, Form, Input, Modal } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 
 export default function ModalViewCategoryBono({data }) {
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false)
 
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
   
   const handleCloseModal = () => {
-    setLoading(false)
     setShowModal(false)
   }
 
@@ -26,7 +23,6 @@ export default function ModalViewCategoryBono({data }) {
 
   return (
     <>
-      {contextHolder}
       <Button onClick={handleOpenModal} icon={<EyeOutlined/>}/>
       <Modal
         style={{ top: 20 }}

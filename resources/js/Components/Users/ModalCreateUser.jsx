@@ -72,10 +72,11 @@ export default function ModalCreateUser({ userType, branches }) {
   };
 
   const validateAge = (dateString) => {
+    return true;
     const selectedDate = formatDate(dateString, "YYYY-MM-DD");
     const currentDate = formatDate(new Date(), "YYYY-MM-DD");
     const age = currentDate.diff(selectedDate, 'years');
-    return age >= 16;
+    //return age >= 16;
   };
 
   const prefixSelector = (

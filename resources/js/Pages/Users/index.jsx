@@ -504,7 +504,7 @@ export default function UserPage({
                             />
                             <div className="flex gap-5">
                                 {data?.role === 'Jugador' && <ModalCreateBonus />}
-                                {(data?.role && data.role !== 'Supervisor') && (
+                                {(data?.role && (data.role !== 'Supervisor' && auth.role !== 'Trabajador')) && (
                                     <ModalCreateUser
                                         userType={data?.role}
                                         states={states}

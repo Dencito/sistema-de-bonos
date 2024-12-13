@@ -39,6 +39,7 @@ export default function CategoryBonusPage({ auth, categoriesBonus }) {
                         </div>
                         <Table className='overflow-auto' dataSource={categoriesBonus.map(categoryBonus => ({ ...categoryBonus, key: categoryBonus.id }))}>
                             <Column title="Nombre" dataIndex="name" key="id" />
+                            <Column title="Monto" dataIndex="base_amount" key="id" />
                             <Column
                                 title="Usuarios"
                                 key="quantity"

@@ -66,10 +66,11 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
 
 
   const validateAge = (dateString) => {
+    return true;
     const selectedDate = formatDate(dateString, "YYYY-MM-DD");
     const currentDate = formatDate(new Date(), "YYYY-MM-DD");
     const age = currentDate.diff(selectedDate, 'years');
-    return age >= 16;
+    //return age >= 16;
   };
 
   const prefixSelector = (
@@ -458,7 +459,7 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
-            {roles?.map(role => (
+            {roles.filter(role => role?.name !== "Jugador")?.map(role => (
               <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
             ))}
           </Select>
@@ -614,7 +615,7 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           initialValue={data?.roles[0]?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
-          <Select placeholder="Seleccione el rol">
+          <Select disabled placeholder="Seleccione el rol">
             {roles?.map(role => (
               <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
             ))}

@@ -29,11 +29,12 @@ export default function ModalCreateBranch({ companies }) {
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
+  
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
         const response = await fetch(
-          `${impor.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`,
+          `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`,
           {
             method: "GET",
             headers: {
@@ -642,7 +643,7 @@ export default function ModalCreateBranch({ companies }) {
         </Form.Item>
 
         <Form.List name="availableBonusDays">
-          {(fields, { add, remove }) => (
+          {() => (
             <div
               style={{
                 display: "flex",

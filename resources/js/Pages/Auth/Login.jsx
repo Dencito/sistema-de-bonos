@@ -10,7 +10,7 @@ export default function Login({ status, auth }) {
         password: '',
         remember: false,
     });
-    const { successMsg, errorMsg } = useMessage();
+    const { successMsg } = useMessage();
 
     useEffect(() => {
         return () => {

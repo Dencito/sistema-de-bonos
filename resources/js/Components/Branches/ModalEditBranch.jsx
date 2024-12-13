@@ -740,7 +740,7 @@ export default function ModalEditBranch({ data, states }) {
           </Form.Item>
 
           <Form.List name="available_bonus_days">
-            {(fields, { add, remove }) => (
+            {(fields, { remove }) => (
               <div
                 style={{
                   display: "flex",

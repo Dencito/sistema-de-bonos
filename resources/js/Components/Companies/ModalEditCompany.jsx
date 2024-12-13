@@ -207,7 +207,7 @@ export default function ModalEditCompany({ data }) {
             initialValues={data}
             clearOnDestroy
             onFinish={(values) => onEdit(values)}
-            onFinishFailed={(values) => errorMsg("Verifica todos los campos")}
+            onFinishFailed={() => errorMsg("Verifica todos los campos")}
           >
             {dom}
           </Form>

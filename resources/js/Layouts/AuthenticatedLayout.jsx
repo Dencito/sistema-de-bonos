@@ -1,11 +1,6 @@
-import { theme } from 'antd';
 import { Links } from '@components/Links';
 
 export default function Authenticated({ auth, user, role, children }) {
-    const {
-        token: { colorBgContainer, borderRadiusLG },
-    } = theme.useToken();
-
     const { roles } = auth
     const nameCompanySelect = window.localStorage.getItem('companySelect');
 

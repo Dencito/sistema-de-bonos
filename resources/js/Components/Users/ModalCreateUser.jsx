@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Form, Input, Modal, Select } from "antd";
+import { Form, Input, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";

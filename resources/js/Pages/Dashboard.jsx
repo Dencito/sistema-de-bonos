@@ -1,15 +1,10 @@
-import { MobileButton } from "@/Components/MobileButton";
-import PdfGenerator from "@/Components/PdfGenerator";
-import useBranchValidateSchedules from "@/Hooks/useBranchValidateSchedules";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { useEffect } from "react";
 import { Head } from "@inertiajs/react";
-import { useEffect, useState } from "react";
+import { MobileButton } from "@components/MobileButton";
+import PdfGenerator from "@components/PdfGenerator";
+import AuthenticatedLayout from "@layouts/AuthenticatedLayout";
 
 export default function Dashboard({ auth }) {
-    const [companySelect, setCompanySelect] = useState(null);
-    const canLogin = useBranchValidateSchedules(auth?.branch?.shifts);
-    const [loading, setLoading] = useState(true);
-
     const getSelectedCompany = async () => {
         try {
             const response = await axios.get("/selected-company");
@@ -17,12 +12,9 @@ export default function Dashboard({ auth }) {
                 "companySelect",
                 await response.data.company
             );
-            setCompanySelect(await response.data.company);
-            setLoading(false);
             return response.data.company;
         } catch (error) {
             console.error("Error al obtener la empresa seleccionada:", error);
-            setLoading(false);
             return null;
         }
     };

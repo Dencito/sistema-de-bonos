@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, message, Modal, Select } from "antd";
+import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { validate } from 'rut.js';
 import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
@@ -10,7 +10,6 @@ export default function ModalViewCompany({ data }) {
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
   
   useEffect(() => {
     const getCountries = async () => {
@@ -130,20 +129,17 @@ export default function ModalViewCompany({ data }) {
   );
   return (
     <>
-      {contextHolder}
       <Button onClick={handleOpenModal} icon={<EyeOutlined />} />
       <Modal
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Datos de {data?.name}</p>}
         open={showModal}
-        okText="Ok"
-        cancelText="Salir"
+        cancelText="Cancelar"
         onCancel={() => handleCloseModal()}
-        destroyOnClose={() => handleCloseModal()}
-        okButtonProps={{
-          autoFocus: true,
-          htmlType: 'submit',
-        }}
+        destroyOnClose={true}
+        okButtonProps={{ 
+          style: { display: 'none' } 
+        }} 
         modalRender={(dom) => (
           <Form
             layout="vertical"
@@ -154,7 +150,6 @@ export default function ModalViewCompany({ data }) {
               modifier: 'public',
             }}
             clearOnDestroy
-            onFinish={() => handleCloseModal()}
           >
             {dom}
           </Form>

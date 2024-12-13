@@ -31,13 +31,11 @@ export default function ModalViewBranchStates({ data, state }) {
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Sucursales: {state}</p>}
         open={showModal}
-        okText="Ok"
-        cancelText="Salir"
+        cancelText="Cancelar"
         onCancel={() => handleCloseModal()}
-        destroyOnClose={() => handleCloseModal()}
+        destroyOnClose={true}
         okButtonProps={{
-          autoFocus: true,
-          htmlType: 'submit',
+          style: { display: 'none'}
         }}
         modalRender={(dom) => (
           <Form
@@ -49,7 +47,6 @@ export default function ModalViewBranchStates({ data, state }) {
               modifier: 'public',
             }}
             clearOnDestroy
-            onFinish={() => handleCloseModal()}
           >
             {dom}
           </Form>
@@ -64,7 +61,7 @@ export default function ModalViewBranchStates({ data, state }) {
               <p>
                 {item.name}
               </p>
-              <Dropdown dropdownRender={(e) =>
+              <Dropdown dropdownRender={() =>
                 <div className="flex gap-2 rounded-lg flex-col bg-white"> 
                 {Object.entries(states).map(([stateItem, icon]) => (
                 <>

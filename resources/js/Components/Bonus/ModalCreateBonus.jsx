@@ -11,16 +11,16 @@ const EnumTypes = {
     birthday: "birthday",
     today: "today",
 };
+
 export default function ModalCreateBonus() {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [selectType, setSelectType] = useState(null);
-    const [selectCompany, setSelectCompany] = useState(null);
 
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
 
-    const onCreate = async (values) => {
+    const onCreate = async () => {
         try {
             const startDataTime = form
                 .getFieldValue("start_datetime")
@@ -60,7 +60,6 @@ export default function ModalCreateBonus() {
 
     const handleCloseModal = () => {
         setLoading(false);
-        setSelectCompany(null);
         setSelectType(null);
         setShowModal(false);
     };

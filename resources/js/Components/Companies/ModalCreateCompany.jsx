@@ -264,7 +264,7 @@ export default function ModalCreateCompany() {
                         }}
                         clearOnDestroy
                         onFinish={(values) => onCreate(values)}
-                        onFinishFailed={(values) =>
+                        onFinishFailed={() =>
                             errorMsg("Verifica todos los campos")
                         }
                     >

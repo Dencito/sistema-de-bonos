@@ -152,16 +152,6 @@ export default function ModalEditState({ data }) {
         }
     };
 
-    const handleAlert = (type, message) => {
-        setShowAlerts({ ...showAlerts, [type]: { state: true, message } });
-        return setTimeout(() => {
-            setShowAlerts({
-                ...showAlerts,
-                [type]: { state: false, message: "" },
-            });
-        }, 2500);
-    };
-
     const handleCloseModal = () => {
         setCountry("");
         setShowModal(false);

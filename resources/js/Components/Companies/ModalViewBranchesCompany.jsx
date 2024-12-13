@@ -27,14 +27,12 @@ export default function ModalViewBranchesCompany({ data, company }) {
                     <p className="text-bold text-3xl">Sucursales: {company}</p>
                 }
                 open={showModal}
-                okText="Ok"
-                cancelText="Salir"
+                cancelText="Cancelar"
                 onCancel={() => handleCloseModal()}
-                destroyOnClose={() => handleCloseModal()}
+                destroyOnClose={true}
                 okButtonProps={{
-                    autoFocus: true,
-                    htmlType: "submit",
-                }}
+                    style: { display: 'none'}
+                  }}
                 modalRender={(dom) => (
                     <Form
                         layout="vertical"
@@ -45,7 +43,6 @@ export default function ModalViewBranchesCompany({ data, company }) {
                             modifier: "public",
                         }}
                         clearOnDestroy
-                        onFinish={() => handleCloseModal()}
                     >
                         {dom}
                     </Form>

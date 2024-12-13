@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { Button, Form, Input, message, Modal } from "antd";
+import { Button, Form, Input, Modal } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { getValidationRequiredMessage } from "../../Utils/messagesValidationes";
 
 export default function ModalViewCategoryBono({data }) {
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false)
 
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
   
   const handleCloseModal = () => {
-    setLoading(false)
     setShowModal(false)
   }
 
@@ -26,19 +23,16 @@ export default function ModalViewCategoryBono({data }) {
 
   return (
     <>
-      {contextHolder}
       <Button onClick={handleOpenModal} icon={<EyeOutlined/>}/>
       <Modal
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Datos de {data?.name}</p>}
         open={showModal}
-        okText="Ok"
-        cancelText="Salir"
+        cancelText="Cancelar"
         onCancel={() => handleCloseModal()}
-        destroyOnClose={() => handleCloseModal()}
+        destroyOnClose={true}
         okButtonProps={{
-          autoFocus: true,
-          htmlType: 'submit',
+          style:{ display: 'none'}
         }}
         modalRender={(dom) => (
           <Form
@@ -48,7 +42,6 @@ export default function ModalViewCategoryBono({data }) {
             name="form_in_modal"
             initialValues={data}
             clearOnDestroy
-            onFinish={() => handleCloseModal()}
           >
             {dom}
           </Form>

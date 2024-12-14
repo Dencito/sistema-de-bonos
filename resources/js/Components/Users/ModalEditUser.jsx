@@ -7,7 +7,7 @@ import { useMessage } from "@contexts/MessageShow";
 import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
 import { validate } from "rut.js";
-import { formatDate } from "@utils/date";
+import { differenceInYears } from 'date-fns';
 
 export default function ModalEditUser({ data, roles, branches, states, userType }) {
   const [showModal, setShowModal] = useState(false);
@@ -66,9 +66,9 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
 
 
   const validateAge = (dateString) => {
-    const selectedDate = formatDate(dateString, "YYYY-MM-DD");
-    const currentDate = formatDate(new Date(), "YYYY-MM-DD");
-    const age = currentDate.diff(selectedDate, 'years');
+    const selectedDate = new Date(dateString);
+    const currentDate = new Date();
+    const age = differenceInYears(currentDate, selectedDate);
     return age >= 16;
   };
 

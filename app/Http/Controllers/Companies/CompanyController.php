@@ -12,10 +12,13 @@ use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
-
+use Illuminate\Support\Str;
 
 class CompanyController extends Controller
 {
+    private $baseDirectory = 'companies';
+    private $excludedDirs = ['deploy'];
+
     /**
      * Display a listing of the resource.
      */
@@ -63,6 +66,7 @@ class CompanyController extends Controller
         if (!auth()->user()->hasAnyRole(1)) {
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
+
         $validator = Validator::make($request->all(), [
             'creationDate' => 'required|date',
             'db_name' => 'string',
@@ -92,69 +96,235 @@ class CompanyController extends Controller
             'companyAddressNumber' => 'required|string',
             'max_branches' => 'required|string',
         ]);
-        /* return response()->json([
-            'data' => $foundRut,
-            'rutNumbers' => $request->rutNumbers
-            ]); */
-            
-                try {
-                    $found = $this->getCompanyByName($request->name);
-                    if ($found) {
-                        return response()->json([
-                            'message' => 'La empresa ya existe',
-                            'status' => 400
-                        ], 400);
-                    }
-                } catch (ModelNotFoundException $e) {
-                    // Handle the case when the company is not found, which means it's safe to create a new one
-                }
-        
-                try {
-                    $foundRut = $this->getRutByRutNumbers($request->rutNumbers);
-                    if ($foundRut) {
-                        return response()->json([
-                            'message' => 'El rut de la empresa ya existe',
-                            'status' => 400
-                        ], 400);
-                    }
-                } catch (ModelNotFoundException $e) {
-                    // Handle the case when the rut is not found, which means it's safe to create a new one
-                }
-            if ($validator->fails()) {
-                $data = [
-                    'message' => 'Error en la validación de los datos',
-                    'errors' => $validator->errors(),
-                    'status' => 400
-                ];
-                return response()->json($data, 400);
-            }
 
-            $company = Company::create(
-                array_merge($validator->validated(), 
-                ['state_id' => 1]));
-            if(!$company) {
-                $data = [
-                    'message' => 'Error la crear la empresa',
-                    'status' => 500,
-                ];
-                return response()->json($data, 500);
-            }
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error en la validación de los datos',
+                'errors' => $validator->errors(),
+                'status' => 400
+            ], 400);
+        }
+
+        // Verificar si ya existe una empresa con el mismo nombre
+        $existingCompany = $this->getCompanyByName($request->name);
+        if ($existingCompany) {
+            return response()->json([
+                'message' => 'Ya existe una empresa con este nombre',
+                'status' => 400
+            ], 400);
+        }
+
+        // Verificar si ya existe una empresa con el mismo RUT
+        $existingRut = $this->getRutByRutNumbers($request->rutNumbers);
+        if ($existingRut) {
+            return response()->json([
+                'message' => 'Ya existe una empresa con este RUT',
+                'status' => 400
+            ], 400);
+        }
+
+        try {
+            // Preparar los datos de la empresa
+            $data = $request->all();
+            $slug = Str::slug($request->name);
+            
+            $data['slug'] = $slug;
+            $data['state_id'] = 1;
+            $data['schema_name'] = $slug; // Usar el mismo slug como schema_name
+            $data['settings'] = json_encode([]); // Agregar settings vacío
+            $data['is_active'] = true; // Activar la empresa por defecto
+
+            // Crear la empresa
+            $company = Company::create($data);
+            
+            // Crear directorio y configurar dominio
+            $domain = $this->createCompanyDirectory($company);
 
             return response()->json([
-                'error' => false,
                 'message' => 'Empresa creada exitosamente',
+                'company' => $company,
+                'domain' => $domain
             ]);
 
+        } catch (\Exception $e) {
+            \Log::error('Error al crear empresa: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al crear la empresa: ' . $e->getMessage(),
+                'status' => 500
+            ], 500);
+        }
+    }
+
+    private function createCompanyDirectory(Company $company)
+    {
+        // Crear el slug de la empresa
+        $slug = $company->slug;
+        $domain = "{$slug}.rentamania.cl";
+        $company->domain = $domain;
+        $company->save();
+
+        // Definir directorios
+        $sourceDir = base_path();
+        $parentDir = dirname($sourceDir); // Subir un nivel: /carpetaPadre
+        $targetDir = $parentDir . DIRECTORY_SEPARATOR . $domain;
+
+        try {
+            // Verificar si existe el directorio fuente
+            if (!File::exists($sourceDir)) {
+                throw new \Exception("El directorio fuente no existe: {$sourceDir}");
+            }
+
+            // Verificar si el directorio destino ya existe
+            if (File::exists($targetDir)) {
+                throw new \Exception("El directorio para {$domain} ya existe");
+            }
+
+            // Crear el directorio destino
+            File::makeDirectory($targetDir, 0755, true);
+
+            // Copiar todos los archivos excepto los excluidos
+            $this->copyDirectoryContents($sourceDir, $targetDir);
+
+            // Copiar el .env.example como base para el nuevo .env
+            if (File::exists($sourceDir . DIRECTORY_SEPARATOR . '.env.example')) {
+                File::copy(
+                    $sourceDir . DIRECTORY_SEPARATOR . '.env.example',
+                    $targetDir . DIRECTORY_SEPARATOR . '.env'
+                );
+            } else if (File::exists($sourceDir . DIRECTORY_SEPARATOR . '.env')) {
+                File::copy(
+                    $sourceDir . DIRECTORY_SEPARATOR . '.env',
+                    $targetDir . DIRECTORY_SEPARATOR . '.env'
+                );
+            } else {
+                throw new \Exception("No se encontró archivo .env o .env.example para copiar");
+            }
+
+            // Configurar el .env para esta empresa
+            $this->configureEnvFile($targetDir, $company);
+
+            return $domain;
+        } catch (\Exception $e) {
+            \Log::error('Error al crear directorio de empresa: ' . $e->getMessage());
+            // Limpiar en caso de error
+            if (File::exists($targetDir)) {
+                File::deleteDirectory($targetDir);
+            }
+            throw $e;
+        }
+    }
+
+    private function copyDirectoryContents($source, $destination)
+    {
+        $excludedPaths = [
+            'deploy',
+            '.git',
+            'node_modules',
+            'vendor',
+            'storage/logs',
+            'storage/framework/cache',
+            '.env',
+            '.env.example',
+            '.gitignore'
+        ];
+
+        // Crear el directorio destino si no existe
+        if (!File::exists($destination)) {
+            File::makeDirectory($destination, 0755, true);
+        }
+
+        // Copiar archivos y directorios
+        $directory = new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS);
+        $iterator = new \RecursiveIteratorIterator($directory, \RecursiveIteratorIterator::SELF_FIRST);
+
+        foreach ($iterator as $item) {
+            // Obtener la ruta relativa
+            $relativePath = substr($item->getPathname(), strlen($source) + 1);
+
+            // Verificar si el archivo/directorio debe ser excluido
+            $shouldExclude = false;
+            foreach ($excludedPaths as $excludedPath) {
+                if (str_starts_with($relativePath, $excludedPath)) {
+                    $shouldExclude = true;
+                    break;
+                }
+            }
+
+            if (!$shouldExclude) {
+                if ($item->isDir()) {
+                    // Crear directorio en destino
+                    $targetDir = $destination . DIRECTORY_SEPARATOR . $relativePath;
+                    if (!File::exists($targetDir)) {
+                        File::makeDirectory($targetDir, 0755, true);
+                    }
+                } else {
+                    // Copiar archivo
+                    $targetFile = $destination . DIRECTORY_SEPARATOR . $relativePath;
+                    File::copy($item->getPathname(), $targetFile);
+                }
+            }
+        }
+
+        // Crear directorios necesarios
+        $dirsToCreate = [
+            'storage/app',
+            'storage/framework/cache',
+            'storage/framework/sessions',
+            'storage/framework/views',
+            'storage/logs',
+            'bootstrap/cache'
+        ];
+
+        foreach ($dirsToCreate as $dir) {
+            $path = $destination . DIRECTORY_SEPARATOR . $dir;
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+            }
+        }
+    }
+
+    private function configureEnvFile($targetDir, Company $company)
+    {
+        $envFile = $targetDir . DIRECTORY_SEPARATOR . '.env';
+        
+        // Verificar que el archivo existe
+        if (!File::exists($envFile)) {
+            throw new \Exception("No se encontró el archivo .env en el directorio destino");
+        }
+
+        // Leer el contenido del .env
+        $envContent = File::get($envFile);
+
+        // Reemplazar valores
+        $replacements = [
+            'DB_DATABASE' => 'tenant_' . $company->slug,
+            'APP_URL' => 'https://' . $company->domain,
+            'SESSION_DOMAIN' => $company->domain,
+            'SANCTUM_STATEFUL_DOMAINS' => $company->domain
+        ];
+
+        foreach ($replacements as $key => $value) {
+            $envContent = preg_replace(
+                "/^{$key}=.*/m",
+                "{$key}={$value}",
+                $envContent
+            );
+        }
+
+        // Guardar el nuevo .env
+        File::put($envFile, $envContent);
+
+        // Generar key
+        $command = "cd {$targetDir} && php artisan key:generate";
+        exec($command);
     }
 
     public function getCompanyByName($name) {
-        $company = Company::where('name', $name)->firstOrFail();
-        return $company;
+        return Company::where('name', $name)->first();
     }
 
     public function getRutByRutNumbers($rutNumbers) {
-        $company = Company::where('rutNumbers', $rutNumbers)->firstOrFail();
-        return $company;
+        return Company::where('rutNumbers', $rutNumbers)->first();
     }
 
     /**

@@ -7,7 +7,7 @@ import AuthenticatedLayout from "@layouts/AuthenticatedLayout";
 export default function Dashboard({ auth }) {
     const getSelectedCompany = async () => {
         try {
-            const response = await axios.get("/selected-company");
+            const response = await axios.get("/companies/selected");
             window.localStorage.setItem(
                 "companySelect",
                 await response.data.company

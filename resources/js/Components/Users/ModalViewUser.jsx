@@ -3,6 +3,7 @@ import { Form, Input, Select, Modal } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { CustomButton } from "@/components-v2/CustomButton";
+import { roleDisplayNames } from "@/Utils/constants";
 
 export default function ModalViewUser({data, states, roles, branches, userType}) {
   const [showModal, setShowModal] = useState(false);
@@ -59,7 +60,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name]}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -117,7 +118,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name]}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -189,7 +190,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name]}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -379,7 +380,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name]}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -529,7 +530,7 @@ export default function ModalViewUser({data, states, roles, branches, userType})
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name]}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -540,20 +541,6 @@ export default function ModalViewUser({data, states, roles, branches, userType})
   return (
     <>
       <CustomButton onClick={handleOpenModal} icon={<EyeOutlined />} />
-      {/* <ModalForm
-        title={`Ver Usuario ${data?.username || data?.firt_name}`}
-        showModal={showModal}
-        loading={loading}
-        form={form}
-        onSubmit={handleCloseModal}
-        onClose={handleCloseModal}
-        initialValues={data}
-        disabled
-      >
-        <>
-          {formFieldsByUserType[userType?.toUpperCase()]}
-        </>
-      </ModalForm> */}
       <Modal
         style={{ top: 20 }}
         title={`Ver Usuario ${data?.username || data?.firt_name}`}

@@ -14,6 +14,7 @@ export default [
             "react/react-in-jsx-scope": "off",
             "no-unused-vars": "warn",
             "no-undef": "warn",
+            "no-console": ["error", { allow: ["warn", "error"] }],
         },
     },
 ];

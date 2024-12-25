@@ -12,8 +12,6 @@ const { Column } = Table;
 
 
 export default function CompanyPage({ auth, companies, states, filters }) {
-    console.log(companies)
-
     return (
         <AuthenticatedLayout
             user={auth.user}

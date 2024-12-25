@@ -7,11 +7,12 @@ import { MobileButton } from '@/Components/MobileButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Table } from 'antd';
+import { allowedRoles } from '@/Utils/constants';
 const { Column } = Table;
 
 export default function CategoryBonusPage({ auth, categoriesBonus }) {
     const role = auth.role
-    
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -31,8 +32,7 @@ export default function CategoryBonusPage({ auth, categoriesBonus }) {
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-end">
                             {
-                                (role === 'Dueño' ||
-                                    role === 'Super Admin')
+                                (allowedRoles.createBonusCategory.includes(role))
                                 &&
                                 <ModalCreateCategoryBono />
                             }

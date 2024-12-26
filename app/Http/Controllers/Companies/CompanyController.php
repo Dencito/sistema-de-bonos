@@ -201,21 +201,6 @@ class CompanyController extends Controller
             // Copiar todos los archivos excepto los excluidos
             $this->copyDirectoryContents($sourceDir, $targetDir);
 
-            // Copiar el .env.example como base para el nuevo .env
-            if (File::exists($sourceDir . DIRECTORY_SEPARATOR . '.env.example')) {
-                File::copy(
-                    $sourceDir . DIRECTORY_SEPARATOR . '.env.example',
-                    $targetDir . DIRECTORY_SEPARATOR . '.env'
-                );
-            } else if (File::exists($sourceDir . DIRECTORY_SEPARATOR . '.env')) {
-                File::copy(
-                    $sourceDir . DIRECTORY_SEPARATOR . '.env',
-                    $targetDir . DIRECTORY_SEPARATOR . '.env'
-                );
-            } else {
-                throw new \Exception("No se encontró archivo .env o .env.example para copiar");
-            }
-
             // Configurar el .env para esta empresa
             $this->configureEnvFile($targetDir, $company);
 
@@ -232,18 +217,6 @@ class CompanyController extends Controller
 
     private function copyDirectoryContents($source, $destination)
     {
-        $excludedPaths = [
-            'deploy',
-            '.git',
-            'node_modules',
-            'vendor',
-            'storage/logs',
-            'storage/framework/cache',
-            '.env',
-            '.env.example',
-            '.gitignore'
-        ];
-
         // Crear el directorio destino si no existe
         if (!File::exists($destination)) {
             File::makeDirectory($destination, 0755, true);
@@ -257,27 +230,17 @@ class CompanyController extends Controller
             // Obtener la ruta relativa
             $relativePath = substr($item->getPathname(), strlen($source) + 1);
 
-            // Verificar si el archivo/directorio debe ser excluido
-            $shouldExclude = false;
-            foreach ($excludedPaths as $excludedPath) {
-                if (str_starts_with($relativePath, $excludedPath)) {
-                    $shouldExclude = true;
-                    break;
+            // Copiar archivo o directorio
+            if ($item->isDir()) {
+                // Crear directorio en destino
+                $targetDir = $destination . DIRECTORY_SEPARATOR . $relativePath;
+                if (!File::exists($targetDir)) {
+                    File::makeDirectory($targetDir, 0755, true);
                 }
-            }
-
-            if (!$shouldExclude) {
-                if ($item->isDir()) {
-                    // Crear directorio en destino
-                    $targetDir = $destination . DIRECTORY_SEPARATOR . $relativePath;
-                    if (!File::exists($targetDir)) {
-                        File::makeDirectory($targetDir, 0755, true);
-                    }
-                } else {
-                    // Copiar archivo
-                    $targetFile = $destination . DIRECTORY_SEPARATOR . $relativePath;
-                    File::copy($item->getPathname(), $targetFile);
-                }
+            } else {
+                // Copiar archivo
+                $targetFile = $destination . DIRECTORY_SEPARATOR . $relativePath;
+                File::copy($item->getPathname(), $targetFile);
             }
         }
 

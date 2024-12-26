@@ -1,4 +1,5 @@
 import { Links } from '@components/Links';
+import { roleDisplayNames } from '@/Utils/constants';
 
 export default function Authenticated({ auth, user, role, children }) {
     const { roles } = auth
@@ -14,7 +15,7 @@ export default function Authenticated({ auth, user, role, children }) {
                         <span className='font-semibold'>Usuario:</span>
                         <p className='mb-3 text-lg font-bold uppercase'>{user.username}</p>
                         <span className='font-semibold'>Rol:</span>
-                        <p className='mb-3 text-lg font-bold uppercase'>{role}</p>
+                        <p className='mb-3 text-lg font-bold uppercase'>{roleDisplayNames[role]}</p>
                         <hr />
                     </div>
                     <Links role={role} roles={roles} />

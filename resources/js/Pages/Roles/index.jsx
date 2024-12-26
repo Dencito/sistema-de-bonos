@@ -4,12 +4,13 @@ import useBranchValidateSchedules from '@/Hooks/useBranchValidateSchedules';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Table } from 'antd';
+import { allowedRoles } from '@/Utils/constants';
 const { Column } = Table;
 
 export default function RolePage({ auth, roles }) {
     const canLogin = useBranchValidateSchedules(auth?.branch?.shifts);
 
-    if (!canLogin && (auth?.role !== "Dueño" && auth?.role !== "Super Admin" && auth?.role !== "Admin")) {
+    if (!canLogin && allowedRoles.allowedDuringWorkHours.includes(auth?.role)) {
         return <div className="flex justify-center items-center min-h-screen">
             <Head title="Roles" />
             <h1 className='text-3xl font-bold'>Usted esta fuera de su horario laboral</h1>

@@ -3,6 +3,7 @@ import { Form, Input, Checkbox, Button, Alert } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
+import { roleNames } from '@/Utils/constants';
 
 export default function Login({ status, auth }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -27,7 +28,7 @@ export default function Login({ status, auth }) {
     const submit = () => {
         if (auth?.users === 0) {
             const { login: username, password} = data
-            return handleCreateOwner({ username, password,  role: 'Dueño'  })
+            return handleCreateOwner({ username, password,  role: roleNames.duenio }) 
         } else {
             post(route('login')); // No es necesario llamar a e.preventDefault()
         }

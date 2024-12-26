@@ -14,6 +14,7 @@ import ExcelManager from "@/Components/Users/ExcelManager";
 import { CustomTable } from "@components-v2/CustomTable";
 import { SelectAssignCategories } from "@/Components/CategoriesBonus/SelectAssignCategories";
 import { SelectAssignBonuses } from "@/Components/Bonus/SelectAssignBonuses";
+import { roleDisplayNames } from "@/Utils/constants";
 
 export default function UserPage({
     auth,
@@ -33,7 +34,6 @@ export default function UserPage({
         role: filters.role || "",
     };
     const { data } = useForm(InitForm);
-
     const rowSelection = {
         selectedRowKeys,
         onChange: setSelectedRowKeys,
@@ -41,7 +41,7 @@ export default function UserPage({
 
 
     const columns = {
-        'Super Admin': [
+        'super-admin': [
             {
                 title: "Nombre de usuario",
                 dataIndex: "username",
@@ -101,7 +101,7 @@ export default function UserPage({
                 ),
             },
         ],
-        'Admin': [
+        'admin': [
             {
                 title: "Nombre de usuario",
                 dataIndex: "username",
@@ -145,7 +145,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {user?.roles[0]?.name}
+                        {roleDisplayNames[user?.roles[0]?.name]}
                     </p>
                 ),
             },
@@ -175,7 +175,7 @@ export default function UserPage({
                 ),
             },
         ],
-        'Supervisor': [
+        'supervisor': [
             {
                 title: "Nombre de usuario",
                 dataIndex: "username",
@@ -228,7 +228,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {user?.roles[0]?.name}
+                        {roleDisplayNames[user?.roles[0]?.name]}
                     </p>
                 ),
             },
@@ -258,7 +258,7 @@ export default function UserPage({
                 ),
             },
         ],
-        'Trabajador': [
+        'trabajador': [
             {
                 title: "Nombre de usuario",
                 dataIndex: "username",
@@ -320,7 +320,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {user?.roles[0]?.name}
+                        {roleDisplayNames[user?.roles[0]?.name]}
                     </p>
                 ),
             },
@@ -350,7 +350,7 @@ export default function UserPage({
                 ),
             },
         ],
-        'Jugador': [
+        'jugador': [
             {
                 title: "Nombres",
                 key: "names",
@@ -411,7 +411,7 @@ export default function UserPage({
                     );
 
                     return (
-                        <Dropdown overlay={menu} placement="bottomLeft" arrow>
+                        <Dropdown menu={menu} placement="bottomLeft" arrow>
                             <p className="font-bold rounded-lg p-1">
                                 Sucursales <DownOutlined />
                             </p>
@@ -443,7 +443,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {user?.roles[0]?.name}
+                        {roleDisplayNames[user?.roles[0]?.name]}
                     </p>
                 ),
             },
@@ -490,7 +490,7 @@ export default function UserPage({
             <header className="flex items-center justify-between bg-white p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className="text-4xl font-bold">
-                    {data.role || "Todos los usuarios"}
+                    {roleDisplayNames[data.role] || "Todos los usuarios"}
                 </h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
@@ -503,8 +503,8 @@ export default function UserPage({
                                 roles={roles}
                             />
                             <div className="flex gap-5">
-                                {data?.role === 'Jugador' && <ModalCreateBonus />}
-                                {(data?.role && (data.role !== 'Supervisor' && auth.role !== 'Trabajador')) && (
+                                {roleDisplayNames[data?.role] && <ModalCreateBonus />}
+                                {(data?.role && (data.role !== roleDisplayNames.jugador.toLowerCase() && auth.role !== roleDisplayNames.jugador.toLowerCase() && auth.role !== roleDisplayNames.trabajador.toLowerCase())) && (
                                     <ModalCreateUser
                                         userType={data?.role}
                                         states={states}
@@ -535,7 +535,7 @@ export default function UserPage({
                                 categories={categories}
                                 selectedRowKeys={selectedRowKeys}
                             />
-                            {data?.role === 'Jugador' && <SelectAssignBonuses
+                            {data?.role === roleDisplayNames.trabajador.toLowerCase() && <SelectAssignBonuses
                                 setSelectedRowKeys={setSelectedRowKeys}
                                 bonuses={bonuses}
                                 selectedRowKeys={selectedRowKeys}

@@ -276,7 +276,7 @@ class CompanyController extends Controller
 
         // Reemplazar valores
         $replacements = [
-            'DB_DATABASE' => 'tenant_' . $company->slug,
+            //'DB_DATABASE' => 'tenant_' . $company->slug,
             'APP_URL' => 'https://' . $company->domain,
             'SESSION_DOMAIN' => $company->domain,
             'SANCTUM_STATEFUL_DOMAINS' => $company->domain

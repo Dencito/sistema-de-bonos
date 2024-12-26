@@ -13,11 +13,21 @@ use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use App\Services\GoDaddyService;
+use App\Services\CpanelService;
 
 class CompanyController extends Controller
 {
     private $baseDirectory = 'companies';
     private $excludedDirs = ['deploy'];
+    protected $godaddyService;
+    protected $cpanelService;
+
+    public function __construct(GoDaddyService $godaddyService, CpanelService $cpanelService)
+    {
+        $this->godaddyService = $godaddyService;
+        $this->cpanelService = $cpanelService;
+    }
 
     /**
      * Display a listing of the resource.
@@ -105,23 +115,23 @@ class CompanyController extends Controller
             ], 400);
         }
 
-        // Verificar si ya existe una empresa con el mismo nombre
-        $existingCompany = $this->getCompanyByName($request->name);
-        if ($existingCompany) {
-            return response()->json([
-                'message' => 'Ya existe una empresa con este nombre',
-                'status' => 400
-            ], 400);
-        }
+            // Verificar si ya existe una empresa con el mismo nombre
+            $existingCompany = $this->getCompanyByName($request->name);
+            if ($existingCompany) {
+                return response()->json([
+                    'message' => 'Ya existe una empresa con este nombre',
+                    'status' => 400
+                ], 400);
+            }
 
-        // Verificar si ya existe una empresa con el mismo RUT
-        $existingRut = $this->getRutByRutNumbers($request->rutNumbers);
-        if ($existingRut) {
-            return response()->json([
-                'message' => 'Ya existe una empresa con este RUT',
-                'status' => 400
-            ], 400);
-        }
+            // Verificar si ya existe una empresa con el mismo RUT
+            $existingRut = $this->getRutByRutNumbers($request->rutNumbers);
+            if ($existingRut) {
+                return response()->json([
+                    'message' => 'Ya existe una empresa con este RUT',
+                    'status' => 400
+                ], 400);
+            }
 
         try {
             // Preparar los datos de la empresa
@@ -134,16 +144,21 @@ class CompanyController extends Controller
             $data['settings'] = json_encode([]); // Agregar settings vacío
             $data['is_active'] = true; // Activar la empresa por defecto
 
-            // Crear la empresa
             $company = Company::create($data);
             
             // Crear directorio y configurar dominio
             $domain = $this->createCompanyDirectory($company);
 
+            // Crear el subdominio en GoDaddy
+            $subdomain = Str::slug($request->name) . '.alimentacion.mx';
+            $this->godaddyService->createSubdomain($request->name);
+
+            // Crear el subdominio en cPanel
+            $this->cpanelService->createSubdomain($request->name);
+
             return response()->json([
                 'message' => 'Empresa creada exitosamente',
                 'company' => $company,
-                'domain' => $domain
             ]);
 
         } catch (\Exception $e) {
@@ -158,8 +173,9 @@ class CompanyController extends Controller
     private function createCompanyDirectory(Company $company)
     {
         // Crear el slug de la empresa
+        $domain = env('GODADDY_DOMAIN');
         $slug = $company->slug;
-        $domain = "{$slug}.rentamania.cl";
+        $domain = "{$slug}.{$domain}";
         $company->domain = $domain;
         $company->save();
 

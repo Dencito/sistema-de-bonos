@@ -14,6 +14,13 @@ return [
     |
     */
 
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -35,4 +42,17 @@ return [
         ],
     ],
 
+    'godaddy' => [
+        'api_key' => env('GODADDY_API_KEY'),
+        'api_secret' => env('GODADDY_API_SECRET'),
+        'domain' => env('GODADDY_DOMAIN'),
+        'server_ip' => env('GODADDY_SERVER_IP'),
+    ],
+
+    'cpanel' => [
+        'username' => env('CPANEL_USERNAME'),
+        'token' => env('CPANEL_TOKEN'),
+        'domain' => env('CPANEL_DOMAIN'),
+        'host' => env('CPANEL_HOST'),
+    ],
 ];

@@ -14,12 +14,12 @@ return new class extends Migration
     public function up(): void
     {
         // Crear roles y asignar permisos
-        $owner = Role::create(['name' => 'Dueño']);
-        $superAdmin = Role::create(['name' => 'Super Admin']);
-        $admin = Role::create(['name' => 'Admin']);
-        $supervisor = Role::create(['name' => 'Supervisor']);
-        $worker = Role::create(['name' => 'Trabajador']);
-        $player = Role::create(['name' => 'Jugador']);
+        $owner = Role::create(['name' => 'duenio']);
+        $superAdmin = Role::create(['name' => 'super-admin']);
+        $admin = Role::create(['name' => 'admin']);
+        $supervisor = Role::create(['name' => 'supervisor']);
+        $worker = Role::create(['name' => 'trabajador']);
+        $player = Role::create(['name' => 'jugador']);
     }
 
     /**

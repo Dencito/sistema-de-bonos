@@ -1,4 +1,4 @@
-import { MobileButton } from '@/Components/MobileButton';
+import MobileButton  from '@/Components/MobileButton';
 import ModalViewBranchStatuses from '@/Components/Statuses/ModalViewBranchStatuses';
 import ModalViewUserStatuses from '@/Components/Statuses/ModalViewUserStatuses';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';

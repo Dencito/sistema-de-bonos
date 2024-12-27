@@ -11,7 +11,7 @@ import FilterModal from '@/Components/Companies/FilterModal';
 const { Column } = Table;
 
 
-export default function CompanyPage({ auth, companies, states, filters }) {
+export default function CompanyPage({ auth, companies, statuses, filters }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -30,7 +30,7 @@ export default function CompanyPage({ auth, companies, states, filters }) {
                 <div className="w-full">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">
-                            <FilterModal filters={filters} states={states}/>
+                            <FilterModal filters={filters} statuses={statuses}/>
                             <ModalCreateCompany />
                         </div>
                         <Table className='overflow-auto' dataSource={companies.map(company => ({ ...company, key: company.id }))}>
@@ -46,11 +46,11 @@ export default function CompanyPage({ auth, companies, states, filters }) {
                                     </div>
                                 )}
                             />
-                            <Column title="Estado" key="state" render={(_, company) => (
-                                <div className={`${company?.state?.name === 'Activo' && 'bg-green-300' ||
-                                    company?.state?.name === 'Inactivo' && 'bg-red-200' ||
-                                    company?.state?.name === 'En revisión' && 'bg-orange-300' ||
-                                    company?.state?.name === 'Borrado' && 'bg-red-400'
+                            <Column title="Estado" key="status" render={(_, company) => (
+                                <div className={`${company?.status?.name === 'Activo' && 'bg-green-300' ||
+                                    company?.status?.name === 'Inactivo' && 'bg-red-200' ||
+                                    company?.status?.name === 'En revisión' && 'bg-orange-300' ||
+                                    company?.status?.name === 'Borrado' && 'bg-red-400'
                                     } font-bold rounded-full text-center p-1 w-6 h-6`}></div>
                             )} />
                             <Column

@@ -17,7 +17,7 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Define the model's default status.
      *
      * @return array<string, mixed>
      */
@@ -37,7 +37,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->status(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
     }

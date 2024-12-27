@@ -4,9 +4,8 @@ import { EyeOutlined } from "@ant-design/icons";
 import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { days } from "./days";
 
-export default function ModalViewBranch({ data, states, companies }) {
+export default function ModalViewBranch({ data, statuses, companies }) {
   const [showModal, setShowModal] = useState(false);
-  // const [selectedDays, setSelectedDays] = useState(data?.available_bonus_days?.map((bonusDays) => bonusDays.day));
 
   const [form] = Form.useForm();
   //change later
@@ -25,19 +24,31 @@ export default function ModalViewBranch({ data, states, companies }) {
       <Button onClick={handleOpenModal} icon={<EyeOutlined />} />
       <Modal
         style={{ top: 20 }}
-        title={<p className="text-bold text-3xl">Datos de {data?.name}</p>}
+        title={<p className="text-bold text-3xl">Ver sucursal</p>}
         open={showModal}
         cancelText="Cerrar"
-        onCancel={handleCloseModal}
-        destroyOnClose
-        okButtonProps={{ style: { display: 'none' } }}
+        onCancel={() => handleCloseModal()}
+        destroyOnClose={true}
+        okButtonProps={{
+          style: {
+            display: 'none',
+          },
+        }}
         modalRender={(dom) => (
           <Form
             layout="vertical"
             form={form}
             disabled
             name="form_in_modal"
-            initialValues={data}
+            initialValues={{
+              name: data?.name,
+              company_id: data?.company_id,
+              status_id: data?.status_id,
+              branchAddressStreet: data?.branchAddressStreet,
+              branchAddressNumber: data?.branchAddressNumber,
+              branchAddressLocal: data?.branchAddressLocal,
+              branchAddressDeptOrHouse: data?.branchAddressDeptOrHouse,
+            }}
             clearOnDestroy
           >
             {dom}
@@ -63,11 +74,11 @@ export default function ModalViewBranch({ data, states, companies }) {
             ))}
           </Select>
         </Form.Item>
-        <Form.Item name="state_id" label="Seleccione el estado" rules={[{ required: true, message: getValidationRequiredMessage }]}>
+        <Form.Item name="status_id" label="Seleccione el estado" rules={[{ required: true, message: getValidationRequiredMessage }]}>
           <Select showSearch placeholder="Seleccione el estado">
-            {states?.map((state) => (
-              <Select.Option key={state?.id} value={state?.id}>
-                {state?.name}
+            {statuses?.map((status) => (
+              <Select.Option key={status?.id} value={status?.id}>
+                {status?.name}
               </Select.Option>
             ))}
           </Select>

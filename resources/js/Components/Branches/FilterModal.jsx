@@ -4,11 +4,11 @@ import { useState } from "react";
 
 const { Option } = Select;
 
-export default function FilterModal({ filters, states }) {
+export default function FilterModal({ filters, statuses }) {
     const [showModal, setShowModal] = useState(false);
     const InitForm = {
         name: filters.name || "",
-        state: filters.state || "",
+        status: filters.status || "",
     };
     const { data, setData, get } = useForm(InitForm);
 
@@ -66,17 +66,17 @@ export default function FilterModal({ filters, states }) {
                         />
                     </div>
                     <div>
-                        <label htmlFor="state">Estado </label>
+                        <label htmlFor="status">Estado </label>
                         <Select
                             className="w-60"
-                            id="state"
-                            value={data.state}
-                            onChange={(value) => setData("state", value)}
+                            id="status"
+                            value={data.status}
+                            onChange={(value) => setData("status", value)}
                             placeholder="Seleccione un estado"
                         >
-                            {states.map((state) => (
-                                <Option key={state.id} value={state.name}>
-                                    {state.name}
+                            {statuses.map((status) => (
+                                <Option key={status.id} value={status.name}>
+                                    {status.name}
                                 </Option>
                             ))}
                         </Select>

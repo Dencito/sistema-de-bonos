@@ -27,8 +27,8 @@ class Branch extends Model
         'branchAddressNumber',
         'branchAddressLocal',
         'branchAddressDeptOrHouse',
-        'state_id',
-        'company_id'
+        'company_id',
+        'status_id'
     ];
 
     public function shifts()
@@ -61,8 +61,8 @@ class Branch extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function state()
+    public function status()
     {
-        return $this->belongsTo(State::class);
+        return $this->belongsTo(Status::class);
     }
 }

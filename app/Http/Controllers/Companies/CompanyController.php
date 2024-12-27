@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Companies;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\State;
+use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -45,24 +45,24 @@ class CompanyController extends Controller
             $request->name = $companySelectSession;
         }
 
-        $companies = Company::with(['branches','state'])
+        $companies = Company::with(['branches','status'])
             ->when($request->name, function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })
-            ->when($request->state, function ($query, $state) {
-                $query->whereHas('state', function ($q) use ($state) {
-                    $q->where('name', $state);
+            ->when($request->status, function ($query, $status) {
+                $query->whereHas('status', function ($q) use ($status) {
+                    $q->where('name', $status);
                 });
             })
             ->get();
 
-        $states = State::where('name', '!=', 'En revisión')->get();
+        $statuses = Status::where('name', '!=', 'En revisión')->get();
 
         $data = [
             'companies' => $companies,
-            'states' => $states,
+            'statuses' => $statuses,
             'total' => $companies->count(),
-            'filters' => $request->only(['name', 'state'])
+            'filters' => $request->only(['name', 'status'])
         ];
 
         return Inertia::render('Companies/index', $data);

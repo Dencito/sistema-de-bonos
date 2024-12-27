@@ -22,7 +22,7 @@ export default function UserPage({
     roles,
     branches,
     companies,
-    states,
+    statuses,
     categories,
     bonuses,
     filters,
@@ -30,7 +30,7 @@ export default function UserPage({
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
         username: filters.username || "",
-        state: filters.state || "",
+        status: filters.status || "",
         role: filters.role || "",
     };
     const { data } = useForm(InitForm);
@@ -49,16 +49,16 @@ export default function UserPage({
             },
             {
                 title: "Estado",
-                key: "state",
+                key: "status",
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.state?.name === "Activo"
+                        className={`${branch?.status?.name === "Activo"
                             ? "bg-green-300"
-                            : branch?.state?.name === "Inactivo"
+                            : branch?.status?.name === "Inactivo"
                                 ? "bg-red-200"
-                                : branch?.state?.name === "En revisión"
+                                : branch?.status?.name === "En revisión"
                                     ? "bg-orange-300"
-                                    : branch?.state?.name === "Borrado"
+                                    : branch?.status?.name === "Borrado"
                                         ? "bg-red-400"
                                         : ""
                             } 
@@ -81,7 +81,7 @@ export default function UserPage({
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -89,7 +89,7 @@ export default function UserPage({
                             userType={data?.role}
                         />
                         <ModalEditUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -123,16 +123,16 @@ export default function UserPage({
             },
             {
                 title: "Estado",
-                key: "state",
+                key: "status",
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.state?.name === "Activo"
+                        className={`${branch?.status?.name === "Activo"
                             ? "bg-green-300"
-                            : branch?.state?.name === "Inactivo"
+                            : branch?.status?.name === "Inactivo"
                                 ? "bg-red-200"
-                                : branch?.state?.name === "En revisión"
+                                : branch?.status?.name === "En revisión"
                                     ? "bg-orange-300"
-                                    : branch?.state?.name === "Borrado"
+                                    : branch?.status?.name === "Borrado"
                                         ? "bg-red-400"
                                         : ""
                             } 
@@ -155,7 +155,7 @@ export default function UserPage({
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -163,7 +163,7 @@ export default function UserPage({
                             userType={data?.role}
                         />
                         <ModalEditUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -206,16 +206,16 @@ export default function UserPage({
             },
             {
                 title: "Estado",
-                key: "state",
+                key: "status",
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.state?.name === "Activo"
+                        className={`${branch?.status?.name === "Activo"
                             ? "bg-green-300"
-                            : branch?.state?.name === "Inactivo"
+                            : branch?.status?.name === "Inactivo"
                                 ? "bg-red-200"
-                                : branch?.state?.name === "En revisión"
+                                : branch?.status?.name === "En revisión"
                                     ? "bg-orange-300"
-                                    : branch?.state?.name === "Borrado"
+                                    : branch?.status?.name === "Borrado"
                                         ? "bg-red-400"
                                         : ""
                             } 
@@ -238,7 +238,7 @@ export default function UserPage({
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -246,7 +246,7 @@ export default function UserPage({
                             userType={data?.role}
                         />
                         <ModalEditUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -298,16 +298,16 @@ export default function UserPage({
             },
             {
                 title: "Estado",
-                key: "state",
+                key: "status",
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.state?.name === "Activo"
+                        className={`${branch?.status?.name === "Activo"
                             ? "bg-green-300"
-                            : branch?.state?.name === "Inactivo"
+                            : branch?.status?.name === "Inactivo"
                                 ? "bg-red-200"
-                                : branch?.state?.name === "En revisión"
+                                : branch?.status?.name === "En revisión"
                                     ? "bg-orange-300"
-                                    : branch?.state?.name === "Borrado"
+                                    : branch?.status?.name === "Borrado"
                                         ? "bg-red-400"
                                         : ""
                             } 
@@ -330,7 +330,7 @@ export default function UserPage({
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -338,7 +338,7 @@ export default function UserPage({
                             userType={data?.role}
                         />
                         <ModalEditUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -421,16 +421,16 @@ export default function UserPage({
             },
             {
                 title: "Estado",
-                key: "state",
+                key: "status",
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.state?.name === "Activo"
+                        className={`${branch?.status?.name === "Activo"
                             ? "bg-green-300"
-                            : branch?.state?.name === "Inactivo"
+                            : branch?.status?.name === "Inactivo"
                                 ? "bg-red-200"
-                                : branch?.state?.name === "En revisión"
+                                : branch?.status?.name === "En revisión"
                                     ? "bg-orange-300"
-                                    : branch?.state?.name === "Borrado"
+                                    : branch?.status?.name === "Borrado"
                                         ? "bg-red-400"
                                         : ""
                             } 
@@ -453,7 +453,7 @@ export default function UserPage({
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -461,7 +461,7 @@ export default function UserPage({
                             userType={data?.role}
                         />
                         <ModalEditUser
-                            states={states}
+                            statuses={statuses}
                             companies={companies}
                             branches={branches}
                             roles={roles}
@@ -499,7 +499,7 @@ export default function UserPage({
                         <div className="text-gray-900 my-3 flex items-center justify-between">
                             <FilterModal
                                 filters={filters}
-                                states={states}
+                                statuses={statuses}
                                 roles={roles}
                             />
                             <div className="flex gap-5">
@@ -507,7 +507,7 @@ export default function UserPage({
                                 {(data?.role && (data.role !== roleDisplayNames.jugador.toLowerCase() && auth.role !== roleDisplayNames.jugador.toLowerCase() && auth.role !== roleDisplayNames.trabajador.toLowerCase())) && (
                                     <ModalCreateUser
                                         userType={data?.role}
-                                        states={states}
+                                        statuses={statuses}
                                         companies={companies}
                                         roles={roles?.filter(
                                             (item) => item?.name === data?.role

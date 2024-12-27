@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Branch;
 use App\Models\Company;
-use App\Models\State;
+use App\Models\Status;
 use App\Models\Shift;
 use App\Models\ShiftSchedule;
 use App\Models\AvailableBonusDay; //shifts available bonus
@@ -49,18 +49,18 @@ class BranchController extends Controller
                 'name' => $company->name,
             ];
         });
-        $states = State::all();
+        $statuses = Status::all();
         
         if ($companies->isEmpty()) {
             abort(403, 'No tienes permiso para acceder a esta página. Debe existir al menos una empresa.');
         }
-        $branches = Branch::with(['shifts', 'users', 'shifts.schedules', 'availableBonusDays.schedules', 'state', 'company'])
+        $branches = Branch::with(['shifts', 'users', 'shifts.schedules', 'availableBonusDays.schedules', 'status', 'company'])
         ->when($request->name, function ($query, $name) {
             $query->where('name', 'like', "%{$name}%");
         })
-        ->when($request->state, function ($query, $state) {
-            $query->whereHas('state', function ($q) use ($state) {
-                $q->where('name', $state);
+        ->when($request->status, function ($query, $status) {
+            $query->whereHas('status', function ($q) use ($status) {
+                $q->where('name', $status);
             });
         })
         ->get();
@@ -69,10 +69,10 @@ class BranchController extends Controller
         
         $data = [
             'companies' => $companies,
-            'states' => $states,
+            'statuses' => $statuses,
             'branches' => $branches,
             'total' => $branches->count(),
-            'filters' => $request->only(['name', 'state'])
+            'filters' => $request->only(['name', 'status'])
         ];
         return Inertia::render('Branches/index', $data);
     }

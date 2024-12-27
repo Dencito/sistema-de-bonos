@@ -5,7 +5,7 @@ import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/
 import { CustomButton } from "@/components-v2/CustomButton";
 import { roleDisplayNames } from "@/Utils/constants";
 
-export default function ModalViewUser({data, states, roles, branches, userType}) {
+export default function ModalViewUser({data, statuses, roles, branches, userType}) {
   const [showModal, setShowModal] = useState(false);
   const [form] = Form.useForm();
 
@@ -42,13 +42,13 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           <Input.Password showCount maxLength={20} />
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -100,13 +100,13 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -177,8 +177,8 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -367,8 +367,8 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -512,13 +512,13 @@ export default function ModalViewUser({data, states, roles, branches, userType})
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

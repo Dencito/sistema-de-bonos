@@ -62,7 +62,7 @@ export const Links = ({ role, roles }) => {
                     key: '6',
                     icon: <SquareStack />,
                     label: 'Estados',
-                    link: '/states',
+                    link: '/statuses',
                     autorized: allowedRoles.status.includes(role)
                 },
                 {

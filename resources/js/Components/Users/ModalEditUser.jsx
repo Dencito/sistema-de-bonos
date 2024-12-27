@@ -9,7 +9,7 @@ import { CustomButton } from "@components-v2/CustomButton";
 import { validate } from "rut.js";
 import { differenceInYears } from 'date-fns';
 
-export default function ModalEditUser({ data, roles, branches, states, userType }) {
+export default function ModalEditUser({ data, roles, branches, statuses, userType }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
 
@@ -102,8 +102,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -160,8 +160,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -232,8 +232,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -446,8 +446,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -603,8 +603,8 @@ export default function ModalEditUser({ data, roles, branches, states, userType 
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el estado">
-            {states?.map(state => (
-              <Select.Option key={state.id} value={state.id}>{state.name}</Select.Option>
+            {statuses?.map(status => (
+              <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

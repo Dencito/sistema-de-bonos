@@ -39,14 +39,14 @@ class User extends Authenticatable
         'username',
         'password',
         'branch_id',
-        'state_id',
+        'status_id',
         'company_id',
         'category_bonus_id',
     ];
 
-    public function state()
+    public function status()
     {
-        return $this->belongsTo(State::class);
+        return $this->belongsTo(Status::class);
     }
 
     public function categoryBonus()

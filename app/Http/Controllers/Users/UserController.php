@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
-use App\Models\State;
+use App\Models\Status;
 use App\Models\CategoryBonus;
 use App\Models\Branch;
 use App\Models\Company;
@@ -22,7 +22,7 @@ class UserController extends Controller
     {
         $userRoleId = auth()->user()->roles->first()->id;
 
-        $users = User::with(['state', 'roles', 'bonuses', 'categoryBonus', 'branches', 'branch'])
+        $users = User::with(['status', 'roles', 'bonuses', 'categoryBonus', 'branches', 'branch'])
             ->when($request->username, function ($query, $username) {
                 $query->where('username', 'like', "%{$username}%");
             })
@@ -34,15 +34,15 @@ class UserController extends Controller
                     $q->where('name', $role);
                 });
             })
-            ->when($request->state, function ($query, $state) {
-                $query->whereHas('state', function ($q) use ($state) {
-                    $q->where('name', $state);
+            ->when($request->status, function ($query, $status) {
+                $query->whereHas('status', function ($q) use ($status) {
+                    $q->where('name', $status);
                 });
             })
             ->get();
 
         $roles = Role::where('id', '>', $userRoleId)->get();
-        $states = State::where('name', '!=', 'En revisión')->get();
+        $statuses = Status::where('name', '!=', 'En revisión')->get();
         $branches = Branch::with(['company'])->get()->map(function ($branch) {
             return [
                 'id' => $branch->id,
@@ -78,12 +78,12 @@ class UserController extends Controller
         return Inertia::render('Users/index', [
             'users' => $users,
             'roles' => $roles,
-            'states' => $states,
+            'statuses' => $statuses,
             'branches' => $branches,
             'companies' => $companies,
             'categories' => $categories,
             'bonuses' => $bonuses,
-            'filters' => $request->only(['username', 'role', 'state']),
+            'filters' => $request->only(['username', 'role', 'status']),
         ]);
     }
 
@@ -142,7 +142,7 @@ class UserController extends Controller
             'username' => 'nullable|string|unique:users,username',
             'password' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
-            'state_id' => 'nullable|exists:states,id',
+            'status_id' => 'nullable|exists:status,id',
             'category_bonus_id' => 'nullable|exists:category_bonuses,id',
             'role' => 'nullable|exists:roles,name',
             'branches' => 'nullable|array',
@@ -310,7 +310,7 @@ class UserController extends Controller
             'username' => 'nullable|string',
             'password' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
-            'state_id' => 'required|exists:states,id',
+            'status_id' => 'required|exists:status,id',
             'company_id' => 'nullable|exists:companies,id',
             'category_bonus_id' => 'nullable|exists:category_bonuses,id',
             'role' => 'nullable|string|exists:roles,name',

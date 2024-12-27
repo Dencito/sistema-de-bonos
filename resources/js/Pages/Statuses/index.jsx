@@ -1,12 +1,28 @@
 import { MobileButton } from '@/Components/MobileButton';
-import ModalViewBranchStates from '@/Components/States/ModalViewBranchStates';
-import ModalViewUserStates from '@/Components/States/ModalViewUserStates';
+import ModalViewBranchStatuses from '@/Components/Statuses/ModalViewBranchStatuses';
+import ModalViewUserStatuses from '@/Components/Statuses/ModalViewUserStatuses';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Table } from 'antd';
-const { Column } = Table;
 
-export default function StatePage({ auth, states }) {
+export default function StatusPage({ auth, statuses }) {
+    const columns = [
+        {
+            title: "Nombre",
+            dataIndex: "name",
+            key: "id"
+        },
+        {
+            title: "Acciones",
+            key: "actions",
+            render: (_, status) => (
+                <div className='flex flex-wrap gap-3'>
+                    <ModalViewUserStatuses data={status.users} status={status.name} />
+                    <ModalViewBranchStatuses data={status.branches} status={status.name} />
+                </div>
+            )
+        }
+    ];
     
     return (
         <AuthenticatedLayout
@@ -15,7 +31,7 @@ export default function StatePage({ auth, states }) {
             auth={auth}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">panel</h2>}
         >
-            <Head title="Sucursales" />
+            <Head title="Estados" />
             <header className="flex items-center justify-between bg-white p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className='text-4xl font-bold'>
@@ -27,19 +43,11 @@ export default function StatePage({ auth, states }) {
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-end">
                         </div>
-                        <Table className='overflow-auto' dataSource={states.map(state => ({ ...state, key: state.id }))}>
-                            <Column title="Nombre" dataIndex="name" key="id" />
-                            <Column
-                                title="Acciones"
-                                key="actions"
-                                render={(_, state) => (
-                                    <div className='flex flex-wrap gap-3'>
-                                        <ModalViewUserStates data={state.users} state={state.name} />
-                                        <ModalViewBranchStates data={state.branches} state={state.name} />
-                                    </div>
-                                )}
-                            />
-                        </Table>
+                        <Table 
+                            dataSource={statuses.map(status => ({ ...status, key: status.id }))}
+                            columns={columns}
+                            scroll={{ x: true }}
+                        />
                     </div>
                 </div>
             </div>

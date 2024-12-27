@@ -3,7 +3,7 @@ import { MobileButton } from '@/Components/MobileButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
-export default function BranchPage({ auth, branches, states, companies, filters }){ 
+export default function BranchPage({ auth, branches, statuses, companies, filters }){ 
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -20,7 +20,7 @@ export default function BranchPage({ auth, branches, states, companies, filters 
       </header>
       <div className='flex-1 overflow-auto p-4 z-10'>
         <div className="w-full">
-            <TableDataBranches filters={filters} auth={auth} branches={branches} states={states} companies={companies} />
+            <TableDataBranches filters={filters} auth={auth} branches={branches} statuses={statuses} companies={companies} />
         </div>
       </div>
     </AuthenticatedLayout>

@@ -134,7 +134,7 @@ export default function ModalViewCompany({ data }) {
         style={{ top: 20 }}
         title={<p className="text-bold text-3xl">Datos de {data?.name}</p>}
         open={showModal}
-        cancelText="Cancelar"
+        cancelText="Cerrar"
         onCancel={() => handleCloseModal()}
         destroyOnClose={true}
         okButtonProps={{ 

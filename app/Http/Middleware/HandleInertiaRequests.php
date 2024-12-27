@@ -93,7 +93,7 @@ class HandleInertiaRequests extends Middleware
 
         if ($user) {
             // Cargar relaciones del usuario
-            $user->load('branch.company', 'roles', 'state', 'company', 'categoryBonus', 'branches.company', 'branches.shifts.schedules');
+            $user->load('branch.company', 'roles', 'status', 'company', 'categoryBonus', 'branches.company', 'branches.shifts.schedules');
 /* 
             // Si el usuario no tiene un rol con ID 1, 2 o 3, asignar una compañía por defecto
             if (!in_array(1, $roleIds) && !in_array(2, $roleIds) && !in_array(3, $roleIds)) {
@@ -134,7 +134,7 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $roles = Role::where('id', '>', $userRoleId)->get(),
                 'companies' => $companies,
                 'create_more_branches' => $companies->first(),
-                'branch' => $user->branch_id ? Branch::with(['shifts', 'shifts.schedules', 'state'])
+                'branch' => $user->branch_id ? Branch::with(['shifts', 'shifts.schedules', 'status'])
                     ->where('id', $user->branch_id)
                     ->firstOrFail(): null,
                 'users' => $users,

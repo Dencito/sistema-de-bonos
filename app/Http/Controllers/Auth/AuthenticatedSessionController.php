@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        if ($user->state_id !== 1) {
+        if ($user->status_id !== 1) {
             Auth::logout();
             abort(403, 'Tu cuenta fue bloqueada o se encuentra eliminada.');
         }

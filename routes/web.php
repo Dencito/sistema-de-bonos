@@ -5,6 +5,7 @@ use App\Http\Controllers\Companies\CompanyController;
 use App\Http\Controllers\Branches\BranchController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\States\StateController;
+use App\Http\Controllers\Statuses\StatusController;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Bonuses\BonusController;
@@ -100,7 +101,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
     
-    Route::get('/states', [StateController::class, 'index'])->name('states.index');
+    Route::get('/statuses', [StatusController::class, 'index'])->name('statuses.index');
     
     Route::prefix('categories-bonus')->group(function() {
         Route::get('/', [CategoryBonusController::class, 'index'])->name('categoriesBonus.index');

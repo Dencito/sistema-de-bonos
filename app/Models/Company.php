@@ -38,7 +38,7 @@ class Company extends Model
         'companyAddressNumber',
         'max_branches',
         'db_name',
-        'state_id',
+        'status_id',
         'domain',
         'slug',
         'schema_name',
@@ -89,9 +89,9 @@ class Company extends Model
         return $this->subscription_ends_at && $this->subscription_ends_at->isFuture();
     }
 
-    public function state()
+    public function status()
     {
-        return $this->belongsTo(State::class);
+        return $this->belongsTo(Status::class);
     }
 
 }

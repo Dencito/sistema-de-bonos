@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
-import { Table } from '@/Utils/antd';
+import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 import FilterModal from '@/Components/Companies/FilterModal';
 
@@ -81,7 +81,7 @@ const columns = [
     }
 ];
 
-export default function CompanyPage({ auth, companies, states, filters }) {
+export default function CompanyPage({ auth, companies, statuses, filters }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -100,12 +100,12 @@ export default function CompanyPage({ auth, companies, states, filters }) {
                 <div className="w-full">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">
-                            <FilterModal filters={filters} states={states}/>
+                            <FilterModal filters={filters} statuses={statuses}/>
                             <Suspense fallback={<LoadingFallback />}>
                                 <LazyModalCreateCompany />
                             </Suspense>
                         </div>
-                        <Table 
+                        <CustomTable 
                             dataSource={companies.map(company => ({ ...company, key: company.id }))}
                             columns={columns}
                             scroll={{ x: true }}

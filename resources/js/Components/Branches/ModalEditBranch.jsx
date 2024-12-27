@@ -7,7 +7,7 @@ import { days } from "./days";
 import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { useMessage } from "@contexts/MessageShow";
 
-export default function ModalEditBranch({ data, states }) {
+export default function ModalEditBranch({ data, statuses }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const [isEditable, setIsEditable] = useState(false);
@@ -302,14 +302,14 @@ export default function ModalEditBranch({ data, states }) {
         </Form.Item>
 
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Seleccione el estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select showSearch placeholder="Seleccione el estado">
             {
-              states?.map(state => (
-                <Select.Option key={state?.id} value={state?.id}>{state?.name}</Select.Option>
+              statuses?.map(status => (
+                <Select.Option key={status?.id} value={status?.id}>{status?.name}</Select.Option>
               ))
             }
           </Select>

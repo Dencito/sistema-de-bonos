@@ -1,5 +1,5 @@
 import { TableDataBranches } from '@/Components/Branches/TableDataBranches';
-import { MobileButton } from '@/Components/MobileButton';
+import MobileButton from '@/Components/MobileButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 

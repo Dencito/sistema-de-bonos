@@ -9,7 +9,7 @@ import { Dropdown, Menu } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import ModalCreateBonus from "@/Components/Bonus/ModalCreateBonus";
 import FilterModal from "@/Components/Users/FilterModal";
-import { MobileButton } from "@/Components/MobileButton";
+import MobileButton from "@/Components/MobileButton";
 import ExcelManager from "@/Components/Users/ExcelManager";
 import { CustomTable } from "@components-v2/CustomTable";
 import { SelectAssignCategories } from "@/Components/CategoriesBonus/SelectAssignCategories";

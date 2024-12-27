@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CircleX, Menu } from 'lucide-react';
 import { Links } from './Links';
 
-export const MobileButton = ({role, roles}) => {
+export default function MobileButton({ role, roles }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {

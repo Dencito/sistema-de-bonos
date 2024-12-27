@@ -1,13 +1,17 @@
-import ModalCreateCompany from '@/Components/Companies/ModalCreateCompany';
-import ModalDeleteCompany from '@/Components/Companies/ModalDeleteCompany';
-import ModalEditCompany from '@/Components/Companies/ModalEditCompany';
-import ModalViewBranchesCompany from '@/Components/Companies/ModalViewBranchesCompany';
-import ModalViewCompany from '@/Components/Companies/ModalViewCompany';
+import { lazy, Suspense } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
-import { CustomTable } from '@/components-v2/CustomTable';
+import { Table } from '@/Utils/antd';
 import MobileButton from '@/Components/MobileButton';
 import FilterModal from '@/Components/Companies/FilterModal';
+
+const LazyModalCreateCompany = lazy(() => import('@/Components/Companies/ModalCreateCompany'));
+const LazyModalDeleteCompany = lazy(() => import('@/Components/Companies/ModalDeleteCompany'));
+const LazyModalEditCompany = lazy(() => import('@/Components/Companies/ModalEditCompany'));
+const LazyModalViewBranchesCompany = lazy(() => import('@/Components/Companies/ModalViewBranchesCompany'));
+const LazyModalViewCompany = lazy(() => import('@/Components/Companies/ModalViewCompany'));
+
+const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
 const columns = [
     {
@@ -18,7 +22,17 @@ const columns = [
     {
         title: "Dominio",
         dataIndex: "domain",
-        key: "domain"
+        key: "domain",
+        render: (domain) => (
+            <a 
+                href={`https://${domain}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-blue-700"
+            >
+                {domain}
+            </a>
+        )
     },
     {
         title: "Rut",
@@ -34,12 +48,11 @@ const columns = [
         title: "Sucursales",
         key: "branches",
         render: (_, company) => (
-            <div className="flex flex-wrap gap-3">
-                <ModalViewBranchesCompany data={company} />
-                <ModalViewCompany data={company} />
-                <ModalEditCompany data={company} />
-                <ModalDeleteCompany data={company} />
-            </div>
+            <Suspense fallback={<LoadingFallback />}>
+                <div className="flex flex-wrap gap-3">
+                    <LazyModalViewBranchesCompany company={company.name} data={company.branches} />
+                </div>
+            </Suspense>
         )
     },
     {
@@ -57,11 +70,13 @@ const columns = [
         title: "Acciones",
         key: "actions",
         render: (_, company) => (
-            <div className='flex flex-wrap gap-3'>
-                <ModalViewCompany data={company} />
-                <ModalEditCompany data={company} />
-                <ModalDeleteCompany data={company} />
-            </div>
+            <Suspense fallback={<LoadingFallback />}>
+                <div className='flex flex-wrap gap-3'>
+                    <LazyModalViewCompany data={company} />
+                    <LazyModalEditCompany data={company} />
+                    <LazyModalDeleteCompany data={company} />
+                </div>
+            </Suspense>
         )
     }
 ];
@@ -86,9 +101,11 @@ export default function CompanyPage({ auth, companies, states, filters }) {
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">
                             <FilterModal filters={filters} states={states}/>
-                            <ModalCreateCompany />
+                            <Suspense fallback={<LoadingFallback />}>
+                                <LazyModalCreateCompany />
+                            </Suspense>
                         </div>
-                        <CustomTable 
+                        <Table 
                             dataSource={companies.map(company => ({ ...company, key: company.id }))}
                             columns={columns}
                             scroll={{ x: true }}

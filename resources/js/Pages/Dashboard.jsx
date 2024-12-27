@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Head } from "@inertiajs/react";
-import { MobileButton } from "@components/MobileButton";
+import MobileButton from "@components/MobileButton";
 import PdfGenerator from "@components/PdfGenerator";
 import AuthenticatedLayout from "@layouts/AuthenticatedLayout";
 import { roleDisplayNames } from '@/Utils/constants';

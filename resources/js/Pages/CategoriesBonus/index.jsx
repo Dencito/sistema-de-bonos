@@ -3,7 +3,7 @@ import ModalDeleteCategoryBono from '@/Components/CategoriesBonus/ModalDeleteCat
 import ModalEditCategoryBono from '@/Components/CategoriesBonus/ModalEditCategoryBono';
 import ModalViewCategoryBono from '@/Components/CategoriesBonus/ModalViewCategoryBono';
 import ModalViewUserCategories from '@/Components/CategoriesBonus/ModalViewUserCategories';
-import { MobileButton } from '@/Components/MobileButton';
+import MobileButton from '@/Components/MobileButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Table } from 'antd';

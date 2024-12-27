@@ -1,4 +1,4 @@
-import { MobileButton } from '@/Components/MobileButton';
+import MobileButton from '@/Components/MobileButton';
 import ModalViewRole from '@/Components/Roles/ModalViewRole';
 import useBranchValidateSchedules from '@/Hooks/useBranchValidateSchedules';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';

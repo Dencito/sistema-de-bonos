@@ -1,4 +1,4 @@
-import { Table } from "antd";
+import { Table } from "@/Utils/antd";
 
 export function CustomTable({
     dataSource,

@@ -1,0 +1,14 @@
+export { default as Table } from 'antd/es/table';
+export { default as Modal } from 'antd/es/modal';
+export { default as Form } from 'antd/es/form';
+export { default as Input } from 'antd/es/input';
+export { default as Select } from 'antd/es/select';
+export { default as Button } from 'antd/es/button';
+export { default as message } from 'antd/es/message';
+export { default as notification } from 'antd/es/notification';
+export { default as ConfigProvider } from 'antd/es/config-provider';
+export { default as Card } from 'antd/es/card';
+export { default as Tabs } from 'antd/es/tabs';
+export { default as Layout } from 'antd/es/layout';
+export { default as Menu } from 'antd/es/menu';
+export { default as Grid } from 'antd/es/grid';

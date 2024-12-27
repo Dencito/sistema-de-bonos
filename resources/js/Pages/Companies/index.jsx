@@ -57,12 +57,12 @@ const columns = [
     },
     {
         title: "Estado",
-        key: "state",
+        key: "status",
         render: (_, company) => (
-            <div className={`${company?.state?.name === 'Activo' && 'bg-green-300' ||
-                company?.state?.name === 'Inactivo' && 'bg-red-200' ||
-                company?.state?.name === 'En revisión' && 'bg-orange-300' ||
-                company?.state?.name === 'Borrado' && 'bg-red-400'
+            <div className={`${company?.status?.name === 'Activo' && 'bg-green-300' ||
+                company?.status?.name === 'Inactivo' && 'bg-red-200' ||
+                company?.status?.name === 'En revisión' && 'bg-orange-300' ||
+                company?.status?.name === 'Borrado' && 'bg-red-400'
                 } font-bold rounded-full text-center p-1 w-6 h-6`}></div>
         )
     },

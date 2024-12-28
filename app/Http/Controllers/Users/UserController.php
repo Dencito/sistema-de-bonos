@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Role;
+use App\Models\User;
+use App\Models\Role;
 use App\Models\Status;
 use App\Models\CategoryBonus;
 use App\Models\Branch;
@@ -15,22 +15,21 @@ use App\Models\Bonus;
 use App\Models\UserBranches;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $userRoleId = auth()->user()->roles->first()->id;
+        $user = auth()->user();
 
-        $users = User::with(['status', 'roles', 'bonuses', 'categoryBonus', 'branches', 'branch'])
+        $users = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch'])
             ->when($request->username, function ($query, $username) {
                 $query->where('username', 'like', "%{$username}%");
             })
-            ->whereDoesntHave('roles', function ($query) {
-                $query->where('id', 1);
-            })
+            ->where('role_id', '>', 1)  // Exclude role ID 1 (duenio)
             ->when($request->role, function ($query, $role) {
-                $query->whereHas('roles', function ($q) use ($role) {
+                $query->whereHas('role', function ($q) use ($role) {
                     $q->where('name', $role);
                 });
             })
@@ -41,7 +40,7 @@ class UserController extends Controller
             })
             ->get();
 
-        $roles = Role::where('id', '>', $userRoleId)->get();
+        $roles = Role::where('id', '>', $user->role_id)->get();
         $statuses = Status::where('name', '!=', 'En revisión')->get();
         $branches = Branch::with(['company'])->get()->map(function ($branch) {
             return [
@@ -51,29 +50,9 @@ class UserController extends Controller
             ];
         });
 
-        $companies = Company::all()->map(function ($company) {
-            return [
-                'id' => $company->id,
-                'name' => $company->name,
-            ];
-        });
-
-        if ($companies->isEmpty()) {
-            abort(403, 'No tienes permiso para acceder a esta página. Debe existir al menos una empresa.');
-        }
-
-        $categories = CategoryBonus::all()->map(function ($company) {
-            return [
-                'id' => $company->id,
-                'name' => $company->name,
-            ];
-        });
-        $bonuses = Bonus::all()->map(function ($bonus) {
-            return [
-                'id' => $bonus->id,
-                'name' => $bonus->name,
-            ];
-        });
+        $companies = Company::select('id', 'name')->get();
+        $categories = CategoryBonus::select('id', 'name')->get();
+        $bonuses = Bonus::select('id', 'name')->get();
 
         return Inertia::render('Users/index', [
             'users' => $users,
@@ -83,7 +62,7 @@ class UserController extends Controller
             'companies' => $companies,
             'categories' => $categories,
             'bonuses' => $bonuses,
-            'filters' => $request->only(['username', 'role', 'status']),
+            'filters' => $request->only(['username', 'status', 'role']),
         ]);
     }
 
@@ -144,7 +123,7 @@ class UserController extends Controller
             'branch_id' => 'nullable|exists:branches,id',
             'status_id' => 'nullable|exists:status,id',
             'category_bonus_id' => 'nullable|exists:category_bonuses,id',
-            'role' => 'nullable|exists:roles,name',
+            'role' => 'nullable|string|exists:roles,name',
             'branches' => 'nullable|array',
             'branches.*' => 'nullable|exists:branches,id',
         ]);
@@ -153,6 +132,13 @@ class UserController extends Controller
         
         DB::beginTransaction();
         try {
+            // Get role_id from role name
+            $role = Role::where('name', $request->role)->first();
+            if (!$role) {
+                DB::rollBack();
+                return response()->json(['message' => 'Rol no válido', 'error' => true], 400);
+            }
+
             $company = Company::first();
             // Comenzar una transacción para asegurar atomicidad
             $user = User::create([
@@ -177,13 +163,12 @@ class UserController extends Controller
                 'username' => $request->username,
                 'password' => $request->password ? Hash::make($request->password) : null,
                 'branch_id' => $request->branch_id,
-                'state_id' => 1,
+                'status_id' => 1,
                 'company_id' => $company ? $company->id : null,
                 'category_bonus_id' => $request->category_bonus_id,
+                'role_id' => $role->id,
             ]);
             
-            $user->assignRole($request->role);
-
             $userId = $user->id;
             if($request->branches) {
                 $branchIds = $request->branches;
@@ -231,10 +216,10 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         // Obtener el ID del rol del usuario autenticado
-        $userRoleId = auth()->user()->roles->first()->id;
+        $userRoleId = auth()->user()->role_id;
 
         // Verificar que el rol del usuario a eliminar no sea mayor o igual al rol del usuario autenticado
-        $userRoleIdToUpdate = $user->roles->first()->id;
+        $userRoleIdToUpdate = $user->role_id;
 
         if ($userRoleIdToUpdate <= $userRoleId) {
             return response()->json([
@@ -340,12 +325,11 @@ class UserController extends Controller
             'username' => $request->username,
             'password' => $request->filled('password') ? Hash::make($validatedData['password']) : $user->password,
             'branch_id' => $request->branch_id,
-            'state_id' => $request->state_id,
+            'status_id' => $request->status_id,
             'category_bonus_id' => $request->category_bonus_id,
+            'role_id' => Role::where('name', $request->role)->first()->id,
         ]);
 
-        $user->syncRoles([$validatedData['role']]);
-        
         if ($request->has('branches')) {
             $user->branches()->sync($request->branches);
         }
@@ -359,7 +343,7 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         // Obtener el ID del rol del usuario autenticado
-        $userRoleId = auth()->user()->roles->first()->id;
+        $userRoleId = auth()->user()->role_id;
 
         // Verificar que el usuario no se esté eliminando a sí mismo
         if ($user->id === auth()->id()) {
@@ -370,7 +354,7 @@ class UserController extends Controller
         }
 
         // Verificar que el rol del usuario a eliminar no sea mayor o igual al rol del usuario autenticado
-        $userRoleIdToDelete = $user->roles->first()->id;
+        $userRoleIdToDelete = $user->role_id;
 
         if ($userRoleIdToDelete <= $userRoleId) {
             return response()->json([

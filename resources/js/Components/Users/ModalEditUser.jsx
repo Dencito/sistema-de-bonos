@@ -9,7 +9,7 @@ import { CustomButton } from "@components-v2/CustomButton";
 import { validate } from "rut.js";
 import { differenceInYears } from 'date-fns';
 
-export default function ModalEditUser({ data, roles, branches, statuses, userType }) {
+export default function ModalEditUser({ data, roles, branches, statuses, userType, roleDisplayNames }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
 
@@ -97,7 +97,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           <Input.Password showCount maxLength={20} />
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -110,12 +110,12 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -155,7 +155,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -168,12 +168,12 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -227,7 +227,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -240,12 +240,12 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -441,7 +441,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -454,12 +454,12 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
             {roles.filter(role => role?.name !== "Jugador")?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -598,7 +598,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -611,12 +611,12 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select disabled placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

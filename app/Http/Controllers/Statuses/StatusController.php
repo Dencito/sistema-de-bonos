@@ -16,9 +16,7 @@ class StatusController extends Controller
         }
         
         $statuses = Status::with(['users' => function ($query) {
-            $query->whereDoesntHave('roles', function ($q) {
-                $q->where('id', 1);
-            });
+            $query->where('role_id', '!=', 1);
         }, 'branches', 'companies'])
         ->get();
 

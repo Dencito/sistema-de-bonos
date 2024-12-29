@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\State;
+use App\Models\Status;
 
 return new class extends Migration
 {
@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('states', function (Blueprint $table) {
+        Schema::create('statuses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->timestamps();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('db_name')->nullable();
-            $table->foreignId('state_id')->constrained('states')->onDelete('cascade');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -39,7 +39,7 @@ return new class extends Migration
             $table->string('branchAddressNumber');
             $table->string('branchAddressLocal')->nullable();
             $table->string('branchAddressDeptOrHouse')->nullable();
-            $table->foreignId('state_id')->constrained('states')->onDelete('cascade');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
             $table->timestamps();
         });
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('password');
             $table->rememberToken();
-            $table->foreignId('state_id')->constrained('states')->onDelete('cascade');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('cascade');
             $table->timestamps();
         });
@@ -86,10 +86,10 @@ return new class extends Migration
             $table->integer('last_activity')->index();
         });
 
-        State::create(['name' => 'Activo']);
-        State::create(['name' => 'Inactivo']);
-        State::create(['name' => 'En revisión']);
-        State::create(['name' => 'Borrado']);
+        Status::create(['name' => 'Activo']);
+        Status::create(['name' => 'Inactivo']);
+        Status::create(['name' => 'En revisión']);
+        Status::create(['name' => 'Borrado']);
     }
 
     /**

@@ -118,7 +118,7 @@ class BranchController extends Controller
                 'branchAddressLocal' => $request->branchAddressLocal,
                 'branchAddressDeptOrHouse' => $request->branchAddressDeptOrHouse,
                 'company_id' => $request->company_id,
-                'state_id' => 1,
+                'status_id' => 1,
             ]);
     
             // Crear los turnos y horarios
@@ -182,7 +182,7 @@ class BranchController extends Controller
             'branchAddressNumber' => 'required|string',
             'branchAddressLocal' => 'nullable|string',
             'branchAddressDeptOrHouse' => 'nullable|string',
-            'state_id' => 'required|integer',
+            'status_id' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
@@ -209,7 +209,7 @@ class BranchController extends Controller
             return response()->json(['message' => 'El nombre de la sucursal ya existe', 'error' => true], 400);
         }
 
-        if (!auth()->user()->hasAnyRole(1) && ($branch->state_id !== $request->state_id)) {
+        if (!auth()->user()->hasAnyRole(1) && ($branch->status_id !== $request->status_id)) {
             abort(403, 'No tienes permiso para cambiar el estado.');
         }
 
@@ -231,7 +231,7 @@ class BranchController extends Controller
             'branchAddressLocal',
             'branchAddressDeptOrHouse',
             'company_id',
-            'state_id',
+            'status_id',
         ]);
 
         // Detectar cambios

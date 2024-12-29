@@ -71,7 +71,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {user?.roles[0]?.name}
+                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
             },
@@ -87,6 +87,7 @@ export default function UserPage({
                             roles={roles}
                             data={user}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalEditUser
                             statuses={statuses}
@@ -95,6 +96,7 @@ export default function UserPage({
                             roles={roles}
                             data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -145,7 +147,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {roleDisplayNames[user?.roles[0]?.name]}
+                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
             },
@@ -161,6 +163,7 @@ export default function UserPage({
                             roles={roles}
                             data={user}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalEditUser
                             statuses={statuses}
@@ -169,6 +172,7 @@ export default function UserPage({
                             roles={roles}
                             data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -228,7 +232,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {roleDisplayNames[user?.roles[0]?.name]}
+                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
             },
@@ -244,6 +248,7 @@ export default function UserPage({
                             roles={roles}
                             data={user}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalEditUser
                             statuses={statuses}
@@ -252,6 +257,7 @@ export default function UserPage({
                             roles={roles}
                             data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -320,7 +326,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {roleDisplayNames[user?.roles[0]?.name]}
+                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
             },
@@ -336,6 +342,7 @@ export default function UserPage({
                             roles={roles}
                             data={user}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalEditUser
                             statuses={statuses}
@@ -344,6 +351,7 @@ export default function UserPage({
                             roles={roles}
                             data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -443,7 +451,7 @@ export default function UserPage({
                 key: "role",
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {roleDisplayNames[user?.roles[0]?.name]}
+                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
             },
@@ -459,6 +467,7 @@ export default function UserPage({
                             roles={roles}
                             data={user}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalEditUser
                             statuses={statuses}
@@ -467,6 +476,7 @@ export default function UserPage({
                             roles={roles}
                             data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
                             userType={data?.role}
+                            roleDisplayNames={roleDisplayNames}
                         />
                         <ModalDeleteUser data={user} />
                     </div>

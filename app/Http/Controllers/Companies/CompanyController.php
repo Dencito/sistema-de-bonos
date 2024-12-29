@@ -139,7 +139,7 @@ class CompanyController extends Controller
             $slug = Str::slug($request->name);
             
             $data['slug'] = $slug;
-            $data['state_id'] = 1;
+            $data['status_id'] = 1;
             $data['schema_name'] = $slug; // Usar el mismo slug como schema_name
             $data['settings'] = json_encode([]); // Agregar settings vacío
             $data['is_active'] = true; // Activar la empresa por defecto

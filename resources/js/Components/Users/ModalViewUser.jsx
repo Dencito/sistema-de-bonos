@@ -55,7 +55,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
@@ -113,7 +113,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
@@ -172,7 +172,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -185,7 +185,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
@@ -362,7 +362,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
           </Select>
         </Form.Item>
         <Form.Item
-          name="state_id"
+          name="status_id"
           label="Estado"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
@@ -375,7 +375,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
@@ -525,7 +525,7 @@ export default function ModalViewUser({data, statuses, roles, branches, userType
         <Form.Item
           name="role"
           label="Rol"
-          initialValue={data?.roles[0]?.name}
+          initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">

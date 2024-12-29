@@ -87,7 +87,7 @@ export default function ModalCreateUser({ userType, branches }) {
   );
 
   const formFieldsByUserType = {
-    "SUPER ADMIN": (
+    "SUPER-ADMIN": (
       <>
         <Form.Item
           name="username"
@@ -131,7 +131,6 @@ export default function ModalCreateUser({ userType, branches }) {
         <Form.Item
           name="branch_id"
           label="Sucursal"
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione la sucursal">
             {branches?.map(branch => (

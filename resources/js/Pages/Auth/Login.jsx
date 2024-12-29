@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { roleNames } from '@/Utils/constants';
 
@@ -90,6 +90,9 @@ export default function Login({ status, auth }) {
                     </Button>
                 </Form.Item>
             </Form>
+            <Link href={route('password.request')} className="text-sm text-gray-600 hover:text-gray-900">
+    ¿Olvidaste tu contraseña?
+</Link>
         </GuestLayout>
     );
 }

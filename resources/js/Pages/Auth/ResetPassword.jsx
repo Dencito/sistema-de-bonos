@@ -2,76 +2,102 @@ import { useEffect } from 'react';
 import { Form, Input, Button } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { useMessage } from '@contexts/MessageShow';
 
 export default function ResetPassword({ token, email }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        token: token,
-        email: email,
-        password: '',
-        password_confirmation: '',
-    });
+    const { showMessage } = useMessage();
+    const { post, processing } = useForm();
 
-    useEffect(() => {
-        return () => {
-            reset('password', 'password_confirmation');
-        };
-    }, []);
-
-    const submit = () => {
-        post(route('password.store'));
+    const onFinish = (values) => {
+        post(route('password.store', {
+            ...values,
+            token: token,
+            email: email
+        }), {
+            onSuccess: () => {
+                showMessage('Tu contraseña ha sido restablecida correctamente', 'success');
+            },
+            onError: (errors) => {
+                showMessage('Error al restablecer la contraseña', 'error');
+            }
+        });
     };
 
     return (
         <GuestLayout>
-            <Head title="Reset Password" />
+            <Head title="Restablecer Contraseña" />
 
-            <Form onFinish={submit} layout="vertical">
+            <Form
+                name="reset-password"
+                onFinish={onFinish}
+                layout="vertical"
+                initialValues={{ email }}
+            >
                 <Form.Item
                     label="Email"
-                    validateStatus={errors.email ? 'error' : ''}
-                    help={errors.email}
+                    name="email"
+                    rules={[
+                        {
+                            required: true,
+                            message: 'Por favor ingresa tu correo electrónico',
+                        },
+                        {
+                            type: 'email',
+                            message: 'Ingresa un correo electrónico válido',
+                        },
+                    ]}
                 >
-                    <Input
-                        id="email"
-                        type="email"
-                        value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        autoComplete="username"
-                        required
-                    />
+                    <Input size="large" disabled />
                 </Form.Item>
 
                 <Form.Item
-                    label="Password"
-                    validateStatus={errors.password ? 'error' : ''}
-                    help={errors.password}
+                    label="Nueva Contraseña"
+                    name="password"
+                    rules={[
+                        {
+                            required: true,
+                            message: 'Por favor ingresa tu nueva contraseña',
+                        },
+                        {
+                            min: 8,
+                            message: 'La contraseña debe tener al menos 8 caracteres',
+                        },
+                    ]}
                 >
-                    <Input.Password
-                        id="password"
-                        value={data.password}
-                        onChange={(e) => setData('password', e.target.value)}
-                        autoComplete="new-password"
-                        required
-                    />
+                    <Input.Password size="large" />
                 </Form.Item>
 
                 <Form.Item
-                    label="Confirm Password"
-                    validateStatus={errors.password_confirmation ? 'error' : ''}
-                    help={errors.password_confirmation}
+                    label="Confirmar Contraseña"
+                    name="password_confirmation"
+                    dependencies={['password']}
+                    rules={[
+                        {
+                            required: true,
+                            message: 'Por favor confirma tu contraseña',
+                        },
+                        ({ getFieldValue }) => ({
+                            validator(_, value) {
+                                if (!value || getFieldValue('password') === value) {
+                                    return Promise.resolve();
+                                }
+                                return Promise.reject(new Error('Las contraseñas no coinciden'));
+                            },
+                        }),
+                    ]}
                 >
-                    <Input.Password
-                        id="password_confirmation"
-                        value={data.password_confirmation}
-                        onChange={(e) => setData('password_confirmation', e.target.value)}
-                        autoComplete="new-password"
-                        required
-                    />
+                    <Input.Password size="large" />
                 </Form.Item>
 
-                <Form.Item className="flex items-center justify-end mt-4">
-                    <Button type="primary" htmlType="submit" loading={processing}>
-                        Reset Password
+                <Form.Item>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={processing}
+                        size="large"
+                        block
+                    >
+                        Restablecer Contraseña
                     </Button>
                 </Form.Item>
             </Form>

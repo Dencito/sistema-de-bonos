@@ -81,7 +81,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
   );
 
   const formFieldsByUserType = {
-    "SUPER ADMIN": (
+    "SUPER-ADMIN": (
       <>
         <Form.Item
           name="username"
@@ -609,14 +609,14 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           </Select>
         </Form.Item>
         <Form.Item
-          name="role"
+          name="role_id"
           label="Rol"
           initialValue={data?.role?.name}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select disabled placeholder="Seleccione el rol">
             {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
+              <Select.Option key={role?.id} value={role?.id}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

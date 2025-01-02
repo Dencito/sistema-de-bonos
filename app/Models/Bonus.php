@@ -10,17 +10,16 @@ class Bonus extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
         'amount',
-        'type',
         'start_datetime',
         'end_datetime',
+        'user_id'
     ];
 
-    // Relación con el modelo User (un bono puede estar asignado a muchos usuarios)
-    public function users()
+    // Relación con el modelo User (un bono pertenece a un usuario)
+    public function user()
     {
-        return $this->belongsToMany(User::class, 'user_bonuses');
+        return $this->belongsTo(User::class);
     }
     
     public function categories()

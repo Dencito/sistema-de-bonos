@@ -52,7 +52,7 @@ class UserController extends Controller
 
         $companies = Company::select('id', 'name')->get();
         $categories = CategoryBonus::select('id', 'name')->get();
-        $bonuses = Bonus::select('id', 'name')->get();
+        $bonuses = Bonus::select()->get();
 
         return Inertia::render('Users/index', [
             'users' => $users,
@@ -96,6 +96,15 @@ class UserController extends Controller
                     return response()->json(['message' => 'El RUT ya esta en uso.', 'error' => true], 400);
                 }
             }
+
+            if (!is_null($request->phone)) {
+                $existingUser = User::where('phone', $request->phone)->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El telefono ya esta en uso.', 'error' => true], 400);
+                }
+            }
+            
+            
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Error al verificar los datos del usuario', 'error' => true], 500);
         }
@@ -121,7 +130,7 @@ class UserController extends Controller
             'username' => 'nullable|string|unique:users,username',
             'password' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
-            'status_id' => 'nullable|exists:status,id',
+            'status_id' => 'nullable',
             'category_bonus_id' => 'nullable|exists:category_bonuses,id',
             'role' => 'nullable|string|exists:roles,name',
             'branches' => 'nullable|array',
@@ -249,7 +258,17 @@ class UserController extends Controller
                 }
             }
 
-            // Validar si 'email' no es null antes de la consulta
+            // Validar si 'phone' no es null antes de la consulta
+            if (!is_null($request->phone)) {
+                $existingUser = User::where('phone', $request->phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+                if ($existingUser) {
+                    return response()->json(['message' => 'El teléfono ya existe', 'error' => true], 400);
+                }
+            }
+
+            // Validar si 'code' no es null antes de la consulta
             if (!is_null($request->code)) {
                 $existingUser = User::where('code', $request->code)
                 ->where('id', '!=', $user->id)
@@ -295,10 +314,10 @@ class UserController extends Controller
             'username' => 'nullable|string',
             'password' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
-            'status_id' => 'required|exists:status,id',
+            'status_id' => 'required',
             'company_id' => 'nullable|exists:companies,id',
             'category_bonus_id' => 'nullable|exists:category_bonuses,id',
-            'role' => 'nullable|string|exists:roles,name',
+            'role_id' => 'nullable',
             'branches' => 'nullable|array',
             'branches.*' => 'nullable|exists:branches,id',
         ]);
@@ -327,7 +346,7 @@ class UserController extends Controller
             'branch_id' => $request->branch_id,
             'status_id' => $request->status_id,
             'category_bonus_id' => $request->category_bonus_id,
-            'role_id' => Role::where('name', $request->role)->first()->id,
+            'role_id' =>  $request->role_id,
         ]);
 
         if ($request->has('branches')) {

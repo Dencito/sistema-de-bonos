@@ -26,27 +26,25 @@ class BonusController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'amount' => 'required|string',
-            'type' => 'required|string',
-            'start_datetime' => 'nullable',
-            'end_datetime' => 'nullable',
+            'amount' => 'required|numeric|min:0|max:9999999.99',
+            'start_datetime' => 'nullable|date',
+            'end_datetime' => 'nullable|date|after:start_datetime',
+            'user_id' => 'required|exists:users,id'
+        ], [
+            'amount.max' => 'El monto no puede ser mayor a $9.999.999,99'
         ]);
 
-        // Verificar si la categoría ya existe
-        $found = Bonus::where('name', $request->name)->first();
-
-        if ($found) {
-            return response()->json([
-                'message' => 'El bono ya existe',
-                'status' => 400
-            ], 400);
-        }
-        $bonus = Bonus::create($request->all());
+        $bonus = Bonus::create([
+            'amount' => $request->amount,
+            'start_datetime' => $request->start_datetime,
+            'end_datetime' => $request->end_datetime,
+            'user_id' => $request->user_id
+        ]);
 
         return response()->json([
             'error' => false,
             'message' => 'Bono creado exitosamente',
+            'bonus' => $bonus
         ]);
     }
 

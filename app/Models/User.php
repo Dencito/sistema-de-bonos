@@ -104,7 +104,7 @@ class User extends Authenticatable
 
     public function bonuses()
     {
-        return $this->belongsToMany(Bonus::class, 'user_bonuses');
+        return $this->hasMany(Bonus::class);
     }
 
     public function branch()

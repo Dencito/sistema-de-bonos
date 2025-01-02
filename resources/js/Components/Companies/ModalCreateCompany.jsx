@@ -166,6 +166,7 @@ export default function ModalCreateCompany() {
         <Form.Item
             name="prefix"
             rules={[{ required: true, message: getValidationRequiredMessage }]}
+            initialValue="+56"
             noStyle
         >
             <Select
@@ -190,6 +191,7 @@ export default function ModalCreateCompany() {
     const prefixSelectorContact = (
         <Form.Item
             name="prefixContact"
+            initialValue="+56"
             rules={[{ required: true, message: getValidationRequiredMessage }]}
             noStyle
         >

@@ -1,176 +1,131 @@
 import { useState } from "react";
-import { Form, Input, Select, DatePicker } from "antd";
+import { Form, Input, DatePicker, Modal } from "antd";
 import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@contexts/MessageShow";
-import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
+import axios from 'axios';
 
-const EnumTypes = {
-    basic: "basic",
-    birthday: "birthday",
-    today: "today",
-};
-
-export default function ModalCreateBonus() {
+export default function ModalCreateBonus({data}) {
+    if(!data) return null;
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [selectType, setSelectType] = useState(null);
 
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
 
     const onCreate = async () => {
         try {
-            const startDataTime = form
-                .getFieldValue("start_datetime")
-                ?.format("YYYY-MM-DD HH:mm:ss");
-            const endDataTime = form
-                .getFieldValue("end_datetime")
-                ?.format("YYYY-MM-DD HH:mm:ss");
-            const name = form.getFieldValue("name");
-            const amount = form.getFieldValue("amount");
-            const type = form.getFieldValue("type");
+            const values = await form.validateFields();
+            const startDateTime = values.start_datetime?.format("YYYY-MM-DD HH:mm:ss");
+            const endDateTime = values.end_datetime?.format("YYYY-MM-DD HH:mm:ss");
+            
             setLoading(true);
             const sendData = {
-                name,
-                type,
-                amount,
+                amount: values.amount,
+                start_datetime: startDateTime,
+                end_datetime: endDateTime,
+                user_id: data.id
             };
-            if (selectType === EnumTypes.basic) {
-                sendData.start_datetime = startDataTime;
-                sendData.endDataTime = endDataTime;
-            }
-            const { data } = await axios.post(`/bonuses`, sendData);
-            router.visit("/users", {
-                preserveState: true, // Mantener el estado actual
+            
+            const { data: responseData } = await axios.post(`/bonuses`, sendData);
+            router.visit(window.location.href, {
+                preserveState: true,
             });
-            data && successMsg(data?.message);
+            responseData && successMsg(responseData?.message);
             setLoading(false);
             form.resetFields();
             handleCloseModal();
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
             setLoading(false);
-            return errorMsg(dataError?.message);
+            if (error.isAxiosError) {
+                errorMsg(error?.response?.data?.message);
+            }
         }
     };
 
     const handleCloseModal = () => {
-        setLoading(false);
-        setSelectType(null);
         setShowModal(false);
-    };
-
-    const handleOpenModal = () => {
-        setShowModal(true);
-    };
-
-    const onlyNumberInput = (e) => {
-        const cleanedValue = e.target.value.replace(/\D/g, "");
-        form.setFieldsValue({ [e.target.name]: cleanedValue });
+        form.resetFields();
     };
 
     return (
         <>
-            <CustomButton onClick={handleOpenModal} className="my-5">
-                Crear bono
-            </CustomButton>
-            <ModalForm
+            <CustomButton 
+                onClick={() => setShowModal(true)} 
                 title="Crear bono"
-                showModal={showModal}
-                loading={loading}
-                form={form}
-                onClose={handleCloseModal}
-                onSubmit={onCreate}
-                initialValues={{}}
+                type="primary"
+            />
+            <Modal
+                title="Crear Bono"
+                open={showModal}
+                onCancel={handleCloseModal}
+                onOk={onCreate}
+                confirmLoading={loading}
+                okText="Crear"
+                cancelText="Cancelar"
             >
-                <>
+                <Form
+                    form={form}
+                    layout="vertical"
+                >
                     <Form.Item
-                        name="name"
-                        label="Nombre del bono"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Input showCount maxLength={30} />
-                    </Form.Item>
-                    <Form.Item
-                        name="amount"
                         label="Monto"
+                        name="amount"
                         rules={[
+                            { required: true, message: getValidationRequiredMessage('El monto') },
                             {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
+                                validator: (_, value) => {
+                                    if (value < 1) {
+                                        return Promise.reject('El monto debe ser mayor o igual a 1');
+                                    }
+                                    if (value > 9999999.99) {
+                                        return Promise.reject('El monto no puede ser mayor a $9.999.999,99');
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
                         ]}
                     >
                         <Input
-                            name="amount"
-                            onChange={onlyNumberInput}
-                            showCount
-                            maxLength={10}
+                            placeholder="Ingrese el monto"
+                            type="number"
+                            min="0"
+                            max="9999999.99"
+                            step="0.01"
+                            onKeyPress={(e) => {
+                                if (!/[\d.]/.test(e.key)) {
+                                    e.preventDefault();
+                                }
+                            }}
                         />
                     </Form.Item>
+
                     <Form.Item
-                        name="type"
-                        label="Tipo de bono"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
+                        label="Fecha de inicio"
+                        name="start_datetime"
                     >
-                        <Select
-                            onChange={(value) => setSelectType(value)}
-                            placeholder="Seleccionar tipo"
-                        >
-                            {Object.values(EnumTypes).map((type, index) => (
-                                <Select.Option key={index} value={type}>
-                                    {type}
-                                </Select.Option>
-                            ))}
-                        </Select>
+                        <DatePicker
+                            showTime
+                            format="DD-MM-YYYY HH:mm:ss"
+                            placeholder="Seleccione fecha de inicio"
+                            style={{ width: '100%' }}
+                        />
                     </Form.Item>
-                    {selectType === EnumTypes.basic && (
-                        <div className="flex justify-between">
-                            <Form.Item
-                                name="start_datetime"
-                                label="Fecha y hora de inicio"
-                                rules={[
-                                    {
-                                        required: true,
-                                        message:
-                                            "Por favor, seleccione la fecha y hora de inicio.",
-                                    },
-                                ]}
-                            >
-                                <DatePicker
-                                    showTime
-                                    format="YYYY-MM-DD HH:mm:ss"
-                                    placeholder="Seleccionar fecha y hora"
-                                />
-                            </Form.Item>
-                            <Form.Item
-                                name="end_datetime"
-                                label="Fecha y hora de fin"
-                            >
-                                <DatePicker
-                                    showTime
-                                    format="YYYY-MM-DD HH:mm:ss"
-                                    placeholder="Seleccionar fecha y hora"
-                                />
-                            </Form.Item>
-                        </div>
-                    )}
-                </>
-            </ModalForm>
+
+                    <Form.Item
+                        label="Fecha de fin"
+                        name="end_datetime"
+                    >
+                        <DatePicker
+                            showTime
+                            format="DD-MM-YYYY HH:mm:ss"
+                            placeholder="Seleccione fecha de fin"
+                            style={{ width: '100%' }}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </>
     );
 }

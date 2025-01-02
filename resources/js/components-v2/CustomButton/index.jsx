@@ -8,6 +8,7 @@ export function CustomButton({
     icon,
     size,
     danger = false,
+    title,
     ...rest
 }) {
     return (
@@ -20,6 +21,8 @@ export function CustomButton({
             loading={loading}
             danger={danger}
             {...rest}
-        />
+        >
+            {title}
+        </Button>
     );
 }

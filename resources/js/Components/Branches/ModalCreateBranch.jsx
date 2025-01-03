@@ -18,6 +18,7 @@ import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { days } from "./days";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@contexts/MessageShow";
+import ScheduleModal from "./ScheduleModal";
 
 export default function ModalCreateBranch({ companies }) {
   const [showModal, setShowModal] = useState(false);
@@ -26,6 +27,8 @@ export default function ModalCreateBranch({ companies }) {
   const [country, setCountry] = useState("");
   const [countries, setCountries] = useState();
   const [regions, setRegions] = useState();
+  const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
+  const [selectedSchedules, setSelectedSchedules] = useState([]);
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
@@ -85,6 +88,11 @@ export default function ModalCreateBranch({ companies }) {
         { day, schedule: [null] },
       ]);
     }
+  };
+
+  const handleScheduleSave = (schedules) => {
+    setSelectedSchedules(schedules);
+    form.setFieldsValue({ schedules });
   };
 
   const onCreate = async (values) => {
@@ -274,7 +282,7 @@ export default function ModalCreateBranch({ companies }) {
               ))}
             </Select>
           </Form.Item>
-
+          
           <Form.Item
             className="w-6/12"
             name="branchAddressRegion"
@@ -298,6 +306,37 @@ export default function ModalCreateBranch({ companies }) {
             </Select>
           </Form.Item>
         </div>
+
+        
+        <Form.Item
+            name="schedules"
+            label="Horarios"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+        >
+          <div>
+            <Button onClick={() => setScheduleModalVisible(true)} type="default">
+              Seleccionar Horarios
+            </Button>
+            {selectedSchedules?.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                {selectedSchedules.map((schedule, index) => (
+                  <Tag key={index}>{`${schedule.day} ${schedule.start}-${schedule.end}`}</Tag>
+                ))}
+              </div>
+            )}
+            <ScheduleModal
+              open={scheduleModalVisible}
+              onClose={() => setScheduleModalVisible(false)}
+              onSave={handleScheduleSave}
+              initialValue={selectedSchedules}
+            />
+          </div>
+        </Form.Item>
 
         <Form.Item
           name="branchAddressProvince"

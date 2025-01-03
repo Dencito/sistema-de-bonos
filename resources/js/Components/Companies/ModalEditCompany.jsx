@@ -5,6 +5,7 @@ import { getValidationEmailMessage, getValidationRequiredMessage } from "@utils/
 import { router } from '@inertiajs/react'
 import { useMessage } from "@contexts/MessageShow";
 import { EditOutlined } from '@ant-design/icons';
+import { VITE_COUNTRIES_API_URL, VITE_COUNTRIES_API_KEY } from "@utils/env";
 
 export default function ModalEditCompany({ data }) {
   const [showModal, setShowModal] = useState(false);
@@ -23,10 +24,10 @@ export default function ModalEditCompany({ data }) {
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
+        const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
           },
         });
         const data = await response.json()
@@ -35,10 +36,10 @@ export default function ModalEditCompany({ data }) {
     }
     const getRegion = async () => {
       if (country !== '' && showModal) {
-        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`, {
+        const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries/${country}/states`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
           },
         });
         const data = await response.json()
@@ -75,15 +76,11 @@ export default function ModalEditCompany({ data }) {
       const { response: { data: dataError } } = error
       return errorMsg(dataError?.message)
     }
-    /* 
-    setFormValues(values); */
-
   };
 
 
   const onlyNumberInput = (e) => {
-    const cleanedValue = e.target.value.replace(/\D/g, '');
-    form.setFieldsValue({ [e.target.name]: cleanedValue });
+    form.setFieldsValue({ [e.target.name]: e.target.value.replace(/\D/g, '') });
   }
 
   const validateRutNumbers = (e) => {

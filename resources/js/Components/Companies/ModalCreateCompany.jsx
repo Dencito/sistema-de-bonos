@@ -8,6 +8,7 @@ import {
 } from "@utils/messagesValidationes";
 import { router } from "@inertiajs/react";
 import { useMessage } from "@contexts/MessageShow";
+import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
 
 export default function ModalCreateCompany() {
     const [showModal, setShowModal] = useState(false);
@@ -27,13 +28,11 @@ export default function ModalCreateCompany() {
         const getCountries = async () => {
             if (showModal) {
                 const response = await fetch(
-                    `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`,
+                    `${VITE_COUNTRIES_API_URL}/countries`,
                     {
                         method: "GET",
                         headers: {
-                            Authorization: `Bearer ${
-                                import.meta.env.VITE_API_KEY_COUNTRYS
-                            }`,
+                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
                         },
                     }
                 );
@@ -44,13 +43,11 @@ export default function ModalCreateCompany() {
         const getRegion = async () => {
             if (country !== "" && showModal) {
                 const response = await fetch(
-                    `${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`,
+                    `${VITE_COUNTRIES_API_URL}/countries/${country}/states`,
                     {
                         method: "GET",
                         headers: {
-                            Authorization: `Bearer ${
-                                import.meta.env.VITE_API_KEY_COUNTRYS
-                            }`,
+                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
                         },
                     }
                 );

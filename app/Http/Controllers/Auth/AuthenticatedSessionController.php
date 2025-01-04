@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -29,23 +31,35 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        try {
+            // Aquí automáticamente buscará en la tabla con el prefijo correcto
+            // Por ejemplo: empresa1_users si el subdominio es empresa1
+            $user = User::where('email', $request->email)->first();
+            
+            if (!$user) {
+                throw new \Exception('Usuario no encontrado en esta empresa');
+            }
 
-        $request->session()->regenerate();
+            $request->authenticate();
+            $request->session()->regenerate();
 
-        $user = Auth::user();
+            if ($user->status_id !== 1) {
+                Auth::logout();
+                throw new \Exception('Tu cuenta fue bloqueada o se encuentra eliminada.');
+            }
 
-        if ($user->status_id !== 1) {
-            Auth::logout();
-            abort(403, 'Tu cuenta fue bloqueada o se encuentra eliminada.');
+            if ($user->hasAnyRole(6)) {
+                Auth::logout();
+                throw new \Exception('Tu cuenta no tiene permisos para acceder a la plataforma.');
+            }
+
+            return redirect()->intended(route('dashboard'));
+            
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'email' => $e->getMessage(),
+            ])->onlyInput('email');
         }
-
-        if ($user->hasAnyRole(6)) {
-            Auth::logout();
-            abort(403, 'Tu cuenta no tiene permisos para acceder a la plataforma.');
-        }
-
-        return redirect()->intended(route('dashboard'));
     }
 
     /**
@@ -56,7 +70,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

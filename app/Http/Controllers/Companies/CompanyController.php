@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Companies;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Status;
+use App\Services\CompanyDatabaseService;
 use App\Services\CpanelService;
 use App\Services\GoDaddyService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,11 +24,13 @@ class CompanyController extends Controller
     private $excludedDirs = ['deploy'];
     protected $godaddyService;
     protected $cpanelService;
+    protected $companyDatabaseService;
 
-    public function __construct(GoDaddyService $godaddyService, CpanelService $cpanelService)
+    public function __construct(GoDaddyService $godaddyService, CpanelService $cpanelService, CompanyDatabaseService $companyDatabaseService)
     {
         $this->godaddyService = $godaddyService;
         $this->cpanelService = $cpanelService;
+        $this->companyDatabaseService = $companyDatabaseService;
     }
 
     /**
@@ -164,6 +167,27 @@ class CompanyController extends Controller
 
             // Crear el subdominio en cPanel
             $this->cpanelService->createSubdomain($request->name);
+
+            /*
+             * // Crear el subdominio en cPanel
+             * $this->cpanelService->createSubdomain($request->name);
+             *
+             * // Crear las tablas específicas de la empresa
+             * $prefix = $subdomain;
+             * $this->companyDatabaseService->createCompanyTables($prefix);
+             *
+             * // Crear roles por defecto
+             * $this->companyDatabaseService->createDefaultRoles($prefix);
+             *
+             * // Crear usuario administrador por defecto
+             * $adminData = [
+             *     'name' => 'Admin',
+             *     'email' => 'admin@' . $subdomain . '.rentamania.com',
+             *     'password' => bcrypt('password'), // Deberías generar una contraseña segura
+             *     'role' => 'admin'
+             * ];
+             * $this->companyDatabaseService->createDefaultAdmin($prefix, $adminData);
+             */
 
             return response()->json([
                 'message' => 'Empresa creada exitosamente',

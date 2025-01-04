@@ -10,11 +10,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
-use Sentry\State\HubInterface;
-use Sentry\State\Scope;
+use App\Traits\SentryLogging;
 
 class ProfileController extends Controller
 {
+    use SentryLogging;
+
     /**
      * Display the user's profile form.
      */
@@ -25,9 +26,9 @@ class ProfileController extends Controller
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status' => session('status'),
             ]);
-        } catch (\Throwable $e) {
-            $this->logError($e, 'profile.edit');
-            throw $e;
+        } catch (\Throwable $exception) {
+            $this->logError($exception, 'profile.edit');
+            throw $exception;
         }
     }
 
@@ -46,11 +47,11 @@ class ProfileController extends Controller
             $request->user()->save();
 
             return Redirect::route('profile.edit');
-        } catch (\Throwable $e) {
-            $this->logError($e, 'profile.update', [
+        } catch (\Throwable $exception) {
+            $this->logError($exception, 'profile.update', [
                 'email_changed' => $request->user()->isDirty('email')
             ]);
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -74,19 +75,9 @@ class ProfileController extends Controller
             $request->session()->regenerateToken();
 
             return Redirect::to('/');
-        } catch (\Throwable $e) {
-            $this->logError($e, 'profile.destroy');
-            throw $e;
+        } catch (\Throwable $exception) {
+            $this->logError($exception, 'profile.destroy');
+            throw $exception;
         }
-    }
-
-    protected function logError(\Throwable $e, string $transaction, array $extra = []): void
-    {
-        /** @var HubInterface $sentry */
-        $sentry = app(HubInterface::class);
-        $sentry->captureException($e, [
-            'transaction' => $transaction,
-            'extra' => $extra,
-        ]);
     }
 }

@@ -5,16 +5,17 @@ namespace App\Http\Controllers\Companies;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Status;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Services\CpanelService;
+use App\Services\GoDaddyService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Inertia\Inertia;
-use Spatie\Permission\Models\Role;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use App\Services\GoDaddyService;
-use App\Services\CpanelService;
+use Inertia\Inertia;
+use Sentry\Laravel\Sentry;
+use Spatie\Permission\Models\Role;
 
 class CompanyController extends Controller
 {
@@ -34,38 +35,46 @@ class CompanyController extends Controller
      */
     public function index(Request $request)
     {
+        try {
+            if (!auth()->user()->hasAnyRole(1, 2)) {
+                abort(403, 'No tienes permiso para acceder a esta página.');
+            }
 
-        if (!auth()->user()->hasAnyRole(1, 2)) {
-            abort(403, 'No tienes permiso para acceder a esta página.');
+            $companySelectSession = $request->session()->get('selected_company');
+
+            if (auth()->user()->hasAnyRole(2)) {
+                $request->name = $companySelectSession;
+            }
+
+            $companies = Company::with(['branches', 'status'])
+                ->when($request->name, function ($query, $name) {
+                    $query->where('name', 'like', "%{$name}%");
+                })
+                ->when($request->status, function ($query, $status) {
+                    $query->whereHas('status', function ($q) use ($status) {
+                        $q->where('name', $status);
+                    });
+                })
+                ->get();
+
+            $roles = Role::all();
+            $statuses = Status::where('name', '!=', 'En revisión')->get();
+
+            $data = [
+                'companies' => $companies,
+                'roles' => $roles,
+                'statuses' => $statuses,
+                'total' => $companies->count(),
+                'filters' => $request->only(['name', 'status'])
+            ];
+
+            return Inertia::render('Companies/index', $data);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.index', [
+                'filters' => $request->only(['name', 'status'])
+            ]);
+            throw $e;
         }
-
-        $companySelectSession = $request->session()->get('selected_company');
-        
-        if (auth()->user()->hasAnyRole(2)) {
-            $request->name = $companySelectSession;
-        }
-
-        $companies = Company::with(['branches','status'])
-            ->when($request->name, function ($query, $name) {
-                $query->where('name', 'like', "%{$name}%");
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->whereHas('status', function ($q) use ($status) {
-                    $q->where('name', $status);
-                });
-            })
-            ->get();
-
-        $statuses = Status::where('name', '!=', 'En revisión')->get();
-
-        $data = [
-            'companies' => $companies,
-            'statuses' => $statuses,
-            'total' => $companies->count(),
-            'filters' => $request->only(['name', 'status'])
-        ];
-
-        return Inertia::render('Companies/index', $data);
     }
 
     /**
@@ -73,47 +82,48 @@ class CompanyController extends Controller
      */
     public function create(Request $request)
     {
-        if (!auth()->user()->hasAnyRole(1)) {
-            abort(403, 'No tienes permiso para acceder a esta página.');
-        }
+        try {
+            if (!auth()->user()->hasAnyRole(1)) {
+                abort(403, 'No tienes permiso para acceder a esta página.');
+            }
 
-        $validator = Validator::make($request->all(), [
-            'creationDate' => 'required|date',
-            'db_name' => 'string',
-            'name' => 'required|string',
-            'rutNumbers' => 'required|string',
-            'rutDv' => 'required|string',
-            'business' => 'required|string',
-            'prefix' => 'required|string',
-            'phone' => 'required|string',
-            'email' => 'required|email',
-            'legalRepresentativeNames' => 'required|string',
-            'legalRepresentativeLastNames' => 'required|string',
-            'rutNumbersLegalRepresentative' => 'required|string',
-            'rutDvLegalRepresentative' => 'required|string',
-            'contactNames' => 'required|string',
-            'contactLastNames' => 'required|string',
-            'rutNumbersContact' => 'required|string',
-            'rutDvContact' => 'required|string',
-            'prefixContact' => 'required|string',
-            'contactPhone' => 'required|string',
-            'contactEmail' => 'required|email',
-            'companyAddressCountry' => 'required|string',
-            'companyAddressRegion' => 'required|string',
-            'companyAddressProvince' => 'required|string',
-            'companyAddressCommune' => 'required|string',
-            'companyAddressStreet' => 'required|string',
-            'companyAddressNumber' => 'required|string',
-            'max_branches' => 'required|string',
-        ]);
+            $validator = Validator::make($request->all(), [
+                'creationDate' => 'required|date',
+                'db_name' => 'string',
+                'name' => 'required|string',
+                'rutNumbers' => 'required|string',
+                'rutDv' => 'required|string',
+                'business' => 'required|string',
+                'prefix' => 'required|string',
+                'phone' => 'required|string',
+                'email' => 'required|email',
+                'legalRepresentativeNames' => 'required|string',
+                'legalRepresentativeLastNames' => 'required|string',
+                'rutNumbersLegalRepresentative' => 'required|string',
+                'rutDvLegalRepresentative' => 'required|string',
+                'contactNames' => 'required|string',
+                'contactLastNames' => 'required|string',
+                'rutNumbersContact' => 'required|string',
+                'rutDvContact' => 'required|string',
+                'prefixContact' => 'required|string',
+                'contactPhone' => 'required|string',
+                'contactEmail' => 'required|email',
+                'companyAddressCountry' => 'required|string',
+                'companyAddressRegion' => 'required|string',
+                'companyAddressProvince' => 'required|string',
+                'companyAddressCommune' => 'required|string',
+                'companyAddressStreet' => 'required|string',
+                'companyAddressNumber' => 'required|string',
+                'max_branches' => 'required|string',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Error en la validación de los datos',
-                'errors' => $validator->errors(),
-                'status' => 400
-            ], 400);
-        }
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Error en la validación de los datos',
+                    'errors' => $validator->errors(),
+                    'status' => 400
+                ], 400);
+            }
 
             // Verificar si ya existe una empresa con el mismo nombre
             $existingCompany = $this->getCompanyByName($request->name);
@@ -133,19 +143,18 @@ class CompanyController extends Controller
                 ], 400);
             }
 
-        try {
             // Preparar los datos de la empresa
             $data = $request->all();
             $slug = Str::slug($request->name);
-            
+
             $data['slug'] = $slug;
             $data['status_id'] = 1;
-            $data['schema_name'] = $slug; // Usar el mismo slug como schema_name
-            $data['settings'] = json_encode([]); // Agregar settings vacío
-            $data['is_active'] = true; // Activar la empresa por defecto
+            $data['schema_name'] = $slug;  // Usar el mismo slug como schema_name
+            $data['settings'] = json_encode([]);  // Agregar settings vacío
+            $data['is_active'] = true;  // Activar la empresa por defecto
 
             $company = Company::create($data);
-            
+
             // Crear directorio y configurar dominio
             $domain = $this->createCompanyDirectory($company);
 
@@ -160,13 +169,14 @@ class CompanyController extends Controller
                 'message' => 'Empresa creada exitosamente',
                 'company' => $company,
             ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error al crear empresa: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.create', [
+                'company_data' => $request->only(['name', 'rut', 'email'])
+            ]);
             return response()->json([
                 'message' => 'Error al crear la empresa: ' . $e->getMessage(),
                 'status' => 500
-            ], 500);
+            ], 500);;
         }
     }
 
@@ -181,7 +191,7 @@ class CompanyController extends Controller
 
         // Definir directorios
         $sourceDir = base_path();
-        $parentDir = dirname($sourceDir); // Subir un nivel: /carpetaPadre
+        $parentDir = dirname($sourceDir);  // Subir un nivel: /carpetaPadre
         $targetDir = $parentDir . DIRECTORY_SEPARATOR . $domain;
 
         try {
@@ -205,9 +215,11 @@ class CompanyController extends Controller
             $this->configureEnvFile($targetDir, $company);
 
             return $domain;
-        } catch (\Exception $e) {
-            \Log::error('Error al crear directorio de empresa: ' . $e->getMessage());
-            // Limpiar en caso de error
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.createCompanyDirectory', [
+                'company_id' => $company->id,
+                'domain' => $domain
+            ]);
             if (File::exists($targetDir)) {
                 File::deleteDirectory($targetDir);
             }
@@ -265,10 +277,10 @@ class CompanyController extends Controller
     private function configureEnvFile($targetDir, Company $company)
     {
         $envFile = $targetDir . DIRECTORY_SEPARATOR . '.env';
-        
+
         // Verificar que el archivo existe
         if (!File::exists($envFile)) {
-            throw new \Exception("No se encontró el archivo .env en el directorio destino");
+            throw new \Exception('No se encontró el archivo .env en el directorio destino');
         }
 
         // Leer el contenido del .env
@@ -276,7 +288,7 @@ class CompanyController extends Controller
 
         // Reemplazar valores
         $replacements = [
-            //'DB_DATABASE' => 'tenant_' . $company->slug,
+            // 'DB_DATABASE' => 'tenant_' . $company->slug,
             'APP_URL' => 'https://' . $company->domain,
             'SESSION_DOMAIN' => $company->domain,
             'SANCTUM_STATEFUL_DOMAINS' => $company->domain
@@ -298,11 +310,13 @@ class CompanyController extends Controller
         exec($command);
     }
 
-    public function getCompanyByName($name) {
+    public function getCompanyByName($name)
+    {
         return Company::where('name', $name)->first();
     }
 
-    public function getRutByRutNumbers($rutNumbers) {
+    public function getRutByRutNumbers($rutNumbers)
+    {
         return Company::where('rutNumbers', $rutNumbers)->first();
     }
 
@@ -319,20 +333,26 @@ class CompanyController extends Controller
      */
     public function show(string $id)
     {
-        $companies = Company::all()->map(function($company) {
-            return [
-                'id' => $company->id,
-                'name' => $company->name,
-            ];
-        });
-        dd($companies);
+        try {
+            $companies = Company::all()->map(function ($company) {
+                return [
+                    'id' => $company->id,
+                    'name' => $company->name,
+                ];
+            });
+            dd($companies);
 
-        return response()->json([
-            'error' => false,
-            'companies' => $companies
-        ]);
+            return response()->json([
+                'error' => false,
+                'companies' => $companies
+            ]);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.show', [
+                'company_id' => $id
+            ]);
+            throw $e;
+        }
     }
-
 
     /**
      * Show the form for editing the specified resource.
@@ -347,108 +367,136 @@ class CompanyController extends Controller
      */
     public function update(Request $request)
     {
-        if (!auth()->user()->hasAnyRole(1)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-        // Obtener la empresa existente
-        $company = Company::find($request->id);
-
         try {
-            if (!$company) {
-                return response()->json(['message' => 'No existe la empresa o fue eliminada', 'error' => true], 404);
+            if (!auth()->user()->hasAnyRole(1)) {
+                abort(403, 'No tienes permiso para realizar esta acción.');
             }
-        } catch (\Throwable $th) {
-            //throw $th;
-        }
+            // Obtener la empresa existente
+            $company = Company::find($request->id);
 
-        try {
-            $existingCompany = Company::where('name', $request->name)
-                               ->where('id', '!=', $request->id)
-                               ->first();
-            if ($existingCompany) {
-                return response()->json(['message' => 'El nombre de la empresa ya existe', 'error' => true], 400);
+            try {
+                if (!$company) {
+                    return response()->json(['message' => 'No existe la empresa o fue eliminada', 'error' => true], 404);
+                }
+            } catch (\Throwable $th) {
+                // throw $th;
             }
-        } catch (\Throwable $th) {
-        }
 
-        $newData = $request->all();
-
-        $oldData = $company->toArray();
-
-        $changes = [];
-        foreach ($newData as $key => $value) {
-            if (array_key_exists($key, $oldData) && $oldData[$key] != $value) {
-                $changes[$key] = [
-                    'old' => $oldData[$key],
-                    'new' => $value
-                ];
+            try {
+                $existingCompany = Company::where('name', $request->name)
+                    ->where('id', '!=', $request->id)
+                    ->first();
+                if ($existingCompany) {
+                    return response()->json(['message' => 'El nombre de la empresa ya existe', 'error' => true], 400);
+                }
+            } catch (\Throwable $th) {
             }
+
+            $newData = $request->all();
+
+            $oldData = $company->toArray();
+
+            $changes = [];
+            foreach ($newData as $key => $value) {
+                if (array_key_exists($key, $oldData) && $oldData[$key] != $value) {
+                    $changes[$key] = [
+                        'old' => $oldData[$key],
+                        'new' => $value
+                    ];
+                }
+            }
+
+            $company->update($newData);
+
+            $companies = Company::all();
+
+            return response()->json([
+                'error' => false,
+                'message' => 'Empresa actualizada',
+                'changes' => $changes
+            ]);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.update', [
+                'company_id' => $request->input('id'),
+                'company_data' => $request->only(['name', 'rut', 'email'])
+            ]);
+            throw $e;
         }
-
-        $company->update($newData);
-
-        $companies = Company::all();
-
-        return response()->json([
-            'error' => false,
-            'message' => 'Empresa actualizada',
-            'changes' => $changes
-        ]);
     }
 
     public function destroy(Request $request)
     {
-        if (!auth()->user()->hasAnyRole(1)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
+        try {
+            if (!auth()->user()->hasAnyRole(1)) {
+                abort(403, 'No tienes permiso para realizar esta acción.');
+            }
+            $company = Company::find($request->id);
+
+            if (!$company) {
+                return response()->json(['message' => 'La empresa no existe', 'error' => true], 400);
+            }
+
+            $company->delete();
+
+            return response()->json([
+                'error' => false,
+                'message' => 'La empresa ha sido eliminada exitosamente',
+            ]);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.destroy', [
+                'company_id' => $request->input('id')
+            ]);
+            throw $e;
         }
-        $company = Company::find($request->id);
-
-        if (!$company) {
-            return response()->json(['message' => 'La empresa no existe', 'error' => true], 400);
-        }
-
-        $company->delete();
-
-        return response()->json([
-            'error' => false,
-            'message' => 'La empresa ha sido eliminada exitosamente',
-        ]);
     }
-
 
     // Verificar si la empresa existe
     public function verifyCompany(Request $request)
     {
-        $companyName = $request->query('name');
+        try {
+            $companyName = $request->query('name');
 
-        if (!$companyName) {
-            return response()->json(['error' => 'El nombre de la empresa es requerido.'], 400);
+            if (!$companyName) {
+                return response()->json(['error' => 'El nombre de la empresa es requerido.'], 400);
+            }
+
+            $companyExists = Company::where('name', $companyName)->exists();
+
+            return response()->json(['exists' => $companyExists]);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.verifyCompany', [
+                'company_name' => $request->query('name')
+            ]);
+            throw $e;
         }
-
-        $companyExists = Company::where('name', $companyName)->exists();
-
-        return response()->json(['exists' => $companyExists]);
     }
 
     // Seleccionar una empresa y almacenarla en la sesión
     public function selectCompany(Request $request)
     {
-        $companyName = $request->input('name');
+        try {
+            $companyName = $request->input('name');
 
-        if (!$companyName) {
-            return response()->json(['error' => 'El nombre de la empresa es requerido.'], 400);
+            if (!$companyName) {
+                return response()->json(['error' => 'El nombre de la empresa es requerido.'], 400);
+            }
+
+            $company = Company::where('name', $companyName)->first();
+
+            if (!$company) {
+                return response()->json(['error' => 'La empresa no existe.'], 404);
+            }
+
+            // Almacenar el ID de la empresa en la sesión
+            session(['selected_company' => $company->id]);
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.selectCompany', [
+                'company_name' => $request->input('name')
+            ]);
+            throw $e;
         }
-
-        $company = Company::where('name', $companyName)->first();
-
-        if (!$company) {
-            return response()->json(['error' => 'La empresa no existe.'], 404);
-        }
-
-        // Almacenar el ID de la empresa en la sesión
-        session(['selected_company' => $company->id]);
-
-        return response()->json(['success' => true]);
     }
 
     public function deselectCompany(Request $request)
@@ -459,25 +507,32 @@ class CompanyController extends Controller
 
             // Responde con éxito
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            // Manejo de errores
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.deselectCompany');
             return response()->json(['error' => 'Error al deseleccionar la empresa'], 500);
         }
     }
 
     public function updateEnv(Request $request)
     {
-        // Buscar la empresa por su ID
-        $company = Company::find($request->id);
+        try {
+            // Buscar la empresa por su ID
+            $company = Company::find($request->id);
 
-        if (!$company) {
-            return response()->json(['message' => 'La empresa no existe', 'error' => true], 400);
+            if (!$company) {
+                return response()->json(['message' => 'La empresa no existe', 'error' => true], 400);
+            }
+
+            // Cambiar el valor de la variable de entorno DB_DATABASE
+            $this->setEnvValue('DB_DATABASE', $company->db_name);
+
+            return response()->json(['message' => 'Se cambio exitosamente de aplicación.'], 200);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'companies.updateEnv', [
+                'company_id' => $request->input('id')
+            ]);
+            throw $e;
         }
-
-        // Cambiar el valor de la variable de entorno DB_DATABASE
-        $this->setEnvValue('DB_DATABASE', $company->db_name);
-
-        return response()->json(['message' => 'Se cambio exitosamente de aplicación.'], 200);
     }
 
     private function setEnvValue($key, $value)
@@ -505,5 +560,13 @@ class CompanyController extends Controller
             Artisan::call('config:clear');
             Artisan::call('config:cache');
         }
+    }
+
+    protected function logError(\Throwable $exception, string $context = '', array $extraData = [])
+    {
+        Sentry::captureException($exception, [
+            'extra' => $extraData,
+            'context' => $context
+        ]);
     }
 }

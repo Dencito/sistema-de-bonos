@@ -7,6 +7,7 @@ import { days } from "./days";
 import { getValidationRequiredMessage } from "@utils/messagesValidationes";
 import { useMessage } from "@contexts/MessageShow";
 import ScheduleModal from "./ScheduleModal";
+import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
 
 export default function ModalEditBranch({ data, statuses }) {
   const [showModal, setShowModal] = useState(false);
@@ -54,10 +55,10 @@ export default function ModalEditBranch({ data, statuses }) {
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
+        const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
           },
         });
         const data = await response.json()
@@ -66,10 +67,10 @@ export default function ModalEditBranch({ data, statuses }) {
     }
     const getRegion = async () => {
       if (country !== '' && showModal) {
-        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`, {
+        const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries/${country}/states`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
           },
         });
         const data = await response.json()

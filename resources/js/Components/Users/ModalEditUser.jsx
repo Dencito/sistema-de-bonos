@@ -8,6 +8,7 @@ import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
 import { validate } from "rut.js";
 import { differenceInYears } from 'date-fns';
+import { roleNames } from "@/Utils/constants";
 
 export default function ModalEditUser({ data, roles, branches, statuses, userType, roleDisplayNames }) {
   const [showModal, setShowModal] = useState(false);
@@ -81,7 +82,7 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
   );
 
   const formFieldsByUserType = {
-    "SUPER ADMIN": (
+    "SUPER-ADMIN": (
       <>
         <Form.Item
           name="username"
@@ -452,14 +453,14 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           </Select>
         </Form.Item>
         <Form.Item
-          name="role"
+          name="role_id"
           label="Rol"
-          initialValue={data?.role?.name}
+          initialValue={data?.role?.id}
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione el rol">
-            {roles.filter(role => role?.name !== "Jugador")?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
+            {roles?.filter(role => role?.name !== roleNames.jugador).map(role => (
+              <Select.Option key={role?.id} value={role?.id}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>
@@ -605,18 +606,6 @@ export default function ModalEditUser({ data, roles, branches, statuses, userTyp
           <Select placeholder="Seleccione el estado">
             {statuses?.map(status => (
               <Select.Option key={status.id} value={status.id}>{status.name}</Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-        <Form.Item
-          name="role"
-          label="Rol"
-          initialValue={data?.role?.name}
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
-        >
-          <Select disabled placeholder="Seleccione el rol">
-            {roles?.map(role => (
-              <Select.Option key={role?.id} value={role?.name}>{roleDisplayNames[role?.name] || role?.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

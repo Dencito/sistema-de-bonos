@@ -86,7 +86,7 @@ class BranchController extends Controller
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
-        $company = Company::find($request->company_id);
+        $company = Company::findOrFail($request->company_id);
         $currentBranches = $company->branches()->count();
 
         if ($currentBranches >= $company->max_branches) {
@@ -96,6 +96,7 @@ class BranchController extends Controller
                 'error' => true
             ], 400);
         }
+
         try {
             $found = $this->getBranchByName($request->name);
             if ($found) {
@@ -119,41 +120,93 @@ class BranchController extends Controller
                 'branchAddressDeptOrHouse' => $request->branchAddressDeptOrHouse,
                 'company_id' => $request->company_id,
                 'status_id' => 1,
+                'available_schedules' => $request->available_schedules,
+                'bonus_schedules' => $request->bonus_schedules
             ]);
-    
-            // Crear los turnos y horarios
-            foreach ($request->shifts as $shiftData) {
-                $shift = $branch->shifts()->create([
-                    'day_init' => $shiftData['day_init'],
-                    'day_end' => $shiftData['day_end'],
-                ]);
-            
-                foreach ($shiftData['schedule'] as $schedule) {
-                    $shift->schedules()->create([
-                        'start' => $schedule['start'],
-                        'end' => $schedule['end'],
-                    ]);
-                }
+
+            return response()->json([
+                'message' => 'Sucursal creada exitosamente',
+                'data' => $branch,
+                'status' => 201
+            ], 201);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        if (!auth()->user()->hasAnyRole(1, 2)) {
+            abort(403, 'No tienes permiso para realizar esta acción.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'numberOfEmployees' => 'required|integer',
+            'branchAddressCountry' => 'required|string|max:255',
+            'branchAddressRegion' => 'required|string|max:255',
+            'branchAddressProvince' => 'required|string|max:255',
+            'branchAddressCommune' => 'required|string|max:255',
+            'branchAddressStreet' => 'required|string|max:255',
+            'branchAddressNumber' => 'required|string|max:255',
+            'branchAddressLocal' => 'nullable|string|max:255',
+            'branchAddressDeptOrHouse' => 'nullable|string|max:255',
+            'company_id' => 'required|exists:companies,id',
+            'available_schedules' => 'nullable|json',
+            'bonus_schedules' => 'nullable|json'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors' => $validator->errors(),
+                'status' => 422
+            ], 422);
+        }
+
+        try {
+            // Verificar si existe una sucursal con el mismo nombre
+            $existingBranch = Branch::where('name', $request->name)->first();
+            if ($existingBranch) {
+                return response()->json([
+                    'message' => 'Ya existe una sucursal con este nombre',
+                    'status' => 400
+                ], 400);
             }
 
-            // Crear los turnos y horarios
-            foreach ($request->availableBonusDays as $availableBonusDayData) {
-                $availableBonusDay = $branch->availableBonusDays()->create([
-                    'day' => $availableBonusDayData['day'],
-                ]);
-            
-                foreach ($availableBonusDayData['schedule'] as $schedule) {
-                    $availableBonusDay->schedules()->create([
-                        'start' => $schedule['start'],
-                        'end' => $schedule['end'],
-                    ]);
-                }
-            }
-    
-            Mail::to(env('MAIL_TO_SEND'))
-            ->send(new BranchCreatedMail($branch->name, Company::find($branch->company_id)->name, auth()->user()->username));
+            // Verificar el límite de sucursales
+            $company = Company::findOrFail($request->company_id);
+            $currentBranches = $company->branches()->count();
 
-            return response()->json(['message' => 'Sucursal creada exitosamente'], 201);
+            if ($currentBranches >= $company->max_branches) {
+                return response()->json([
+                    'message' => 'Se ha alcanzado el número máximo de sucursales permitidas para esta empresa',
+                    'status' => 400
+                ], 400);
+            }
+
+            $branch = Branch::create([
+                ...$request->all(),
+                'status_id' => 1,
+                'creationDate' => now()
+            ]);
+
+            return response()->json([
+                'message' => 'Sucursal creada exitosamente',
+                'data' => $branch,
+                'status' => 201
+            ], 201);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'No se encontró la empresa especificada',
+                'error' => $e->getMessage(),
+                'status' => 404
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al crear la sucursal',
+                'error' => $e->getMessage(),
+                'status' => 500
+            ], 500);
         }
     }
 
@@ -183,10 +236,13 @@ class BranchController extends Controller
             'branchAddressLocal' => 'nullable|string',
             'branchAddressDeptOrHouse' => 'nullable|string',
             'status_id' => 'required|integer',
+            'available_schedules' => 'nullable|json',
+            'bonus_schedules' => 'nullable|json'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
+                'error' => true,
                 'message' => 'Error en la validación de los datos',
                 'errors' => $validator->errors(),
                 'status' => 400
@@ -232,6 +288,8 @@ class BranchController extends Controller
             'branchAddressDeptOrHouse',
             'company_id',
             'status_id',
+            'available_schedules',
+            'bonus_schedules'
         ]);
 
         // Detectar cambios

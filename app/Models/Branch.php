@@ -28,8 +28,11 @@ class Branch extends Model
         'branchAddressLocal',
         'branchAddressDeptOrHouse',
         'company_id',
-        'status_id'
+        'status_id',
+        'available_schedules',
+        'bonus_schedules'
     ];
+
 
     public function shifts()
     {

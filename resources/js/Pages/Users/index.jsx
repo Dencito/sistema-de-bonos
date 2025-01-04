@@ -39,7 +39,6 @@ export default function UserPage({
         onChange: setSelectedRowKeys,
     };
 
-
     const columns = {
         'super-admin': [
             {
@@ -479,10 +478,141 @@ export default function UserPage({
                             roleDisplayNames={roleDisplayNames}
                         />
                         <ModalDeleteUser data={user} />
+                        <ModalCreateBonus data={user} />
                     </div>
                 ),
-            },
+            }
         ]
+    };
+
+    const expandedRowRender = (user) => {
+        const getBonusStatus = (bonus) => {
+            const now = new Date();
+            const startDate = bonus.start_datetime ? new Date(bonus.start_datetime) : null;
+            const endDate = bonus.end_datetime ? new Date(bonus.end_datetime) : null;
+
+            // Sin fechas de inicio ni fin
+            if (!startDate && !endDate) {
+                return { 
+                    text: "Sin vencimiento", 
+                    class: "bg-blue-100 text-blue-800" 
+                };
+            }
+
+            // Solo tiene fecha de inicio
+            if (startDate && !endDate) {
+                return now < startDate
+                    ? { 
+                        text: "Pendiente de activación", 
+                        class: "bg-yellow-100 text-yellow-800" 
+                    }
+                    : { 
+                        text: "Activo sin vencimiento", 
+                        class: "bg-blue-100 text-blue-800" 
+                    };
+            }
+
+            // Solo tiene fecha de fin
+            if (!startDate && endDate) {
+                return now > endDate
+                    ? { 
+                        text: "Vencido", 
+                        class: "bg-red-100 text-red-800" 
+                    }
+                    : { 
+                        text: "Activo", 
+                        class: "bg-green-100 text-green-800" 
+                    };
+            }
+
+            // Tiene ambas fechas
+            if (now < startDate) {
+                return { 
+                    text: "Pendiente de activación", 
+                    class: "bg-yellow-100 text-yellow-800" 
+                };
+            }
+            if (now > endDate) {
+                return { 
+                    text: "Vencido", 
+                    class: "bg-red-100 text-red-800" 
+                };
+            }
+            return { 
+                text: "Activo", 
+                class: "bg-green-100 text-green-800" 
+            };
+        };
+
+        return (
+            <div className="py-2">
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-lg">Bonos asignados</h3>
+                </div>
+                <div className="flex flex-wrap gap-3 overflow-x-auto pb-2">
+                    {user?.bonuses?.map((bonus) => {
+                        const status = getBonusStatus(bonus);
+                        return (
+                            <div key={bonus?.id} className="flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="font-bold text-lg text-green-600">${bonus.amount.toLocaleString('es-CL')}</span>
+                                    <div className={`px-2 py-1 rounded-full text-xs ${status.class}`}>
+                                        {status.text}
+                                    </div>
+                                </div>
+                                <div className="space-y-1 text-sm">
+                                    {bonus.start_datetime ? (
+                                        <div className="flex items-center text-gray-600">
+                                            <span className="w-16 font-medium">Inicio:</span>
+                                            <span>{new Date(bonus.start_datetime).toLocaleDateString('es-CL', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center text-gray-600">
+                                            <span className="w-16 font-medium">Inicio:</span>
+                                            <span className="italic">No definido</span>
+                                        </div>
+                                    )}
+                                    {bonus.end_datetime ? (
+                                        <div className="flex items-center text-gray-600">
+                                            <span className="w-16 font-medium">Fin:</span>
+                                            <span>{new Date(bonus.end_datetime).toLocaleDateString('es-CL', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center text-gray-600">
+                                            <span className="w-16 font-medium">Fin:</span>
+                                            <span className="italic">Sin vencimiento</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center text-gray-600">
+                                        <span className="w-16 font-medium">Creado:</span>
+                                        <span>{new Date(bonus.created_at).toLocaleDateString('es-CL', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric'
+                                        })}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {(!user?.bonuses || user?.bonuses.length === 0) && (
+                    <p className="text-gray-500 text-center py-4">No hay bonos asignados</p>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -513,8 +643,7 @@ export default function UserPage({
                                 roles={roles}
                             />
                             <div className="flex gap-5">
-                                {roleDisplayNames[data?.role] && <ModalCreateBonus />}
-                                {(data?.role && (data.role !== roleDisplayNames.jugador.toLowerCase() && auth.role !== roleDisplayNames.jugador.toLowerCase() && auth.role !== roleDisplayNames.trabajador.toLowerCase())) && (
+                                {(data?.role) && (
                                     <ModalCreateUser
                                         userType={data?.role}
                                         statuses={statuses}
@@ -522,6 +651,7 @@ export default function UserPage({
                                         roles={roles?.filter(
                                             (item) => item?.name === data?.role
                                         )}
+                                        categories={categories}
                                         branches={branches}
                                     />
                                 )}
@@ -530,14 +660,25 @@ export default function UserPage({
 
                         {
                             data.role &&
-                            <CustomTable
+                            data.role === roleDisplayNames.jugador.toLowerCase() ? <CustomTable
                                 rowSelection={rowSelection}
                                 dataSource={users?.map((user) => ({
                                     ...user,
                                     key: user?.id,
                                 }))}
                                 columns={columns?.[data.role]}
-                            />
+                                expandable={{
+                                    expandedRowRender,
+                                    rowExpandable: (record) => true,
+                                }}
+                            /> : <CustomTable
+                            rowSelection={rowSelection}
+                            dataSource={users?.map((user) => ({
+                                ...user,
+                                key: user?.id,
+                            }))}
+                            columns={columns?.[data.role]}
+                        />
                         }
                         <div className="flex flex-col xl:flex-row gap-5 justify-between mt-5 mb-20">
                             <SelectAssignCategories

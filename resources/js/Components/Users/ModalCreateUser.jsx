@@ -9,7 +9,7 @@ import { ModalForm } from "@components-v2/ModalForm";
 import { CustomButton } from "@components-v2/CustomButton";
 import { differenceInYears } from 'date-fns';
 
-export default function ModalCreateUser({ userType, branches }) {
+export default function ModalCreateUser({ userType, branches, categories = [] }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm();
@@ -87,7 +87,7 @@ export default function ModalCreateUser({ userType, branches }) {
   );
 
   const formFieldsByUserType = {
-    "SUPER ADMIN": (
+    "SUPER-ADMIN": (
       <>
         <Form.Item
           name="username"
@@ -131,7 +131,6 @@ export default function ModalCreateUser({ userType, branches }) {
         <Form.Item
           name="branch_id"
           label="Sucursal"
-          rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
           <Select placeholder="Seleccione la sucursal">
             {branches?.map(branch => (
@@ -511,6 +510,17 @@ export default function ModalCreateUser({ userType, branches }) {
           <Select mode="multiple" placeholder="Seleccione las sucursales">
             {branches?.map(branch => (
               <Select.Option key={branch.id} value={branch.id}>{branch.name}</Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item
+          name="category_id"
+          label="Categorias de bonos"
+          rules={[{ required: true, message: getValidationRequiredMessage }]}
+        >
+          <Select placeholder="Seleccione una categoria">
+            {categories?.map(category => (
+              <Select.Option key={category.id} value={category.id}>{category.name}</Select.Option>
             ))}
           </Select>
         </Form.Item>

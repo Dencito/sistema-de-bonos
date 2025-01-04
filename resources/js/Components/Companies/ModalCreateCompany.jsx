@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, Modal, Select } from "antd";
+import { Button, Divider, Form, Input, Modal, Select, Spin } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { validate } from "rut.js";
 import {
@@ -20,6 +20,7 @@ export default function ModalCreateCompany() {
         legalRepresentative: false,
         contact: false,
     });
+    const [loading, setLoading] = useState(false);
 
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
@@ -72,16 +73,19 @@ export default function ModalCreateCompany() {
             if (checkErrors(errorRuts)) {
                 return errorMsg(`Uno de los ruts es invalido`);
             }
+            setLoading(true);
             const { data } = await axios.post(`/companies`, values);
             router.visit("/companies", {
                 preserveState: true,
             });
             data && successMsg(data?.message);
             handleCloseModal();
+            setLoading(false);
         } catch (error) {
             const {
                 response: { data: dataError },
             } = error;
+            setLoading(false);
             return errorMsg(dataError?.message);
         }
     };
@@ -161,6 +165,7 @@ export default function ModalCreateCompany() {
         <Form.Item
             name="prefix"
             rules={[{ required: true, message: getValidationRequiredMessage }]}
+            initialValue="+56"
             noStyle
         >
             <Select
@@ -185,6 +190,7 @@ export default function ModalCreateCompany() {
     const prefixSelectorContact = (
         <Form.Item
             name="prefixContact"
+            initialValue="+56"
             rules={[{ required: true, message: getValidationRequiredMessage }]}
             noStyle
         >
@@ -206,7 +212,23 @@ export default function ModalCreateCompany() {
             </Select>
         </Form.Item>
     );
-
+    
+    
+    useEffect(() => {
+        if(loading) {
+            const handleBeforeUnload = (event) => {
+                event.preventDefault();
+                event.returnValue = ""; // Activa el cuadro de diálogo en navegadores modernos.
+              };
+              // Agregar eventos
+              window.addEventListener('beforeunload', handleBeforeUnload);
+          
+              return () => {
+                // Eliminar eventos al desmontar el componente
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+              };   
+        }
+      }, [loading]);
     return (
         <>
             <Button
@@ -220,8 +242,11 @@ export default function ModalCreateCompany() {
             <Modal
                 style={{ top: 20 }}
                 title={<p className="text-bold text-3xl">Crear empresa</p>}
+                confirmLoading={loading}
+                zIndex={20}
                 open={showModal}
                 onCancel={() =>
+                    !loading &&
                     Modal.confirm({
                         title: "¿Estás seguro de que quieres salir?",
                         content: "Se borrarán todos los datos no guardados.",
@@ -240,6 +265,7 @@ export default function ModalCreateCompany() {
                     htmlType: "submit",
                 }}
                 destroyOnClose={() =>
+                    !loading &&
                     Modal.confirm({
                         title: "¿Estás seguro de que quieres salir?",
                         content: "Se borrarán todos los datos no guardados.",
@@ -259,12 +285,22 @@ export default function ModalCreateCompany() {
                         initialValues={{
                             modifier: "public",
                         }}
+                        disabled={loading}
+                        className="z-40"
                         clearOnDestroy
                         onFinish={(values) => onCreate(values)}
                         onFinishFailed={() =>
                             errorMsg("Verifica todos los campos")
                         }
                     >
+                        {loading && (
+                                <Spin size="large" tip={
+                                        <div className="flex flex-col items-center justify-center">
+                                            <p className="text-bold text-2xl">Estamos creando la empresa</p>
+                                            <p className="text-bold text-xl">Esto puede llegar a tardar unos segundos</p>
+                                        </div>
+                                } fullscreen />
+                        )}
                         {dom}
                     </Form>
                 )}

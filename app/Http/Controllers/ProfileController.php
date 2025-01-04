@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Sentry\State\HubInterface;
+use Sentry\State\Scope;
 
 class ProfileController extends Controller
 {
@@ -18,10 +20,15 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
-        ]);
+        try {
+            return Inertia::render('Profile/Edit', [
+                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+                'status' => session('status'),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logError($e, 'profile.edit');
+            throw $e;
+        }
     }
 
     /**
@@ -29,15 +36,22 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        try {
+            $request->user()->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            if ($request->user()->isDirty('email')) {
+                $request->user()->email_verified_at = null;
+            }
+
+            $request->user()->save();
+
+            return Redirect::route('profile.edit');
+        } catch (\Throwable $e) {
+            $this->logError($e, 'profile.update', [
+                'email_changed' => $request->user()->isDirty('email')
+            ]);
+            throw $e;
         }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit');
     }
 
     /**
@@ -45,19 +59,34 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validate([
-            'password' => ['required', 'current_password'],
+        try {
+            $request->validate([
+                'password' => ['required', 'current_password'],
+            ]);
+
+            $user = $request->user();
+
+            Auth::logout();
+
+            $user->delete();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return Redirect::to('/');
+        } catch (\Throwable $e) {
+            $this->logError($e, 'profile.destroy');
+            throw $e;
+        }
+    }
+
+    protected function logError(\Throwable $e, string $transaction, array $extra = []): void
+    {
+        /** @var HubInterface $sentry */
+        $sentry = app(HubInterface::class);
+        $sentry->captureException($e, [
+            'transaction' => $transaction,
+            'extra' => $extra,
         ]);
-
-        $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
     }
 }

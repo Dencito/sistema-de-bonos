@@ -3,6 +3,7 @@ import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { validate } from 'rut.js';
 import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
+import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
 
 export default function ModalViewCompany({ data }) {
   const [showModal, setShowModal] = useState(false);
@@ -10,27 +11,27 @@ export default function ModalViewCompany({ data }) {
   const [countries, setCountries] = useState()
   const [regions, setRegions] = useState()
   const [form] = Form.useForm();
-  
+
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
-        const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
+        const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
           },
         });
         const data = await response.json()
         setCountries(data?.data)
       }
     }
-  
+
     const getRegion = async () => {
       if (country !== '' && showModal) {
-        const response = await fetch(`https://restfulcountries.com/api/v1/countries/${country}/states`, {
+        const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries/${country}/states`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
           },
         });
         const data = await response.json()
@@ -46,10 +47,8 @@ export default function ModalViewCompany({ data }) {
       if (!value) {
         return Promise.reject(new Error('El campo debe tener un valor de RUT valido'));
       }
-
       const { rutNumbers, rutDv } = form.getFieldsValue(['rutNumbers', 'rutDv']);
       const fullRut = `${rutNumbers}-${rutDv}`;
-
       if (validate(fullRut)) {
         return Promise.resolve();
       }
@@ -62,7 +61,6 @@ export default function ModalViewCompany({ data }) {
       if (!value) {
         return Promise.reject(new Error('El campo debe tener un valor de RUT valido'));
       }
-
       const { rutNumbersLegalRepresentative, rutDvLegalRepresentative } = form.getFieldsValue(['rutNumbersLegalRepresentative', 'rutDvLegalRepresentative']);
       const fullRut = `${rutNumbersLegalRepresentative}-${rutDvLegalRepresentative}`;
 
@@ -78,7 +76,6 @@ export default function ModalViewCompany({ data }) {
       if (!value) {
         return Promise.reject(new Error('El campo debe tener un valor de RUT valido'));
       }
-
       const { rutNumbersContact, rutDvContact } = form.getFieldsValue(['rutNumbersContact', 'rutDvContact']);
       const fullRut = `${rutNumbersContact}-${rutDvContact}`;
       if (validate(fullRut)) {
@@ -137,9 +134,9 @@ export default function ModalViewCompany({ data }) {
         cancelText="Cerrar"
         onCancel={() => handleCloseModal()}
         destroyOnClose={true}
-        okButtonProps={{ 
-          style: { display: 'none' } 
-        }} 
+        okButtonProps={{
+          style: { display: 'none' }
+        }}
         modalRender={(dom) => (
           <Form
             layout="vertical"
@@ -176,7 +173,7 @@ export default function ModalViewCompany({ data }) {
           label="Cantidad maxima de sucursales"
           rules={[{ required: true, message: getValidationRequiredMessage }]}
         >
-          <Input  showCount maxLength={2} />
+          <Input showCount maxLength={2} />
         </Form.Item>
         <div className="flex gap-3">
           <Form.Item

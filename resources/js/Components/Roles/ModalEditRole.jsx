@@ -9,6 +9,7 @@ import {
 import { router } from "@inertiajs/react";
 import axios from "axios";
 import { useMessage } from "@contexts/MessageShow";
+import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
 
 export default function ModalEditRole({ data }) {
     const [showModal, setShowModal] = useState(false);
@@ -23,13 +24,11 @@ export default function ModalEditRole({ data }) {
         const getCountries = async () => {
             if (showModal) {
                 const response = await fetch(
-                    "https://restfulcountries.com/api/v1/countries",
+                    `${VITE_COUNTRIES_API_URL}/countries`,
                     {
                         method: "GET",
                         headers: {
-                            Authorization: `Bearer ${
-                                import.meta.env.VITE_API_KEY_COUNTRYS
-                            }`,
+                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
                         },
                     }
                 );
@@ -40,13 +39,11 @@ export default function ModalEditRole({ data }) {
         const getRegion = async () => {
             if (country !== "" && showModal) {
                 const response = await fetch(
-                    `https://restfulcountries.com/api/v1/countries/${country}/states`,
+                    `${VITE_COUNTRIES_API_URL}/countries/${country}/states`,
                     {
                         method: "GET",
                         headers: {
-                            Authorization: `Bearer ${
-                                import.meta.env.VITE_API_KEY_COUNTRYS
-                            }`,
+                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
                         },
                     }
                 );
@@ -90,13 +87,11 @@ export default function ModalEditRole({ data }) {
                     new Error("El campo debe tener un valor de RUT valido")
                 );
             }
-
             const { rutNumbers, rutDv } = form.getFieldsValue([
                 "rutNumbers",
                 "rutDv",
             ]);
             const fullRut = `${rutNumbers}-${rutDv}`;
-
             if (validate(fullRut)) {
                 return Promise.resolve();
             }
@@ -114,14 +109,12 @@ export default function ModalEditRole({ data }) {
                     new Error("El campo debe tener un valor de RUT valido")
                 );
             }
-
             const { rutNumbersLegalRepresentative, rutDvLegalRepresentative } =
                 form.getFieldsValue([
                     "rutNumbersLegalRepresentative",
                     "rutDvLegalRepresentative",
                 ]);
             const fullRut = `${rutNumbersLegalRepresentative}-${rutDvLegalRepresentative}`;
-
             if (validate(fullRut)) {
                 return Promise.resolve();
             }
@@ -139,7 +132,6 @@ export default function ModalEditRole({ data }) {
                     new Error("El campo debe tener un valor de RUT valido")
                 );
             }
-
             const { rutNumbersContact, rutDvContact } = form.getFieldsValue([
                 "rutNumbersContact",
                 "rutDvContact",

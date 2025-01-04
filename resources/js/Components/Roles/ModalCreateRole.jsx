@@ -3,8 +3,9 @@ import { Button, Divider, Form, Input, Modal, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { validate } from 'rut.js';
 import { getValidationEmailMessage, getValidationNumbersMessage, getValidationRequiredMessage } from "@utils/messagesValidationes";
-import { router  } from '@inertiajs/react'
+import { router } from '@inertiajs/react'
 import { useMessage } from "@contexts/MessageShow";
+import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
 
 export default function ModalCreateRole() {
     const [showModal, setShowModal] = useState(false);
@@ -18,10 +19,10 @@ export default function ModalCreateRole() {
     useEffect(() => {
         const getCountries = async () => {
             if (showModal) {
-                const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries`, {
+                const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries`, {
                     method: "GET",
                     headers: {
-                        Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+                        Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
                     },
                 });
                 const data = await response.json()
@@ -30,10 +31,10 @@ export default function ModalCreateRole() {
         }
         const getRegion = async () => {
             if (country !== '' && showModal) {
-                const response = await fetch(`${import.meta.env.VITE_RESTFUL_COUNTRIES_URL}/countries/${country}/states`, {
+                const response = await fetch(`${VITE_COUNTRIES_API_URL}/countries/${country}/states`, {
                     method: "GET",
                     headers: {
-                        Authorization: `Bearer ${import.meta.env.VITE_API_KEY_COUNTRYS}`,
+                        Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
                     },
                 });
                 const data = await response.json()
@@ -145,7 +146,7 @@ export default function ModalCreateRole() {
     );
     return (
         <>
-            
+
             <Button onClick={handleOpenModal} className="my-5" type="primary" shape="circle" icon={<PlusOutlined />} size={50} />
             <Modal
                 style={{ top: 20 }}
@@ -429,7 +430,7 @@ export default function ModalCreateRole() {
                     label="Comuna"
                     rules={[{ required: true, message: getValidationRequiredMessage }]}
                 >
-                    <Input  showCount maxLength={30} />
+                    <Input showCount maxLength={30} />
                 </Form.Item>
                 <div className="flex gap-3">
                     <Form.Item

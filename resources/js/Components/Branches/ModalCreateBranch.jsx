@@ -22,17 +22,18 @@ import ScheduleModal from "./ScheduleModal";
 
 export default function ModalCreateBranch({ companies }) {
   const [showModal, setShowModal] = useState(false);
-  const [selectedDays, setSelectedDays] = useState([]);
   const [loading, setLoading] = useState(false);
   const [country, setCountry] = useState("");
   const [countries, setCountries] = useState();
   const [regions, setRegions] = useState();
-  const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
-  const [selectedSchedules, setSelectedSchedules] = useState([]);
+  const [availableScheduleModalVisible, setAvailableScheduleModalVisible] = useState(false);
+  const [bonusScheduleModalVisible, setBonusScheduleModalVisible] = useState(false);
+  const [availableSchedules, setAvailableSchedules] = useState([]);
+  const [bonusSchedules, setBonusSchedules] = useState([]);
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
-  
+
   useEffect(() => {
     const getCountries = async () => {
       if (showModal) {
@@ -70,69 +71,52 @@ export default function ModalCreateBranch({ companies }) {
     getRegion();
   }, [showModal, country]);
 
-  const handleDaySelection = (day) => {
-    // Si el día ya está seleccionado, lo eliminamos
-    if (selectedDays.includes(day)) {
-      setSelectedDays(selectedDays.filter((d) => d !== day));
-      form.setFieldValue(
-        "availableBonusDays",
-        form
-          .getFieldValue("availableBonusDays")
-          ?.filter((shift) => shift?.day !== day)
-      );
-    } else {
-      // Si no está seleccionado, lo añadimos
-      setSelectedDays([...selectedDays, day]);
-      form.setFieldValue("availableBonusDays", [
-        ...(form.getFieldValue("availableBonusDays") || []),
-        { day, schedule: [null] },
-      ]);
-    }
+  const handleAvailableScheduleSave = (schedules) => {
+    setAvailableSchedules(schedules);
+    form.setFieldsValue({ available_schedules: JSON.stringify(schedules) });
   };
 
-  const handleScheduleSave = (schedules) => {
-    setSelectedSchedules(schedules);
-    form.setFieldsValue({ schedules });
+  const handleBonusScheduleSave = (schedules) => {
+    setBonusSchedules(schedules);
+    form.setFieldsValue({ bonus_schedules: JSON.stringify(schedules) });
   };
+  console.log(bonusSchedules, "schedules bonus");
+  console.log(availableSchedules, "availableSchedules bonus");
 
   const onCreate = async (values) => {
     try {
-      const findScheduleUndefined = values?.shifts?.some(
-        (shift) => !shift?.schedule || shift?.schedule?.length === 0
-      );
-
-      if (
-        values?.shifts?.length === 0 ||
-        findScheduleUndefined ||
-        values?.shifts === undefined
-      ) {
-        return errorMsg(
-          "La sucursal debe contar con al menos un turno con horario definido"
-        );
+      setLoading(true);
+      
+      // Asegurarse de que company_id esté establecido
+      if (!values.company_id && companies?.length > 0) {
+        values.company_id = companies[0].id;
       }
 
-      setLoading(true);
-      //Seleccionarlo directo en el back
-      values.company_id = companies?.[0]?.id;
-      const { data } = await axios.post(`/branches`, values);
-      router.visit("/branches", {
-        preserveState: true, // Mantener el estado actual
+      const response = await axios.post('/branches', {
+        ...values,
+        creationDate: new Date().toISOString(),
       });
-      data && successMsg(data?.message);
-      setLoading(false);
+
+      if (response?.data?.status >= 400) {
+        errorMsg(response?.data?.message);
+        return;
+      }
+
+      successMsg(response?.data?.message);
+      router.visit(window.location.href, {
+        preserveState: false,
+      });
       handleCloseModal();
     } catch (error) {
-      const {
-        response: { data: dataError },
-      } = error;
+      const message = error.response?.data?.message || 'Error al crear la sucursal';
+      errorMsg(message);
+    } finally {
       setLoading(false);
-      return errorMsg(dataError?.message);
     }
   };
 
   const handleCloseModal = () => {
     setCountry("");
-    setSelectedDays([]);
     setLoading(false);
     setShowModal(false);
   };
@@ -149,224 +133,35 @@ export default function ModalCreateBranch({ companies }) {
   return (
     <>
       <Button
-        onClick={handleOpenModal}
-        className="my-5"
         type="primary"
-        shape="circle"
+        onClick={handleOpenModal}
         icon={<PlusOutlined />}
-        size={50}
-      />
-      <Modal
-        style={{ top: 20 }}
-        title={<p className="text-bold text-3xl">Crear sucursal</p>}
-        open={showModal}
-        onCancel={() =>
-          !loading &&
-          Modal.confirm({
-            title: "¿Estás seguro de que quieres salir?",
-            content: "Se borrarán todos los datos no guardados.",
-            okText: "Sí",
-            okType: "danger",
-            cancelText: "No",
-            onOk() {
-              handleCloseModal();
-            },
-          })
-        }
-        okText="Crear"
-        cancelText="Cancelar"
-        okButtonProps={{
-          autoFocus: true,
-          htmlType: "submit",
-          loading: loading, // Estado de carga del botón
-          disabled: loading, // Deshabilitar cuando está cargando
-        }}
-        cancelButtonProps={{
-          disabled: loading, // Deshabilitar cuando está cargando
-        }}
-        destroyOnClose={() =>
-          Modal.confirm({
-            title: "¿Estás seguro de que quieres salir?",
-            content: "Se borrarán todos los datos no guardados.",
-            okText: "Sí",
-            okType: "danger",
-            cancelText: "No",
-            onOk() {
-              handleCloseModal();
-            },
-          })
-        }
-        modalRender={(dom) => (
-          <Form
-            layout="vertical"
-            form={form}
-            name="form_in_modal"
-            initialValues={{
-              modifier: "public",
-            }}
-            disabled={loading}
-            clearOnDestroy
-            onFinish={(values) => onCreate(values)}
-          >
-            {dom}
-          </Form>
-        )}
       >
-        <Form.Item
-          name="creationDate"
-          label="Fecha de creación"
-          initialValue={new Date().toJSON().slice(0, 10)}
+        Nueva Sucursal
+      </Button>
+      <Modal
+      style={{ top: 20 }}
+      title="Crear Nueva Sucursal"
+        open={showModal}
+        onCancel={handleCloseModal}
+        footer={null}
+        width={800}
+      >
+        <Form
+          form={form}
+          onFinish={onCreate}
+          layout="vertical"
         >
-          <Input disabled />
-        </Form.Item>
-        <Form.Item
-          name="name"
-          label="Nombre de la sucursal"
-          rules={[
-            {
-              required: true,
-              message: getValidationRequiredMessage,
-            },
-          ]}
-        >
-          <Input showCount maxLength={30} />
-        </Form.Item>
-        <Form.Item
-          name="numberOfEmployees"
-          label="Cantidad de trabajadores"
-          rules={[
-            {
-              required: true,
-              message: getValidationRequiredMessage,
-            },
-          ]}
-        >
-          <Input
-            name="numberOfEmployees"
-            onChange={onlyNumberInput}
-            showCount
-            maxLength={4}
-          />
-        </Form.Item>
-
-        <Divider className="font-bold text-3xl">Dirección</Divider>
-
-        <div className="flex gap-5">
           <Form.Item
-            className="w-6/12"
-            name="branchAddressCountry"
-            label="país"
-            rules={[
-              {
-                required: true,
-                message: getValidationRequiredMessage,
-              },
-            ]}
+            name="creationDate"
+            label="Fecha de creación"
+            initialValue={new Date().toJSON().slice(0, 10)}
           >
-            <Select
-              onChange={() =>
-                setCountry(
-                  form?.getFieldsValue()?.branchAddressCountry
-                )
-              }
-              showSearch
-              placeholder="Seleccionar país"
-            >
-              {countries?.map((country) => (
-                <Select.Option
-                  key={country?.name}
-                  value={country?.name}
-                >
-                  {country?.name}
-                </Select.Option>
-              ))}
-            </Select>
+            <Input disabled />
           </Form.Item>
-          
           <Form.Item
-            className="w-6/12"
-            name="branchAddressRegion"
-            label="Región"
-            rules={[
-              {
-                required: true,
-                message: getValidationRequiredMessage,
-              },
-            ]}
-          >
-            <Select showSearch placeholder="Seleccionar region">
-              {regions?.map((region) => (
-                <Select.Option
-                  key={region?.name}
-                  value={region?.name}
-                >
-                  {region?.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </div>
-
-        
-        <Form.Item
-            name="schedules"
-            label="Horarios"
-            rules={[
-              {
-                required: true,
-                message: getValidationRequiredMessage,
-              },
-            ]}
-        >
-          <div>
-            <Button onClick={() => setScheduleModalVisible(true)} type="default">
-              Seleccionar Horarios
-            </Button>
-            {selectedSchedules?.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                {selectedSchedules.map((schedule, index) => (
-                  <Tag key={index}>{`${schedule.day} ${schedule.start}-${schedule.end}`}</Tag>
-                ))}
-              </div>
-            )}
-            <ScheduleModal
-              open={scheduleModalVisible}
-              onClose={() => setScheduleModalVisible(false)}
-              onSave={handleScheduleSave}
-              initialValue={selectedSchedules}
-            />
-          </div>
-        </Form.Item>
-
-        <Form.Item
-          name="branchAddressProvince"
-          label="Provincia"
-          rules={[
-            {
-              required: true,
-              message: getValidationRequiredMessage,
-            },
-          ]}
-        >
-          <Input showCount maxLength={30} />
-        </Form.Item>
-        <Form.Item
-          name="branchAddressCommune"
-          label="Comuna"
-          rules={[
-            {
-              required: true,
-              message: getValidationRequiredMessage,
-            },
-          ]}
-        >
-          <Input showCount maxLength={30} />
-        </Form.Item>
-        <div className="flex gap-3">
-          <Form.Item
-            className="w-9/12"
-            name="branchAddressStreet"
-            label="Calle"
+            name="name"
+            label="Nombre de la sucursal"
             rules={[
               {
                 required: true,
@@ -377,9 +172,8 @@ export default function ModalCreateBranch({ companies }) {
             <Input showCount maxLength={30} />
           </Form.Item>
           <Form.Item
-            className="w-3/12"
-            name="branchAddressNumber"
-            label="Numero"
+            name="numberOfEmployees"
+            label="Cantidad de trabajadores"
             rules={[
               {
                 required: true,
@@ -388,445 +182,210 @@ export default function ModalCreateBranch({ companies }) {
             ]}
           >
             <Input
-              name="branchAddressNumber"
+              name="numberOfEmployees"
               onChange={onlyNumberInput}
               showCount
-              maxLength={6}
+              maxLength={4}
             />
           </Form.Item>
-        </div>
-        <div className="flex gap-3">
-          <Form.Item
-            className="w-6/12"
-            name="branchAddressLocal"
-            label="Local"
-          >
-            <Input showCount maxLength={10} />
-          </Form.Item>
-          <Form.Item
-            className="w-6/12"
-            name="branchAddressDeptOrHouse"
-            label="Departamento / Casa"
-          >
-            <Input showCount maxLength={10} />
-          </Form.Item>
-        </div>
 
-        <Divider className="font-bold text-3xl">Turnos</Divider>
+          <Divider className="font-bold text-3xl">Dirección</Divider>
 
-        <Form.List name="shifts">
-          {(fields, { add, remove }) => (
-            <div
-              style={{
-                display: "flex",
-                rowGap: 16,
-                flexDirection: "column",
-              }}
+          <div className="flex gap-5">
+            <Form.Item
+              className="w-6/12"
+              name="branchAddressCountry"
+              label="país"
+              rules={[
+                {
+                  required: true,
+                  message: getValidationRequiredMessage,
+                },
+              ]}
             >
-              {fields.map((field) => (
-                <Card
-                  size="small"
-                  title={`Turno ${field.name + 1}`}
-                  key={field.key}
-                  extra={
-                    !loading && (
-                      <CloseOutlined
-                        onClick={() => {
-                          remove(field.name);
-                        }}
-                      />
-                    )
-                  }
-                >
-                  <div className="flex flex-wrap justify-between">
-                    <Form.Item
-                      className="w-5/12"
-                      shouldUpdate
-                      rules={[
-                        {
-                          required: true,
-                          message:
-                            getValidationRequiredMessage,
-                        },
-                        {
-                          validator(_, value) {
-                            const selectedDays = form.getFieldsValue().shifts || [];
-                            const currentShift = selectedDays.find((shift) => shift.day_init === value);
-
-                            if (currentShift && currentShift.day_init && currentShift.day_end) {
-                              const dayOrder = days.map(day => day.name);
-                              if (dayOrder.indexOf(currentShift.day_init) > dayOrder.indexOf(currentShift.day_end)) {
-                                return Promise.reject(new Error('El día de inicio debe ser antes o igual al día de fin.'));
-                              }
-                            }
-                            return Promise.resolve();
-                          }
-                        }
-                      ]}
-                      label="Desde"
-                      name={[field.name, "day_init"]}
-                    >
-                      <Select
-                        showSearch
-                        placeholder="Seleccionar dia"
-                      >
-                        {days?.map((day) => (
-                          <Select.Option
-                            key={day?.id}
-                            value={day?.name}
-                          >
-                            {day?.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                    <Form.Item
-                      className="w-5/12"
-                      shouldUpdate
-                      rules={[
-                        {
-                          required: true,
-                          message:
-                            getValidationRequiredMessage,
-                        },
-                        {
-                          validator(_, value) {
-                            const selectedShifts = form.getFieldsValue().shifts || [];
-                            const currentShift = selectedShifts.find((shift) => shift.day_end === value);
-
-                            if (currentShift && currentShift.day_init && currentShift.day_end) {
-                              const dayOrder = days?.map(day => day?.name);
-                              if (dayOrder.indexOf(currentShift.day_init) > dayOrder.indexOf(currentShift.day_end)) {
-                                return Promise.reject(new Error('El día de inicio debe ser antes o igual al día de fin.'));
-                              }
-                            }
-                            return Promise.resolve();
-                          }
-                        }
-                      ]}
-                      label="Hasta"
-                      name={[field.name, "day_end"]}
-                    >
-                      <Select
-                        showSearch
-                        placeholder="Seleccionar dia"
-                      >
-                        {days?.map((day) => (
-                          <Select.Option
-                            disabled={form
-                              .getFieldsValue()
-                              .shifts?.some(
-                                (shift) =>
-                                  shift?.day ===
-                                  day?.name
-                              )}
-                            key={day?.id}
-                            value={day?.name}
-                          >
-                            {day?.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </div>
-
-                  <Form.Item label="Horarios">
-                    <Form.List initialValue={[null]} name={[field.name, "schedule"]}>
-                      {(subFields, subOpt) => (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          {subFields.map((subField) => (
-                            <Space key={subField.key}>
-                              <Form.Item
-                                label="Hora de inicio"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: getValidationRequiredMessage,
-                                  },
-                                  {
-                                    validator(_, value) {
-                                      const currentSchedule = form.getFieldsValue().shifts?.[field.name]?.schedule || [];
-                                      const currentEntry = currentSchedule[subField.name];
-                                      const endTime = form.getFieldValue(['shifts', field.name, 'schedule', subField.name, 'end']);
-
-                                      // Solo realizar validaciones si ambas horas están presentes
-                                      if (value && endTime) {
-                                        if (value >= endTime) {
-                                          return Promise.reject(new Error('La hora de inicio debe ser anterior a la hora de fin.'));
-                                        }
-
-                                        const isOverlapping = currentSchedule.some((schedule, index) => {
-                                          if (index !== subField.name) {
-                                            const otherStart = schedule.start;
-                                            const otherEnd = schedule.end;
-                                            return (
-                                              (value >= otherStart && value < otherEnd) ||
-                                              (endTime > otherStart && endTime <= otherEnd)
-                                            );
-                                          }
-                                          return false;
-                                        });
-
-                                        if (isOverlapping) {
-                                          return Promise.reject(new Error('Los horarios no deben solaparse.'));
-                                        }
-                                      }
-
-                                      return Promise.resolve();
-                                    },
-                                  },
-                                ]}
-                                name={[subField.name, "start"]}
-                              >
-                                <Input type="time" />
-                              </Form.Item>
-
-                              <Form.Item
-                                label="Hora de fin"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: getValidationRequiredMessage,
-                                  },
-                                  {
-                                    validator(_, value) {
-                                      const currentSchedule = form.getFieldsValue().shifts?.[field.name]?.schedule || [];
-                                      const currentEntry = currentSchedule[subField.name];
-                                      const startTime = form.getFieldValue(['shifts', field.name, 'schedule', subField.name, 'start']);
-
-                                      // Solo realizar validaciones si ambas horas están presentes
-                                      if (startTime && value) {
-                                        if (startTime >= value) {
-                                          return Promise.reject(new Error('La hora de inicio debe ser anterior a la hora de fin.'));
-                                        }
-
-                                        const isOverlapping = currentSchedule.some((schedule, index) => {
-                                          if (index !== subField.name) {
-                                            const otherStart = schedule.start;
-                                            const otherEnd = schedule.end;
-                                            return (
-                                              (startTime >= otherStart && startTime < otherEnd) ||
-                                              (value > otherStart && value <= otherEnd)
-                                            );
-                                          }
-                                          return false;
-                                        });
-
-                                        if (isOverlapping) {
-                                          return Promise.reject(new Error('Los horarios no deben solaparse.'));
-                                        }
-                                      }
-
-                                      return Promise.resolve();
-                                    },
-                                  },
-                                ]}
-                                name={[subField.name, "end"]}
-                              >
-                                <Input type="time" />
-                              </Form.Item>
-
-                              {!loading && (
-                                <CloseOutlined onClick={() => subOpt.remove(subField.name)} />
-                              )}
-                            </Space>
-                          ))}
-
-                          {!loading && (
-                            <Button type="dashed" onClick={() => subOpt.add()} block>
-                              + Agregar horarios al turno
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </Form.List>
-                  </Form.Item>
-
-                </Card>
-              ))}
-
-              {!loading && (
-                <Button
-                  type="dashed"
-                  onClick={() => add()}
-                  block
-                >
-                  + Agregar dias a trabajar
-                </Button>
-              )}
-            </div>
-          )}
-        </Form.List>
-
-        <Divider className="font-bold text-3xl">
-          Disponibilidad de los bonos
-        </Divider>
-
-        <Form.Item>
-          <div>
-            {days?.map((day) => (
-              <Tag.CheckableTag
-                key={day?.id}
-                checked={selectedDays.includes(day?.name)}
-                onChange={() => handleDaySelection(day?.name)}
+              <Select
+                onChange={() =>
+                  setCountry(
+                    form?.getFieldsValue()?.branchAddressCountry
+                  )
+                }
+                showSearch
+                placeholder="Seleccionar país"
               >
-                {day?.name}
-              </Tag.CheckableTag>
-            ))}
-          </div>
-        </Form.Item>
-
-        <Form.List name="availableBonusDays">
-          {() => (
-            <div
-              style={{
-                display: "flex",
-                rowGap: 16,
-                flexDirection: "column",
-              }}
+                {countries?.map((country) => (
+                  <Select.Option
+                    key={country?.name}
+                    value={country?.name}
+                  >
+                    {country?.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            
+            <Form.Item
+              className="w-6/12"
+              name="branchAddressRegion"
+              label="Región"
+              rules={[
+                {
+                  required: true,
+                  message: getValidationRequiredMessage,
+                },
+              ]}
             >
-              {selectedDays.map((day, index) => (
-                <Card
-                  size="small"
-                  title={`Día: ${day}`}
-                  key={day}
-                  extra={
-                    !loading && (
-                      <CloseOutlined
-                        onClick={() => {
-                          handleDaySelection(day); // Eliminar el día y su información asociada
-                        }}
-                      />
-                    )
-                  }
+              <Select showSearch placeholder="Seleccionar region">
+                {regions?.map((region) => (
+                  <Select.Option
+                    key={region?.name}
+                    value={region?.name}
+                  >
+                    {region?.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            name="branchAddressProvince"
+            label="Provincia"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Input showCount maxLength={30} />
+          </Form.Item>
+          <Form.Item
+            name="branchAddressCommune"
+            label="Comuna"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Input showCount maxLength={30} />
+          </Form.Item>
+          <div className="flex gap-3">
+            <Form.Item
+              className="w-9/12"
+              name="branchAddressStreet"
+              label="Calle"
+              rules={[
+                {
+                  required: true,
+                  message: getValidationRequiredMessage,
+                },
+              ]}
+            >
+              <Input showCount maxLength={30} />
+            </Form.Item>
+            <Form.Item
+              className="w-3/12"
+              name="branchAddressNumber"
+              label="Numero"
+              rules={[
+                {
+                  required: true,
+                  message: getValidationRequiredMessage,
+                },
+              ]}
+            >
+              <Input
+                name="branchAddressNumber"
+                onChange={onlyNumberInput}
+                showCount
+                maxLength={6}
+              />
+            </Form.Item>
+          </div>
+          <div className="flex gap-3">
+            <Form.Item
+              className="w-6/12"
+              name="branchAddressLocal"
+              label="Local"
+            >
+              <Input showCount maxLength={10} />
+            </Form.Item>
+            <Form.Item
+              className="w-6/12"
+              name="branchAddressDeptOrHouse"
+              label="Departamento / Casa"
+            >
+              <Input showCount maxLength={10} />
+            </Form.Item>
+          </div>
+
+          <Divider orientation="left">Horarios</Divider>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Card title="Horarios Disponibles" size="small">
+              <Space>
+                <Button 
+                  onClick={() => setAvailableScheduleModalVisible(true)}
+                  type="primary"
                 >
-                  <Form.Item label="Horarios">
-                    <Form.List initialValue={[null]} name={[index, "schedule"]}>
-                      {(subFields, subOpt) => (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          {subFields.map((subField) => (
-                            <Space key={subField.key}>
-                              <Form.Item
-                                label="Hora de inicio"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: getValidationRequiredMessage,
-                                  },
-                                  {
-                                    validator(_, value) {
-                                      const currentSchedule = form.getFieldsValue().availableBonusDays?.[index]?.schedule || [];
-                                      const currentEntry = currentSchedule[subField.name];
-                                      const endTime = form.getFieldValue(['availableBonusDays', index, 'schedule', subField.name, 'end']);
+                  Configurar Horarios Disponibles
+                </Button>
+                {availableSchedules.length > 0 && (
+                  <Tag color="green">{availableSchedules.length} horarios configurados</Tag>
+                )}
+              </Space>
+            </Card>
+            
+            <Card title="Horarios de Bonos" size="small">
+              <Space>
+                <Button 
+                  onClick={() => setBonusScheduleModalVisible(true)}
+                  type="primary"
+                >
+                  Configurar Horarios de Bonos
+                </Button>
+                {bonusSchedules.length > 0 && (
+                  <Tag color="blue">{bonusSchedules.length} horarios configurados</Tag>
+                )}
+              </Space>
+            </Card>
+          </Space>
 
-                                      // Solo realizar validaciones si ambas horas están presentes
-                                      if (value && endTime) {
-                                        if (value >= endTime) {
-                                          return Promise.reject(new Error('La hora de inicio debe ser anterior a la hora de fin.'));
-                                        }
+          <Form.Item hidden name="available_schedules">
+            <Input />
+          </Form.Item>
+          
+          <Form.Item hidden name="bonus_schedules">
+            <Input />
+          </Form.Item>
 
-                                        const isOverlapping = currentSchedule.some((schedule, index) => {
-                                          if (index !== subField.name) {
-                                            const otherStart = schedule.start;
-                                            const otherEnd = schedule.end;
-                                            return (
-                                              (value >= otherStart && value < otherEnd) ||
-                                              (endTime > otherStart && endTime <= otherEnd)
-                                            );
-                                          }
-                                          return false;
-                                        });
-
-                                        if (isOverlapping) {
-                                          return Promise.reject(new Error('Los horarios no deben solaparse.'));
-                                        }
-                                      }
-
-                                      return Promise.resolve();
-                                    },
-                                  },
-                                ]}
-                                name={[subField.name, "start"]}
-                              >
-                                <Input type="time" />
-                              </Form.Item>
-
-                              <Form.Item
-                                label="Hora de fin"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: getValidationRequiredMessage,
-                                  },
-                                  {
-                                    validator(_, value) {
-                                      const currentSchedule = form.getFieldsValue().availableBonusDays?.[index]?.schedule || [];
-                                      const currentEntry = currentSchedule[subField.name];
-                                      const startTime = form.getFieldValue(['availableBonusDays', index, 'schedule', subField.name, 'start']);
-
-                                      // Solo realizar validaciones si ambas horas están presentes
-                                      if (startTime && value) {
-                                        if (startTime >= value) {
-                                          return Promise.reject(new Error('La hora de inicio debe ser anterior a la hora de fin.'));
-                                        }
-
-                                        const isOverlapping = currentSchedule.some((schedule, index) => {
-                                          if (index !== subField.name) {
-                                            const otherStart = schedule.start;
-                                            const otherEnd = schedule.end;
-                                            return (
-                                              (startTime >= otherStart && startTime < otherEnd) ||
-                                              (value > otherStart && value <= otherEnd)
-                                            );
-                                          }
-                                          return false;
-                                        });
-
-                                        if (isOverlapping) {
-                                          return Promise.reject(new Error('Los horarios no deben solaparse.'));
-                                        }
-                                      }
-
-                                      return Promise.resolve();
-                                    },
-                                  },
-                                ]}
-                                name={[subField.name, "end"]}
-                              >
-                                <Input type="time" />
-                              </Form.Item>
-
-                              {!loading && (
-                                <CloseOutlined onClick={() => subOpt.remove(subField.name)} />
-                              )}
-                            </Space>
-                          ))}
-
-                          {!loading && (
-                            <Button type="dashed" onClick={() => subOpt.add()} block>
-                              + Agregar horarios al turno
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </Form.List>
-                  </Form.Item>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Form.List>
+          <Form.Item>
+            <Space>
+              <Button onClick={handleCloseModal}>
+                Cancelar
+              </Button>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Crear
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Modal>
+
+      <ScheduleModal
+        open={availableScheduleModalVisible}
+        onClose={() => setAvailableScheduleModalVisible(false)}
+        onSave={handleAvailableScheduleSave}
+        initialValue={availableSchedules}
+      />
+
+      <ScheduleModal
+        open={bonusScheduleModalVisible}
+        onClose={() => setBonusScheduleModalVisible(false)}
+        onSave={handleBonusScheduleSave}
+        initialValue={bonusSchedules}
+      />
     </>
   );
 }

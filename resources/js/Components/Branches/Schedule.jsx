@@ -23,7 +23,7 @@ export default function Schedule({ field, onScheduleSave }) {
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  const hours = Array.from({ length: 24 }, (_, i) => 
+  const hours = Array.from({ length: 24 }, (_, i) =>
     i.toString().padStart(2, '0') + ':00'
   );
 
@@ -37,15 +37,15 @@ export default function Schedule({ field, onScheduleSave }) {
     setIsSelecting({ active: true, isSelecting: !isSlotSelected });
     toggleSlot(day, hour);
   };
-  
+
   const handleMouseEnter = (day, hour) => {
     if (isSelecting.active && selectionStart) {
       const newSelectedSlots = { ...selectedSlots };
-      
+
       const startDay = days.findIndex(d => d.name === selectionStart.day);
       const currentDay = days.findIndex(d => d.name === day);
       const startHour = selectionStart.hour;
-      
+
       // Aplicar la misma acción (seleccionar o deseleccionar) a todos los slots en el rango
       for (let d = Math.min(startDay, currentDay); d <= Math.max(startDay, currentDay); d++) {
         for (let h = Math.min(startHour, hour); h <= Math.max(startHour, hour); h++) {
@@ -53,11 +53,11 @@ export default function Schedule({ field, onScheduleSave }) {
           newSelectedSlots[slotKey] = isSelecting.isSelecting;
         }
       }
-      
+
       setSelectedSlots(newSelectedSlots);
     }
   };
-  
+
   const handleMouseUp = () => {
     setIsSelecting({ active: false, isSelecting: false });
     setSelectionStart(null);
@@ -83,7 +83,7 @@ export default function Schedule({ field, onScheduleSave }) {
         acc[day].push(parseInt(hour));
         return acc;
       }, {});
-  
+
     // Procesamos cada día para obtener los rangos de horas
     const schedules = Object.entries(groupedByDay).map(([day, hours]) => {
       // Ordenamos las horas y encontramos los rangos
@@ -91,7 +91,7 @@ export default function Schedule({ field, onScheduleSave }) {
       const ranges = [];
       let rangeStart = hours[0];
       let prevHour = hours[0];
-  
+
       for (let i = 1; i <= hours.length; i++) {
         if (i === hours.length || hours[i] !== prevHour + 1) {
           // Fin del rango actual
@@ -108,7 +108,7 @@ export default function Schedule({ field, onScheduleSave }) {
           prevHour = hours[i];
         }
       }
-  
+
       return {
         day,
         ranges
@@ -116,12 +116,6 @@ export default function Schedule({ field, onScheduleSave }) {
     });
     setSavedSchedules(schedules);
     onScheduleSave(schedules);
-    // console.log('Horarios guardados:', {
-    //   schedules,
-    //   branch_id: field,
-    //   created_at: new Date().toISOString(),
-    // });
-    //setSelectedSlots({});
     message.success('Horarios guardados exitosamente');
   };
 
@@ -138,14 +132,14 @@ export default function Schedule({ field, onScheduleSave }) {
             </div>
           ))}
         </div>
-  
+
         {days.map((day) => (
           <div key={day.name} className="grid grid-cols-[120px_repeat(24,minmax(45px,1fr))] gap-0.5 items-center">
             <div className="p-2 font-medium text-left sticky left-0 bg-white z-10 text-sm">
               {day.name}
             </div>
             {hours.map((_, index) => (
-              <div 
+              <div
                 key={`${day.name}-${index}`}
                 className={`h-[35px] border border-gray-200 rounded cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:border-blue-400
                   ${selectedSlots[`${day.name}-${index}`] ? 'bg-blue-500 border-blue-500' : ''}`}
@@ -157,8 +151,8 @@ export default function Schedule({ field, onScheduleSave }) {
           </div>
         ))}
       </div>
-  
-      <Button 
+
+      <Button
         type="primary"
         icon={<SaveOutlined />}
         onClick={handleSaveSchedule}
@@ -166,7 +160,7 @@ export default function Schedule({ field, onScheduleSave }) {
       >
         Guardar Horarios
       </Button>
-  
+
       {savedSchedules.length > 0 && (
         <Card title="Horarios Guardados" className="mt-4">
           {savedSchedules.map((schedule, index) => (

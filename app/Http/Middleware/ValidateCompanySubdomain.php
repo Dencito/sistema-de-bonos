@@ -20,7 +20,7 @@ class ValidateCompanySubdomain
     {
         try {
             $host = $request->getHost();
-            
+
             // Para desarrollo local, si estamos usando localhost:8000
             if (str_contains($host, 'localhost:')) {
                 $subdomain = $request->header('X-Company-Prefix', 'empresa1');
@@ -30,6 +30,10 @@ class ValidateCompanySubdomain
                     throw new \Exception('Acceso inválido: Subdominio no encontrado');
                 }
                 $subdomain = $parts[0];
+            }
+
+            if ($subdomain === env('APP_PRINCIPAL_SUBDOMAIN')) {
+                return $next($request);
             }
 
             if (!$this->companyDatabaseService->validateCompanyTables($subdomain)) {

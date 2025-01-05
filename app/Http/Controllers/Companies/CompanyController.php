@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Companies;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Status;
+use App\Models\Role;
 use App\Services\CompanyDatabaseService;
 use App\Services\CpanelService;
 use App\Services\GoDaddyService;
@@ -16,7 +17,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Sentry\Laravel\Sentry;
-use Spatie\Permission\Models\Role;
 
 class CompanyController extends Controller
 {

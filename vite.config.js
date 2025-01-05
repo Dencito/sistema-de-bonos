@@ -3,14 +3,6 @@ import laravel from "laravel-vite-plugin";
 import react from "@vitejs/plugin-react";
 import path from 'path';
 
-const antdComponents = {
-    'antd-general': ['antd/es/config-provider', 'antd/locale/es_ES'],
-    'antd-layout': ['antd/es/layout', 'antd/es/menu', 'antd/es/grid'],
-    'antd-display': ['antd/es/table', 'antd/es/tabs', 'antd/es/card'],
-    'antd-feedback': ['antd/es/modal', 'antd/es/message', 'antd/es/notification'],
-    'antd-inputs': ['antd/es/form', 'antd/es/input', 'antd/es/select', 'antd/es/button'],
-};
-
 export default defineConfig({
     plugins: [
         laravel({
@@ -19,28 +11,6 @@ export default defineConfig({
         }),
         react(),
     ],
-    build: {
-        chunkSizeWarningLimit: 600,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    'vendor-react': ['react', 'react-dom', 'react/jsx-runtime'],
-                    'vendor-utils': ['@inertiajs/react', 'lucide-react'],
-                    ...antdComponents,
-                },
-                chunkFileNames: (chunkInfo) => {
-                    const name = chunkInfo.name;
-                    if (name.includes('antd-')) {
-                        return 'assets/antd/[name]-[hash].js';
-                    }
-                    return 'assets/[name]-[hash].js';
-                },
-            },
-        },
-    },
-    optimizeDeps: {
-        include: Object.values(antdComponents).flat(),
-    },
     server: {
         port: 5174,
     },

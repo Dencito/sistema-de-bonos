@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Traits\SentryLogging;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -79,5 +80,10 @@ class ProfileController extends Controller
             $this->logError($exception, 'profile.destroy');
             throw $exception;
         }
+    }
+
+    protected function logError(Throwable $exception, string $context = '', array $extraData = []): void
+    {
+        parent::logError($exception, $context, $extraData);
     }
 }

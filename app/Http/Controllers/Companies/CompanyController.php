@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Companies;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\Status;
 use App\Models\Role;
+use App\Models\Status;
 use App\Services\CompanyDatabaseService;
 use App\Services\CpanelService;
 use App\Services\GoDaddyService;
@@ -168,26 +168,8 @@ class CompanyController extends Controller
             // Crear el subdominio en cPanel
             $this->cpanelService->createSubdomain($request->name);
 
-            /*
-             * // Crear el subdominio en cPanel
-             * $this->cpanelService->createSubdomain($request->name);
-             *
-             * // Crear las tablas específicas de la empresa
-             * $prefix = $subdomain;
-             * $this->companyDatabaseService->createCompanyTables($prefix);
-             *
-             * // Crear roles por defecto
-             * $this->companyDatabaseService->createDefaultRoles($prefix);
-             *
-             * // Crear usuario administrador por defecto
-             * $adminData = [
-             *     'name' => 'Admin',
-             *     'email' => 'admin@' . $subdomain . '.rentamania.com',
-             *     'password' => bcrypt('password'), // Deberías generar una contraseña segura
-             *     'role' => 'admin'
-             * ];
-             * $this->companyDatabaseService->createDefaultAdmin($prefix, $adminData);
-             */
+            // Crear las tablas específicas de la empresa
+            $this->companyDatabaseService->createCompanyTables($subdomain);
 
             return response()->json([
                 'message' => 'Empresa creada exitosamente',

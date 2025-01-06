@@ -6,9 +6,7 @@ trait CompanyScope
 {
     public function getTable()
     {
-        // Obtener el prefijo de la empresa desde la configuración
         $prefix = config('company.prefix');
-        
         // Si no hay prefijo, usar el nombre de tabla normal
         if (!$prefix) {
             return parent::getTable();

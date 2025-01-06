@@ -10,10 +10,9 @@ class CompanyDatabaseService
 {
     protected $requiredTables = ['roles', 'users'];
 
-    public function createCompanyTables(string $companyPrefix)
+    public function createCompanyTables(string $companyPrefix, string $email)
     {
         try {
-            // Crear tabla de roles
             $rolesTable = $companyPrefix . '_roles';
             if (!Schema::hasTable($rolesTable)) {
                 Schema::create($rolesTable, function ($table) {
@@ -25,7 +24,6 @@ class CompanyDatabaseService
 
                 DB::beginTransaction();
                 try {
-                    // Insertar roles por defecto
                     $roles = ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador', 'jugador'];
                     foreach ($roles as $role) {
                         DB::table($rolesTable)->insert([
@@ -42,7 +40,6 @@ class CompanyDatabaseService
                 }
             }
 
-            // Crear tabla de usuarios
             $usersTable = $companyPrefix . '_users';
             if (!Schema::hasTable($usersTable)) {
                 Schema::create($usersTable, function ($table) use ($rolesTable) {
@@ -76,7 +73,6 @@ class CompanyDatabaseService
                     $table->unsignedBigInteger('role_id');
                     $table->timestamps();
 
-                    // Relación con roles
                     $table
                         ->foreign('role_id')
                         ->references('id')
@@ -87,13 +83,12 @@ class CompanyDatabaseService
 
                 DB::beginTransaction();
                 try {
-                    // Crear usuario admin por defecto
                     DB::table($usersTable)->insert([
-                        'first_name' => 'Admin',
+                        'first_name' => $companyPrefix,
                         'first_last_name' => 'System',
-                        'email' => 'admin@' . $companyPrefix . '.com',
-                        'username' => 'admin_' . $companyPrefix,
-                        'password' => Hash::make('password'),
+                        'email' => $email,
+                        'username' => $companyPrefix,
+                        'password' => Hash::make($companyPrefix . 'password'),
                         'status_id' => 1,
                         'role_id' => 1,
                         'created_at' => now(),

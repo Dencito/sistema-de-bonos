@@ -212,23 +212,23 @@ export default function ModalCreateCompany() {
             </Select>
         </Form.Item>
     );
-    
-    
+
+
     useEffect(() => {
-        if(loading) {
+        if (loading) {
             const handleBeforeUnload = (event) => {
                 event.preventDefault();
                 event.returnValue = ""; // Activa el cuadro de diálogo en navegadores modernos.
-              };
-              // Agregar eventos
-              window.addEventListener('beforeunload', handleBeforeUnload);
-          
-              return () => {
+            };
+            // Agregar eventos
+            window.addEventListener('beforeunload', handleBeforeUnload);
+
+            return () => {
                 // Eliminar eventos al desmontar el componente
                 window.removeEventListener('beforeunload', handleBeforeUnload);
-              };   
+            };
         }
-      }, [loading]);
+    }, [loading]);
     return (
         <>
             <Button
@@ -294,12 +294,12 @@ export default function ModalCreateCompany() {
                         }
                     >
                         {loading && (
-                                <Spin size="large" tip={
-                                        <div className="flex flex-col items-center justify-center">
-                                            <p className="text-bold text-2xl">Estamos creando la empresa</p>
-                                            <p className="text-bold text-xl">Esto puede llegar a tardar unos segundos</p>
-                                        </div>
-                                } fullscreen />
+                            <Spin size="large" tip={
+                                <div className="flex flex-col items-center justify-center">
+                                    <p className="text-bold text-2xl">Estamos creando la empresa</p>
+                                    <p className="text-bold text-xl">Esto puede llegar a tardar unos segundos</p>
+                                </div>
+                            } fullscreen />
                         )}
                         {dom}
                     </Form>

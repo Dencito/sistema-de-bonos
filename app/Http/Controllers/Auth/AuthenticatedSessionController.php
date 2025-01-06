@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -34,12 +35,13 @@ class AuthenticatedSessionController extends Controller
         try {
             // Aquí automáticamente buscará en la tabla con el prefijo correcto
             // Por ejemplo: empresa1_users si el subdominio es empresa1
-            $user = User::where('email', $request->email)->first();
-            
-            if (!$user) {
-                throw new \Exception('Usuario no encontrado en esta empresa');
+            $user = User::where('email', $request->login)->first();
+
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                throw new \Exception('Las credenciales no son correctas');
             }
 
+            Auth::login($user);
             $request->authenticate();
             $request->session()->regenerate();
 
@@ -54,7 +56,6 @@ class AuthenticatedSessionController extends Controller
             }
 
             return redirect()->intended(route('dashboard'));
-            
         } catch (\Exception $e) {
             return back()->withErrors([
                 'email' => $e->getMessage(),

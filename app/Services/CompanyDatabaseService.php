@@ -8,12 +8,99 @@ use Illuminate\Support\Facades\Schema;
 
 class CompanyDatabaseService
 {
-    protected $requiredTables = ['roles', 'users'];
+    protected $requiredTables = ['roles', 'users', 'bonuses', 'branches', 'user_branches', 'statuses', 'companies'];
 
-    public function createCompanyTables(string $companyPrefix, string $email)
+    public function createCompanyTables(string $request)
     {
         try {
-            $rolesTable = $companyPrefix . '_roles';
+            if (!Schema::hasTable('statuses')) {
+                Schema::create('statuses', function ($table) {
+                    $table->id();
+                    $table->string('name');
+                    $table->timestamps();
+                });
+
+                DB::table('statuses')->insert([
+                    ['name' => 'Activo', 'created_at' => now(), 'updated_at' => now()],
+                    ['name' => 'Inactivo', 'created_at' => now(), 'updated_at' => now()],
+                    ['name' => 'En revisión', 'created_at' => now(), 'updated_at' => now()],
+                    ['name' => 'Borrado', 'created_at' => now(), 'updated_at' => now()],
+                ]);
+            }
+
+            if (!Schema::hasTable('companies')) {
+                Schema::create('companies', function ($table) {
+                    $table->id();
+                    $table->string('name');
+                    $table->string('db_name')->nullable();
+                    $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+                    $table->timestamps();
+                    $table->date('creationDate')->nullable();
+                    $table->string('rutNumbers')->nullable();
+                    $table->char('rutDv', 1)->nullable();
+                    $table->string('business')->nullable();
+                    $table->string('prefix')->nullable();
+                    $table->string('phone')->nullable();
+                    $table->string('email')->nullable();
+                    $table->string('legalRepresentativeNames')->nullable();
+                    $table->string('legalRepresentativeLastNames')->nullable();
+                    $table->string('rutNumbersLegalRepresentative')->nullable();
+                    $table->char('rutDvLegalRepresentative', 1)->nullable();
+                    $table->string('contactNames')->nullable();
+                    $table->string('contactLastNames')->nullable();
+                    $table->string('rutNumbersContact')->nullable();
+                    $table->char('rutDvContact', 1)->nullable();
+                    $table->string('prefixContact')->nullable();
+                    $table->string('contactPhone')->nullable();
+                    $table->string('contactEmail')->nullable();
+                    $table->string('companyAddressCountry')->nullable();
+                    $table->string('companyAddressRegion')->nullable();
+                    $table->string('companyAddressProvince')->nullable();
+                    $table->string('companyAddressCommune')->nullable();
+                    $table->string('companyAddressStreet')->nullable();
+                    $table->string('companyAddressNumber')->nullable();
+                    $table->integer('max_branches')->default(0);
+                    $table->string('domain')->nullable();
+                    $table->string('slug')->unique();
+                    $table->string('schema_name')->unique();
+                    $table->json('settings')->nullable();
+                    $table->boolean('is_active')->default(true);
+                    $table->timestamp('trial_ends_at')->nullable();
+                    $table->timestamp('subscription_ends_at')->nullable();
+                });
+
+                DB::table('companies')->insert([
+                    'name' => $request->name,
+                    'db_name' => 'db_' . $request->name,
+                    'status_id' => 1,  // Activo
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'creationDate' => now(),
+                    'business' => 'Default Business',
+                    'prefix' => $request->prefix,
+                    'phone' => '123456789',
+                    'email' => $request->email,
+                    'legalRepresentativeNames' => 'Legal Representative',
+                    'legalRepresentativeLastNames' => 'Default',
+                    'contactNames' => 'Contact',
+                    'contactLastNames' => 'Person',
+                    'contactEmail' => $request->contactEmail,
+                    'companyAddressCountry' => 'Chile',
+                    'companyAddressRegion' => 'Default Region',
+                    'companyAddressProvince' => 'Default Province',
+                    'companyAddressCommune' => 'Default Commune',
+                    'companyAddressStreet' => 'Default Street',
+                    'companyAddressNumber' => '123',
+                    'max_branches' => 5,
+                    'domain' => $request->name . '.' . env('APP_DOMAIN', 'localhost'),
+                    'slug' => $request->name,
+                    'schema_name' => $request->name,
+                    'settings' => json_encode([]),
+                    'is_active' => true,
+                ]);
+            }
+
+            $rolesTable = $request->name . '_roles';
             if (!Schema::hasTable($rolesTable)) {
                 Schema::create($rolesTable, function ($table) {
                     $table->id();
@@ -40,7 +127,7 @@ class CompanyDatabaseService
                 }
             }
 
-            $usersTable = $companyPrefix . '_users';
+            $usersTable = $request->name . '_users';
             if (!Schema::hasTable($usersTable)) {
                 Schema::create($usersTable, function ($table) use ($rolesTable) {
                     $table->id();
@@ -84,11 +171,11 @@ class CompanyDatabaseService
                 DB::beginTransaction();
                 try {
                     DB::table($usersTable)->insert([
-                        'first_name' => $companyPrefix,
+                        'first_name' => $request->name,
                         'first_last_name' => 'System',
                         'email' => $email,
-                        'username' => $companyPrefix,
-                        'password' => Hash::make($companyPrefix . 'password'),
+                        'username' => $request->name,
+                        'password' => Hash::make($request->name . '.password'),
                         'status_id' => 1,
                         'role_id' => 1,
                         'created_at' => now(),
@@ -99,6 +186,51 @@ class CompanyDatabaseService
                     DB::rollBack();
                     throw $e;
                 }
+            }
+
+            $bonusesTable = $request->name . '_bonuses';
+            if (!Schema::hasTable($bonusesTable)) {
+                Schema::create($bonusesTable, function ($table) use ($usersTable) {
+                    $table->id();
+                    $table->decimal('amount', 10, 2);
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->dateTime('start_datetime')->nullable();
+                    $table->dateTime('end_datetime')->nullable();
+                    $table->timestamps();
+                });
+            }
+
+            $branchesTable = $request->name . '_branches';
+            if (!Schema::hasTable($branchesTable)) {
+                Schema::create($branchesTable, function ($table) {
+                    $table->id();
+                    $table->string('name');
+                    $table->string('creationDate');
+                    $table->string('numberOfEmployees');
+                    $table->string('branchAddressCountry');
+                    $table->string('branchAddressRegion');
+                    $table->string('branchAddressProvince');
+                    $table->string('branchAddressCommune');
+                    $table->string('branchAddressStreet');
+                    $table->string('branchAddressNumber');
+                    $table->string('branchAddressLocal')->nullable();
+                    $table->string('branchAddressDeptOrHouse')->nullable();
+                    $table->json('available_schedules')->nullable();
+                    $table->json('bonus_schedules')->nullable();
+                    $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+                    $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+                    $table->timestamps();
+                });
+            }
+
+            $userBranchesTable = $request->name . '_user_branches';
+            if (!Schema::hasTable($userBranchesTable)) {
+                Schema::create($userBranchesTable, function ($table) use ($usersTable, $branchesTable) {
+                    $table->id();
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->timestamps();
+                });
             }
 
             return true;

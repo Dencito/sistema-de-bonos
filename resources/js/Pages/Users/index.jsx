@@ -493,54 +493,54 @@ export default function UserPage({
 
             // Sin fechas de inicio ni fin
             if (!startDate && !endDate) {
-                return { 
-                    text: "Sin vencimiento", 
-                    class: "bg-blue-100 text-blue-800" 
+                return {
+                    text: "Sin vencimiento",
+                    class: "bg-blue-100 text-blue-800"
                 };
             }
 
             // Solo tiene fecha de inicio
             if (startDate && !endDate) {
                 return now < startDate
-                    ? { 
-                        text: "Pendiente de activación", 
-                        class: "bg-yellow-100 text-yellow-800" 
+                    ? {
+                        text: "Pendiente de activación",
+                        class: "bg-yellow-100 text-yellow-800"
                     }
-                    : { 
-                        text: "Activo sin vencimiento", 
-                        class: "bg-blue-100 text-blue-800" 
+                    : {
+                        text: "Activo sin vencimiento",
+                        class: "bg-blue-100 text-blue-800"
                     };
             }
 
             // Solo tiene fecha de fin
             if (!startDate && endDate) {
                 return now > endDate
-                    ? { 
-                        text: "Vencido", 
-                        class: "bg-red-100 text-red-800" 
+                    ? {
+                        text: "Vencido",
+                        class: "bg-red-100 text-red-800"
                     }
-                    : { 
-                        text: "Activo", 
-                        class: "bg-green-100 text-green-800" 
+                    : {
+                        text: "Activo",
+                        class: "bg-green-100 text-green-800"
                     };
             }
 
             // Tiene ambas fechas
             if (now < startDate) {
-                return { 
-                    text: "Pendiente de activación", 
-                    class: "bg-yellow-100 text-yellow-800" 
+                return {
+                    text: "Pendiente de activación",
+                    class: "bg-yellow-100 text-yellow-800"
                 };
             }
             if (now > endDate) {
-                return { 
-                    text: "Vencido", 
-                    class: "bg-red-100 text-red-800" 
+                return {
+                    text: "Vencido",
+                    class: "bg-red-100 text-red-800"
                 };
             }
-            return { 
-                text: "Activo", 
-                class: "bg-green-100 text-green-800" 
+            return {
+                text: "Activo",
+                class: "bg-green-100 text-green-800"
             };
         };
 
@@ -660,7 +660,7 @@ export default function UserPage({
 
                         {
                             data.role &&
-                            data.role === roleDisplayNames.jugador.toLowerCase() ? <CustomTable
+                                data.role === roleDisplayNames.jugador.toLowerCase() ? <CustomTable
                                 rowSelection={rowSelection}
                                 dataSource={users?.map((user) => ({
                                     ...user,
@@ -669,16 +669,16 @@ export default function UserPage({
                                 columns={columns?.[data.role]}
                                 expandable={{
                                     expandedRowRender,
-                                    rowExpandable: (record) => true,
+                                    rowExpandable: () => true,
                                 }}
                             /> : <CustomTable
-                            rowSelection={rowSelection}
-                            dataSource={users?.map((user) => ({
-                                ...user,
-                                key: user?.id,
-                            }))}
-                            columns={columns?.[data.role]}
-                        />
+                                rowSelection={rowSelection}
+                                dataSource={users?.map((user) => ({
+                                    ...user,
+                                    key: user?.id,
+                                }))}
+                                columns={columns?.[data.role]}
+                            />
                         }
                         <div className="flex flex-col xl:flex-row gap-5 justify-between mt-5 mb-20">
                             <SelectAssignCategories

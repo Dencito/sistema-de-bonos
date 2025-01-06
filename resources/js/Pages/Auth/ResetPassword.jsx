@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Form, Input, Button } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
@@ -17,7 +16,7 @@ export default function ResetPassword({ token, email }) {
             onSuccess: () => {
                 showMessage('Tu contraseña ha sido restablecida correctamente', 'success');
             },
-            onError: (errors) => {
+            onError: () => {
                 showMessage('Error al restablecer la contraseña', 'error');
             }
         });

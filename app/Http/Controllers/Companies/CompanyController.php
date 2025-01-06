@@ -165,7 +165,7 @@ class CompanyController extends Controller
 
             $this->cpanelService->createSubdomain($request->name);
 
-            $this->companyDatabaseService->createCompanyTables($request->name, $request->email);
+            $this->companyDatabaseService->createCompanyTables($request);
 
             return response()->json([
                 'message' => 'Empresa creada exitosamente',

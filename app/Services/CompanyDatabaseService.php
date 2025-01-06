@@ -13,8 +13,6 @@ class CompanyDatabaseService
     public function createCompanyTables(string $companyPrefix)
     {
         try {
-            DB::beginTransaction();
-
             // Crear tabla de roles
             $rolesTable = $companyPrefix . '_roles';
             if (!Schema::hasTable($rolesTable)) {
@@ -25,15 +23,22 @@ class CompanyDatabaseService
                     $table->timestamps();
                 });
 
-                // Insertar roles por defecto
-                $roles = ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador', 'jugador'];
-                foreach ($roles as $role) {
-                    DB::table($rolesTable)->insert([
-                        'name' => $role,
-                        'description' => ucfirst($role),
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
+                DB::beginTransaction();
+                try {
+                    // Insertar roles por defecto
+                    $roles = ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador', 'jugador'];
+                    foreach ($roles as $role) {
+                        DB::table($rolesTable)->insert([
+                            'name' => $role,
+                            'description' => ucfirst($role),
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
                 }
             }
 
@@ -80,24 +85,29 @@ class CompanyDatabaseService
                         ->onUpdate('cascade');
                 });
 
-                // Crear usuario admin por defecto
-                DB::table($usersTable)->insert([
-                    'first_name' => 'Admin',
-                    'first_last_name' => 'System',
-                    'email' => 'admin@' . $companyPrefix . '.com',
-                    'username' => 'admin_' . $companyPrefix,
-                    'password' => Hash::make('password'),
-                    'status_id' => 1,  // Asegúrate de que este ID existe
-                    'role_id' => 1,  // ID del rol 'duenio'
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                DB::beginTransaction();
+                try {
+                    // Crear usuario admin por defecto
+                    DB::table($usersTable)->insert([
+                        'first_name' => 'Admin',
+                        'first_last_name' => 'System',
+                        'email' => 'admin@' . $companyPrefix . '.com',
+                        'username' => 'admin_' . $companyPrefix,
+                        'password' => Hash::make('password'),
+                        'status_id' => 1,
+                        'role_id' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
+                }
             }
 
-            DB::commit();
             return true;
         } catch (\Exception $e) {
-            DB::rollBack();
             throw $e;
         }
     }

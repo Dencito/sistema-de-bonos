@@ -320,6 +320,14 @@ export default function ModalCreateCompany() {
                             required: true,
                             message: getValidationRequiredMessage,
                         },
+                        {
+                            validator: (_, value) => {
+                                if (/^[a-z0-9]+$/.test(value)) {
+                                    return Promise.resolve();
+                                }
+                                return Promise.reject('El nombre solo debe contener letras minúsculas y números, sin espacios ni caracteres especiales, Esto es temporal');
+                            }
+                        }
                     ]}
                 >
                     <Input showCount maxLength={50} />

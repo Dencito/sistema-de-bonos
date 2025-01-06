@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Sentry\Laravel\Sentry;
+use Illuminate\Support\Facades\Report;
+use Illuminate\Support\Facades\DB;
 
 class CompanyController extends Controller
 {
@@ -162,19 +163,18 @@ class CompanyController extends Controller
             $domain = $this->createCompanyDirectory($company);
 
             // Crear el subdominio en GoDaddy
-            $subdomain = Str::slug($request->name) . '.alimentacion.mx';
             $this->godaddyService->createSubdomain($request->name);
 
             // Crear el subdominio en cPanel
             $this->cpanelService->createSubdomain($request->name);
 
             // Crear las tablas específicas de la empresa
-            $this->companyDatabaseService->createCompanyTables($subdomain);
+            $this->companyDatabaseService->createCompanyTables($request->name);
 
             return response()->json([
                 'message' => 'Empresa creada exitosamente',
                 'company' => $company,
-            ]);
+            ], 201);
         } catch (\Throwable $e) {
             $this->logError($e, 'companies.create', [
                 'company_data' => $request->only(['name', 'rut', 'email'])
@@ -297,6 +297,7 @@ class CompanyController extends Controller
             // 'DB_DATABASE' => 'tenant_' . $company->slug,
             'APP_URL' => 'https://' . $company->domain,
             'SESSION_DOMAIN' => $company->domain,
+            'APP_PRINCIPAL_SUBDOMAIN' => '',
             'SANCTUM_STATEFUL_DOMAINS' => $company->domain
         ];
 
@@ -570,9 +571,6 @@ class CompanyController extends Controller
 
     protected function logError(\Throwable $exception, string $context = '', array $extraData = [])
     {
-        Sentry::captureException($exception, [
-            'extra' => $extraData,
-            'context' => $context
-        ]);
+        report($exception);
     }
 }

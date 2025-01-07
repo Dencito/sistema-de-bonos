@@ -12,7 +12,16 @@ class CompanyDatabaseService
     public function createCompanyTables(Request $request)
     {
         try {
+            // Definir nombres de tablas al inicio
             $statusesTable = $request->name . '_statuses';
+            $companiesTable = $request->name . '_companies';
+            $rolesTable = $request->name . '_roles';
+            $usersTable = $request->name . '_users';
+            $bonusesTable = $request->name . '_bonuses';
+            $branchesTable = $request->name . '_branches';
+            $userBranchesTable = $request->name . '_user_branches';
+
+            // Crear tabla de estados
             if (!Schema::hasTable($statusesTable)) {
                 Schema::create($statusesTable, function ($table) {
                     $table->id();
@@ -28,9 +37,9 @@ class CompanyDatabaseService
                 ]);
             }
 
-            $companiesTable = $request->name . '_companies';
+            // Crear tabla de empresas
             if (!Schema::hasTable($companiesTable)) {
-                Schema::create($companiesTable, function ($table) {
+                Schema::create($companiesTable, function ($table) use ($statusesTable) {
                     $table->id();
                     $table->string('name');
                     $table->string('db_name')->nullable();
@@ -101,7 +110,7 @@ class CompanyDatabaseService
                 ]);
             }
 
-            $rolesTable = $request->name . '_roles';
+            // Crear tabla de roles
             if (!Schema::hasTable($rolesTable)) {
                 Schema::create($rolesTable, function ($table) {
                     $table->id();
@@ -128,7 +137,7 @@ class CompanyDatabaseService
                 }
             }
 
-            $usersTable = $request->name . '_users';
+            // Crear tabla de usuarios
             if (!Schema::hasTable($usersTable)) {
                 Schema::create($usersTable, function ($table) use ($rolesTable) {
                     $table->id();
@@ -189,7 +198,7 @@ class CompanyDatabaseService
                 }
             }
 
-            $bonusesTable = $request->name . '_bonuses';
+            // Crear tabla de bonos
             if (!Schema::hasTable($bonusesTable)) {
                 Schema::create($bonusesTable, function ($table) use ($usersTable) {
                     $table->id();
@@ -201,7 +210,7 @@ class CompanyDatabaseService
                 });
             }
 
-            $branchesTable = $request->name . '_branches';
+            // Crear tabla de sucursales
             if (!Schema::hasTable($branchesTable)) {
                 Schema::create($branchesTable, function ($table) use ($statusesTable, $companiesTable) {
                     $table->id();
@@ -224,7 +233,7 @@ class CompanyDatabaseService
                 });
             }
 
-            $userBranchesTable = $request->name . '_user_branches';
+            // Crear tabla de usuarios-sucursales
             if (!Schema::hasTable($userBranchesTable)) {
                 Schema::create($userBranchesTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();

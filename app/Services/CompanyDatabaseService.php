@@ -34,7 +34,7 @@ class CompanyDatabaseService
                     $table->id();
                     $table->string('name');
                     $table->string('db_name')->nullable();
-                    $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+                    $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
                     $table->timestamps();
                     $table->date('creationDate')->nullable();
                     $table->string('rutNumbers')->nullable();
@@ -174,7 +174,7 @@ class CompanyDatabaseService
                     DB::table($usersTable)->insert([
                         'first_name' => $request->name,
                         'first_last_name' => 'System',
-                        'email' => $email,
+                        'email' => $request->email,
                         'username' => $request->name,
                         'password' => Hash::make($request->name . '.password'),
                         'status_id' => 1,

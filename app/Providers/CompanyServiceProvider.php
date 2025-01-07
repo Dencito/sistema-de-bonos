@@ -88,8 +88,9 @@ class CompanyServiceProvider extends ServiceProvider
                 return;
             }
 
-            $tablesExist = $companyDatabaseService->validateCompanyTables($subdomain);
-            \Sentry\addBreadcrumb(
+            //TODO
+            //$tablesExist = $companyDatabaseService->validateCompanyTables($subdomain);
+            /* \Sentry\addBreadcrumb(
                 new \Sentry\Breadcrumb(
                     \Sentry\Breadcrumb::LEVEL_INFO,
                     \Sentry\Breadcrumb::TYPE_DEFAULT,
@@ -100,11 +101,12 @@ class CompanyServiceProvider extends ServiceProvider
                         'tablesExist' => $tablesExist
                     ]
                 )
-            );
+            ); */
 
-            if (!$tablesExist) {
+            //TODO: Verifify if tables exist
+            /* if (!$tablesExist) {
                 throw new \Exception("Acceso inválido: Las tablas para {$subdomain} no existen");
-            }
+            } */
 
             Config::set('company.prefix', $subdomain);
         } catch (\Exception $e) {

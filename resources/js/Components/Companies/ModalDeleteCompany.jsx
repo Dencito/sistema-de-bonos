@@ -1,27 +1,25 @@
 import { router } from '@inertiajs/react';
 import { Button, Modal } from 'antd';
-import axios from 'axios';
-import React from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useMessage } from '@contexts/MessageShow';
+import { companyService } from '@services/api';
 
 export default function ModalDeleteCompany({ data }) {
     const { successMsg, errorMsg } = useMessage();
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.delete(
-                `/companies/${data?.id}`
-            );
-            router.visit('/companies', {
-                preserveState: true,
-            });
-            dataDelete && successMsg(await dataDelete?.message);
+            const response = await companyService.delete(data?.id);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/companies', {
+                    preserveState: true,
+                });
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al eliminar la empresa');
         }
     };
 

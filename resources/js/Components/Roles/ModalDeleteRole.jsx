@@ -1,7 +1,7 @@
 import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
 import { Button, Modal } from 'antd';
-import axios from 'axios';
+import { roleService } from '@/Services/api';
 import React from 'react';
 
 export default function ModalDeleteRole({ data }) {
@@ -9,24 +9,23 @@ export default function ModalDeleteRole({ data }) {
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.delete(
-                `/companies/${data?.id}`
-            );
-            router.visit('/companies', {
-                preserveState: true,
-            });
-            dataDelete && successMsg(await dataDelete?.message);
+            const response = await roleService.delete(data?.id);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/roles', {
+                    preserveState: true,
+                });
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al eliminar el rol');
         }
     };
 
     const showDeleteConfirm = () => {
         Modal.confirm({
-            title: `¿Estás seguro de que quieres eliminar la empresa ${data.name}?`,
+            title: `¿Estás seguro de que quieres eliminar el rol ${data.name}?`,
             content: 'Se borrarán todos los datos.',
             okText: 'Sí',
             okType: 'danger',

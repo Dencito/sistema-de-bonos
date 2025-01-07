@@ -4,7 +4,7 @@ import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { CustomButton } from '@components-v2/CustomButton';
-import axios from 'axios';
+import { bonusService } from '@services/api';
 
 export default function ModalCreateBonus({ data }) {
     if (!data) return null;
@@ -32,19 +32,19 @@ export default function ModalCreateBonus({ data }) {
                 user_id: data.id,
             };
 
-            const { data: responseData } = await axios.post('/bonuses', sendData);
-            router.visit(window.location.href, {
-                preserveState: true,
-            });
-            responseData && successMsg(responseData?.message);
-            setLoading(false);
-            form.resetFields();
-            handleCloseModal();
+            const response = await bonusService.create(sendData);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit(window.location.href, {
+                    preserveState: true,
+                });
+                form.resetFields();
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
             setLoading(false);
-            if (error.isAxiosError) {
-                errorMsg(error?.response?.data?.message);
-            }
         }
     };
 

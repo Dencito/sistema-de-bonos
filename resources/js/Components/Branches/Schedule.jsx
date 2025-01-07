@@ -3,7 +3,7 @@ import { Button, Card, message } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { days } from '@components/Branches/days';
 
-export default function Schedule({ field, onScheduleSave }) {
+export default function Schedule({ onScheduleSave }) {
     const [selectedSlots, setSelectedSlots] = useState({});
     const [savedSchedules, setSavedSchedules] = useState([]);
     const [isSelecting, setIsSelecting] = useState({

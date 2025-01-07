@@ -8,7 +8,7 @@ import {
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { EditOutlined } from '@ant-design/icons';
-import { countriesService } from '@services/api';
+import { countriesService, companyService } from '@services/api';
 
 export default function ModalEditCompany({ data }) {
     const [showModal, setShowModal] = useState(false);
@@ -54,23 +54,18 @@ export default function ModalEditCompany({ data }) {
             if (checkErrors(errorRuts)) {
                 return errorMsg('Uno de los ruts es invalido');
             }
-            const { data: dataUpdate } = await axios.put('/companies', {
-                id: data?.id,
-                ...values,
-            });
-            if (dataUpdate?.changes?.length === 0) {
-                return errorMsg('Usted no modifico ningun dato.');
+            const response = await companyService.update(data?.id, values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/companies', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
             }
-            router.visit('/companies', {
-                preserveState: false,
-            });
-            dataUpdate && successMsg(dataUpdate?.message);
-            handleCloseModal();
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al actualizar la empresa');
         }
     };
 

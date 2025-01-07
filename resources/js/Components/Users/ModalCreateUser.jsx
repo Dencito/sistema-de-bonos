@@ -37,20 +37,21 @@ export default function ModalCreateUser({
         values.role = userType;
         try {
             setLoading(true);
-            const { data } = await userService.create(values);
-            router.visit(window.location.href, {
-                preserveState: true, // Mantener el estado actual
-            });
-            data && successMsg(data?.message);
-            setLoading(false);
-            form.resetFields();
-            handleCloseModal();
+            const response = await userService.create(values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit(window.location.href, {
+                    preserveState: true,
+                });
+                form.resetFields();
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
+            errorMsg('Error al crear el usuario');
+        } finally {
             setLoading(false);
-            return errorMsg(dataError?.message);
         }
     };
 

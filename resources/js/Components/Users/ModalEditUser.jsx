@@ -34,22 +34,20 @@ export default function ModalEditUser({
     const onUpdate = async (values) => {
         try {
             setLoading(true);
-            const { data: dataUpdate } = await userService.update(
-                data.id,
-                values
-            );
-            router.visit(window.location.href, {
-                preserveState: false,
-            });
-            dataUpdate && successMsg(dataUpdate?.message);
-            setLoading(false);
-            handleCloseModal();
+            const response = await userService.update(data.id, values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit(window.location.href, {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
+            errorMsg('Error al actualizar el usuario');
+        } finally {
             setLoading(false);
-            return errorMsg(dataError?.message);
         }
     };
 

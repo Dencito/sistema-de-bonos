@@ -1,26 +1,24 @@
 import { router } from '@inertiajs/react';
 import { Button, Modal } from 'antd';
-import axios from 'axios';
-import React from 'react';
 import { useMessage } from '@contexts/MessageShow';
+import { companyService } from '@services/api';
 
 export default function ModalChangeCompany({ data }) {
     const { successMsg, errorMsg } = useMessage();
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.post(
-                `/companies/change-db/${data?.id}`
-            );
-            router.visit('/companies', {
-                preserveState: true,
-            });
-            dataDelete && successMsg(await dataDelete?.message);
+            const response = await companyService.changeDb(data?.id);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/companies', {
+                    preserveState: true,
+                });
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al cambiar de empresa');
         }
     };
 

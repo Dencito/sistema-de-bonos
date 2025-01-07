@@ -16,21 +16,22 @@ export const SelectAssignCategories = ({
 
     const handleAssignCategories = async () => {
         try {
-            const { data } = await categoryBonusService.assignMultipleUsers(
+            const response = await categoryBonusService.assignMultipleUsers(
                 selectedRowKeys,
                 selectCategoryId
             );
-            router.visit('/users', {
-                preserveState: false,
-            });
-            data && successMsg(data?.message);
-            setSelectCategoryId(null);
-            setSelectedRowKeys([]);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/users', {
+                    preserveState: true,
+                });
+                setSelectCategoryId(null);
+                setSelectedRowKeys([]);
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al asignar categorías');
         }
     };
     return (

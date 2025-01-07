@@ -10,16 +10,17 @@ export default function ModalDeleteUser({ data }) {
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await userService.delete(data?.id);
-            dataDelete && successMsg(await dataDelete?.message);
-            router.visit(window.location.href, {
-                preserveState: true,
-            });
+            const response = await userService.delete(data?.id);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit(window.location.href, {
+                    preserveState: true,
+                });
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al eliminar el usuario');
         }
     };
 

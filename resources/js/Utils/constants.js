@@ -1,10 +1,10 @@
 export const roleDisplayNames = {
-    'duenio': 'Dueño',
+    duenio: 'Dueño',
     'super-admin': 'Super Admin',
-    'admin': 'Admin',
-    'supervisor': 'Supervisor',
-    'trabajador': 'Trabajador',
-    'jugador': 'Jugador',
+    admin: 'Admin',
+    supervisor: 'Supervisor',
+    trabajador: 'Trabajador',
+    jugador: 'Jugador',
 };
 
 export const allowedRoles = {
@@ -16,11 +16,11 @@ export const allowedRoles = {
     allowedDuringWorkHours: ['trabajador', 'supervisor'],
 };
 
-export const  roleNames = {
-    'duenio': 'duenio',
+export const roleNames = {
+    duenio: 'duenio',
     'super-admin': 'super-admin',
-    'admin': 'admin',
-    'supervisor': 'supervisor',
-    'trabajador': 'trabajador',
-    'jugador': 'jugador',
-}
+    admin: 'admin',
+    supervisor: 'supervisor',
+    trabajador: 'trabajador',
+    jugador: 'jugador',
+};

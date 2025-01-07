@@ -7,7 +7,6 @@ Este proyecto es una aplicación web para la gestión de bonos y tickets, diseñ
 ## Funcionalidades
 
 - **Gestión de Empresas**: Permite a los usuarios crear y gestionar varias empresas, facilitando la administración de bonos a nivel organizativo.
-  
 - **Gestión de Sucursales**: Los usuarios pueden añadir sucursales a las empresas, y gestionar los bonos asociados a cada una.
 
 - **Categorías de Bonos**: Organiza los bonos en distintas categorías para una fácil búsqueda y administración.
@@ -49,54 +48,63 @@ Asegúrate de tener instalados los siguientes componentes:
 ### Pasos de Instalación
 
 1. **Clona el repositorio:**
+
     - Abre tu terminal y ejecuta el siguiente comando para clonar el repositorio:
+
     ```bash
-   git clone https://github.com/Dencito/sistema-de-bonos
+    git clone https://github.com/Dencito/sistema-de-bonos
+
+    ```
 
 2. **Navega al directorio del proyecto:**
-   - Cambia al directorio del proyecto clonado:
-     ```bash
-     cd tu_repositorio
-     ```
+
+    - Cambia al directorio del proyecto clonado:
+        ```bash
+        cd tu_repositorio
+        ```
 
 3. **Instala las dependencias del backend:**
-   - Ejecuta el siguiente comando para instalar las dependencias de Laravel:
-     ```bash
-     composer install
-     ```
+
+    - Ejecuta el siguiente comando para instalar las dependencias de Laravel:
+        ```bash
+        composer install
+        ```
 
 4. **Configura tu archivo `.env`:**
-   - Copia el archivo de ejemplo para crear tu archivo `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Abre el archivo `.env` en un editor de texto y configura la conexión a tu base de datos MySQL. Modifica los siguientes campos:
-     ```env
-     DB_CONNECTION=mysql
-     DB_HOST=127.0.0.1
-     DB_PORT=3306
-     DB_DATABASE=nombre_de_tu_base_de_datos
-     DB_USERNAME=tu_usuario
-     DB_PASSWORD=tu_contraseña
-     ```
+
+    - Copia el archivo de ejemplo para crear tu archivo `.env`:
+        ```bash
+        cp .env.example .env
+        ```
+    - Abre el archivo `.env` en un editor de texto y configura la conexión a tu base de datos MySQL. Modifica los siguientes campos:
+        ```env
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=nombre_de_tu_base_de_datos
+        DB_USERNAME=tu_usuario
+        DB_PASSWORD=tu_contraseña
+        ```
 
 5. **Ejecuta las migraciones:**
-   - Ejecuta el siguiente comando para crear las tablas necesarias en tu base de datos:
-     ```bash
-     php artisan migrate
-     ```
+
+    - Ejecuta el siguiente comando para crear las tablas necesarias en tu base de datos:
+        ```bash
+        php artisan migrate
+        ```
 
 6. **Instala las dependencias del frontend:**
-   - Instala las dependencias utilizando npm:
-     ```bash
-     npm install
-     ```
+
+    - Instala las dependencias utilizando npm:
+        ```bash
+        npm install
+        ```
 
 7. **Ejecuta el servidor de desarrollo:**
-   - Para iniciar la el frontend, ejecuta:
-     ```bash
-     npm run dev
-     ```
+    - Para iniciar la el frontend, ejecuta:
+        ```bash
+        npm run dev
+        ```
 
 ### Acceso a la Aplicación
 

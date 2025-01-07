@@ -61,7 +61,9 @@ export default function Register() {
                     <Input.Password
                         id="password_confirmation"
                         value={data.password_confirmation}
-                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        onChange={(e) =>
+                            setData('password_confirmation', e.target.value)
+                        }
                         autoComplete="new-password"
                         required
                     />
@@ -74,7 +76,12 @@ export default function Register() {
                     >
                         Already registered?
                     </Link>
-                    <Button type="primary" htmlType="submit" loading={processing} className="ms-4">
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={processing}
+                        className="ms-4"
+                    >
                         Register
                     </Button>
                 </Form.Item>

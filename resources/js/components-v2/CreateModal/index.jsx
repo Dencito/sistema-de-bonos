@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Button, Form, Input, Modal } from "antd";
+import { useEffect } from 'react';
+import { Button, Form, Input, Modal } from 'antd';
 
 export function CreateModal({
     isOpen,

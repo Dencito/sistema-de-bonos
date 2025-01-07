@@ -1,11 +1,11 @@
-import { Links } from "@components/Links";
-import { roleDisplayNames } from "@/Utils/constants";
-import { VITE_PRIMARY_SUBDOMAIN } from "@/Utils/env";
+import { Links } from '@components/Links';
+import { roleDisplayNames } from '@/Utils/constants';
+import { VITE_PRIMARY_SUBDOMAIN } from '@/Utils/env';
 
 export default function Authenticated({ auth, user, role, children }) {
     const { roles } = auth;
-    const nameCompanySelect = window.localStorage.getItem("companySelect");
-    const isPrimarySubdomain = VITE_PRIMARY_SUBDOMAIN === "tickets";
+    const nameCompanySelect = window.localStorage.getItem('companySelect');
+    const isPrimarySubdomain = VITE_PRIMARY_SUBDOMAIN === 'tickets';
 
     return (
         <div className="flex h-screen">

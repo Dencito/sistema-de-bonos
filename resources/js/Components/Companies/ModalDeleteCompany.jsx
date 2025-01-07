@@ -1,23 +1,27 @@
 import { router } from '@inertiajs/react';
-import { Button, Modal } from 'antd'
+import { Button, Modal } from 'antd';
 import axios from 'axios';
-import React from 'react'
+import React from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useMessage } from '@contexts/MessageShow';
 
-export default function ModalDeleteCompany ({ data }) {
+export default function ModalDeleteCompany({ data }) {
     const { successMsg, errorMsg } = useMessage();
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.delete(`/companies/${data?.id}`,);
+            const { data: dataDelete } = await axios.delete(
+                `/companies/${data?.id}`
+            );
             router.visit('/companies', {
                 preserveState: true,
             });
-            dataDelete && successMsg(await dataDelete?.message)
+            dataDelete && successMsg(await dataDelete?.message);
         } catch (error) {
-            const { response: { data: dataError } } = error
-            return errorMsg(dataError?.message)
+            const {
+                response: { data: dataError },
+            } = error;
+            return errorMsg(dataError?.message);
         }
     };
 
@@ -35,7 +39,11 @@ export default function ModalDeleteCompany ({ data }) {
     };
     return (
         <div>
-            <Button danger onClick={() => showDeleteConfirm()} icon={<DeleteOutlined />} />
+            <Button
+                danger
+                onClick={() => showDeleteConfirm()}
+                icon={<DeleteOutlined />}
+            />
         </div>
-    )
-};
+    );
+}

@@ -1,23 +1,27 @@
-import { useMessage } from '@/Contexts/MessageShow';
+import { useMessage } from '@contexts/MessageShow';
 import { router } from '@inertiajs/react';
-import { Button, Modal } from 'antd'
-import axios from 'axios';
-import React from 'react'
+import { Button, Modal } from 'antd';
+import { categoryBonusService } from '@services/api';
+import React from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
 
-export default function ModalDeleteCategoryBono ({ data }) {
+export default function ModalDeleteCategoryBono({ data }) {
     const { successMsg, errorMsg } = useMessage();
-  
+
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.delete(`/categories-bonus/${data?.id}`,);
-            dataDelete && successMsg(await dataDelete?.message)
+            const { data: dataDelete } = await categoryBonusService.delete(
+                data?.id
+            );
+            dataDelete && successMsg(await dataDelete?.message);
             router.visit('/categories-bonus', {
                 preserveState: true,
             });
         } catch (error) {
-            const { response: { data: dataError } } = error
-            return errorMsg(dataError?.message)
+            const {
+                response: { data: dataError },
+            } = error;
+            return errorMsg(dataError?.message);
         }
     };
 
@@ -35,7 +39,11 @@ export default function ModalDeleteCategoryBono ({ data }) {
     };
     return (
         <div>
-            <Button danger onClick={() => showDeleteConfirm()} icon={<DeleteOutlined />} />
+            <Button
+                danger
+                onClick={() => showDeleteConfirm()}
+                icon={<DeleteOutlined />}
+            />
         </div>
-    )
-};
+    );
+}

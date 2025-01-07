@@ -1,6 +1,6 @@
-import { Button, Typography } from "antd";
-import React, { useState } from "react";
-import * as XLSX from "xlsx"; // Importamos sheetjs
+import { Button, Typography } from 'antd';
+import React, { useState } from 'react';
+import * as XLSX from 'xlsx'; // Importamos sheetjs
 
 export default function ExcelManager({ users: data }) {
     const [users, setUsers] = useState(data);
@@ -12,7 +12,7 @@ export default function ExcelManager({ users: data }) {
 
         reader.onload = (event) => {
             const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: "array" });
+            const workbook = XLSX.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet);
@@ -28,10 +28,10 @@ export default function ExcelManager({ users: data }) {
     const handleExport = () => {
         const ws = XLSX.utils.json_to_sheet(users); // Convertimos los datos a hoja de cálculo
         const wb = XLSX.utils.book_new(); // Creamos un nuevo libro
-        XLSX.utils.book_append_sheet(wb, ws, "Usuarios"); // Agregamos la hoja al libro
+        XLSX.utils.book_append_sheet(wb, ws, 'Usuarios'); // Agregamos la hoja al libro
 
         // Generamos y descargamos el archivo Excel
-        XLSX.writeFile(wb, "usuarios_exportados.xlsx");
+        XLSX.writeFile(wb, 'usuarios_exportados.xlsx');
     };
 
     return (

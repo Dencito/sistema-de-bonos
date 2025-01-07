@@ -9,10 +9,13 @@ import esES from 'antd/locale/es_ES';
 import { MessageProvider } from './Contexts/MessageShow';
 import { VITE_APP_NAME } from '@utils/env';
 
-
 createInertiaApp({
     title: (title) => `${title} - ${VITE_APP_NAME}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.jsx`,
+            import.meta.glob('./Pages/**/*.jsx')
+        ),
     setup({ el, App, props }) {
         const root = createRoot(el);
 

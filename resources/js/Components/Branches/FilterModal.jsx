@@ -1,19 +1,19 @@
-import { useForm } from "@inertiajs/react";
-import { Modal, Input, Button, Select } from "antd";
-import { useState } from "react";
+import { useForm } from '@inertiajs/react';
+import { Modal, Input, Button, Select } from 'antd';
+import { useState } from 'react';
 
 const { Option } = Select;
 
 export default function FilterModal({ filters, statuses }) {
     const [showModal, setShowModal] = useState(false);
     const InitForm = {
-        name: filters.name || "",
-        status: filters.status || "",
+        name: filters.name || '',
+        status: filters.status || '',
     };
     const { data, setData, get } = useForm(InitForm);
 
     const handleFilter = () => {
-        get(route("branches.index"));
+        get(route('branches.index'));
         handleCloseModal();
     };
 
@@ -61,7 +61,7 @@ export default function FilterModal({ filters, statuses }) {
                             className=""
                             id="name"
                             value={data.name}
-                            onChange={(e) => setData("name", e.target.value)}
+                            onChange={(e) => setData('name', e.target.value)}
                             placeholder="Nombre de la sucursal"
                         />
                     </div>
@@ -71,7 +71,7 @@ export default function FilterModal({ filters, statuses }) {
                             className="w-60"
                             id="status"
                             value={data.status}
-                            onChange={(value) => setData("status", value)}
+                            onChange={(value) => setData('status', value)}
                             placeholder="Seleccione un estado"
                         >
                             {statuses.map((status) => (

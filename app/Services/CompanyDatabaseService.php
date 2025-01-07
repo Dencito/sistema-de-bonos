@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Http\Request;
 
 class CompanyDatabaseService
 {
@@ -266,7 +266,7 @@ class CompanyDatabaseService
 
     private function getRequiredTablesName(string $companyPrefix): array
     {
-        if(env("APP_PRIMARY_SUBDOMAIN") === "tickets") {
+        if (env('APP_PRIMARY_SUBDOMAIN') === 'tickets') {
             return [];
         }
         return [
@@ -279,7 +279,6 @@ class CompanyDatabaseService
             "{$companyPrefix}_companies",
         ];
     }
-
 
     public function getCompanyPrefix(): ?string
     {

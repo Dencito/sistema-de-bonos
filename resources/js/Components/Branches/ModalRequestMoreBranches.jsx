@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Button, Form, Input, Modal } from "antd";
-import { getValidationRequiredMessage } from "@utils/messagesValidationes";
-import { router } from "@inertiajs/react";
-import { useMessage } from "@contexts/MessageShow";
+import { useState } from 'react';
+import { Button, Form, Input, Modal } from 'antd';
+import { getValidationRequiredMessage } from '@utils/messagesValidationes';
+import { router } from '@inertiajs/react';
+import { useMessage } from '@contexts/MessageShow';
 
 export default function ModalRequestMoreBranches() {
     const [showModal, setShowModal] = useState(false);
@@ -14,11 +14,8 @@ export default function ModalRequestMoreBranches() {
     const onCreate = async (values) => {
         try {
             setLoading(true);
-            const { data } = await axios.post(
-                `/branches/request_more_branches`,
-                values
-            );
-            router.visit("/branches", {
+            const { data } = await axios.post('/branches/request_more_branches', values);
+            router.visit('/branches', {
                 preserveState: true, // Mantener el estado actual
             });
             data && successMsg(data?.message);
@@ -34,7 +31,6 @@ export default function ModalRequestMoreBranches() {
     };
 
     const handleCloseModal = () => {
-        //setCountry("");
         setLoading(false);
         setShowModal(false);
     };
@@ -44,7 +40,9 @@ export default function ModalRequestMoreBranches() {
     };
 
     const onlyNumberInput = (e) => {
-        form.setFieldsValue({ [e.target.name]: e.target.value.replace(/\D/g, "") });
+        form.setFieldsValue({
+            [e.target.name]: e.target.value.replace(/\D/g, ''),
+        });
     };
 
     return (
@@ -61,11 +59,11 @@ export default function ModalRequestMoreBranches() {
                 onCancel={() =>
                     !loading &&
                     Modal.confirm({
-                        title: "¿Estás seguro de que quieres salir?",
-                        content: "Se borrarán todos los datos no guardados.",
-                        okText: "Sí",
-                        okType: "danger",
-                        cancelText: "No",
+                        title: '¿Estás seguro de que quieres salir?',
+                        content: 'Se borrarán todos los datos no guardados.',
+                        okText: 'Sí',
+                        okType: 'danger',
+                        cancelText: 'No',
                         onOk() {
                             handleCloseModal();
                         },
@@ -75,7 +73,7 @@ export default function ModalRequestMoreBranches() {
                 cancelText="Cancelar"
                 okButtonProps={{
                     autoFocus: true,
-                    htmlType: "submit",
+                    htmlType: 'submit',
                     loading: loading, // Estado de carga del botón
                     disabled: loading, // Deshabilitar cuando está cargando
                 }}
@@ -84,11 +82,11 @@ export default function ModalRequestMoreBranches() {
                 }}
                 destroyOnClose={() =>
                     Modal.confirm({
-                        title: "¿Estás seguro de que quieres salir?",
-                        content: "Se borrarán todos los datos no guardados.",
-                        okText: "Sí",
-                        okType: "danger",
-                        cancelText: "No",
+                        title: '¿Estás seguro de que quieres salir?',
+                        content: 'Se borrarán todos los datos no guardados.',
+                        okText: 'Sí',
+                        okType: 'danger',
+                        cancelText: 'No',
                         onOk() {
                             handleCloseModal();
                         },
@@ -100,7 +98,7 @@ export default function ModalRequestMoreBranches() {
                         form={form}
                         name="form_in_modal"
                         initialValues={{
-                            modifier: "public",
+                            modifier: 'public',
                         }}
                         disabled={loading}
                         clearOnDestroy

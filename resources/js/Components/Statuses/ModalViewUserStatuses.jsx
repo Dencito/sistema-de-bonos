@@ -12,24 +12,20 @@ export default function ModalViewUserStatuses({ data, status }) {
 
     const columns = [
         {
-            title: "Nombre",
-            dataIndex: "name",
-            key: "id"
+            title: 'Nombre',
+            dataIndex: 'name',
+            key: 'id',
         },
         {
-            title: "Empresa",
-            key: "company",
-            render: (_, user) => (
-                <p>{user?.company?.name}</p>
-            )
+            title: 'Empresa',
+            key: 'company',
+            render: (_, user) => <p>{user?.company?.name}</p>,
         },
         {
-            title: "Sucursal",
-            key: "branch",
-            render: (_, user) => (
-                <p>{user?.branch?.name}</p>
-            )
-        }
+            title: 'Sucursal',
+            key: 'branch',
+            render: (_, user) => <p>{user?.branch?.name}</p>,
+        },
     ];
 
     return (
@@ -40,12 +36,19 @@ export default function ModalViewUserStatuses({ data, status }) {
             >
                 <Eye className='w-5 h-5' />
             </button> */}
-            <CustomButton onClick={() => setShowModal(true)} className='hover:border-green-300'>
+            <CustomButton
+                onClick={() => setShowModal(true)}
+                className="hover:border-green-300"
+            >
                 Ver usuarios
             </CustomButton>
             <Modal
                 style={{ top: 20 }}
-                title={<p className="text-bold text-3xl">Usuarios con estado {status}</p>}
+                title={
+                    <p className="text-bold text-3xl">
+                        Usuarios con estado {status}
+                    </p>
+                }
                 open={showModal}
                 cancelText="Cerrar"
                 onCancel={() => handleCloseModal()}
@@ -57,7 +60,7 @@ export default function ModalViewUserStatuses({ data, status }) {
                 }}
             >
                 <Table
-                    dataSource={data.map(user => ({ ...user, key: user.id }))}
+                    dataSource={data.map((user) => ({ ...user, key: user.id }))}
                     columns={columns}
                     scroll={{ x: true }}
                 />

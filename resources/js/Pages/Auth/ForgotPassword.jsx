@@ -10,11 +10,14 @@ export default function ForgotPassword({ status }) {
     const onFinish = (values) => {
         post(route('password.email', values), {
             onSuccess: () => {
-                successMsg('Se ha enviado el enlace de recuperación a tu correo', 'success');
+                successMsg(
+                    'Se ha enviado el enlace de recuperación a tu correo',
+                    'success'
+                );
             },
             onError: (errors) => {
                 errorMsg('Error al enviar el correo de recuperación', 'error');
-            }
+            },
         });
     };
 
@@ -23,7 +26,9 @@ export default function ForgotPassword({ status }) {
             <Head title="Recuperar Contraseña" />
 
             <div className="mb-4 text-sm text-gray-600">
-                ¿Olvidaste tu contraseña? No hay problema. Solo indícanos tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                ¿Olvidaste tu contraseña? No hay problema. Solo indícanos tu
+                dirección de correo electrónico y te enviaremos un enlace para
+                restablecer tu contraseña.
             </div>
 
             {status && (
@@ -35,11 +40,7 @@ export default function ForgotPassword({ status }) {
                 />
             )}
 
-            <Form
-                name="forgot-password"
-                onFinish={onFinish}
-                layout="vertical"
-            >
+            <Form name="forgot-password" onFinish={onFinish} layout="vertical">
                 <Form.Item
                     label="Email"
                     name="email"

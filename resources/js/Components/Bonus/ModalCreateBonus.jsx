@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Form, Input, DatePicker, Modal } from "antd";
-import { getValidationRequiredMessage } from "@utils/messagesValidationes";
-import { router } from "@inertiajs/react";
-import { useMessage } from "@contexts/MessageShow";
-import { CustomButton } from "@components-v2/CustomButton";
+import { useState } from 'react';
+import { Form, Input, DatePicker, Modal } from 'antd';
+import { getValidationRequiredMessage } from '@utils/messagesValidationes';
+import { router } from '@inertiajs/react';
+import { useMessage } from '@contexts/MessageShow';
+import { CustomButton } from '@components-v2/CustomButton';
 import axios from 'axios';
 
-export default function ModalCreateBonus({data}) {
-    if(!data) return null;
+export default function ModalCreateBonus({ data }) {
+    if (!data) return null;
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -17,18 +17,22 @@ export default function ModalCreateBonus({data}) {
     const onCreate = async () => {
         try {
             const values = await form.validateFields();
-            const startDateTime = values.start_datetime?.format("YYYY-MM-DD HH:mm:ss");
-            const endDateTime = values.end_datetime?.format("YYYY-MM-DD HH:mm:ss");
-            
+            const startDateTime = values.start_datetime?.format(
+                'YYYY-MM-DD HH:mm:ss'
+            );
+            const endDateTime = values.end_datetime?.format(
+                'YYYY-MM-DD HH:mm:ss'
+            );
+
             setLoading(true);
             const sendData = {
                 amount: values.amount,
                 start_datetime: startDateTime,
                 end_datetime: endDateTime,
-                user_id: data.id
+                user_id: data.id,
             };
-            
-            const { data: responseData } = await axios.post(`/bonuses`, sendData);
+
+            const { data: responseData } = await axios.post('/bonuses', sendData);
             router.visit(window.location.href, {
                 preserveState: true,
             });
@@ -51,8 +55,8 @@ export default function ModalCreateBonus({data}) {
 
     return (
         <>
-            <CustomButton 
-                onClick={() => setShowModal(true)} 
+            <CustomButton
+                onClick={() => setShowModal(true)}
                 title="Crear bono"
                 type="primary"
             />
@@ -65,26 +69,31 @@ export default function ModalCreateBonus({data}) {
                 okText="Crear"
                 cancelText="Cancelar"
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                >
+                <Form form={form} layout="vertical">
                     <Form.Item
                         label="Monto"
                         name="amount"
                         rules={[
-                            { required: true, message: getValidationRequiredMessage('El monto') },
+                            {
+                                required: true,
+                                message:
+                                    getValidationRequiredMessage('El monto'),
+                            },
                             {
                                 validator: (_, value) => {
                                     if (value < 1) {
-                                        return Promise.reject('El monto debe ser mayor o igual a 1');
+                                        return Promise.reject(
+                                            'El monto debe ser mayor o igual a 1'
+                                        );
                                     }
                                     if (value > 9999999.99) {
-                                        return Promise.reject('El monto no puede ser mayor a $9.999.999,99');
+                                        return Promise.reject(
+                                            'El monto no puede ser mayor a $9.999.999,99'
+                                        );
                                     }
                                     return Promise.resolve();
-                                }
-                            }
+                                },
+                            },
                         ]}
                     >
                         <Input
@@ -101,10 +110,7 @@ export default function ModalCreateBonus({data}) {
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        label="Fecha de inicio"
-                        name="start_datetime"
-                    >
+                    <Form.Item label="Fecha de inicio" name="start_datetime">
                         <DatePicker
                             showTime
                             format="DD-MM-YYYY HH:mm:ss"
@@ -113,10 +119,7 @@ export default function ModalCreateBonus({data}) {
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        label="Fecha de fin"
-                        name="end_datetime"
-                    >
+                    <Form.Item label="Fecha de fin" name="end_datetime">
                         <DatePicker
                             showTime
                             format="DD-MM-YYYY HH:mm:ss"

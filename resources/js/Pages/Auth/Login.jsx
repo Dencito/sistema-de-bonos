@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
-import GuestLayout from '@/Layouts/GuestLayout';
+import GuestLayout from '@layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
-import { roleNames } from '@/Utils/constants';
+import { roleNames } from '@utils/constants';
+import { userService } from '@services/api';
 
 export default function Login({ status, auth }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -20,15 +21,19 @@ export default function Login({ status, auth }) {
     }, []);
 
     const handleCreateOwner = async (values) => {
-        const { data } = await axios.post(`/users/owner`, values);
+        const { data } = await userService.login(values);
         router.visit(route('login'));
-        data && successMsg(data?.message)
-    }
+        data && successMsg(data?.message);
+    };
 
     const submit = () => {
         if (auth?.users === 0) {
-            const { login: username, password} = data
-            return handleCreateOwner({ username, password,  role: roleNames.duenio }) 
+            const { login: username, password } = data;
+            return handleCreateOwner({
+                username,
+                password,
+                role: roleNames.duenio,
+            });
         } else {
             post(route('login')); // No es necesario llamar a e.preventDefault()
         }
@@ -38,17 +43,27 @@ export default function Login({ status, auth }) {
         <GuestLayout>
             <Head title="Inicio de sesión" />
 
-            {status && <Alert message={status} type="success" showIcon className="mb-4" />}
-            <h1 className='text-3xl font-bold mb-4'>{auth?.users === 0 ? 'Registrar Dueño' : 'Ingresar'}</h1>
+            {status && (
+                <Alert
+                    message={status}
+                    type="success"
+                    showIcon
+                    className="mb-4"
+                />
+            )}
+            <h1 className="text-3xl font-bold mb-4">
+                {auth?.users === 0 ? 'Registrar Dueño' : 'Ingresar'}
+            </h1>
 
-            <Form
-                onFinish={submit}
-                layout="vertical"
-            >
+            <Form onFinish={submit} layout="vertical">
                 <Form.Item
-                    label={auth?.users === 0 ? "Nombre de usuario" : "Usuario o Email o Teléfono"}
+                    label={
+                        auth?.users === 0
+                            ? 'Nombre de usuario'
+                            : 'Usuario o Email o Teléfono'
+                    }
                     validateStatus={errors.login ? 'error' : ''}
-                    help={errors.login ? "Credenciales incorrectas" : ''}
+                    help={errors.login ? 'Credenciales incorrectas' : ''}
                 >
                     <Input
                         id="login"
@@ -85,14 +100,22 @@ export default function Login({ status, auth }) {
                 </Form.Item>
 
                 <Form.Item className="flex items-center justify-end">
-                    <Button type="primary" htmlType="submit" loading={processing} className="ms-4">
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={processing}
+                        className="ms-4"
+                    >
                         Ingresar
                     </Button>
                 </Form.Item>
             </Form>
-            <Link href={route('password.request')} className="text-sm text-gray-600 hover:text-gray-900">
-    ¿Olvidaste tu contraseña?
-</Link>
+            <Link
+                href={route('password.request')}
+                className="text-sm text-gray-600 hover:text-gray-900"
+            >
+                ¿Olvidaste tu contraseña?
+            </Link>
         </GuestLayout>
     );
 }

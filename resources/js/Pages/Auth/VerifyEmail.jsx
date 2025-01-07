@@ -14,10 +14,11 @@ export default function VerifyEmail({ status }) {
             <Head title="Email Verification" />
 
             <Typography.Paragraph className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify your email address by clicking on the
-                link we just emailed to you? If you didn&apos;t receive the email, we will gladly send you another.
+                Thanks for signing up! Before getting started, could you verify
+                your email address by clicking on the link we just emailed to
+                you? If you didn&apos;t receive the email, we will gladly send
+                you another.
             </Typography.Paragraph>
-
 
             {status === 'verification-link-sent' && (
                 <Alert
@@ -30,7 +31,11 @@ export default function VerifyEmail({ status }) {
 
             <Form onFinish={submit}>
                 <div className="mt-4 flex items-center justify-between">
-                    <Button type="primary" htmlType="submit" loading={processing}>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={processing}
+                    >
                         Resend Verification Email
                     </Button>
 

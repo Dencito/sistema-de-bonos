@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Button, Form, List, Modal } from "antd";
+import { useState } from 'react';
+import { Button, Form, List, Modal } from 'antd';
 
 export default function ModalViewRole({ data }) {
     const [showModal, setShowModal] = useState(false);
@@ -33,7 +33,7 @@ export default function ModalViewRole({ data }) {
                 onCancel={() => handleCloseModal()}
                 destroyOnClose={true}
                 okButtonProps={{
-                    style: { display: 'none'},
+                    style: { display: 'none' },
                 }}
                 modalRender={(dom) => (
                     <Form
@@ -42,7 +42,7 @@ export default function ModalViewRole({ data }) {
                         disabled
                         name="form_in_modal"
                         initialValues={{
-                            modifier: "public",
+                            modifier: 'public',
                         }}
                         clearOnDestroy
                         onFinish={() => handleCloseModal()}

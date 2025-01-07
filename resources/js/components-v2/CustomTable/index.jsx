@@ -1,11 +1,11 @@
-import { Table } from "@/Utils/antd";
+import { Table } from '@/Utils/antd';
 
 export function CustomTable({
     dataSource,
     columns,
     loading = false,
     pagination = true,
-    rowKey = "id",
+    rowKey = 'id',
     onRowClick,
     scroll,
     ...rest

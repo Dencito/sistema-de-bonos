@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, Modal, Select, Spin } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { validate } from "rut.js";
+import { useEffect, useState } from 'react';
+import { Button, Divider, Form, Input, Modal, Select, Spin } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { validate } from 'rut.js';
 import {
     getValidationEmailMessage,
     getValidationRequiredMessage,
-} from "@utils/messagesValidationes";
-import { router } from "@inertiajs/react";
-import { useMessage } from "@contexts/MessageShow";
-import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
+} from '@utils/messagesValidationes';
+import { router } from '@inertiajs/react';
+import { useMessage } from '@contexts/MessageShow';
+import { countriesService } from '@services/api';
 
 export default function ModalCreateCompany() {
     const [showModal, setShowModal] = useState(false);
-    const [country, setCountry] = useState("");
+    const [country, setCountry] = useState('');
     const [countries, setCountries] = useState();
     const [regions, setRegions] = useState();
     const [errorRuts, setErrorRuts] = useState({
@@ -28,32 +28,22 @@ export default function ModalCreateCompany() {
     useEffect(() => {
         const getCountries = async () => {
             if (showModal) {
-                const response = await fetch(
-                    `${VITE_COUNTRIES_API_URL}/countries`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
-                        },
-                    }
-                );
-                const data = await response.json();
-                setCountries(data?.data);
+                try {
+                    const data = await countriesService.getAll();
+                    setCountries(data?.data);
+                } catch (error) {
+                    errorMsg('Failed to fetch countries');
+                }
             }
         };
         const getRegion = async () => {
-            if (country !== "" && showModal) {
-                const response = await fetch(
-                    `${VITE_COUNTRIES_API_URL}/countries/${country}/states`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
-                        },
-                    }
-                );
-                const data = await response.json();
-                setRegions(data?.data);
+            if (country && showModal) {
+                try {
+                    const data = await countriesService.getStates(country);
+                    setRegions(data?.data);
+                } catch (error) {
+                    errorMsg('Failed to fetch regions');
+                }
             }
         };
         getCountries();
@@ -71,11 +61,11 @@ export default function ModalCreateCompany() {
     const onCreate = async (values) => {
         try {
             if (checkErrors(errorRuts)) {
-                return errorMsg(`Uno de los ruts es invalido`);
+                return errorMsg('Uno de los ruts es invalido');
             }
             setLoading(true);
-            const { data } = await axios.post(`/companies`, values);
-            router.visit("/companies", {
+            const { data } = await axios.post('/companies', values);
+            router.visit('/companies', {
                 preserveState: true,
             });
             data && successMsg(data?.message);
@@ -91,15 +81,15 @@ export default function ModalCreateCompany() {
     };
 
     const onlyNumberInput = (e) => {
-        const cleanedValue = e.target.value.replace(/\D/g, "");
+        const cleanedValue = e.target.value.replace(/\D/g, '');
         form.setFieldsValue({ [e.target.name]: cleanedValue });
     };
 
     const validateRutNumbers = (e) => {
         onlyNumberInput(e);
         const { rutNumbers, rutDv } = form.getFieldsValue([
-            "rutNumbers",
-            "rutDv",
+            'rutNumbers',
+            'rutDv',
         ]);
         if (rutNumbers?.length > 0 && rutDv?.length > 0) {
             const fullRut = `${rutNumbers}-${rutDv}`;
@@ -114,8 +104,8 @@ export default function ModalCreateCompany() {
         onlyNumberInput(e);
         const { rutNumbersLegalRepresentative, rutDvLegalRepresentative } =
             form.getFieldsValue([
-                "rutNumbersLegalRepresentative",
-                "rutDvLegalRepresentative",
+                'rutNumbersLegalRepresentative',
+                'rutDvLegalRepresentative',
             ]);
         if (
             rutNumbersLegalRepresentative?.length > 0 &&
@@ -135,8 +125,8 @@ export default function ModalCreateCompany() {
     const validateRutNumbersContact = (e) => {
         onlyNumberInput(e);
         const { rutNumbersContact, rutDvContact } = form.getFieldsValue([
-            "rutNumbersContact",
-            "rutDvContact",
+            'rutNumbersContact',
+            'rutDvContact',
         ]);
         if (rutNumbersContact?.length > 0 && rutDvContact?.length > 0) {
             const fullRut = `${rutNumbersContact}-${rutDvContact}`;
@@ -148,7 +138,7 @@ export default function ModalCreateCompany() {
     };
 
     const handleCloseModal = () => {
-        setCountry("");
+        setCountry('');
         setErrorRuts({
             company: false,
             legalRepresentative: false,
@@ -179,7 +169,7 @@ export default function ModalCreateCompany() {
                         key={country?.phone_code}
                         value={country?.phone_code}
                     >
-                        {!country?.phone_code.includes("+") && "+"}
+                        {!country?.phone_code.includes('+') && '+'}
                         {country?.phone_code}
                     </Select.Option>
                 ))}
@@ -205,7 +195,7 @@ export default function ModalCreateCompany() {
                         key={country?.phone_code}
                         value={country?.phone_code}
                     >
-                        {!country?.phone_code.includes("+") && "+"}
+                        {!country?.phone_code.includes('+') && '+'}
                         {country?.phone_code}
                     </Select.Option>
                 ))}
@@ -213,12 +203,11 @@ export default function ModalCreateCompany() {
         </Form.Item>
     );
 
-
     useEffect(() => {
         if (loading) {
             const handleBeforeUnload = (event) => {
                 event.preventDefault();
-                event.returnValue = ""; // Activa el cuadro de diálogo en navegadores modernos.
+                event.returnValue = ''; // Activa el cuadro de diálogo en navegadores modernos.
             };
             // Agregar eventos
             window.addEventListener('beforeunload', handleBeforeUnload);
@@ -248,11 +237,11 @@ export default function ModalCreateCompany() {
                 onCancel={() =>
                     !loading &&
                     Modal.confirm({
-                        title: "¿Estás seguro de que quieres salir?",
-                        content: "Se borrarán todos los datos no guardados.",
-                        okText: "Sí",
-                        okType: "danger",
-                        cancelText: "No",
+                        title: '¿Estás seguro de que quieres salir?',
+                        content: 'Se borrarán todos los datos no guardados.',
+                        okText: 'Sí',
+                        okType: 'danger',
+                        cancelText: 'No',
                         onOk() {
                             handleCloseModal();
                         },
@@ -262,16 +251,16 @@ export default function ModalCreateCompany() {
                 cancelText="Cancelar"
                 okButtonProps={{
                     autoFocus: true,
-                    htmlType: "submit",
+                    htmlType: 'submit',
                 }}
                 destroyOnClose={() =>
                     !loading &&
                     Modal.confirm({
-                        title: "¿Estás seguro de que quieres salir?",
-                        content: "Se borrarán todos los datos no guardados.",
-                        okText: "Sí",
-                        okType: "danger",
-                        cancelText: "No",
+                        title: '¿Estás seguro de que quieres salir?',
+                        content: 'Se borrarán todos los datos no guardados.',
+                        okText: 'Sí',
+                        okType: 'danger',
+                        cancelText: 'No',
                         onOk() {
                             handleCloseModal();
                         },
@@ -283,23 +272,32 @@ export default function ModalCreateCompany() {
                         form={form}
                         name="form_in_modal"
                         initialValues={{
-                            modifier: "public",
+                            modifier: 'public',
                         }}
                         disabled={loading}
                         className="z-40"
                         clearOnDestroy
                         onFinish={(values) => onCreate(values)}
                         onFinishFailed={() =>
-                            errorMsg("Verifica todos los campos")
+                            errorMsg('Verifica todos los campos')
                         }
                     >
                         {loading && (
-                            <Spin size="large" tip={
-                                <div className="flex flex-col items-center justify-center">
-                                    <p className="text-bold text-2xl">Estamos creando la empresa</p>
-                                    <p className="text-bold text-xl">Esto puede llegar a tardar unos segundos</p>
-                                </div>
-                            } fullscreen />
+                            <Spin
+                                size="large"
+                                tip={
+                                    <div className="flex flex-col items-center justify-center">
+                                        <p className="text-bold text-2xl">
+                                            Estamos creando la empresa
+                                        </p>
+                                        <p className="text-bold text-xl">
+                                            Esto puede llegar a tardar unos
+                                            segundos
+                                        </p>
+                                    </div>
+                                }
+                                fullscreen
+                            />
                         )}
                         {dom}
                     </Form>
@@ -325,9 +323,11 @@ export default function ModalCreateCompany() {
                                 if (/^[a-z0-9]+$/.test(value)) {
                                     return Promise.resolve();
                                 }
-                                return Promise.reject('El nombre solo debe contener letras minúsculas y números, sin espacios ni caracteres especiales, Esto es temporal');
-                            }
-                        }
+                                return Promise.reject(
+                                    'El nombre solo debe contener letras minúsculas y números, sin espacios ni caracteres especiales, Esto es temporal'
+                                );
+                            },
+                        },
                     ]}
                 >
                     <Input showCount maxLength={50} />
@@ -357,14 +357,14 @@ export default function ModalCreateCompany() {
                         rules={[
                             {
                                 required: true,
-                                message: "Este campo es obligatorio",
+                                message: 'Este campo es obligatorio',
                             },
                         ]}
                     >
                         <Input
                             name="rutNumbers"
                             style={{
-                                borderColor: errorRuts.company && "#ff4d4f",
+                                borderColor: errorRuts.company && '#ff4d4f',
                             }}
                             onChange={validateRutNumbers}
                             showCount
@@ -379,13 +379,13 @@ export default function ModalCreateCompany() {
                             {
                                 required: true,
                                 message:
-                                    "El campo debe ser un código de verificación de un RUT",
+                                    'El campo debe ser un código de verificación de un RUT',
                             },
                         ]}
                     >
                         <Input
                             style={{
-                                borderColor: errorRuts.company && "#ff4d4f",
+                                borderColor: errorRuts.company && '#ff4d4f',
                             }}
                             onChange={validateRutNumbers}
                             showCount
@@ -396,12 +396,12 @@ export default function ModalCreateCompany() {
                 {errorRuts.company && (
                     <span
                         style={{
-                            position: "relative",
+                            position: 'relative',
                             top:
-                                form.getFieldValue("rutNumbers") === ""
-                                    ? "0px"
-                                    : "-15px",
-                            color: "#ff4d4f",
+                                form.getFieldValue('rutNumbers') === ''
+                                    ? '0px'
+                                    : '-15px',
+                            color: '#ff4d4f',
                         }}
                     >
                         El RUT es invalido.
@@ -437,7 +437,7 @@ export default function ModalCreateCompany() {
                         maxLength={10}
                         addonBefore={prefixSelector}
                         style={{
-                            width: "100%",
+                            width: '100%',
                         }}
                     />
                 </Form.Item>
@@ -447,7 +447,7 @@ export default function ModalCreateCompany() {
                     label="Correo electrónico"
                     rules={[
                         {
-                            type: "email",
+                            type: 'email',
                             message: getValidationEmailMessage,
                         },
                         {
@@ -502,7 +502,7 @@ export default function ModalCreateCompany() {
                             name="rutNumbersLegalRepresentative"
                             style={{
                                 borderColor:
-                                    errorRuts.legalRepresentative && "#ff4d4f",
+                                    errorRuts.legalRepresentative && '#ff4d4f',
                             }}
                             onChange={validateRutNumbersLegalRepresentative}
                             showCount
@@ -517,14 +517,14 @@ export default function ModalCreateCompany() {
                             {
                                 required: true,
                                 message:
-                                    "El campo debe ser un código de verificación de un RUT",
+                                    'El campo debe ser un código de verificación de un RUT',
                             },
                         ]}
                     >
                         <Input
                             style={{
                                 borderColor:
-                                    errorRuts.legalRepresentative && "#ff4d4f",
+                                    errorRuts.legalRepresentative && '#ff4d4f',
                             }}
                             onChange={validateRutNumbersLegalRepresentative}
                             showCount
@@ -535,14 +535,14 @@ export default function ModalCreateCompany() {
                 {errorRuts.legalRepresentative && (
                     <span
                         style={{
-                            position: "relative",
+                            position: 'relative',
                             top:
                                 form.getFieldValue(
-                                    "rutNumbersLegalRepresentative"
-                                ) === ""
-                                    ? "0px"
-                                    : "-15px",
-                            color: "#ff4d4f",
+                                    'rutNumbersLegalRepresentative'
+                                ) === ''
+                                    ? '0px'
+                                    : '-15px',
+                            color: '#ff4d4f',
                         }}
                     >
                         El RUT es invalido.
@@ -590,7 +590,7 @@ export default function ModalCreateCompany() {
                         <Input
                             name="rutNumbersContact"
                             style={{
-                                borderColor: errorRuts.contact && "#ff4d4f",
+                                borderColor: errorRuts.contact && '#ff4d4f',
                             }}
                             onChange={validateRutNumbersContact}
                             showCount
@@ -605,13 +605,13 @@ export default function ModalCreateCompany() {
                             {
                                 required: true,
                                 message:
-                                    "El campo debe ser un código de verificación de un RUT",
+                                    'El campo debe ser un código de verificación de un RUT',
                             },
                         ]}
                     >
                         <Input
                             style={{
-                                borderColor: errorRuts.contact && "#ff4d4f",
+                                borderColor: errorRuts.contact && '#ff4d4f',
                             }}
                             onChange={validateRutNumbersContact}
                             showCount
@@ -622,12 +622,12 @@ export default function ModalCreateCompany() {
                 {errorRuts.contact && (
                     <span
                         style={{
-                            position: "relative",
+                            position: 'relative',
                             top:
-                                form.getFieldValue("rutNumbersContact") === ""
-                                    ? "0px"
-                                    : "-15px",
-                            color: "#ff4d4f",
+                                form.getFieldValue('rutNumbersContact') === ''
+                                    ? '0px'
+                                    : '-15px',
+                            color: '#ff4d4f',
                         }}
                     >
                         El RUT es invalido.
@@ -650,7 +650,7 @@ export default function ModalCreateCompany() {
                         maxLength={10}
                         addonBefore={prefixSelectorContact}
                         style={{
-                            width: "100%",
+                            width: '100%',
                         }}
                     />
                 </Form.Item>
@@ -660,7 +660,7 @@ export default function ModalCreateCompany() {
                     label="Correo electrónico"
                     rules={[
                         {
-                            type: "email",
+                            type: 'email',
                             message: getValidationEmailMessage,
                         },
                         {

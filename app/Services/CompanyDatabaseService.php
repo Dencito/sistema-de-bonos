@@ -5,11 +5,11 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\Request;
 
 class CompanyDatabaseService
 {
-
-    public function createCompanyTables(string $request)
+    public function createCompanyTables(Request $request)
     {
         try {
             $statusesTable = $request->name . '_statuses';

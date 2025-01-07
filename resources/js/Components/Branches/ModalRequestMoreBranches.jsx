@@ -3,6 +3,7 @@ import { Button, Form, Input, Modal } from 'antd';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
+import { branchService } from '@services/api';
 
 export default function ModalRequestMoreBranches() {
     const [showModal, setShowModal] = useState(false);
@@ -14,19 +15,20 @@ export default function ModalRequestMoreBranches() {
     const onCreate = async (values) => {
         try {
             setLoading(true);
-            const { data } = await axios.post('/branches/request_more_branches', values);
-            router.visit('/branches', {
-                preserveState: true, // Mantener el estado actual
-            });
-            data && successMsg(data?.message);
-            setLoading(false);
-            handleCloseModal();
+            const response = await branchService.requestMore(values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/branches', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
+            errorMsg('Error al solicitar más sucursales');
+        } finally {
             setLoading(false);
-            return errorMsg(dataError?.message);
         }
     };
 

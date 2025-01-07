@@ -16,41 +16,43 @@ export const SelectAssignBonuses = ({
 
     const handleAssignBonuses = async () => {
         try {
-            const { data } = await bonusService.assignMultipleUsers(
+            const response = await bonusService.assignMultipleUsers(
                 selectedRowKeys,
                 selectBonusId
             );
-            router.visit('/users', {
-                preserveState: false,
-            });
-            data && successMsg(data?.message);
-            setSelectBonusId(null);
-            setSelectedRowKeys([]);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/users', {
+                    preserveState: true,
+                });
+                setSelectBonusId(null);
+                setSelectedRowKeys([]);
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al asignar bonos');
         }
     };
 
     const handleDestroyBonuses = async () => {
         try {
-            const { data } = await bonusService.destroyMultipleUsers(
+            const response = await bonusService.destroyMultipleUsers(
                 selectedRowKeys,
                 selectBonusId
             );
-            router.visit('/users', {
-                preserveState: true,
-            });
-            data && successMsg(data?.message);
-            setSelectBonusId(null);
-            setSelectedRowKeys([]);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/users', {
+                    preserveState: true,
+                });
+                setSelectBonusId(null);
+                setSelectedRowKeys([]);
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al eliminar bonos');
         }
     };
     return (

@@ -5,50 +5,67 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
 
+const handleResponse = async (promise) => {
+    try {
+        const response = await promise;
+        return { success: true, message: response?.data?.message, data: response?.data };
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || 'Error en la operación';
+        return { success: false, message: errorMessage };
+    }
+};
+
 export const userService = {
-    login: (values) => axios.post('/users/owner', values),
-    update: (id, values) => axios.put(`/users/${id}`, values),
-    delete: (id) => axios.delete(`/users/${id}`),
-    create: (values) => axios.post('/users', values),
+    login: (values) => handleResponse(axios.post('/users/owner', values)),
+    update: (id, values) => handleResponse(axios.put(`/users/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/users/${id}`)),
+    create: (values) => handleResponse(axios.post('/users', values)),
 };
 
 export const companyService = {
-    getSelected: () => axios.get('/companies/selected'),
-    create: (values) => axios.post('/companies', values),
-    update: (id, values) => axios.put('/companies', { id, ...values }),
-    delete: (id) => axios.delete(`/companies/${id}`),
-    changeDb: (id) => axios.post(`/companies/change-db/${id}`),
+    getSelected: () => handleResponse(axios.get('/companies/selected')),
+    create: (values) => handleResponse(axios.post('/companies', values)),
+    update: (id, values) => handleResponse(axios.put(`/companies/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/companies/${id}`)),
+    changeDb: (id) => handleResponse(axios.post(`/companies/change-db/${id}`)),
 };
 
 export const branchService = {
-    create: (values) => axios.post('/branches', values),
-    update: (values) => axios.put('/branches', values),
-    delete: (id) => axios.delete(`/branches/${id}`),
+    create: (values) => handleResponse(axios.post('/branches', values)),
+    update: (id, values) => handleResponse(axios.put(`/branches/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/branches/${id}`)),
+    requestMore: (values) => handleResponse(axios.post('/branches/request_more_branches', values)),
 };
 
 export const categoryBonusService = {
-    create: (values) => axios.post('/categories-bonus', values),
-    update: (id, values) => axios.put(`/categories-bonus/${id}`, values),
-    delete: (id) => axios.delete(`/categories-bonus/${id}`),
+    create: (values) => handleResponse(axios.post('/categories-bonus', values)),
+    update: (id, values) => handleResponse(axios.put(`/categories-bonus/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/categories-bonus/${id}`)),
     assignMultipleUsers: (users, categoryBonusId) =>
-        axios.post('/categories-bonus/assign-multiple-users', {
+        handleResponse(axios.post('/categories-bonus/assign-multiple-users', {
             users,
             category_bonus_id: categoryBonusId,
-        }),
+        })),
 };
 
 export const bonusService = {
-    create: (values) => axios.post('/bonuses', values),
+    create: (values) => handleResponse(axios.post('/bonuses', values)),
     assignMultipleUsers: (users, bonusId) =>
-        axios.post('/bonuses/assign-multiple-users', {
+        handleResponse(axios.post('/bonuses/assign-multiple-users', {
             users,
             bonus_id: bonusId,
-        }),
+        })),
     destroyMultipleUsers: (users, bonusId) =>
-        axios.post('/bonuses/destroy-multiple-users', {
+        handleResponse(axios.post('/bonuses/destroy-multiple-users', {
             users,
             bonus_id: bonusId,
-        }),
+        })),
+};
+
+export const roleService = {
+    create: (values) => handleResponse(axios.post('/roles', values)),
+    update: (id, values) => handleResponse(axios.put(`/roles/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/roles/${id}`)),
 };
 
 export const countriesService = {

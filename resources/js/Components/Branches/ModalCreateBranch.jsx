@@ -15,7 +15,7 @@ import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import ScheduleModal from './ScheduleModal';
-import { countriesService } from '@services/api';
+import { countriesService, branchService } from '@services/api';
 
 export default function ModalCreateBranch({ companies }) {
     const [showModal, setShowModal] = useState(false);
@@ -69,17 +69,12 @@ export default function ModalCreateBranch({ companies }) {
                 values.company_id = companies[0].id;
             }
 
-            const response = await axios.post('/branches', {
-                ...values,
-                creationDate: new Date().toISOString(),
-            });
-
-            if (response?.data?.status >= 400) {
-                errorMsg(response?.data?.message);
+            const { success, message } = await branchService.create(values);
+            if (!success) {
+                errorMsg(message);
                 return;
             }
-
-            successMsg(response?.data?.message);
+            successMsg(message);
             router.visit(window.location.href, {
                 preserveState: false,
             });

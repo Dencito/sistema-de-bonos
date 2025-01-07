@@ -12,11 +12,10 @@ import {
 } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { router } from '@inertiajs/react';
-import axios from 'axios';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { useMessage } from '@contexts/MessageShow';
 import ScheduleModal from './ScheduleModal';
-import { countriesService } from '@services/api';
+import { countriesService, branchService } from '@services/api';
 
 export default function ModalEditBranch({ data, statuses }) {
     const [showModal, setShowModal] = useState(false);
@@ -85,31 +84,23 @@ export default function ModalEditBranch({ data, statuses }) {
     const onEdit = async (values) => {
         try {
             setLoading(true);
-            const formData = {
+            const response = await branchService.update(data?.id, {
                 ...values,
-                id: data?.id,
-                available_schedules: JSON.stringify(availableSchedules),
-                bonus_schedules: JSON.stringify(bonusSchedules),
-            };
-
-            const { data: dataUpdate } = await axios.put('/branches', formData);
-
-            if (dataUpdate?.changes?.length === 0) {
-                setLoading(false);
-                return errorMsg('Usted no modifico ningun dato.');
-            }
-
-            router.visit('/branches', {
-                preserveState: true,
+                availableSchedules: JSON.stringify(availableSchedules),
+                bonusSchedules: JSON.stringify(bonusSchedules),
             });
 
-            dataUpdate && successMsg(dataUpdate?.message);
-            handleCloseModal();
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/branches', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            errorMsg(dataError?.message || 'Error al actualizar la sucursal');
+            errorMsg('Error al actualizar la sucursal');
         } finally {
             setLoading(false);
         }

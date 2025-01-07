@@ -9,6 +9,7 @@ import {
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { countriesService } from '@services/api';
+import { companyService } from '@services/api';
 
 export default function ModalCreateCompany() {
     const [showModal, setShowModal] = useState(false);
@@ -64,19 +65,20 @@ export default function ModalCreateCompany() {
                 return errorMsg('Uno de los ruts es invalido');
             }
             setLoading(true);
-            const { data } = await axios.post('/companies', values);
+            const { data } = await companyService.create(values);
             router.visit('/companies', {
                 preserveState: true,
             });
             data && successMsg(data?.message);
             handleCloseModal();
-            setLoading(false);
         } catch (error) {
             const {
                 response: { data: dataError },
             } = error;
             setLoading(false);
             return errorMsg(dataError?.message);
+        } finally {
+            setLoading(false);
         }
     };
 

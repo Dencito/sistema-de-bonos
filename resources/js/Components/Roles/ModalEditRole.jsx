@@ -7,9 +7,9 @@ import {
     getValidationRequiredMessage,
 } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
-import axios from 'axios';
 import { useMessage } from '@contexts/MessageShow';
 import { countriesService } from '@services/api';
+import { roleService } from '@services/api';
 
 export default function ModalEditRole({ data }) {
     const [showModal, setShowModal] = useState(false);
@@ -39,23 +39,21 @@ export default function ModalEditRole({ data }) {
 
     const onEdit = async (values) => {
         try {
-            const { data: dataUpdate } = await axios.put('/roles', {
+            const response = await roleService.update({
                 id: data?.id,
                 ...values,
             });
-            if (dataUpdate?.changes?.length === 0) {
-                return errorMsg('Usted no modifico ningun dato.');
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/roles', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
             }
-            router.visit('/roles', {
-                preserveState: true, // Mantener el estado actual
-            });
-            dataUpdate && successMsg(dataUpdate?.message);
-            handleCloseModal();
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al actualizar el rol');
         }
     };
 

@@ -10,6 +10,7 @@ import {
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { countriesService } from '@services/api';
+import { roleService } from '@services/api';
 
 export default function ModalCreateRole() {
     const [showModal, setShowModal] = useState(false);
@@ -39,17 +40,18 @@ export default function ModalCreateRole() {
 
     const onCreate = async (values) => {
         try {
-            const { data } = await axios.post('/roles', values);
-            router.visit('/roles', {
-                preserveState: true, // Mantener el estado actual
-            });
-            data && successMsg(data?.message);
-            handleCloseModal();
+            const response = await roleService.create(values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/roles', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
-            return errorMsg(dataError?.message);
+            errorMsg('Error al crear el rol');
         }
     };
 

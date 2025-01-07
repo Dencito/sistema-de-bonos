@@ -39,28 +39,10 @@ class CompanyServiceProvider extends ServiceProvider
             $request = request();
             $host = $request->getHost();
             Log::info('Host original: ' . $host);
-            \Sentry\addBreadcrumb(
-                new \Sentry\Breadcrumb(
-                    \Sentry\Breadcrumb::LEVEL_INFO,
-                    \Sentry\Breadcrumb::TYPE_DEFAULT,
-                    'company.subdomain',
-                    'Host original',
-                    ['host' => $host]
-                )
-            );
 
             if ($this->isLocalEnvironment($host)) {
-                $subdomain = $request->header('X-Company-Prefix', 'albert');
+                $subdomain = $request->header('X-Company-Prefix', 'empresa2');
                 Log::info('Usando entorno local, subdomain desde header: ' . $subdomain);
-                \Sentry\addBreadcrumb(
-                    new \Sentry\Breadcrumb(
-                        \Sentry\Breadcrumb::LEVEL_INFO,
-                        \Sentry\Breadcrumb::TYPE_DEFAULT,
-                        'company.subdomain',
-                        'Usando entorno local',
-                        ['subdomain' => $subdomain]
-                    )
-                );
             } else {
                 if (empty($host)) {
                     throw new \Exception('Host no válido: está vacío');
@@ -70,16 +52,6 @@ class CompanyServiceProvider extends ServiceProvider
                 if (empty($subdomain)) {
                     throw new \Exception('No se pudo extraer el subdominio del host');
                 }
-
-                \Sentry\addBreadcrumb(
-                    new \Sentry\Breadcrumb(
-                        \Sentry\Breadcrumb::LEVEL_INFO,
-                        \Sentry\Breadcrumb::TYPE_DEFAULT,
-                        'company.subdomain',
-                        'Subdomain extraído',
-                        ['subdomain' => $subdomain]
-                    )
-                );
             }
 
             Log::info('APP_PRIMARY_SUBDOMAIN: ' . env('APP_PRIMARY_SUBDOMAIN'));
@@ -88,8 +60,8 @@ class CompanyServiceProvider extends ServiceProvider
                 return;
             }
 
-            //TODO
-            //$tablesExist = $companyDatabaseService->validateCompanyTables($subdomain);
+            // TODO
+            // $tablesExist = $companyDatabaseService->validateCompanyTables($subdomain);
             /* \Sentry\addBreadcrumb(
                 new \Sentry\Breadcrumb(
                     \Sentry\Breadcrumb::LEVEL_INFO,
@@ -103,7 +75,7 @@ class CompanyServiceProvider extends ServiceProvider
                 )
             ); */
 
-            //TODO: Verifify if tables exist
+            // TODO: Verifify if tables exist
             /* if (!$tablesExist) {
                 throw new \Exception("Acceso inválido: Las tablas para {$subdomain} no existen");
             } */

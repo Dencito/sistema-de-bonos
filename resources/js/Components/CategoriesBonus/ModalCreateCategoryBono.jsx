@@ -16,19 +16,20 @@ export default function ModalCreateCategoryBono() {
     const onCreate = async (values) => {
         try {
             setLoading(true);
-            const { data } = await categoryBonusService.create(values);
-            router.visit('/categories-bonus', {
-                preserveState: true, // Mantener el estado actual
-            });
-            data && successMsg(data?.message);
-            setLoading(false);
-            handleCloseModal();
+            const response = await categoryBonusService.create(values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/categories-bonus', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
+            errorMsg('Error al crear la categoría de bono');
+        } finally {
             setLoading(false);
-            return errorMsg(dataError?.message);
         }
     };
 

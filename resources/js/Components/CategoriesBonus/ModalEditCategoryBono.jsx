@@ -16,22 +16,20 @@ export default function ModalEditCategoryBono({ data }) {
     const onUpdate = async (values) => {
         try {
             setLoading(true);
-            const { data: dataUpdate } = await categoryBonusService.update(
-                data.id,
-                values
-            );
-            router.visit('/categories-bonus', {
-                preserveState: true, // Mantener el estado actual
-            });
-            dataUpdate && successMsg(dataUpdate?.message);
-            setLoading(false);
-            handleCloseModal();
+            const response = await categoryBonusService.update(data.id, values);
+            if (response.success) {
+                successMsg(response.message);
+                router.visit('/categories-bonus', {
+                    preserveState: true,
+                });
+                handleCloseModal();
+            } else {
+                errorMsg(response.message);
+            }
         } catch (error) {
-            const {
-                response: { data: dataError },
-            } = error;
+            errorMsg('Error al actualizar la categoría');
+        } finally {
             setLoading(false);
-            return errorMsg(dataError?.message);
         }
     };
 

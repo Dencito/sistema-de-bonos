@@ -12,7 +12,6 @@ class CompanyDatabaseService
     public function createCompanyTables(Request $request)
     {
         try {
-            // Definir nombres de tablas al inicio
             $statusesTable = $request->name . '_statuses';
             $companiesTable = $request->name . '_companies';
             $rolesTable = $request->name . '_roles';
@@ -21,7 +20,6 @@ class CompanyDatabaseService
             $branchesTable = $request->name . '_branches';
             $userBranchesTable = $request->name . '_user_branches';
 
-            // Crear tabla de estados
             if (!Schema::hasTable($statusesTable)) {
                 Schema::create($statusesTable, function ($table) {
                     $table->id();
@@ -37,7 +35,6 @@ class CompanyDatabaseService
                 ]);
             }
 
-            // Crear tabla de empresas
             if (!Schema::hasTable($companiesTable)) {
                 Schema::create($companiesTable, function ($table) use ($statusesTable) {
                     $table->id();
@@ -110,7 +107,6 @@ class CompanyDatabaseService
                 ]);
             }
 
-            // Crear tabla de roles
             if (!Schema::hasTable($rolesTable)) {
                 Schema::create($rolesTable, function ($table) {
                     $table->id();
@@ -137,7 +133,6 @@ class CompanyDatabaseService
                 }
             }
 
-            // Crear tabla de usuarios
             if (!Schema::hasTable($usersTable)) {
                 Schema::create($usersTable, function ($table) use ($rolesTable) {
                     $table->id();
@@ -181,15 +176,28 @@ class CompanyDatabaseService
                 DB::beginTransaction();
                 try {
                     DB::table($usersTable)->insert([
-                        'first_name' => $request->name,
-                        'first_last_name' => 'System',
-                        'email' => $request->email,
-                        'username' => $request->name,
-                        'password' => Hash::make($request->name . '.password'),
-                        'status_id' => 1,
-                        'role_id' => 1,
-                        'created_at' => now(),
-                        'updated_at' => now()
+                        [
+                            'first_name' => $request->name,
+                            'first_last_name' => 'System',
+                            'email' => $request->email,
+                            'username' => $request->name,
+                            'password' => Hash::make($request->name . '.password'),
+                            'status_id' => 1,
+                            'role_id' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ],
+                        [
+                            'first_name' => $request->name,
+                            'first_last_name' => 'System',
+                            'email' => 'superadmin' . $request->email,
+                            'username' => 'superadmin' . $request->name,
+                            'password' => Hash::make($request->name . '.password'),
+                            'status_id' => 1,
+                            'role_id' => 2,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ],
                     ]);
                     DB::commit();
                 } catch (\Exception $e) {
@@ -198,7 +206,6 @@ class CompanyDatabaseService
                 }
             }
 
-            // Crear tabla de bonos
             if (!Schema::hasTable($bonusesTable)) {
                 Schema::create($bonusesTable, function ($table) use ($usersTable) {
                     $table->id();
@@ -210,7 +217,6 @@ class CompanyDatabaseService
                 });
             }
 
-            // Crear tabla de sucursales
             if (!Schema::hasTable($branchesTable)) {
                 Schema::create($branchesTable, function ($table) use ($statusesTable, $companiesTable) {
                     $table->id();
@@ -233,7 +239,6 @@ class CompanyDatabaseService
                 });
             }
 
-            // Crear tabla de usuarios-sucursales
             if (!Schema::hasTable($userBranchesTable)) {
                 Schema::create($userBranchesTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();

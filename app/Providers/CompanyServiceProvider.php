@@ -50,7 +50,7 @@ class CompanyServiceProvider extends ServiceProvider
             );
 
             if ($this->isLocalEnvironment($host)) {
-                $subdomain = $request->header('X-Company-Prefix', 'empresa1');
+                $subdomain = $request->header('X-Company-Prefix', 'albert');
                 Log::info('Usando entorno local, subdomain desde header: ' . $subdomain);
                 \Sentry\addBreadcrumb(
                     new \Sentry\Breadcrumb(

@@ -8,19 +8,19 @@ use Illuminate\Support\Facades\Schema;
 
 class CompanyDatabaseService
 {
-    protected $requiredTables = ['roles', 'users', 'bonuses', 'branches', 'user_branches', 'statuses', 'companies'];
 
     public function createCompanyTables(string $request)
     {
         try {
-            if (!Schema::hasTable('statuses')) {
-                Schema::create('statuses', function ($table) {
+            $statusesTable = $request->name . '_statuses';
+            if (!Schema::hasTable($statusesTable)) {
+                Schema::create($statusesTable, function ($table) {
                     $table->id();
                     $table->string('name');
                     $table->timestamps();
                 });
 
-                DB::table('statuses')->insert([
+                DB::table($statusesTable)->insert([
                     ['name' => 'Activo', 'created_at' => now(), 'updated_at' => now()],
                     ['name' => 'Inactivo', 'created_at' => now(), 'updated_at' => now()],
                     ['name' => 'En revisión', 'created_at' => now(), 'updated_at' => now()],
@@ -28,8 +28,9 @@ class CompanyDatabaseService
                 ]);
             }
 
-            if (!Schema::hasTable('companies')) {
-                Schema::create('companies', function ($table) {
+            $companiesTable = $request->name . '_companies';
+            if (!Schema::hasTable($companiesTable)) {
+                Schema::create($companiesTable, function ($table) {
                     $table->id();
                     $table->string('name');
                     $table->string('db_name')->nullable();
@@ -69,7 +70,7 @@ class CompanyDatabaseService
                     $table->timestamp('subscription_ends_at')->nullable();
                 });
 
-                DB::table('companies')->insert([
+                DB::table($companiesTable)->insert([
                     'name' => $request->name,
                     'db_name' => 'db_' . $request->name,
                     'status_id' => 1,  // Activo
@@ -246,13 +247,30 @@ class CompanyDatabaseService
 
     public function validateCompanyTables(string $companyPrefix): bool
     {
-        foreach ($this->requiredTables as $table) {
+        foreach ($this->getRequiredTablesName($companyPrefix) as $table) {
             if (!$this->tableExists($companyPrefix, $table)) {
                 return false;
             }
         }
         return true;
     }
+
+    private function getRequiredTablesName(string $companyPrefix): array
+    {
+        if(env("APP_PRIMARY_SUBDOMAIN") === "tickets") {
+            return [];
+        }
+        return [
+            "{$companyPrefix}_roles",
+            "{$companyPrefix}_users",
+            "{$companyPrefix}_bonuses",
+            "{$companyPrefix}_branches",
+            "{$companyPrefix}_user_branches",
+            "{$companyPrefix}_statuses",
+            "{$companyPrefix}_companies",
+        ];
+    }
+
 
     public function getCompanyPrefix(): ?string
     {

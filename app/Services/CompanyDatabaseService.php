@@ -203,7 +203,7 @@ class CompanyDatabaseService
 
             $branchesTable = $request->name . '_branches';
             if (!Schema::hasTable($branchesTable)) {
-                Schema::create($branchesTable, function ($table) {
+                Schema::create($branchesTable, function ($table) use ($statusesTable, $companiesTable) {
                     $table->id();
                     $table->string('name');
                     $table->string('creationDate');
@@ -218,8 +218,8 @@ class CompanyDatabaseService
                     $table->string('branchAddressDeptOrHouse')->nullable();
                     $table->json('available_schedules')->nullable();
                     $table->json('bonus_schedules')->nullable();
-                    $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
-                    $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+                    $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
+                    $table->foreignId('company_id')->constrained($companiesTable)->onDelete('cascade');
                     $table->timestamps();
                 });
             }

@@ -1,26 +1,27 @@
 import { useMessage } from '@/Contexts/MessageShow';
 import { router } from '@inertiajs/react';
-import { Button, Modal } from 'antd'
-import axios from 'axios';
-import React from 'react'
+import { Button, Modal } from 'antd';
+import React from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
+import { userService } from '@services/api';
 
-export default function ModalDeleteUser ({ data }) {
+export default function ModalDeleteUser({ data }) {
     const { successMsg, errorMsg } = useMessage();
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.delete(`/users/${data?.id}`,);
-            dataDelete && successMsg(await dataDelete?.message)
+            const { data: dataDelete } = await userService.delete(data?.id);
+            dataDelete && successMsg(await dataDelete?.message);
             router.visit(window.location.href, {
                 preserveState: true,
             });
         } catch (error) {
-            const { response: { data: dataError } } = error
-            return errorMsg(dataError?.message)
+            const {
+                response: { data: dataError },
+            } = error;
+            return errorMsg(dataError?.message);
         }
     };
-
 
     const showDeleteConfirm = () => {
         Modal.confirm({
@@ -34,10 +35,14 @@ export default function ModalDeleteUser ({ data }) {
             },
         });
     };
-    
+
     return (
         <div>
-            <Button danger onClick={() => showDeleteConfirm()} icon={<DeleteOutlined />} />
+            <Button
+                danger
+                onClick={() => showDeleteConfirm()}
+                icon={<DeleteOutlined />}
+            />
         </div>
-    )
-};
+    );
+}

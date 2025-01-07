@@ -11,27 +11,32 @@ export default function ModalViewBranchStatuses({ data, status }) {
 
     const columns = [
         {
-            title: "Nombre",
-            dataIndex: "name",
-            key: "id"
+            title: 'Nombre',
+            dataIndex: 'name',
+            key: 'id',
         },
         {
-            title: "Empresa",
-            key: "company",
-            render: (_, branch) => (
-                <p>{branch?.company?.name}</p>
-            )
-        }
+            title: 'Empresa',
+            key: 'company',
+            render: (_, branch) => <p>{branch?.company?.name}</p>,
+        },
     ];
 
     return (
         <>
-             <CustomButton onClick={() => setShowModal(true)} className='hover:border-green-300'>
+            <CustomButton
+                onClick={() => setShowModal(true)}
+                className="hover:border-green-300"
+            >
                 Ver sucursales
             </CustomButton>
             <Modal
                 style={{ top: 20 }}
-                title={<p className="text-bold text-3xl">Sucursales con estado {status}</p>}
+                title={
+                    <p className="text-bold text-3xl">
+                        Sucursales con estado {status}
+                    </p>
+                }
                 open={showModal}
                 cancelText="Cerrar"
                 onCancel={() => handleCloseModal()}
@@ -43,7 +48,10 @@ export default function ModalViewBranchStatuses({ data, status }) {
                 }}
             >
                 <Table
-                    dataSource={data.map(branch => ({ ...branch, key: branch.id }))}
+                    dataSource={data.map((branch) => ({
+                        ...branch,
+                        key: branch.id,
+                    }))}
                     columns={columns}
                     scroll={{ x: true }}
                 />

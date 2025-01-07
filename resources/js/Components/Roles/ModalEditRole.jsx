@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { Button, Divider, Form, Input, Modal, Select } from "antd";
-import { validate } from "rut.js";
+import { useEffect, useState } from 'react';
+import { Button, Divider, Form, Input, Modal, Select } from 'antd';
+import { validate } from 'rut.js';
 import {
     getValidationEmailMessage,
     getValidationNumbersMessage,
     getValidationRequiredMessage,
-} from "@utils/messagesValidationes";
-import { router } from "@inertiajs/react";
-import axios from "axios";
-import { useMessage } from "@contexts/MessageShow";
-import { VITE_COUNTRIES_API_KEY, VITE_COUNTRIES_API_URL } from "@utils/env";
+} from '@utils/messagesValidationes';
+import { router } from '@inertiajs/react';
+import axios from 'axios';
+import { useMessage } from '@contexts/MessageShow';
+import { countriesService } from '@services/api';
 
 export default function ModalEditRole({ data }) {
     const [showModal, setShowModal] = useState(false);
-    const [country, setCountry] = useState("");
+    const [country, setCountry] = useState('');
     const [countries, setCountries] = useState();
     const [regions, setRegions] = useState();
 
@@ -23,31 +23,13 @@ export default function ModalEditRole({ data }) {
     useEffect(() => {
         const getCountries = async () => {
             if (showModal) {
-                const response = await fetch(
-                    `${VITE_COUNTRIES_API_URL}/countries`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
-                        },
-                    }
-                );
-                const data = await response.json();
+                const data = await countriesService.getAll();
                 setCountries(data?.data);
             }
         };
         const getRegion = async () => {
-            if (country !== "" && showModal) {
-                const response = await fetch(
-                    `${VITE_COUNTRIES_API_URL}/countries/${country}/states`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
-                        },
-                    }
-                );
-                const data = await response.json();
+            if (country !== '' && showModal) {
+                const data = await countriesService.getStates(country);
                 setRegions(data?.data);
             }
         };
@@ -57,14 +39,14 @@ export default function ModalEditRole({ data }) {
 
     const onEdit = async (values) => {
         try {
-            const { data: dataUpdate } = await axios.put(`/companies`, {
+            const { data: dataUpdate } = await axios.put('/roles', {
                 id: data?.id,
                 ...values,
             });
             if (dataUpdate?.changes?.length === 0) {
-                return errorMsg("Usted no modifico ningun dato.");
+                return errorMsg('Usted no modifico ningun dato.');
             }
-            router.visit("/companies", {
+            router.visit('/roles', {
                 preserveState: true, // Mantener el estado actual
             });
             dataUpdate && successMsg(dataUpdate?.message);
@@ -79,73 +61,73 @@ export default function ModalEditRole({ data }) {
 
     const validateRutNumbers = (_, value) => {
         if (
-            form.getFieldsValue().rutNumbers !== "" &&
-            form.getFieldsValue().rutDv !== ""
+            form.getFieldsValue().rutNumbers !== '' &&
+            form.getFieldsValue().rutDv !== ''
         ) {
             if (!value) {
                 return Promise.reject(
-                    new Error("El campo debe tener un valor de RUT valido")
+                    new Error('El campo debe tener un valor de RUT valido')
                 );
             }
             const { rutNumbers, rutDv } = form.getFieldsValue([
-                "rutNumbers",
-                "rutDv",
+                'rutNumbers',
+                'rutDv',
             ]);
             const fullRut = `${rutNumbers}-${rutDv}`;
             if (validate(fullRut)) {
                 return Promise.resolve();
             }
-            return Promise.reject(new Error("RUT Invalido"));
+            return Promise.reject(new Error('RUT Invalido'));
         }
     };
 
     const validateRutNumbersLegalRepresentative = (_, value) => {
         if (
-            form.getFieldsValue().rutNumbersLegalRepresentative !== "" &&
-            form.getFieldsValue().rutDvLegalRepresentative !== ""
+            form.getFieldsValue().rutNumbersLegalRepresentative !== '' &&
+            form.getFieldsValue().rutDvLegalRepresentative !== ''
         ) {
             if (!value) {
                 return Promise.reject(
-                    new Error("El campo debe tener un valor de RUT valido")
+                    new Error('El campo debe tener un valor de RUT valido')
                 );
             }
             const { rutNumbersLegalRepresentative, rutDvLegalRepresentative } =
                 form.getFieldsValue([
-                    "rutNumbersLegalRepresentative",
-                    "rutDvLegalRepresentative",
+                    'rutNumbersLegalRepresentative',
+                    'rutDvLegalRepresentative',
                 ]);
             const fullRut = `${rutNumbersLegalRepresentative}-${rutDvLegalRepresentative}`;
             if (validate(fullRut)) {
                 return Promise.resolve();
             }
-            return Promise.reject(new Error("RUT Invalido"));
+            return Promise.reject(new Error('RUT Invalido'));
         }
     };
 
     const validateRutNumbersContact = (_, value) => {
         if (
-            form.getFieldsValue().rutNumbersContact !== "" &&
-            form.getFieldsValue().rutDvContact !== ""
+            form.getFieldsValue().rutNumbersContact !== '' &&
+            form.getFieldsValue().rutDvContact !== ''
         ) {
             if (!value) {
                 return Promise.reject(
-                    new Error("El campo debe tener un valor de RUT valido")
+                    new Error('El campo debe tener un valor de RUT valido')
                 );
             }
             const { rutNumbersContact, rutDvContact } = form.getFieldsValue([
-                "rutNumbersContact",
-                "rutDvContact",
+                'rutNumbersContact',
+                'rutDvContact',
             ]);
             const fullRut = `${rutNumbersContact}-${rutDvContact}`;
             if (validate(fullRut)) {
                 return Promise.resolve();
             }
-            return Promise.reject(new Error("RUT Invalido"));
+            return Promise.reject(new Error('RUT Invalido'));
         }
     };
 
     const handleCloseModal = () => {
-        setCountry("");
+        setCountry('');
         setShowModal(false);
     };
 
@@ -171,7 +153,7 @@ export default function ModalEditRole({ data }) {
                         key={country?.phone_code}
                         value={country?.phone_code}
                     >
-                        {!country?.phone_code.includes("+") && "+"}
+                        {!country?.phone_code.includes('+') && '+'}
                         {country?.phone_code}
                     </Select.Option>
                 ))}
@@ -197,7 +179,7 @@ export default function ModalEditRole({ data }) {
                         key={country?.phone_code}
                         value={country?.phone_code}
                     >
-                        {!country?.phone_code.includes("+") && "+"}
+                        {!country?.phone_code.includes('+') && '+'}
                         {country?.phone_code}
                     </Select.Option>
                 ))}
@@ -215,11 +197,11 @@ export default function ModalEditRole({ data }) {
                 open={showModal}
                 onCancel={() =>
                     Modal.confirm({
-                        title: "¿Estás seguro de que quieres salir?",
-                        content: "Se borrarán todos los datos no guardados.",
-                        okText: "Sí",
-                        okType: "danger",
-                        cancelText: "No",
+                        title: '¿Estás seguro de que quieres salir?',
+                        content: 'Se borrarán todos los datos no guardados.',
+                        okText: 'Sí',
+                        okType: 'danger',
+                        cancelText: 'No',
                         onOk() {
                             handleCloseModal();
                         },
@@ -229,15 +211,15 @@ export default function ModalEditRole({ data }) {
                 cancelText="Cancelar"
                 okButtonProps={{
                     autoFocus: true,
-                    htmlType: "submit",
+                    htmlType: 'submit',
                 }}
                 destroyOnClose={() =>
                     Modal.confirm({
-                        title: "¿Estás seguro de que quieres salir?",
-                        content: "Se borrarán todos los datos no guardados.",
-                        okText: "Sí",
-                        okType: "danger",
-                        cancelText: "No",
+                        title: '¿Estás seguro de que quieres salir?',
+                        content: 'Se borrarán todos los datos no guardados.',
+                        okText: 'Sí',
+                        okType: 'danger',
+                        cancelText: 'No',
                         onOk() {
                             handleCloseModal();
                         },
@@ -249,7 +231,7 @@ export default function ModalEditRole({ data }) {
                         form={form}
                         name="form_in_modal"
                         initialValues={{
-                            modifier: "public",
+                            modifier: 'public',
                         }}
                         clearOnDestroy
                         onFinish={(values) => onEdit(values)}
@@ -307,12 +289,12 @@ export default function ModalEditRole({ data }) {
                             {
                                 required: true,
                                 message:
-                                    "El campo debe ser un código de verificación de un RUT",
+                                    'El campo debe ser un código de verificación de un RUT',
                             },
                             {
                                 pattern: /^[0-9kK]{1}$/,
                                 message:
-                                    "El campo solo tiene permitido, Numeros y K",
+                                    'El campo solo tiene permitido, Numeros y K',
                             },
                             { validator: validateRutNumbers },
                         ]}
@@ -350,7 +332,7 @@ export default function ModalEditRole({ data }) {
                         type="number"
                         addonBefore={prefixSelector}
                         style={{
-                            width: "100%",
+                            width: '100%',
                         }}
                     />
                 </Form.Item>
@@ -361,7 +343,7 @@ export default function ModalEditRole({ data }) {
                     label="Correo electrónico"
                     rules={[
                         {
-                            type: "email",
+                            type: 'email',
                             message: getValidationEmailMessage,
                         },
                         {
@@ -434,12 +416,12 @@ export default function ModalEditRole({ data }) {
                             {
                                 required: true,
                                 message:
-                                    "El campo debe ser un código de verificación de un RUT",
+                                    'El campo debe ser un código de verificación de un RUT',
                             },
                             {
                                 pattern: /^[0-9kK]{1}$/,
                                 message:
-                                    "El campo solo tiene permitido, Numeros y K",
+                                    'El campo solo tiene permitido, Numeros y K',
                             },
                             {
                                 validator:
@@ -508,12 +490,12 @@ export default function ModalEditRole({ data }) {
                             {
                                 required: true,
                                 message:
-                                    "El campo debe ser un código de verificación de un RUT",
+                                    'El campo debe ser un código de verificación de un RUT',
                             },
                             {
                                 pattern: /^[0-9kK]{1}$/,
                                 message:
-                                    "El campo solo tiene permitido, Numeros y K",
+                                    'El campo solo tiene permitido, Numeros y K',
                             },
                             { validator: validateRutNumbersContact },
                         ]}
@@ -538,7 +520,7 @@ export default function ModalEditRole({ data }) {
                         type="number"
                         addonBefore={prefixSelectorContact}
                         style={{
-                            width: "100%",
+                            width: '100%',
                         }}
                     />
                 </Form.Item>
@@ -549,7 +531,7 @@ export default function ModalEditRole({ data }) {
                     label="Correo electrónico"
                     rules={[
                         {
-                            type: "email",
+                            type: 'email',
                             message: getValidationEmailMessage,
                         },
                         {

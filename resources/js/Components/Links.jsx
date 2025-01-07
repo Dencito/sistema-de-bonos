@@ -1,5 +1,15 @@
 import { Link } from '@inertiajs/react';
-import { Building2, ChartBarStacked, Home, LogOut, MapPinHouse, SquareStack, Users, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+    Building2,
+    ChartBarStacked,
+    Home,
+    LogOut,
+    MapPinHouse,
+    SquareStack,
+    Users,
+    ChevronDown,
+    ChevronRight,
+} from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
 import { VITE_PRIMARY_SUBDOMAIN } from '@/Utils/env';
@@ -11,7 +21,6 @@ export const Links = ({ role, roles }) => {
     }));
 
     const isPrimarySubdomain = VITE_PRIMARY_SUBDOMAIN === 'tickets';
-
 
     const path = window.location.pathname;
     const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +34,7 @@ export const Links = ({ role, roles }) => {
                     label: 'Inicio',
                     link: '/',
                     autorized: true,
-                    show: isPrimarySubdomain
+                    show: isPrimarySubdomain,
                 },
                 {
                     key: '1',
@@ -33,15 +42,15 @@ export const Links = ({ role, roles }) => {
                     label: 'Empresas',
                     link: '/companies',
                     autorized: allowedRoles.companies.includes(role),
-                    show: isPrimarySubdomain
+                    show: isPrimarySubdomain,
                 },
                 {
                     key: '2',
                     icon: <MapPinHouse />,
                     label: 'Sucursales',
-                    link: `/branches`,
+                    link: '/branches',
                     autorized: allowedRoles.branches.includes(role),
-                    show: !isPrimarySubdomain
+                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '3',
@@ -50,7 +59,7 @@ export const Links = ({ role, roles }) => {
                     link: '/users',
                     children: formattedRoles,
                     autorized: true,
-                    show: !isPrimarySubdomain
+                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '4',
@@ -58,7 +67,7 @@ export const Links = ({ role, roles }) => {
                     label: 'Categorias bonos',
                     link: '/categories-bonus',
                     autorized: true,
-                    show: !isPrimarySubdomain
+                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '5',
@@ -66,7 +75,7 @@ export const Links = ({ role, roles }) => {
                     label: 'Roles',
                     link: '/roles',
                     autorized: allowedRoles.roles.includes(role),
-                    show: !isPrimarySubdomain
+                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '6',
@@ -74,7 +83,7 @@ export const Links = ({ role, roles }) => {
                     label: 'Estados',
                     link: '/statuses',
                     autorized: allowedRoles.status.includes(role),
-                    show: !isPrimarySubdomain
+                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '7',
@@ -82,39 +91,57 @@ export const Links = ({ role, roles }) => {
                     label: 'Obtener monto totales',
                     link: '/total-amounts',
                     autorized: false,
-                    show: !isPrimarySubdomain
+                    show: !isPrimarySubdomain,
                 },
-            ].map(item => (
+            ].map((item) => (
                 <div key={item.key}>
-                    {item.autorized && item?.link !== '/users' && item.show &&
-                        <Link className={`transition-all duration-300 my-2 ${path === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`} href={item?.link} selected>
-                            {item.icon} <span className={`text-base ${path === item?.link && 'font-bold'}`}>{item.label}</span>
+                    {item.autorized && item?.link !== '/users' && item.show && (
+                        <Link
+                            className={`transition-all duration-300 my-2 ${path === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`}
+                            href={item?.link}
+                            selected
+                        >
+                            {item.icon}{' '}
+                            <span
+                                className={`text-base ${path === item?.link && 'font-bold'}`}
+                            >
+                                {item.label}
+                            </span>
                         </Link>
-                    }
-                    {
-                        item?.link === '/users' && item.show &&
+                    )}
+                    {item?.link === '/users' && item.show && (
                         <div className="border-none">
                             {/* Etiqueta que despliega el colapso */}
                             <div
                                 onClick={() => setIsOpen(!isOpen)} // Alterna el colapso al hacer clic
-                                className={`transition-all duration-300 ${path === item?.link
-                                    ? 'bg-cyan-300'
-                                    : 'hover:bg-cyan-300'
-                                    } flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2 cursor-pointer`}
+                                className={`transition-all duration-300 ${
+                                    path === item?.link
+                                        ? 'bg-cyan-300'
+                                        : 'hover:bg-cyan-300'
+                                } flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2 cursor-pointer`}
                             >
                                 {/* Contenido principal del menú */}
                                 <span
-                                    className={`text-base flex gap-2 rounded-lg  ${path === item?.link ? 'font-bold' : ''
-                                        }`}
+                                    className={`text-base flex gap-2 rounded-lg  ${
+                                        path === item?.link ? 'font-bold' : ''
+                                    }`}
                                 >
-                                    {item.icon}  {item.label}  {isOpen ? <ChevronRight /> : <ChevronDown />}
+                                    {item.icon} {item.label}{' '}
+                                    {isOpen ? (
+                                        <ChevronRight />
+                                    ) : (
+                                        <ChevronDown />
+                                    )}
                                 </span>
                             </div>
 
                             {/* Submenú colapsable con animación */}
                             <div
-                                className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                                    }`}
+                                className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${
+                                    isOpen
+                                        ? 'max-h-40 opacity-100'
+                                        : 'max-h-0 opacity-0'
+                                }`}
                             >
                                 {item?.children &&
                                     item?.children.map((subItem) => (
@@ -124,18 +151,24 @@ export const Links = ({ role, roles }) => {
                                             href={`${item.link}?role=${subItem?.name}`}
                                         >
                                             <span className="text-sm font-normal">
-                                                {subItem?.displayName} {/* Usa displayName en lugar de name */}
+                                                {subItem?.displayName}{' '}
+                                                {/* Usa displayName en lugar de name */}
                                             </span>
                                         </Link>
                                     ))}
                             </div>
                         </div>
-                    }
+                    )}
                 </div>
             ))}
-            <Link className='border-red-300 border hover:bg-red-400 hover:text-white transition-all w-full py-3 ps-3 rounded-lg duration-300 flex gap-2 text-base font-light items-center space-x-2' as="button" href={route('logout')} method="post">
-                <LogOut /> <span className='text-base'>Salir</span>
+            <Link
+                className="border-red-300 border hover:bg-red-400 hover:text-white transition-all w-full py-3 ps-3 rounded-lg duration-300 flex gap-2 text-base font-light items-center space-x-2"
+                as="button"
+                href={route('logout')}
+                method="post"
+            >
+                <LogOut /> <span className="text-base">Salir</span>
             </Link>
         </div>
-    )
-}
+    );
+};

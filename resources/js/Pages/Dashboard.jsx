@@ -1,21 +1,22 @@
-import { useEffect } from "react";
-import { Head } from "@inertiajs/react";
-import MobileButton from "@components/MobileButton";
-import PdfGenerator from "@components/PdfGenerator";
-import AuthenticatedLayout from "@layouts/AuthenticatedLayout";
-import { roleDisplayNames } from '@/Utils/constants';
+import { useEffect } from 'react';
+import { Head } from '@inertiajs/react';
+import MobileButton from '@components/MobileButton';
+import PdfGenerator from '@components/PdfGenerator';
+import AuthenticatedLayout from '@layouts/AuthenticatedLayout';
+import { roleDisplayNames } from '@utils/constants';
+import { companyService } from '@services/api';
 
 export default function Dashboard({ auth }) {
     const getSelectedCompany = async () => {
         try {
-            const response = await axios.get("/companies/selected");
+            const response = await companyService.getSelected();
             window.localStorage.setItem(
-                "companySelect",
+                'companySelect',
                 await response.data.company
             );
             return response.data.company;
         } catch (error) {
-            console.error("Error al obtener la empresa seleccionada:", error);
+            console.error('Error al obtener la empresa seleccionada:', error);
             return null;
         }
     };
@@ -46,7 +47,9 @@ export default function Dashboard({ auth }) {
                         <h1 className="text-3xl font-bold">
                             Bienvenido usuario: {auth.user.username}
                         </h1>
-                        <h2 className="text-2xl font-bold">Rol: {roleDisplayNames[auth.role]}</h2>
+                        <h2 className="text-2xl font-bold">
+                            Rol: {roleDisplayNames[auth.role]}
+                        </h2>
                     </div>
                     <PdfGenerator user={auth?.user} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:px-6 lg:px-8">

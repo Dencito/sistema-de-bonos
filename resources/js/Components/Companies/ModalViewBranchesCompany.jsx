@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Button, Form, List, Modal } from "antd";
+import { useState } from 'react';
+import { Button, Form, List, Modal } from 'antd';
 
 export default function ModalViewBranchesCompany({ data, company }) {
     const [showModal, setShowModal] = useState(false);
@@ -31,8 +31,8 @@ export default function ModalViewBranchesCompany({ data, company }) {
                 onCancel={() => handleCloseModal()}
                 destroyOnClose={true}
                 okButtonProps={{
-                    style: { display: 'none'}
-                  }}
+                    style: { display: 'none' },
+                }}
                 modalRender={(dom) => (
                     <Form
                         layout="vertical"
@@ -40,7 +40,7 @@ export default function ModalViewBranchesCompany({ data, company }) {
                         disabled
                         name="form_in_modal"
                         initialValues={{
-                            modifier: "public",
+                            modifier: 'public',
                         }}
                         clearOnDestroy
                     >

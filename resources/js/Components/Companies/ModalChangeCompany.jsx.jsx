@@ -1,25 +1,29 @@
 import { router } from '@inertiajs/react';
-import { Button, Modal } from 'antd'
+import { Button, Modal } from 'antd';
 import axios from 'axios';
-import React from 'react'
+import React from 'react';
 import { useMessage } from '@contexts/MessageShow';
 
-export default function ModalChangeCompany ({ data }) {
+export default function ModalChangeCompany({ data }) {
     const { successMsg, errorMsg } = useMessage();
 
     const handleDelete = async () => {
         try {
-            const { data: dataDelete } = await axios.post(`/companies/change-db/${data?.id}`,);
+            const { data: dataDelete } = await axios.post(
+                `/companies/change-db/${data?.id}`
+            );
             router.visit('/companies', {
                 preserveState: true,
             });
-            dataDelete && successMsg(await dataDelete?.message)
+            dataDelete && successMsg(await dataDelete?.message);
         } catch (error) {
-            const { response: { data: dataError } } = error
-            return errorMsg(dataError?.message)
+            const {
+                response: { data: dataError },
+            } = error;
+            return errorMsg(dataError?.message);
         }
     };
-    
+
     const showDeleteConfirm = () => {
         Modal.confirm({
             title: `¿Estás seguro de que deseas cambiar a la empresa ${data.name}?`,
@@ -33,10 +37,10 @@ export default function ModalChangeCompany ({ data }) {
         });
     };
     return (
-        <div>          
+        <div>
             <Button danger onClick={() => showDeleteConfirm()}>
                 Cambiar
             </Button>
         </div>
-    )
-};
+    );
+}

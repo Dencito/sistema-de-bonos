@@ -8,18 +8,24 @@ export default function ResetPassword({ token, email }) {
     const { post, processing } = useForm();
 
     const onFinish = (values) => {
-        post(route('password.store', {
-            ...values,
-            token: token,
-            email: email
-        }), {
-            onSuccess: () => {
-                showMessage('Tu contraseña ha sido restablecida correctamente', 'success');
-            },
-            onError: () => {
-                showMessage('Error al restablecer la contraseña', 'error');
+        post(
+            route('password.store', {
+                ...values,
+                token: token,
+                email: email,
+            }),
+            {
+                onSuccess: () => {
+                    showMessage(
+                        'Tu contraseña ha sido restablecida correctamente',
+                        'success'
+                    );
+                },
+                onError: () => {
+                    showMessage('Error al restablecer la contraseña', 'error');
+                },
             }
-        });
+        );
     };
 
     return (
@@ -59,7 +65,8 @@ export default function ResetPassword({ token, email }) {
                         },
                         {
                             min: 8,
-                            message: 'La contraseña debe tener al menos 8 caracteres',
+                            message:
+                                'La contraseña debe tener al menos 8 caracteres',
                         },
                     ]}
                 >
@@ -77,10 +84,15 @@ export default function ResetPassword({ token, email }) {
                         },
                         ({ getFieldValue }) => ({
                             validator(_, value) {
-                                if (!value || getFieldValue('password') === value) {
+                                if (
+                                    !value ||
+                                    getFieldValue('password') === value
+                                ) {
                                     return Promise.resolve();
                                 }
-                                return Promise.reject(new Error('Las contraseñas no coinciden'));
+                                return Promise.reject(
+                                    new Error('Las contraseñas no coinciden')
+                                );
                             },
                         }),
                     ]}

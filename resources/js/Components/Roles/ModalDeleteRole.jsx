@@ -1,8 +1,8 @@
-import { useMessage } from "@/Contexts/MessageShow";
-import { router } from "@inertiajs/react";
-import { Button, Modal } from "antd";
-import axios from "axios";
-import React from "react";
+import { useMessage } from '@/Contexts/MessageShow';
+import { router } from '@inertiajs/react';
+import { Button, Modal } from 'antd';
+import axios from 'axios';
+import React from 'react';
 
 export default function ModalDeleteRole({ data }) {
     const { successMsg, errorMsg } = useMessage();
@@ -12,7 +12,7 @@ export default function ModalDeleteRole({ data }) {
             const { data: dataDelete } = await axios.delete(
                 `/companies/${data?.id}`
             );
-            router.visit("/companies", {
+            router.visit('/companies', {
                 preserveState: true,
             });
             dataDelete && successMsg(await dataDelete?.message);
@@ -27,10 +27,10 @@ export default function ModalDeleteRole({ data }) {
     const showDeleteConfirm = () => {
         Modal.confirm({
             title: `¿Estás seguro de que quieres eliminar la empresa ${data.name}?`,
-            content: "Se borrarán todos los datos.",
-            okText: "Sí",
-            okType: "danger",
-            cancelText: "No",
+            content: 'Se borrarán todos los datos.',
+            okText: 'Sí',
+            okType: 'danger',
+            cancelText: 'No',
             onOk() {
                 handleDelete();
             },

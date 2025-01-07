@@ -13,7 +13,11 @@ import {
     TimeScale,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { filterByToday, filterByThisWeek, filterByThisMonth } from '@/Utils/filterDates'; 
+import {
+    filterByToday,
+    filterByThisWeek,
+    filterByThisMonth,
+} from '@/Utils/filterDates';
 
 const { Option } = Select;
 
@@ -43,11 +47,14 @@ export default function LineChart({ info }) {
     };
 
     const data = {
-        labels: filteredData(filter).map(row => row.username), // Nombres en el eje X
+        labels: filteredData(filter).map((row) => row.username), // Nombres en el eje X
         datasets: [
             {
                 label: 'Últimas Empresas Creadas',
-                data: filteredData(filter).map(row => ({ x: row.username, y: new Date(row.created_at) })), // Fechas en el eje Y
+                data: filteredData(filter).map((row) => ({
+                    x: row.username,
+                    y: new Date(row.created_at),
+                })), // Fechas en el eje Y
                 fill: 'start',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderColor: 'rgb(75, 192, 192)',
@@ -89,8 +96,16 @@ export default function LineChart({ info }) {
                     text: 'Fecha de Creación',
                 },
                 beginAtZero: false,
-                min: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
-                max: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
+                min: new Date(
+                    new Date().getFullYear(),
+                    new Date().getMonth(),
+                    1
+                ).toISOString(),
+                max: new Date(
+                    new Date().getFullYear(),
+                    new Date().getMonth() + 1,
+                    0
+                ).toISOString(),
                 ticks: {
                     callback: (value) => new Date(value).toLocaleDateString(),
                 },
@@ -114,4 +129,4 @@ export default function LineChart({ info }) {
             <Line data={data} options={options} />
         </div>
     );
-};
+}

@@ -1,20 +1,20 @@
-import React, { useState } from "react";
-import { useForm, Head } from "@inertiajs/react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import ModalCreateUser from "@/Components/Users/ModalCreateUser";
-import ModalDeleteUser from "@/Components/Users/ModalDeleteUser";
-import ModalEditUser from "@/Components/Users/ModalEditUser";
-import ModalViewUser from "@/Components/Users/ModalViewUser";
-import { Dropdown, Menu } from "antd";
-import { DownOutlined } from "@ant-design/icons";
-import ModalCreateBonus from "@/Components/Bonus/ModalCreateBonus";
-import FilterModal from "@/Components/Users/FilterModal";
-import MobileButton from "@/Components/MobileButton";
-import ExcelManager from "@/Components/Users/ExcelManager";
-import { CustomTable } from "@components-v2/CustomTable";
-import { SelectAssignCategories } from "@/Components/CategoriesBonus/SelectAssignCategories";
-import { SelectAssignBonuses } from "@/Components/Bonus/SelectAssignBonuses";
-import { roleDisplayNames } from "@/Utils/constants";
+import React, { useState } from 'react';
+import { useForm, Head } from '@inertiajs/react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import ModalCreateUser from '@/Components/Users/ModalCreateUser';
+import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
+import ModalEditUser from '@/Components/Users/ModalEditUser';
+import ModalViewUser from '@/Components/Users/ModalViewUser';
+import { Dropdown, Menu } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
+import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
+import FilterModal from '@/Components/Users/FilterModal';
+import MobileButton from '@/Components/MobileButton';
+import ExcelManager from '@/Components/Users/ExcelManager';
+import { CustomTable } from '@components-v2/CustomTable';
+import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssignCategories';
+import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
+import { roleDisplayNames } from '@/Utils/constants';
 
 export default function UserPage({
     auth,
@@ -29,9 +29,9 @@ export default function UserPage({
 }) {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
-        username: filters.username || "",
-        status: filters.status || "",
-        role: filters.role || "",
+        username: filters.username || '',
+        status: filters.status || '',
+        role: filters.role || '',
     };
     const { data } = useForm(InitForm);
     const rowSelection = {
@@ -42,32 +42,33 @@ export default function UserPage({
     const columns = {
         'super-admin': [
             {
-                title: "Nombre de usuario",
-                dataIndex: "username",
-                key: "username",
+                title: 'Nombre de usuario',
+                dataIndex: 'username',
+                key: 'username',
             },
             {
-                title: "Estado",
-                key: "status",
+                title: 'Estado',
+                key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === "Activo"
-                            ? "bg-green-300"
-                            : branch?.status?.name === "Inactivo"
-                                ? "bg-red-200"
-                                : branch?.status?.name === "En revisión"
-                                    ? "bg-orange-300"
-                                    : branch?.status?.name === "Borrado"
-                                        ? "bg-red-400"
-                                        : ""
-                            } 
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
+                                    ? 'bg-orange-300'
+                                    : branch?.status?.name === 'Borrado'
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
             },
             {
-                title: "Rol",
-                key: "role",
+                title: 'Rol',
+                key: 'role',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
@@ -75,8 +76,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Acciones",
-                key: "actions",
+                title: 'Acciones',
+                key: 'actions',
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
@@ -93,7 +94,12 @@ export default function UserPage({
                             companies={companies}
                             branches={branches}
                             roles={roles}
-                            data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
+                            data={{
+                                ...user,
+                                branches: user?.branches?.map(
+                                    (branch) => branch?.id
+                                ),
+                            }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -102,20 +108,20 @@ export default function UserPage({
                 ),
             },
         ],
-        'admin': [
+        admin: [
             {
-                title: "Nombre de usuario",
-                dataIndex: "username",
-                key: "username",
+                title: 'Nombre de usuario',
+                dataIndex: 'username',
+                key: 'username',
             },
             {
-                title: "Correo",
-                dataIndex: "email",
-                key: "email",
+                title: 'Correo',
+                dataIndex: 'email',
+                key: 'email',
             },
             {
-                title: "Sucursal",
-                key: "branch",
+                title: 'Sucursal',
+                key: 'branch',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {user?.branch?.name}
@@ -123,27 +129,28 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Estado",
-                key: "status",
+                title: 'Estado',
+                key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === "Activo"
-                            ? "bg-green-300"
-                            : branch?.status?.name === "Inactivo"
-                                ? "bg-red-200"
-                                : branch?.status?.name === "En revisión"
-                                    ? "bg-orange-300"
-                                    : branch?.status?.name === "Borrado"
-                                        ? "bg-red-400"
-                                        : ""
-                            } 
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
+                                    ? 'bg-orange-300'
+                                    : branch?.status?.name === 'Borrado'
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
             },
             {
-                title: "Rol",
-                key: "role",
+                title: 'Rol',
+                key: 'role',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
@@ -151,8 +158,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Acciones",
-                key: "actions",
+                title: 'Acciones',
+                key: 'actions',
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
@@ -169,7 +176,12 @@ export default function UserPage({
                             companies={companies}
                             branches={branches}
                             roles={roles}
-                            data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
+                            data={{
+                                ...user,
+                                branches: user?.branches?.map(
+                                    (branch) => branch?.id
+                                ),
+                            }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -178,20 +190,20 @@ export default function UserPage({
                 ),
             },
         ],
-        'supervisor': [
+        supervisor: [
             {
-                title: "Nombre de usuario",
-                dataIndex: "username",
-                key: "username",
+                title: 'Nombre de usuario',
+                dataIndex: 'username',
+                key: 'username',
             },
             {
-                title: "Correo",
-                dataIndex: "email",
-                key: "email",
+                title: 'Correo',
+                dataIndex: 'email',
+                key: 'email',
             },
             {
-                title: "Numero de teléfono",
-                key: "phone",
+                title: 'Numero de teléfono',
+                key: 'phone',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.prefix} {user?.phone}
@@ -199,8 +211,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Sucursal",
-                key: "branche",
+                title: 'Sucursal',
+                key: 'branche',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {user?.branch?.name}
@@ -208,27 +220,28 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Estado",
-                key: "status",
+                title: 'Estado',
+                key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === "Activo"
-                            ? "bg-green-300"
-                            : branch?.status?.name === "Inactivo"
-                                ? "bg-red-200"
-                                : branch?.status?.name === "En revisión"
-                                    ? "bg-orange-300"
-                                    : branch?.status?.name === "Borrado"
-                                        ? "bg-red-400"
-                                        : ""
-                            } 
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
+                                    ? 'bg-orange-300'
+                                    : branch?.status?.name === 'Borrado'
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
             },
             {
-                title: "Rol",
-                key: "role",
+                title: 'Rol',
+                key: 'role',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
@@ -236,8 +249,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Acciones",
-                key: "actions",
+                title: 'Acciones',
+                key: 'actions',
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
@@ -254,7 +267,12 @@ export default function UserPage({
                             companies={companies}
                             branches={branches}
                             roles={roles}
-                            data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
+                            data={{
+                                ...user,
+                                branches: user?.branches?.map(
+                                    (branch) => branch?.id
+                                ),
+                            }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -263,20 +281,20 @@ export default function UserPage({
                 ),
             },
         ],
-        'trabajador': [
+        trabajador: [
             {
-                title: "Nombre de usuario",
-                dataIndex: "username",
-                key: "username",
+                title: 'Nombre de usuario',
+                dataIndex: 'username',
+                key: 'username',
             },
             {
-                title: "Correo",
-                dataIndex: "email",
-                key: "email",
+                title: 'Correo',
+                dataIndex: 'email',
+                key: 'email',
             },
             {
-                title: "Rut",
-                key: "rut",
+                title: 'Rut',
+                key: 'rut',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.rutNumbers}-{user?.rutDv}
@@ -284,8 +302,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Numero de teléfono",
-                key: "phone",
+                title: 'Numero de teléfono',
+                key: 'phone',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.prefix} {user?.phone}
@@ -293,8 +311,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Sucursal",
-                key: "branche",
+                title: 'Sucursal',
+                key: 'branche',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {user?.branch?.name}
@@ -302,27 +320,28 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Estado",
-                key: "status",
+                title: 'Estado',
+                key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === "Activo"
-                            ? "bg-green-300"
-                            : branch?.status?.name === "Inactivo"
-                                ? "bg-red-200"
-                                : branch?.status?.name === "En revisión"
-                                    ? "bg-orange-300"
-                                    : branch?.status?.name === "Borrado"
-                                        ? "bg-red-400"
-                                        : ""
-                            } 
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
+                                    ? 'bg-orange-300'
+                                    : branch?.status?.name === 'Borrado'
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
             },
             {
-                title: "Rol",
-                key: "role",
+                title: 'Rol',
+                key: 'role',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
@@ -330,8 +349,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Acciones",
-                key: "actions",
+                title: 'Acciones',
+                key: 'actions',
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
@@ -348,7 +367,12 @@ export default function UserPage({
                             companies={companies}
                             branches={branches}
                             roles={roles}
-                            data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
+                            data={{
+                                ...user,
+                                branches: user?.branches?.map(
+                                    (branch) => branch?.id
+                                ),
+                            }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -357,10 +381,10 @@ export default function UserPage({
                 ),
             },
         ],
-        'jugador': [
+        jugador: [
             {
-                title: "Nombres",
-                key: "names",
+                title: 'Nombres',
+                key: 'names',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.first_name} {user?.second_name}
@@ -368,8 +392,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Apellidos",
-                key: "last_names",
+                title: 'Apellidos',
+                key: 'last_names',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.first_last_name} {user?.second_last_name}
@@ -377,26 +401,26 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Correo",
-                dataIndex: "email",
-                key: "email",
+                title: 'Correo',
+                dataIndex: 'email',
+                key: 'email',
             },
             {
-                title: "Rut",
-                key: "rut",
+                title: 'Rut',
+                key: 'rut',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
-                        {(user?.rutNumbers && user?.rutDv) &&
+                        {user?.rutNumbers && user?.rutDv && (
                             <>
                                 {user?.rutNumbers}-{user?.rutDv}
                             </>
-                        }
+                        )}
                     </p>
                 ),
             },
             {
-                title: "Numero de teléfono",
-                key: "phone",
+                title: 'Numero de teléfono',
+                key: 'phone',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.prefix} {user?.phone}
@@ -404,8 +428,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Sucursales",
-                key: "branches",
+                title: 'Sucursales',
+                key: 'branches',
                 render: (_, user) => {
                     const menu = (
                         <Menu>
@@ -427,27 +451,28 @@ export default function UserPage({
                 },
             },
             {
-                title: "Estado",
-                key: "status",
+                title: 'Estado',
+                key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === "Activo"
-                            ? "bg-green-300"
-                            : branch?.status?.name === "Inactivo"
-                                ? "bg-red-200"
-                                : branch?.status?.name === "En revisión"
-                                    ? "bg-orange-300"
-                                    : branch?.status?.name === "Borrado"
-                                        ? "bg-red-400"
-                                        : ""
-                            } 
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
+                                    ? 'bg-orange-300'
+                                    : branch?.status?.name === 'Borrado'
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
             },
             {
-                title: "Rol",
-                key: "role",
+                title: 'Rol',
+                key: 'role',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
@@ -455,8 +480,8 @@ export default function UserPage({
                 ),
             },
             {
-                title: "Acciones",
-                key: "actions",
+                title: 'Acciones',
+                key: 'actions',
                 render: (_, user) => (
                     <div className="flex flex-wrap gap-3">
                         <ModalViewUser
@@ -473,7 +498,12 @@ export default function UserPage({
                             companies={companies}
                             branches={branches}
                             roles={roles}
-                            data={{ ...user, branches: user?.branches?.map(branch => branch?.id) }}
+                            data={{
+                                ...user,
+                                branches: user?.branches?.map(
+                                    (branch) => branch?.id
+                                ),
+                            }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -481,21 +511,25 @@ export default function UserPage({
                         <ModalCreateBonus data={user} />
                     </div>
                 ),
-            }
-        ]
+            },
+        ],
     };
 
     const expandedRowRender = (user) => {
         const getBonusStatus = (bonus) => {
             const now = new Date();
-            const startDate = bonus.start_datetime ? new Date(bonus.start_datetime) : null;
-            const endDate = bonus.end_datetime ? new Date(bonus.end_datetime) : null;
+            const startDate = bonus.start_datetime
+                ? new Date(bonus.start_datetime)
+                : null;
+            const endDate = bonus.end_datetime
+                ? new Date(bonus.end_datetime)
+                : null;
 
             // Sin fechas de inicio ni fin
             if (!startDate && !endDate) {
                 return {
-                    text: "Sin vencimiento",
-                    class: "bg-blue-100 text-blue-800"
+                    text: 'Sin vencimiento',
+                    class: 'bg-blue-100 text-blue-800',
                 };
             }
 
@@ -503,44 +537,44 @@ export default function UserPage({
             if (startDate && !endDate) {
                 return now < startDate
                     ? {
-                        text: "Pendiente de activación",
-                        class: "bg-yellow-100 text-yellow-800"
-                    }
+                          text: 'Pendiente de activación',
+                          class: 'bg-yellow-100 text-yellow-800',
+                      }
                     : {
-                        text: "Activo sin vencimiento",
-                        class: "bg-blue-100 text-blue-800"
-                    };
+                          text: 'Activo sin vencimiento',
+                          class: 'bg-blue-100 text-blue-800',
+                      };
             }
 
             // Solo tiene fecha de fin
             if (!startDate && endDate) {
                 return now > endDate
                     ? {
-                        text: "Vencido",
-                        class: "bg-red-100 text-red-800"
-                    }
+                          text: 'Vencido',
+                          class: 'bg-red-100 text-red-800',
+                      }
                     : {
-                        text: "Activo",
-                        class: "bg-green-100 text-green-800"
-                    };
+                          text: 'Activo',
+                          class: 'bg-green-100 text-green-800',
+                      };
             }
 
             // Tiene ambas fechas
             if (now < startDate) {
                 return {
-                    text: "Pendiente de activación",
-                    class: "bg-yellow-100 text-yellow-800"
+                    text: 'Pendiente de activación',
+                    class: 'bg-yellow-100 text-yellow-800',
                 };
             }
             if (now > endDate) {
                 return {
-                    text: "Vencido",
-                    class: "bg-red-100 text-red-800"
+                    text: 'Vencido',
+                    class: 'bg-red-100 text-red-800',
                 };
             }
             return {
-                text: "Activo",
-                class: "bg-green-100 text-green-800"
+                text: 'Activo',
+                class: 'bg-green-100 text-green-800',
             };
         };
 
@@ -553,55 +587,88 @@ export default function UserPage({
                     {user?.bonuses?.map((bonus) => {
                         const status = getBonusStatus(bonus);
                         return (
-                            <div key={bonus?.id} className="flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]">
+                            <div
+                                key={bonus?.id}
+                                className="flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]"
+                            >
                                 <div className="flex justify-between items-start mb-2">
-                                    <span className="font-bold text-lg text-green-600">${bonus.amount.toLocaleString('es-CL')}</span>
-                                    <div className={`px-2 py-1 rounded-full text-xs ${status.class}`}>
+                                    <span className="font-bold text-lg text-green-600">
+                                        ${bonus.amount.toLocaleString('es-CL')}
+                                    </span>
+                                    <div
+                                        className={`px-2 py-1 rounded-full text-xs ${status.class}`}
+                                    >
                                         {status.text}
                                     </div>
                                 </div>
                                 <div className="space-y-1 text-sm">
                                     {bonus.start_datetime ? (
                                         <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">Inicio:</span>
-                                            <span>{new Date(bonus.start_datetime).toLocaleDateString('es-CL', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}</span>
+                                            <span className="w-16 font-medium">
+                                                Inicio:
+                                            </span>
+                                            <span>
+                                                {new Date(
+                                                    bonus.start_datetime
+                                                ).toLocaleDateString('es-CL', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">Inicio:</span>
-                                            <span className="italic">No definido</span>
+                                            <span className="w-16 font-medium">
+                                                Inicio:
+                                            </span>
+                                            <span className="italic">
+                                                No definido
+                                            </span>
                                         </div>
                                     )}
                                     {bonus.end_datetime ? (
                                         <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">Fin:</span>
-                                            <span>{new Date(bonus.end_datetime).toLocaleDateString('es-CL', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}</span>
+                                            <span className="w-16 font-medium">
+                                                Fin:
+                                            </span>
+                                            <span>
+                                                {new Date(
+                                                    bonus.end_datetime
+                                                ).toLocaleDateString('es-CL', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">Fin:</span>
-                                            <span className="italic">Sin vencimiento</span>
+                                            <span className="w-16 font-medium">
+                                                Fin:
+                                            </span>
+                                            <span className="italic">
+                                                Sin vencimiento
+                                            </span>
                                         </div>
                                     )}
                                     <div className="flex items-center text-gray-600">
-                                        <span className="w-16 font-medium">Creado:</span>
-                                        <span>{new Date(bonus.created_at).toLocaleDateString('es-CL', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}</span>
+                                        <span className="w-16 font-medium">
+                                            Creado:
+                                        </span>
+                                        <span>
+                                            {new Date(
+                                                bonus.created_at
+                                            ).toLocaleDateString('es-CL', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -609,7 +676,9 @@ export default function UserPage({
                     })}
                 </div>
                 {(!user?.bonuses || user?.bonuses.length === 0) && (
-                    <p className="text-gray-500 text-center py-4">No hay bonos asignados</p>
+                    <p className="text-gray-500 text-center py-4">
+                        No hay bonos asignados
+                    </p>
                 )}
             </div>
         );
@@ -626,11 +695,11 @@ export default function UserPage({
                 </h2>
             }
         >
-            <Head title={`Usuarios ${data.role || "todos"}`} />
+            <Head title={`Usuarios ${data.role || 'todos'}`} />
             <header className="flex items-center justify-between bg-white p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className="text-4xl font-bold">
-                    {roleDisplayNames[data.role] || "Todos los usuarios"}
+                    {roleDisplayNames[data.role] || 'Todos los usuarios'}
                 </h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
@@ -643,7 +712,7 @@ export default function UserPage({
                                 roles={roles}
                             />
                             <div className="flex gap-5">
-                                {(data?.role) && (
+                                {data?.role && (
                                     <ModalCreateUser
                                         userType={data?.role}
                                         statuses={statuses}
@@ -658,9 +727,9 @@ export default function UserPage({
                             </div>
                         </div>
 
-                        {
-                            data.role &&
-                                data.role === roleDisplayNames.jugador.toLowerCase() ? <CustomTable
+                        {data.role &&
+                        data.role === roleDisplayNames.jugador.toLowerCase() ? (
+                            <CustomTable
                                 rowSelection={rowSelection}
                                 dataSource={users?.map((user) => ({
                                     ...user,
@@ -671,7 +740,9 @@ export default function UserPage({
                                     expandedRowRender,
                                     rowExpandable: () => true,
                                 }}
-                            /> : <CustomTable
+                            />
+                        ) : (
+                            <CustomTable
                                 rowSelection={rowSelection}
                                 dataSource={users?.map((user) => ({
                                     ...user,
@@ -679,18 +750,21 @@ export default function UserPage({
                                 }))}
                                 columns={columns?.[data.role]}
                             />
-                        }
+                        )}
                         <div className="flex flex-col xl:flex-row gap-5 justify-between mt-5 mb-20">
                             <SelectAssignCategories
                                 setSelectedRowKeys={setSelectedRowKeys}
                                 categories={categories}
                                 selectedRowKeys={selectedRowKeys}
                             />
-                            {data?.role === roleDisplayNames.trabajador.toLowerCase() && <SelectAssignBonuses
-                                setSelectedRowKeys={setSelectedRowKeys}
-                                bonuses={bonuses}
-                                selectedRowKeys={selectedRowKeys}
-                            />}
+                            {data?.role ===
+                                roleDisplayNames.trabajador.toLowerCase() && (
+                                <SelectAssignBonuses
+                                    setSelectedRowKeys={setSelectedRowKeys}
+                                    bonuses={bonuses}
+                                    selectedRowKeys={selectedRowKeys}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -699,4 +773,4 @@ export default function UserPage({
             </div>
         </AuthenticatedLayout>
     );
-};
+}

@@ -1,19 +1,19 @@
-import { useForm } from "@inertiajs/react";
-import { Modal, Input, Button, Select, Form } from "antd";
-import { useState } from "react";
+import { useForm } from '@inertiajs/react';
+import { Modal, Input, Button, Select, Form } from 'antd';
+import { useState } from 'react';
 
 const { Option } = Select;
 
 export default function FilterModal({ filters, statuses }) {
     const [showModal, setShowModal] = useState(false);
     const InitForm = {
-        name: filters.name || "",
-        status: filters.status || "",
+        name: filters.name || '',
+        status: filters.status || '',
     };
     const { data, setData, get, form } = useForm(InitForm);
 
     const handleFilter = () => {
-        get(route("companies.index"));
+        get(route('companies.index'));
         handleCloseModal();
     };
 
@@ -25,7 +25,7 @@ export default function FilterModal({ filters, statuses }) {
         setShowModal(true);
     };
 
-    const handleFinish = (values) => {
+    const handleFinish = () => {
         handleFilter();
     };
 
@@ -74,7 +74,10 @@ export default function FilterModal({ filters, statuses }) {
                                     placeholder="Seleccione un estado"
                                 >
                                     {statuses.map((status) => (
-                                        <Option key={status.id} value={status.name}>
+                                        <Option
+                                            key={status.id}
+                                            value={status.name}
+                                        >
                                             {status.name}
                                         </Option>
                                     ))}

@@ -1,20 +1,20 @@
-import { useForm } from "@inertiajs/react";
-import { Modal, Input, Button, Select } from "antd";
-import { useState } from "react";
+import { useForm } from '@inertiajs/react';
+import { Modal, Input, Button, Select } from 'antd';
+import { useState } from 'react';
 
 const { Option } = Select;
 
 export default function FilterModal({ filters, statuses, roles }) {
     const [showModal, setShowModal] = useState(false);
     const InitForm = {
-        username: filters.username || "",
-        status: filters.status || "",
-        role: filters.role || "",
+        username: filters.username || '',
+        status: filters.status || '',
+        role: filters.role || '',
     };
     const { data, setData, get } = useForm(InitForm);
 
     const handleFilter = () => {
-        get(route("users.index"));
+        get(route('users.index'));
         handleCloseModal();
     };
 
@@ -63,7 +63,7 @@ export default function FilterModal({ filters, statuses, roles }) {
                             id="username"
                             value={data.username}
                             onChange={(e) =>
-                                setData("username", e.target.value)
+                                setData('username', e.target.value)
                             }
                             placeholder="Nombre del usuario"
                         />
@@ -75,7 +75,7 @@ export default function FilterModal({ filters, statuses, roles }) {
                             className="w-60"
                             id="status"
                             value={data.status}
-                            onChange={(value) => setData("status", value)}
+                            onChange={(value) => setData('status', value)}
                             placeholder="Seleccione un estado"
                         >
                             {statuses.map((status) => (
@@ -91,7 +91,7 @@ export default function FilterModal({ filters, statuses, roles }) {
                             className="w-60"
                             id="role"
                             value={data.role}
-                            onChange={(value) => setData("role", value)}
+                            onChange={(value) => setData('role', value)}
                             placeholder="Seleccione un rol"
                         >
                             {roles.map((rol) => (

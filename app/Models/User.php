@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\CompanyScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, CompanyScope;
+
+    protected $table = 'users';
 
     protected $fillable = [
         'first_name',
@@ -36,7 +40,7 @@ class User extends Authenticatable
         'status_id',
         'company_id',
         'category_bonus_id',
-        'role_id', // Add this
+        'role_id', 
     ];
 
     protected $hidden = [

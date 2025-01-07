@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { Form, Input, Button, Alert } from 'antd';

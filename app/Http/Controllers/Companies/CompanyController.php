@@ -4,18 +4,20 @@ namespace App\Http\Controllers\Companies;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Models\Role;
 use App\Models\Status;
+use App\Services\CompanyDatabaseService;
 use App\Services\CpanelService;
 use App\Services\GoDaddyService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Report;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Sentry\Laravel\Sentry;
-use Spatie\Permission\Models\Role;
 
 class CompanyController extends Controller
 {
@@ -23,11 +25,13 @@ class CompanyController extends Controller
     private $excludedDirs = ['deploy'];
     protected $godaddyService;
     protected $cpanelService;
+    protected $companyDatabaseService;
 
-    public function __construct(GoDaddyService $godaddyService, CpanelService $cpanelService)
+    public function __construct(GoDaddyService $godaddyService, CpanelService $cpanelService, CompanyDatabaseService $companyDatabaseService)
     {
         $this->godaddyService = $godaddyService;
         $this->cpanelService = $cpanelService;
+        $this->companyDatabaseService = $companyDatabaseService;
     }
 
     /**
@@ -155,20 +159,18 @@ class CompanyController extends Controller
 
             $company = Company::create($data);
 
-            // Crear directorio y configurar dominio
             $domain = $this->createCompanyDirectory($company);
 
-            // Crear el subdominio en GoDaddy
-            $subdomain = Str::slug($request->name) . '.alimentacion.mx';
             $this->godaddyService->createSubdomain($request->name);
 
-            // Crear el subdominio en cPanel
             $this->cpanelService->createSubdomain($request->name);
+
+            $this->companyDatabaseService->createCompanyTables($request);
 
             return response()->json([
                 'message' => 'Empresa creada exitosamente',
                 'company' => $company,
-            ]);
+            ], 201);
         } catch (\Throwable $e) {
             $this->logError($e, 'companies.create', [
                 'company_data' => $request->only(['name', 'rut', 'email'])
@@ -182,36 +184,29 @@ class CompanyController extends Controller
 
     private function createCompanyDirectory(Company $company)
     {
-        // Crear el slug de la empresa
         $domain = env('GODADDY_DOMAIN');
         $slug = $company->slug;
         $domain = "{$slug}.{$domain}";
         $company->domain = $domain;
         $company->save();
 
-        // Definir directorios
         $sourceDir = base_path();
         $parentDir = dirname($sourceDir);  // Subir un nivel: /carpetaPadre
         $targetDir = $parentDir . DIRECTORY_SEPARATOR . $domain;
 
         try {
-            // Verificar si existe el directorio fuente
             if (!File::exists($sourceDir)) {
                 throw new \Exception("El directorio fuente no existe: {$sourceDir}");
             }
 
-            // Verificar si el directorio destino ya existe
             if (File::exists($targetDir)) {
                 throw new \Exception("El directorio para {$domain} ya existe");
             }
 
-            // Crear el directorio destino
             File::makeDirectory($targetDir, 0755, true);
 
-            // Copiar todos los archivos excepto los excluidos
             $this->copyDirectoryContents($sourceDir, $targetDir);
 
-            // Configurar el .env para esta empresa
             $this->configureEnvFile($targetDir, $company);
 
             return $domain;
@@ -229,34 +224,27 @@ class CompanyController extends Controller
 
     private function copyDirectoryContents($source, $destination)
     {
-        // Crear el directorio destino si no existe
         if (!File::exists($destination)) {
             File::makeDirectory($destination, 0755, true);
         }
 
-        // Copiar archivos y directorios
         $directory = new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS);
         $iterator = new \RecursiveIteratorIterator($directory, \RecursiveIteratorIterator::SELF_FIRST);
 
         foreach ($iterator as $item) {
-            // Obtener la ruta relativa
             $relativePath = substr($item->getPathname(), strlen($source) + 1);
 
-            // Copiar archivo o directorio
             if ($item->isDir()) {
-                // Crear directorio en destino
                 $targetDir = $destination . DIRECTORY_SEPARATOR . $relativePath;
                 if (!File::exists($targetDir)) {
                     File::makeDirectory($targetDir, 0755, true);
                 }
             } else {
-                // Copiar archivo
                 $targetFile = $destination . DIRECTORY_SEPARATOR . $relativePath;
                 File::copy($item->getPathname(), $targetFile);
             }
         }
 
-        // Crear directorios necesarios
         $dirsToCreate = [
             'storage/app',
             'storage/framework/cache',
@@ -278,19 +266,17 @@ class CompanyController extends Controller
     {
         $envFile = $targetDir . DIRECTORY_SEPARATOR . '.env';
 
-        // Verificar que el archivo existe
         if (!File::exists($envFile)) {
             throw new \Exception('No se encontró el archivo .env en el directorio destino');
         }
 
-        // Leer el contenido del .env
         $envContent = File::get($envFile);
 
-        // Reemplazar valores
         $replacements = [
             // 'DB_DATABASE' => 'tenant_' . $company->slug,
             'APP_URL' => 'https://' . $company->domain,
             'SESSION_DOMAIN' => $company->domain,
+            'APP_PRINCIPAL_SUBDOMAIN' => '',
             'SANCTUM_STATEFUL_DOMAINS' => $company->domain
         ];
 
@@ -564,9 +550,6 @@ class CompanyController extends Controller
 
     protected function logError(\Throwable $exception, string $context = '', array $extraData = [])
     {
-        Sentry::captureException($exception, [
-            'extra' => $extraData,
-            'context' => $context
-        ]);
+        report($exception);
     }
 }

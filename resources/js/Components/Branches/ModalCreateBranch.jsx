@@ -79,13 +79,11 @@ export default function ModalCreateBranch({ companies }) {
     setBonusSchedules(schedules);
     form.setFieldsValue({ bonus_schedules: JSON.stringify(schedules) });
   };
-  console.log(bonusSchedules, "schedules bonus");
-  console.log(availableSchedules, "availableSchedules bonus");
 
   const onCreate = async (values) => {
     try {
       setLoading(true);
-      
+
       // Asegurarse de que company_id esté establecido
       if (!values.company_id && companies?.length > 0) {
         values.company_id = companies[0].id;
@@ -139,8 +137,8 @@ export default function ModalCreateBranch({ companies }) {
         Nueva Sucursal
       </Button>
       <Modal
-      style={{ top: 20 }}
-      title="Crear Nueva Sucursal"
+        style={{ top: 20 }}
+        title="Crear Nueva Sucursal"
         open={showModal}
         onCancel={handleCloseModal}
         footer={null}
@@ -221,7 +219,7 @@ export default function ModalCreateBranch({ companies }) {
                 ))}
               </Select>
             </Form.Item>
-            
+
             <Form.Item
               className="w-6/12"
               name="branchAddressRegion"
@@ -324,7 +322,7 @@ export default function ModalCreateBranch({ companies }) {
           <Space direction="vertical" style={{ width: '100%' }}>
             <Card title="Horarios Disponibles" size="small">
               <Space>
-                <Button 
+                <Button
                   onClick={() => setAvailableScheduleModalVisible(true)}
                   type="primary"
                 >
@@ -335,10 +333,10 @@ export default function ModalCreateBranch({ companies }) {
                 )}
               </Space>
             </Card>
-            
+
             <Card title="Horarios de Bonos" size="small">
               <Space>
-                <Button 
+                <Button
                   onClick={() => setBonusScheduleModalVisible(true)}
                   type="primary"
                 >
@@ -354,7 +352,7 @@ export default function ModalCreateBranch({ companies }) {
           <Form.Item hidden name="available_schedules">
             <Input />
           </Form.Item>
-          
+
           <Form.Item hidden name="bonus_schedules">
             <Input />
           </Form.Item>

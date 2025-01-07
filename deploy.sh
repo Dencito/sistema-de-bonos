@@ -6,7 +6,7 @@ git pull origin develop
 
 # Install npm dependencies
 echo "Installing npm dependencies..."
-npm install
+npm install -f
 
 # Install Composer dependencies
 echo "Installing Composer dependencies..."
@@ -22,8 +22,6 @@ npm run build
 
 # Clear caches if necessary
 echo "Clearing application cache..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan optimize:clear
 
 echo "Deployment completed successfully."

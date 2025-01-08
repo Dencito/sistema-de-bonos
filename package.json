@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint resources/js/**/*.{js,jsx}",
+    "lint": "eslint resources/js/**/*.{js,jsx} --max-warnings=30",
     "lint:fix": "eslint --fix resources/js/**/*.{js,jsx}",
     "format": "prettier --write .",
     "prepare": "husky"

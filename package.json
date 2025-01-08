@@ -11,8 +11,8 @@
   },
   "lint-staged": {
     "*.{js,jsx}": [
-      "prettier --write",
-      "eslint --max-warnings 0 --fix"
+      "eslint --max-warnings=0 --fix",
+      "prettier --write"
     ]
   },
   "devDependencies": {

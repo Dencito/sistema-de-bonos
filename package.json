@@ -10,7 +10,7 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{js,jsx}": [
+    "resources/js/**/*.{js,jsx}": [
       "eslint --max-warnings=0 --fix",
       "prettier --write"
     ]

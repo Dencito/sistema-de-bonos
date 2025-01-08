@@ -1,16 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-echo "Running pre-commit hooks..."
-
-# Run lint-staged and store the exit code
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 npx lint-staged
-RESULT=$?
-
-if [ $RESULT -ne 0 ]; then
-  echo " Pre-commit hook failed. Please fix the errors before committing."
-  exit 1
-fi
-
-echo " Pre-commit hook passed!"
-exit 0

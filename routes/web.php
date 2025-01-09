@@ -67,7 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('branches')->group(function() {
         Route::get('/', [BranchController::class, 'index'])->name('branches.index');
         Route::post('/', [BranchController::class, 'create'])->name('branches.create');
-        Route::put('/', [BranchController::class, 'update'])->name('branches.update');
+        Route::put('/{id}', [BranchController::class, 'update'])->name('branches.update');
         Route::delete('/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
         
         Route::put('/shifts', [BranchController::class, 'updateShifts'])->name('branches.updateShifts');

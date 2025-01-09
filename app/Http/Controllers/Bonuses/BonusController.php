@@ -29,7 +29,7 @@ class BonusController extends Controller
             'amount' => 'required|numeric|min:0|max:9999999.99',
             'start_datetime' => 'nullable|date',
             'end_datetime' => 'nullable|date|after:start_datetime',
-            'user_id' => 'required|exists:users,id'
+            'user_id' => 'required'
         ], [
             'amount.max' => 'El monto no puede ser mayor a $9.999.999,99'
         ]);

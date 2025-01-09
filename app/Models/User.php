@@ -13,7 +13,6 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, CompanyScope;
 
-    protected $table = 'users';
 
     protected $fillable = [
         'first_name',
@@ -118,7 +117,7 @@ class User extends Authenticatable
 
     public function branches()
     {
-        return $this->belongsToMany(Branch::class, 'user_branches');
+        return $this->belongsToMany(Branch::class, config('company.prefix') . '_user_branches');
     }
 
     public function company()

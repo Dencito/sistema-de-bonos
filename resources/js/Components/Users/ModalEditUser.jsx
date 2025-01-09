@@ -21,6 +21,7 @@ export default function ModalEditUser({
     statuses,
     userType,
     roleDisplayNames,
+    categories
 }) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -32,9 +33,17 @@ export default function ModalEditUser({
     const { successMsg, errorMsg } = useMessage();
 
     const onUpdate = async (values) => {
+        console.log(values.role_id)
+        console.log(data.role_id)
         try {
             setLoading(true);
-            const response = await userService.update(data.id, values);
+            const response = await userService.update(data.id, {
+                ...values,
+                role_id:
+                    values?.role_id === undefined
+                        ? data?.role_id
+                        : values?.role_id,
+            });
             if (response.success) {
                 successMsg(response.message);
                 router.visit(window.location.href, {
@@ -137,7 +146,7 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    name="role"
+                    name="role_id"
                     label="Rol"
                     initialValue={data?.role?.name}
                     rules={[
@@ -149,7 +158,7 @@ export default function ModalEditUser({
                 >
                     <Select placeholder="Seleccione el rol">
                         {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.name}>
+                            <Select.Option key={role?.id} value={role?.id}>
                                 {roleDisplayNames[role?.name] || role?.name}
                             </Select.Option>
                         ))}
@@ -220,7 +229,7 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    name="role"
+                    name="role_id"
                     label="Rol"
                     initialValue={data?.role?.name}
                     rules={[
@@ -315,7 +324,7 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    name="role"
+                    name="role_id"
                     label="Rol"
                     initialValue={data?.role?.name}
                     rules={[
@@ -327,7 +336,7 @@ export default function ModalEditUser({
                 >
                     <Select placeholder="Seleccione el rol">
                         {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.name}>
+                            <Select.Option key={role?.id} value={role?.id}>
                                 {roleDisplayNames[role?.name] || role?.name}
                             </Select.Option>
                         ))}
@@ -865,6 +874,22 @@ export default function ModalEditUser({
                         {statuses?.map((status) => (
                             <Select.Option key={status.id} value={status.id}>
                                 {status.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+
+                <Form.Item
+                    name="category_id"
+                    label="Categorias de bonos"
+                >
+                    <Select placeholder="Seleccione una categoria">
+                        {categories?.map((category) => (
+                            <Select.Option
+                                key={category.id}
+                                value={category.id}
+                            >
+                                {category.name}
                             </Select.Option>
                         ))}
                     </Select>

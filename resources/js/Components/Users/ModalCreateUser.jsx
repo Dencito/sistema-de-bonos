@@ -18,6 +18,8 @@ export default function ModalCreateUser({
     branches,
     categories = [],
 }) {
+
+    console.log(branches)
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
@@ -34,6 +36,12 @@ export default function ModalCreateUser({
         if (values.rutNumbers) {
             values.rut = `${rutNumbers}-${rutDv}`;
         }
+
+        // Asegurarnos de que branches sea un array de IDs
+        if (values.branches) {
+            values.branches = values.branches.map(branch => typeof branch === 'object' ? branch.id : branch);
+        }
+
         values.role = userType;
         try {
             setLoading(true);
@@ -727,6 +735,7 @@ export default function ModalCreateUser({
                     <Select
                         mode="multiple"
                         placeholder="Seleccione las sucursales"
+                        optionFilterProp="children"
                     >
                         {branches?.map((branch) => (
                             <Select.Option key={branch.id} value={branch.id}>
@@ -738,12 +747,6 @@ export default function ModalCreateUser({
                 <Form.Item
                     name="category_id"
                     label="Categorias de bonos"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
                 >
                     <Select placeholder="Seleccione una categoria">
                         {categories?.map((category) => (

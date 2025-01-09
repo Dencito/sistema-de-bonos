@@ -22,7 +22,6 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-
         $users = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch'])
             ->when($request->username, function ($query, $username) {
                 $query->where('username', 'like', "%{$username}%");
@@ -69,7 +68,6 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-
         try {
             // Validar si 'username' no es null antes de la consulta
             if (!is_null($request->username)) {
@@ -127,14 +125,14 @@ class UserController extends Controller
             'health' => 'nullable|string',
             'afp' => 'nullable|string',
             'childrens' => 'nullable|string',
-            'username' => 'nullable|string|unique:users,username',
+            'username' => 'nullable|string',
             'password' => 'nullable|string',
-            'branch_id' => 'nullable|exists:branches,id',
+            'branch_id' => 'nullable',
             'status_id' => 'nullable',
-            'category_bonus_id' => 'nullable|exists:category_bonuses,id',
-            'role' => 'nullable|string|exists:roles,name',
-            'branches' => 'nullable|array',
-            'branches.*' => 'nullable|exists:branches,id',
+            'category_bonus_id' => 'nullable',
+            'role' => 'nullable|string',
+            'branches' => 'nullable',
+            'branches.*' => 'nullable',
         ]);
 
 
@@ -177,6 +175,8 @@ class UserController extends Controller
                 'category_bonus_id' => $request->category_bonus_id,
                 'role_id' => $role->id,
             ]);
+
+            //dd($request->branches);
             
             $userId = $user->id;
             if($request->branches) {
@@ -201,6 +201,8 @@ class UserController extends Controller
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
+            \Log::error('Error al crear usuario: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
             return response()->json(['error' => true, 'message' => 'Error al crear el usuario', 'details' => $e], 500);
         }
 
@@ -313,13 +315,13 @@ class UserController extends Controller
             'childrens' => 'nullable|integer',
             'username' => 'nullable|string',
             'password' => 'nullable|string',
-            'branch_id' => 'nullable|exists:branches,id',
+            'branch_id' => 'nullable',
             'status_id' => 'required',
-            'company_id' => 'nullable|exists:companies,id',
-            'category_bonus_id' => 'nullable|exists:category_bonuses,id',
+            'company_id' => 'nullable',
+            'category_bonus_id' => 'nullable',
             'role_id' => 'nullable',
             'branches' => 'nullable|array',
-            'branches.*' => 'nullable|exists:branches,id',
+            'branches.*' => 'nullable',
         ]);
 
         $user->update([
@@ -417,9 +419,9 @@ class UserController extends Controller
     
                 if (!$existingUserBonus) {
                     // Crear una nueva relación en `user_bonuses`
-                    UserBonus::create([
+                    UserBranches::create([
                         'user_id' => $userId,
-                        'bonus_id' => $bonusId,
+                        'branch_id' => $bonusId,
                     ]);
                 }
             }

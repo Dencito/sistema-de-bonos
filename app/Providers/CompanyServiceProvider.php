@@ -42,7 +42,7 @@ class CompanyServiceProvider extends ServiceProvider
             Log::info('Host original: ' . $host);
 
             if ($this->isLocalEnvironment($host)) {
-                $subdomain = $request->header('X-Company-Prefix', 'nanu');
+                $subdomain = $request->header('X-Company-Prefix', null);
                 Log::info('Usando entorno local, subdomain desde header: ' . $subdomain);
             } else {
                 if (empty($host)) {

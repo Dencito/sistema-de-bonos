@@ -3,10 +3,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\CompanyScope;
 
 class Status extends Model
 {
-    use HasFactory;
+    use HasFactory, CompanyScope;
 
     protected $fillable = [
         'name',

@@ -680,6 +680,7 @@ export default function ModalCreateCompany() {
                     <Form.Item
                         className="w-6/12"
                         name="companyAddressCountry"
+                        initialValue="Chile"
                         label="País"
                         rules={[
                             {
@@ -713,6 +714,7 @@ export default function ModalCreateCompany() {
                         className="w-6/12"
                         name="companyAddressRegion"
                         label="Región"
+                        initialValue="Santiago de Chile"
                         rules={[
                             {
                                 required: true,

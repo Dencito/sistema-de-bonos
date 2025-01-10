@@ -159,12 +159,13 @@ class CompanyController extends Controller
 
             $company = Company::create($data);
 
+            //Dentro tiene la validacion si es local o no
             $domain = $this->createCompanyDirectory($company);
 
-            $this->godaddyService->createSubdomain($request->name);
-
-            $this->cpanelService->createSubdomain($request->name);
-
+            if(env("APP_ENV") === "prod") {
+                $this->godaddyService->createSubdomain($request->name);
+                $this->cpanelService->createSubdomain($request->name);
+            }
             $this->companyDatabaseService->createCompanyTables($request);
 
             return response()->json([
@@ -189,7 +190,10 @@ class CompanyController extends Controller
         $domain = "{$slug}.{$domain}";
         $company->domain = $domain;
         $company->save();
-
+        
+        if(env("APP_ENV") === "local") {
+            return $domain;
+        }
         $sourceDir = base_path();
         $parentDir = dirname($sourceDir);  // Subir un nivel: /carpetaPadre
         $targetDir = $parentDir . DIRECTORY_SEPARATOR . $domain;
@@ -276,7 +280,7 @@ class CompanyController extends Controller
             // 'DB_DATABASE' => 'tenant_' . $company->slug,
             'APP_URL' => 'https://' . $company->domain,
             'SESSION_DOMAIN' => $company->domain,
-            'APP_PRINCIPAL_SUBDOMAIN' => '',
+            'APP_PRIMARY_SUBDOMAIN' => $company->name,
             'SANCTUM_STATEFUL_DOMAINS' => $company->domain
         ];
 
@@ -292,7 +296,7 @@ class CompanyController extends Controller
         File::put($envFile, $envContent);
 
         // Generar key
-        $command = "cd {$targetDir} && php artisan key:generate";
+        $command = "cd {$targetDir} && php artisan key:generate && npm install -f && npm run build";
         exec($command);
     }
 

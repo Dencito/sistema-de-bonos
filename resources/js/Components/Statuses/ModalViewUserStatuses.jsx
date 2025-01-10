@@ -12,8 +12,8 @@ export default function ModalViewUserStatuses({ data, status }) {
 
     const columns = [
         {
-            title: 'Nombre',
-            dataIndex: 'name',
+            title: 'Nombre de usuario',
+            dataIndex: 'username',
             key: 'id',
         },
         {

@@ -39,6 +39,7 @@ export default function UserPage({
         onChange: setSelectedRowKeys,
     };
 
+
     const columns = {
         'super-admin': [
             {
@@ -87,6 +88,7 @@ export default function UserPage({
                             roles={roles}
                             data={user}
                             userType={data?.role}
+                            categories={categories}
                             roleDisplayNames={roleDisplayNames}
                         />
                         <ModalEditUser
@@ -100,6 +102,7 @@ export default function UserPage({
                                     (branch) => branch?.id
                                 ),
                             }}
+                            categories={categories}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -430,25 +433,18 @@ export default function UserPage({
             {
                 title: 'Sucursales',
                 key: 'branches',
-                render: (_, user) => {
-                    const menu = (
-                        <Menu>
+                render: (_, user) => (
+                    <div className="relative group">
+                        <span className="cursor-pointer hover:text-blue-500">
+                            Ver Sucursales
+                        </span>
+                        <div className="absolute z-10 hidden group-hover:block bg-white border border-gray-200 rounded-md shadow-lg p-2">
                             {user?.branches?.map((branch) => (
-                                <Menu.Item key={branch?.id}>
-                                    {branch?.name}
-                                </Menu.Item>
+                                <p key={branch?.id} className="whitespace-nowrap">{branch?.name}</p>
                             ))}
-                        </Menu>
-                    );
-
-                    return (
-                        <Dropdown menu={menu} placement="bottomLeft" arrow>
-                            <p className="font-bold rounded-lg p-1">
-                                Sucursales <DownOutlined />
-                            </p>
-                        </Dropdown>
-                    );
-                },
+                        </div>
+                    </div>
+                ),
             },
             {
                 title: 'Estado',

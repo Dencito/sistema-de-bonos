@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\CompanyScope;
 
 class Branch extends Model
 {
-    use HasFactory;
+    use HasFactory, CompanyScope;
 
     /**
      * The attributes that are mass assignable.
@@ -56,7 +57,7 @@ class Branch extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, config('company.prefix') . '_user_branches', 'branch_id', 'user_id');
     }
 
     public function company()

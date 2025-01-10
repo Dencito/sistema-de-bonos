@@ -149,7 +149,7 @@ class BranchController extends Controller
             'branchAddressNumber' => 'required|string|max:255',
             'branchAddressLocal' => 'nullable|string|max:255',
             'branchAddressDeptOrHouse' => 'nullable|string|max:255',
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => 'required',
             'available_schedules' => 'nullable|json',
             'bonus_schedules' => 'nullable|json'
         ]);

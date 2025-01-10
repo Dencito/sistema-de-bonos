@@ -11,16 +11,13 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { useState } from 'react';
-import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
-import { VITE_PRIMARY_SUBDOMAIN } from '@/Utils/env';
+import { roleDisplayNames, allowedRoles, roleNames } from '@/Utils/constants';
 
 export const Links = ({ role, roles }) => {
     const formattedRoles = roles.map((role) => ({
         ...role,
         displayName: roleDisplayNames[role.name] || role.name,
     }));
-
-    const isPrimarySubdomain = VITE_PRIMARY_SUBDOMAIN === 'tickets';
 
     const path = window.location.pathname;
     const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +31,6 @@ export const Links = ({ role, roles }) => {
                     label: 'Inicio',
                     link: '/',
                     autorized: true,
-                    show: isPrimarySubdomain,
                 },
                 {
                     key: '1',
@@ -42,7 +38,6 @@ export const Links = ({ role, roles }) => {
                     label: 'Empresas',
                     link: '/companies',
                     autorized: allowedRoles.companies.includes(role),
-                    show: isPrimarySubdomain,
                 },
                 {
                     key: '2',
@@ -50,7 +45,6 @@ export const Links = ({ role, roles }) => {
                     label: 'Sucursales',
                     link: '/branches',
                     autorized: allowedRoles.branches.includes(role),
-                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '3',
@@ -59,7 +53,6 @@ export const Links = ({ role, roles }) => {
                     link: '/users',
                     children: formattedRoles,
                     autorized: true,
-                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '4',
@@ -67,7 +60,6 @@ export const Links = ({ role, roles }) => {
                     label: 'Categorias bonos',
                     link: '/categories-bonus',
                     autorized: true,
-                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '5',
@@ -75,7 +67,6 @@ export const Links = ({ role, roles }) => {
                     label: 'Roles',
                     link: '/roles',
                     autorized: allowedRoles.roles.includes(role),
-                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '6',
@@ -83,7 +74,6 @@ export const Links = ({ role, roles }) => {
                     label: 'Estados',
                     link: '/statuses',
                     autorized: allowedRoles.status.includes(role),
-                    show: !isPrimarySubdomain,
                 },
                 {
                     key: '7',
@@ -91,11 +81,10 @@ export const Links = ({ role, roles }) => {
                     label: 'Obtener monto totales',
                     link: '/total-amounts',
                     autorized: false,
-                    show: !isPrimarySubdomain,
                 },
             ].map((item) => (
                 <div key={item.key}>
-                    {item.autorized && item?.link !== '/users' && item.show && (
+                    {item.autorized && item?.link !== '/users' && (
                         <Link
                             className={`transition-all duration-300 my-2 ${path === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`}
                             href={item?.link}
@@ -109,7 +98,7 @@ export const Links = ({ role, roles }) => {
                             </span>
                         </Link>
                     )}
-                    {item?.link === '/users' && item.show && (
+                    {item?.link === '/users' && (
                         <div className="border-none">
                             {/* Etiqueta que despliega el colapso */}
                             <div

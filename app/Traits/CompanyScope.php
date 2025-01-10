@@ -6,18 +6,20 @@ trait CompanyScope
 {
     public function getTable()
     {
-        $prefix = config('company.prefix');
-        // Si no hay prefijo, usar el nombre de tabla normal
-        if (!$prefix) {
-            return parent::getTable();
+        $prefix = config('company.prefix'); // Prefijo dinámico
+        $table = parent::getTable(); // Nombre base de la tabla
+
+        // Devuelve el nombre base si no hay prefijo
+        if (empty($prefix)) {
+            return $table;
         }
 
-        // Si la tabla ya tiene el prefijo, devolverla como está
-        if (str_starts_with(parent::getTable(), $prefix . '_')) {
-            return parent::getTable();
+        // Evita duplicar prefijos
+        if (str_starts_with($table, $prefix . '_')) {
+            return $table;
         }
 
-        // Añadir el prefijo a la tabla
-        return $prefix . '_' . parent::getTable();
+        // Devuelve el nombre con el prefijo
+        return $prefix . '_' . $table;
     }
 }

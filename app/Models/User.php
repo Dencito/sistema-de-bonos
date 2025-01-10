@@ -117,7 +117,10 @@ class User extends Authenticatable
 
     public function branches()
     {
-        return $this->belongsToMany(Branch::class, config('company.prefix') . '_user_branches');
+        $prefix = config('company.prefix'); // Obtén el prefijo
+        $pivotTable = $prefix ? $prefix . '_user_branches' : 'user_branches'; // Tabla pivote con prefijo
+    
+        return $this->belongsToMany(Branch::class, $pivotTable, 'user_id', 'branch_id');
     }
 
     public function company()

@@ -7,6 +7,7 @@ const requiredEnvVars = [
     'VITE_COUNTRIES_API_URL',
     'VITE_COUNTRIES_API_KEY',
     'VITE_PRIMARY_SUBDOMAIN',
+    'VITE_PASSWORD_ENCRYPTION_KEY',
 ];
 
 const missingVars = requiredEnvVars.filter(
@@ -25,6 +26,7 @@ const envSchema = z.object({
     VITE_COUNTRIES_API_URL: z.string().url(),
     VITE_COUNTRIES_API_KEY: z.string(),
     VITE_PRIMARY_SUBDOMAIN: z.string(),
+    VITE_PASSWORD_ENCRYPTION_KEY: z.string(),
 });
 
 const env = envSchema.safeParse(import.meta.env);
@@ -42,4 +44,5 @@ export const {
     VITE_COUNTRIES_API_URL,
     VITE_COUNTRIES_API_KEY,
     VITE_PRIMARY_SUBDOMAIN,
+    VITE_PASSWORD_ENCRYPTION_KEY,
 } = env.data;

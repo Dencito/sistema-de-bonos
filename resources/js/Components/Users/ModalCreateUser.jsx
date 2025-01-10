@@ -18,8 +18,6 @@ export default function ModalCreateUser({
     branches,
     categories = [],
 }) {
-
-    console.log(branches)
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
@@ -39,7 +37,9 @@ export default function ModalCreateUser({
 
         // Asegurarnos de que branches sea un array de IDs
         if (values.branches) {
-            values.branches = values.branches.map(branch => typeof branch === 'object' ? branch.id : branch);
+            values.branches = values.branches.map((branch) =>
+                typeof branch === 'object' ? branch.id : branch
+            );
         }
 
         values.role = userType;
@@ -744,10 +744,7 @@ export default function ModalCreateUser({
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item
-                    name="category_id"
-                    label="Categorias de bonos"
-                >
+                <Form.Item name="category_id" label="Categorias de bonos">
                     <Select placeholder="Seleccione una categoria">
                         {categories?.map((category) => (
                             <Select.Option

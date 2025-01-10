@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use App\Services\EncryptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,16 +35,23 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         try {
-            // Aquí automáticamente buscará en la tabla con el prefijo correcto
-            // Por ejemplo: empresa1_users si el subdominio es empresa1
-            $user = User::where('email', $request->login)->first();
+            $encryptedPassword = $request->password;
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
+            Log::info('password encriptada recibida: ' . $encryptedPassword);
+
+            $decryptedPassword = EncryptionService::decryptPassword($encryptedPassword);
+
+            Log::info('password desencriptada: ' . $decryptedPassword);
+
+            $user = User::where('username', $request->login)->first();
+
+            Log::info('username: ' . $request->login);
+
+            if (!$user || !Hash::check($decryptedPassword, $user->password)) {
                 throw new \Exception('Las credenciales no son correctas');
             }
 
             Auth::login($user);
-            $request->authenticate();
             $request->session()->regenerate();
 
             if ($user->status_id !== 1) {

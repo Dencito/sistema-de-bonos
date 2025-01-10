@@ -5,8 +5,6 @@ import ModalCreateUser from '@/Components/Users/ModalCreateUser';
 import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
 import ModalEditUser from '@/Components/Users/ModalEditUser';
 import ModalViewUser from '@/Components/Users/ModalViewUser';
-import { Dropdown, Menu } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
 import FilterModal from '@/Components/Users/FilterModal';
 import MobileButton from '@/Components/MobileButton';
@@ -38,7 +36,6 @@ export default function UserPage({
         selectedRowKeys,
         onChange: setSelectedRowKeys,
     };
-
 
     const columns = {
         'super-admin': [
@@ -440,7 +437,12 @@ export default function UserPage({
                         </span>
                         <div className="absolute z-10 hidden group-hover:block bg-white border border-gray-200 rounded-md shadow-lg p-2">
                             {user?.branches?.map((branch) => (
-                                <p key={branch?.id} className="whitespace-nowrap">{branch?.name}</p>
+                                <p
+                                    key={branch?.id}
+                                    className="whitespace-nowrap"
+                                >
+                                    {branch?.name}
+                                </p>
                             ))}
                         </div>
                     </div>

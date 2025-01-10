@@ -17,7 +17,7 @@ export default function ModalChangeCompany({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al cambiar de empresa');
         }
     };

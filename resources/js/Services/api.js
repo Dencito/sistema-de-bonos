@@ -1,7 +1,13 @@
 import axios from 'axios';
-import { VITE_COUNTRIES_API_URL, VITE_COUNTRIES_API_KEY } from '@utils/env';
+import CryptoJS from 'crypto-js';
+import {
+    VITE_COUNTRIES_API_URL,
+    VITE_COUNTRIES_API_KEY,
+    VITE_PASSWORD_ENCRYPTION_KEY,
+} from '@utils/env';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.withCredentials = true;
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
 
@@ -21,10 +27,8 @@ const handleResponse = async (promise) => {
 };
 
 export const userService = {
-    login: (values) => handleResponse(axios.post('/users/owner', values)),
     update: (id, values) => handleResponse(axios.put(`/users/${id}`, values)),
     delete: (id) => handleResponse(axios.delete(`/users/${id}`)),
-    create: (values) => handleResponse(axios.post('/users', values)),
 };
 
 export const companyService = {
@@ -101,4 +105,24 @@ export const countriesService = {
                 Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
             },
         }).then((res) => res.json()),
+};
+
+export const authService = {
+    register: (values) => handleResponse(axios.post('/users/owner', values)),
+    login: (values) => {
+        const iv = CryptoJS.lib.WordArray.random(16);
+        const key = CryptoJS.enc.Utf8.parse(VITE_PASSWORD_ENCRYPTION_KEY);
+
+        const encrypted = CryptoJS.AES.encrypt(values.password, key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7,
+        });
+
+        const ivAndCiphertext = iv.concat(encrypted.ciphertext);
+        const encryptedPassword =
+            CryptoJS.enc.Base64.stringify(ivAndCiphertext);
+        const encryptedValues = { ...values, password: encryptedPassword };
+        return handleResponse(axios.post('/login', encryptedValues));
+    },
 };

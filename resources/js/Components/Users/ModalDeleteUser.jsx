@@ -19,7 +19,7 @@ export default function ModalDeleteUser({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al eliminar el usuario');
         }
     };

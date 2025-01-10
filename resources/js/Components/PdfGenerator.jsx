@@ -35,18 +35,6 @@ export default function PdfGenerator({ user }) {
         doc.save('receipt.pdf');
     };
 
-    const generateQRCode = () => {
-        const qr = new QRious({
-            element: document.getElementById('qr-code'),
-            value: qrData,
-            size: 100,
-        });
-    };
-
-    React.useEffect(() => {
-        generateQRCode();
-    }, [qrData]);
-
     return (
         <div>
             <div

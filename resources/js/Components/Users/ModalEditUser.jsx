@@ -21,7 +21,7 @@ export default function ModalEditUser({
     statuses,
     userType,
     roleDisplayNames,
-    categories
+    categories,
 }) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -33,8 +33,6 @@ export default function ModalEditUser({
     const { successMsg, errorMsg } = useMessage();
 
     const onUpdate = async (values) => {
-        console.log(values.role_id)
-        console.log(data.role_id)
         try {
             setLoading(true);
             const response = await userService.update(data.id, {
@@ -879,10 +877,7 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
 
-                <Form.Item
-                    name="category_id"
-                    label="Categorias de bonos"
-                >
+                <Form.Item name="category_id" label="Categorias de bonos">
                     <Select placeholder="Seleccione una categoria">
                         {categories?.map((category) => (
                             <Select.Option

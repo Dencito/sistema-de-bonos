@@ -4,10 +4,10 @@ import GuestLayout from '@layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { roleNames } from '@utils/constants';
-import { userService } from '@services/api';
+import { authService } from '@services/api';
 
 export default function Login({ status, auth }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, processing, errors, reset } = useForm({
         login: '',
         password: '',
         remember: false,
@@ -21,21 +21,34 @@ export default function Login({ status, auth }) {
     }, []);
 
     const handleCreateOwner = async (values) => {
-        const { data } = await userService.login(values);
-        router.visit(route('login'));
-        data && successMsg(data?.message);
+        try {
+            const { data } = await authService.register(values);
+            if (data) {
+                successMsg(data?.message);
+                router.visit(route('login'));
+            }
+        } catch (error) {
+            console.error('Error creating owner:', error);
+        }
     };
 
-    const submit = () => {
+    const submit = async () => {
+        const { login, password } = data;
         if (auth?.users === 0) {
-            const { login: username, password } = data;
             return handleCreateOwner({
-                username,
+                username: login,
                 password,
                 role: roleNames.duenio,
             });
-        } else {
-            post(route('login')); // No es necesario llamar a e.preventDefault()
+        }
+
+        try {
+            const response = await authService.login({ login, password });
+            if (response.success) {
+                router.visit(route('dashboard'));
+            }
+        } catch (error) {
+            console.error('Login request failed:', error);
         }
     };
 

@@ -27,7 +27,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'login' => ['required', 'email'],
+            'login' => ['required' ,'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -44,28 +44,11 @@ class LoginRequest extends FormRequest
         $login = $this->input('login');
         $password = $this->input('password');
 
-        // Intentar autenticación con correo electrónico
-        if (Auth::attempt(['email' => $login, 'password' => $password], $this->boolean('remember'))) {
-            RateLimiter::clear($this->throttleKey());
-            return;
-        }
-
         // Intentar autenticación con nombre de usuario
         if (Auth::attempt(['username' => $login, 'password' => $password], $this->boolean('remember'))) {
             RateLimiter::clear($this->throttleKey());
             return;
         }
-
-        // Obtén el último carácter como `rutDv` y el resto como `rutNumber`
-        $rutDv = strtolower(substr($login, -1));  // Último carácter
-        $rutNumber = substr($login, 0, -1);  // Resto del login
-
-        // Intenta autenticación con `rutNumber` y `rutDv`
-        if (Auth::attempt(['rutNumbers' => $rutNumber, 'rutDv' => $rutDv, 'password' => $password], $this->boolean('remember'))) {
-            RateLimiter::clear($this->throttleKey());
-            return;
-        }
-
         // Si no coincide con ninguno, incrementa el contador de intentos fallidos
         RateLimiter::hit($this->throttleKey());
 

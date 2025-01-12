@@ -95,6 +95,7 @@ class CompanyController extends Controller
                 'creationDate' => 'required|date',
                 'db_name' => 'string',
                 'name' => 'required|string',
+                'slug' => 'required|string',
                 'rutNumbers' => 'required|string',
                 'rutDv' => 'required|string',
                 'business' => 'required|string',
@@ -149,9 +150,8 @@ class CompanyController extends Controller
 
             // Preparar los datos de la empresa
             $data = $request->all();
-            $slug = Str::slug($request->name);
+            $slug = Str::slug($request->slug);
 
-            $data['slug'] = $slug;
             $data['status_id'] = 1;
             $data['schema_name'] = $slug;  // Usar el mismo slug como schema_name
             $data['settings'] = json_encode([]);  // Agregar settings vacío
@@ -163,8 +163,8 @@ class CompanyController extends Controller
             $domain = $this->createCompanyDirectory($company);
 
             if(env("APP_ENV") === "prod") {
-                $this->godaddyService->createSubdomain($request->name);
-                $this->cpanelService->createSubdomain($request->name);
+                $this->godaddyService->createSubdomain( $slug);
+                $this->cpanelService->createSubdomain( $slug);
             }
             $this->companyDatabaseService->createCompanyTables($request);
 

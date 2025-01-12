@@ -27,6 +27,7 @@ const handleResponse = async (promise) => {
 };
 
 export const userService = {
+    create: (values) => handleResponse(axios.post('/users', values)),
     update: (id, values) => handleResponse(axios.put(`/users/${id}`, values)),
     delete: (id) => handleResponse(axios.delete(`/users/${id}`)),
 };

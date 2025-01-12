@@ -19,6 +19,21 @@ export const Links = ({ role, roles }) => {
         displayName: roleDisplayNames[role.name] || role.name,
     }));
 
+    function getSubdomain() {
+        var url = document.location.href;
+        var host = document.location.host;
+        var partes = host.split('.');
+        var subdominio = partes[0];
+        
+        if (subdominio === 'www') {
+            subdominio = '';
+        }
+        
+        return subdominio;
+    }
+    
+    const isTickets = (getSubdomain() === "tickets");
+
     const path = window.location.pathname;
     const [isOpen, setIsOpen] = useState(false);
 
@@ -44,7 +59,7 @@ export const Links = ({ role, roles }) => {
                     icon: <MapPinHouse />,
                     label: 'Sucursales',
                     link: '/branches',
-                    autorized: allowedRoles.branches.includes(role),
+                    autorized: allowedRoles.branches.includes(role) && !isTickets,
                 },
                 {
                     key: '3',
@@ -52,28 +67,28 @@ export const Links = ({ role, roles }) => {
                     label: 'Usuarios',
                     link: '/users',
                     children: formattedRoles,
-                    autorized: true,
+                    autorized: !isTickets,
                 },
                 {
                     key: '4',
                     icon: <ChartBarStacked />,
                     label: 'Categorias bonos',
                     link: '/categories-bonus',
-                    autorized: true,
+                    autorized: !isTickets,
                 },
                 {
                     key: '5',
                     icon: <SquareStack />,
                     label: 'Roles',
                     link: '/roles',
-                    autorized: allowedRoles.roles.includes(role),
+                    autorized: allowedRoles.roles.includes(role) && !isTickets,
                 },
                 {
                     key: '6',
                     icon: <SquareStack />,
                     label: 'Estados',
                     link: '/statuses',
-                    autorized: allowedRoles.status.includes(role),
+                    autorized: allowedRoles.status.includes(role) && !isTickets,
                 },
                 {
                     key: '7',
@@ -98,7 +113,7 @@ export const Links = ({ role, roles }) => {
                             </span>
                         </Link>
                     )}
-                    {item?.link === '/users' && (
+                    {item?.link === '/users' && !isTickets  && (
                         <div className="border-none">
                             {/* Etiqueta que despliega el colapso */}
                             <div

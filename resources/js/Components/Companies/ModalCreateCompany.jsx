@@ -65,13 +65,18 @@ export default function ModalCreateCompany() {
                 return errorMsg('Uno de los ruts es invalido');
             }
             setLoading(true);
-            const { data } = await companyService.create(values);
+            const { data, message } = await companyService.create(values);
             router.visit('/companies', {
                 preserveState: true,
             });
-            data && successMsg(data?.message);
-            handleCloseModal();
+
+            if (data) {
+                handleCloseModal();
+                return successMsg(data?.message);
+            }
+            errorMsg(message);
         } catch (error) {
+            console.log(error);
             const {
                 response: { data: dataError },
             } = error;
@@ -320,13 +325,25 @@ export default function ModalCreateCompany() {
                             required: true,
                             message: getValidationRequiredMessage,
                         },
+                    ]}
+                >
+                    <Input showCount maxLength={50} />
+                </Form.Item>
+                <Form.Item
+                    name="slug"
+                    label="Slug de la empresa (subdominio)"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
                         {
                             validator: (_, value) => {
                                 if (/^[a-z0-9]+$/.test(value)) {
                                     return Promise.resolve();
                                 }
                                 return Promise.reject(
-                                    'El nombre solo debe contener letras minúsculas y números, sin espacios ni caracteres especiales, Esto es temporal'
+                                    'El nombre solo debe contener letras minúsculas y números, sin espacios ni caracteres especiales.'
                                 );
                             },
                         },

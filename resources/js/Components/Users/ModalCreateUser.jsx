@@ -12,6 +12,7 @@ import { userService } from '@services/api';
 import { Form, Input, Select } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { validate } from 'rut.js';
+import { countries } from '@/Utils/countries.json';
 
 export default function ModalCreateUser({
     userType,
@@ -102,13 +103,17 @@ export default function ModalCreateUser({
 
     const prefixSelector = (
         <Form.Item
-            initialValue={'+56'}
+            initialValue="+56"
             name="prefix"
             rules={[{ required: true, message: getValidationRequiredMessage }]}
             noStyle
         >
-            <Select placeholder="Prefijo">
-                <Select.Option value={'+56'}>+56</Select.Option>
+            <Select showSearch placeholder="Prefijo">
+                {countries.map((country) => (
+                    <Select.Option key={country.prefix} value={country.prefix}>
+                        {country.prefix} {country.name}
+                    </Select.Option>
+                ))}
             </Select>
         </Form.Item>
     );
@@ -190,69 +195,7 @@ export default function ModalCreateUser({
         ),
         SUPERVISOR: (
             <>
-                <Form.Item
-                    name="username"
-                    label="Nombre de usuario"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={15} />
-                </Form.Item>
-                <Form.Item
-                    name="password"
-                    label="Contraseña"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input.Password showCount maxLength={20} />
-                </Form.Item>
-                <Form.Item
-                    name="email"
-                    label="Correo Electrónico"
-                    rules={[
-                        { type: 'email', message: getValidationEmailMessage },
-                    ]}
-                >
-                    <Input showCount maxLength={60} />
-                </Form.Item>
-                <Form.Item name="phone" label="Número de teléfono">
-                    <Input
-                        name="phone"
-                        onChange={onlyNumberInput}
-                        showCount
-                        maxLength={10}
-                        addonBefore={prefixSelector}
-                        style={{
-                            width: '100%',
-                        }}
-                    />
-                </Form.Item>
-                <Form.Item
-                    name="branch_id"
-                    label="Sucursal"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Select placeholder="Seleccione la sucursal">
-                        {branches?.map((branch) => (
-                            <Select.Option key={branch.id} value={branch.id}>
-                                {branch.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
-                </Form.Item>
+                <h2>No se puede crear un supervisor</h2>
             </>
         ),
         TRABAJADOR: (
@@ -423,11 +366,11 @@ export default function ModalCreateUser({
                     name="email"
                     label="Correo Electrónico"
                     rules={[
+                        { type: 'email', message: getValidationEmailMessage },
                         {
                             required: true,
                             message: getValidationRequiredMessage,
                         },
-                        { type: 'email', message: getValidationEmailMessage },
                     ]}
                 >
                     <Input showCount maxLength={60} />
@@ -442,17 +385,17 @@ export default function ModalCreateUser({
                             message: getValidationRequiredMessage,
                         },
                     ]}
-                    initialValue={'Chile'}
+                    initialValue="Chile"
                 >
                     <Select placeholder="Seleccione su nacionalidad">
-                        <Select.Option value="Chile">Chile</Select.Option>
-                        <Select.Option value="Argentina">
-                            Argentina
-                        </Select.Option>
-                        <Select.Option value="Peru">Peru</Select.Option>
-                        <Select.Option value="Prefiero no decirlo">
-                            Prefiero no decirlo
-                        </Select.Option>
+                        {countries.map((country) => (
+                            <Select.Option
+                                key={country.name}
+                                value={country.name}
+                            >
+                                {country.name}
+                            </Select.Option>
+                        ))}
                     </Select>
                 </Form.Item>
 
@@ -691,6 +634,10 @@ export default function ModalCreateUser({
                     rules={[
                         {
                             type: 'email',
+                            message: getValidationEmailMessage,
+                        },
+                        {
+                            required: true,
                             message: getValidationRequiredMessage,
                         },
                     ]}
@@ -701,17 +648,17 @@ export default function ModalCreateUser({
                 <Form.Item
                     name="nationality"
                     label="Nacionalidad"
-                    initialValue={'Chile'}
+                    initialValue="Chile"
                 >
                     <Select placeholder="Seleccione su nacionalidad">
-                        <Select.Option value="Chile">Chile</Select.Option>
-                        <Select.Option value="Argentina">
-                            Argentina
-                        </Select.Option>
-                        <Select.Option value="Peru">Peru</Select.Option>
-                        <Select.Option value="Prefiero no decirlo">
-                            Prefiero no decirlo
-                        </Select.Option>
+                        {countries.map((country) => (
+                            <Select.Option
+                                key={country.name}
+                                value={country.name}
+                            >
+                                {country.name}
+                            </Select.Option>
+                        ))}
                     </Select>
                 </Form.Item>
 
@@ -762,14 +709,16 @@ export default function ModalCreateUser({
 
     return (
         <>
-            <CustomButton
-                onClick={handleOpenModal}
-                className="my-5"
-                type="primary"
-                shape="circle"
-                icon={<PlusOutlined />}
-                size={50}
-            />
+            {userType !== 'supervisor' && (
+                <CustomButton
+                    onClick={handleOpenModal}
+                    className="my-5"
+                    type="primary"
+                    shape="circle"
+                    icon={<PlusOutlined />}
+                    size={50}
+                />
+            )}
             <ModalForm
                 title={`Crear ${userType}`}
                 showModal={showModal}

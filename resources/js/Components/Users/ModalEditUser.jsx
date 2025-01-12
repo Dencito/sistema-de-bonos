@@ -14,6 +14,8 @@ import { differenceInYears } from 'date-fns';
 import { roleNames } from '@utils/constants';
 import { userService } from '@services/api';
 
+import { countries } from '@/Utils/countries.json';
+
 export default function ModalEditUser({
     data,
     roles,
@@ -101,8 +103,12 @@ export default function ModalEditUser({
             rules={[{ required: true, message: getValidationRequiredMessage }]}
             noStyle
         >
-            <Select placeholder="Prefijo">
-                <Select.Option value={'+56'}>+56</Select.Option>
+            <Select showSearch placeholder="Prefijo">
+                {countries.map((country) => (
+                    <Select.Option key={country.prefix} value={country.prefix}>
+                        {country.prefix} {country.name}
+                    </Select.Option>
+                ))}
             </Select>
         </Form.Item>
     );
@@ -286,8 +292,8 @@ export default function ModalEditUser({
                     />
                 </Form.Item>
                 <Form.Item
-                    name="branch_id"
-                    label="Sucursal"
+                    name="branches"
+                    label="Sucursales"
                     rules={[
                         {
                             required: true,
@@ -295,10 +301,13 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione la sucursal">
+                    <Select
+                        mode="multiple"
+                        placeholder="Seleccione las sucursales"
+                    >
                         {branches?.map((branch) => (
                             <Select.Option key={branch.id} value={branch.id}>
-                                {branch.name}
+                                {branch?.name}
                             </Select.Option>
                         ))}
                     </Select>
@@ -333,11 +342,13 @@ export default function ModalEditUser({
                     ]}
                 >
                     <Select placeholder="Seleccione el rol">
-                        {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.id}>
-                                {roleDisplayNames[role?.name] || role?.name}
-                            </Select.Option>
-                        ))}
+                        {roles
+                            ?.filter((role) => role?.name !== roleNames.jugador)
+                            .map((role) => (
+                                <Select.Option key={role?.id} value={role?.id}>
+                                    {roleDisplayNames[role?.name] || role?.name}
+                                </Select.Option>
+                            ))}
                     </Select>
                 </Form.Item>
             </>
@@ -509,6 +520,7 @@ export default function ModalEditUser({
                 <Form.Item
                     name="nationality"
                     label="Nacionalidad"
+                    initialValue="Chile"
                     rules={[
                         {
                             required: true,
@@ -516,15 +528,15 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione su nacionalidad">
-                        <Select.Option value="Chile">Chile</Select.Option>
-                        <Select.Option value="Argentina">
-                            Argentina
-                        </Select.Option>
-                        <Select.Option value="Peru">Peru</Select.Option>
-                        <Select.Option value="Prefiero no decirlo">
-                            Prefiero no decirlo
-                        </Select.Option>
+                    <Select showSearch placeholder="Nacionalidad">
+                        {countries.map((country) => (
+                            <Select.Option
+                                key={country.name}
+                                value={country.name}
+                            >
+                                {country.name}
+                            </Select.Option>
+                        ))}
                     </Select>
                 </Form.Item>
 
@@ -817,16 +829,16 @@ export default function ModalEditUser({
                     <Input showCount maxLength={60} />
                 </Form.Item>
 
-                <Form.Item name="nationality" label="Nacionalidad">
-                    <Select placeholder="Seleccione su nacionalidad">
-                        <Select.Option value="Chile">Chile</Select.Option>
-                        <Select.Option value="Argentina">
-                            Argentina
-                        </Select.Option>
-                        <Select.Option value="Peru">Peru</Select.Option>
-                        <Select.Option value="Prefiero no decirlo">
-                            Prefiero no decirlo
-                        </Select.Option>
+                <Form.Item initialValue="Chile" name="nationality" label="Nacionalidad">
+                <Select showSearch placeholder="Nacionalidad">
+                        {countries.map((country) => (
+                            <Select.Option
+                                key={country.name}
+                                value={country.name}
+                            >
+                                {country.name}
+                            </Select.Option>
+                        ))}
                     </Select>
                 </Form.Item>
 

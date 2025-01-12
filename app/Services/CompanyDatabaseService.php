@@ -12,14 +12,14 @@ class CompanyDatabaseService
     public function createCompanyTables(Request $request)
     {
         try {
-            $statusesTable = $request->name . '_statuses';
-            $companiesTable = $request->name . '_companies';
-            $rolesTable = $request->name . '_roles';
-            $usersTable = $request->name . '_users';
-            $bonusesTable = $request->name . '_bonuses';
-            $branchesTable = $request->name . '_branches';
-            $userBranchesTable = $request->name . '_user_branches';
-            $categoryBonusesTable = $request->name . '_category_bonuses';
+            $statusesTable = $request->slug . '_statuses';
+            $companiesTable = $request->slug . '_companies';
+            $rolesTable = $request->slug . '_roles';
+            $usersTable = $request->slug . '_users';
+            $bonusesTable = $request->slug . '_bonuses';
+            $branchesTable = $request->slug . '_branches';
+            $userBranchesTable = $request->slug . '_user_branches';
+            $categoryBonusesTable = $request->slug . '_category_bonuses';
 
             // 1. Crear tabla de estados (no tiene dependencias)
             if (!Schema::hasTable($statusesTable)) {
@@ -110,9 +110,9 @@ class CompanyDatabaseService
                     'companyAddressStreet' => $request->companyAddressStreet,
                     'companyAddressNumber' => $request->companyAddressNumber,
                     'max_branches' => $request->max_branches,
-                    'domain' => $request->name . '.' . env('APP_DOMAIN', 'localhost'),
-                    'slug' => $request->name,
-                    'schema_name' => $request->name,
+                    'domain' => $request->slug . '.' . env('APP_DOMAIN', 'localhost'),
+                    'slug' => $request->slug,
+                    'schema_name' => $request->slug,
                     'settings' => json_encode([]),
                     'is_active' => true,
                 ]);
@@ -217,22 +217,22 @@ class CompanyDatabaseService
                 try {
                     DB::table($usersTable)->insert([
                         [
-                            'first_name' => $request->name,
+                            'first_name' => $request->slug,
                             'first_last_name' => 'System',
                             'email' => $request->email,
-                            'username' => $request->name,
-                            'password' => Hash::make($request->name . '.password'),
+                            'username' => $request->slug,
+                            'password' => Hash::make($request->slug . '.password'),
                             'status_id' => 1,
                             'role_id' => 1,
                             'created_at' => now(),
                             'updated_at' => now()
                         ],
                         [
-                            'first_name' => $request->name,
+                            'first_name' => $request->slug,
                             'first_last_name' => 'System',
                             'email' => 'superadmin.' . $request->email,
-                            'username' => 'superadmin.' . $request->name,
-                            'password' => Hash::make($request->name . '.password'),
+                            'username' => 'superadmin.' . $request->slug,
+                            'password' => Hash::make($request->slug . '.password'),
                             'status_id' => 1,
                             'role_id' => 2,
                             'created_at' => now(),

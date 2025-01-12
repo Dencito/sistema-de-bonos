@@ -17,6 +17,7 @@ import { roleDisplayNames } from '@/Utils/constants';
 export default function UserPage({
     auth,
     users,
+    userWorkers,
     roles,
     branches,
     companies,
@@ -211,12 +212,24 @@ export default function UserPage({
                 ),
             },
             {
-                title: 'Sucursal',
-                key: 'branche',
+                title: 'Sucursales',
+                key: 'branches',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
-                        {user?.branch?.name}
-                    </p>
+                    <div className="relative group">
+                        <span className="cursor-pointer hover:text-blue-500">
+                            Ver Sucursales
+                        </span>
+                        <div className="absolute z-10 hidden group-hover:block bg-white border border-gray-200 rounded-md shadow-lg p-2">
+                            {user?.branches?.map((branch) => (
+                                <p
+                                    key={branch?.id}
+                                    className="whitespace-nowrap"
+                                >
+                                    {branch?.name}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
                 ),
             },
             {
@@ -273,6 +286,7 @@ export default function UserPage({
                                     (branch) => branch?.id
                                 ),
                             }}
+                            userWorkers={userWorkers}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
                         />
@@ -718,6 +732,7 @@ export default function UserPage({
                                         roles={roles?.filter(
                                             (item) => item?.name === data?.role
                                         )}
+                                        userWorkers={userWorkers}
                                         categories={categories}
                                         branches={branches}
                                     />
@@ -766,7 +781,7 @@ export default function UserPage({
                         </div>
                     </div>
 
-                    <ExcelManager users={users} />
+                    {/* <ExcelManager users={users} /> */}
                 </div>
             </div>
         </AuthenticatedLayout>

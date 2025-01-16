@@ -15,7 +15,7 @@ export default function ForgotPassword({ status }) {
                     'success'
                 );
             },
-            onError: (errors) => {
+            onError: () => {
                 errorMsg('Error al enviar el correo de recuperación', 'error');
             },
         });

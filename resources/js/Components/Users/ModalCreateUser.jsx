@@ -57,7 +57,7 @@ export default function ModalCreateUser({
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al crear el usuario');
         } finally {
             setLoading(false);

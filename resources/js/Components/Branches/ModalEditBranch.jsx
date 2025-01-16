@@ -99,7 +99,7 @@ export default function ModalEditBranch({ data, statuses }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al actualizar la sucursal');
         } finally {
             setLoading(false);

@@ -25,7 +25,7 @@ export default function ModalRequestMoreBranches() {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al solicitar más sucursales');
         } finally {
             setLoading(false);

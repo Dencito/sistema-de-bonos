@@ -43,7 +43,7 @@ export default function ModalCreateBonus({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             setLoading(false);
         }
     };

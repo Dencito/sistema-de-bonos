@@ -64,7 +64,7 @@ export default function ModalEditCompany({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al actualizar la empresa');
         }
     };

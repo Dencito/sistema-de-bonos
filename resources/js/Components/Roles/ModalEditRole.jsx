@@ -52,7 +52,7 @@ export default function ModalEditRole({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al actualizar el rol');
         }
     };

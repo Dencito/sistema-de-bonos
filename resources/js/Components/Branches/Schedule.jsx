@@ -22,10 +22,11 @@ export default function Schedule({ onScheduleSave }) {
         return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
 
-    const hours = Array.from(
-        { length: 24 },
-        (_, i) => i.toString().padStart(2, '0') + ':00'
-    );
+    const hours = Array.from({ length: 48 }, (_, i) => {
+        const hour = Math.floor(i / 2);
+        const minute = i % 2 === 0 ? '00' : '30';
+        return `${hour.toString().padStart(2, '0')}:${minute}`;
+    });
 
     const handleMouseDown = (day, hour) => {
         setIsSelecting(true);
@@ -105,9 +106,18 @@ export default function Schedule({ onScheduleSave }) {
             for (let i = 1; i <= hours.length; i++) {
                 if (i === hours.length || hours[i] !== prevHour + 1) {
                     // Fin del rango actual
+                    const start = `${Math.floor(rangeStart / 2)
+                        .toString()
+                        .padStart(
+                            2,
+                            '0'
+                        )}:${rangeStart % 2 === 0 ? '00' : '30'}`;
+                    const end = `${Math.floor(prevHour / 2)
+                        .toString()
+                        .padStart(2, '0')}:${prevHour % 2 === 0 ? '00' : '30'}`;
                     ranges.push({
-                        start_time: `${rangeStart.toString().padStart(2, '0')}:00`,
-                        end_time: `${(prevHour + 1).toString().padStart(2, '0')}:00`,
+                        start_time: start,
+                        end_time: end,
                     });
                     if (i < hours.length) {
                         // Comenzar nuevo rango
@@ -132,14 +142,14 @@ export default function Schedule({ onScheduleSave }) {
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">
             <div className="overflow-x-auto pt-10">
-                <div className="grid grid-cols-[120px_repeat(24,minmax(45px,1fr))] gap-0.5 items-center">
+                <div className="grid grid-cols-[120px_repeat(48,minmax(30px,1fr))] gap-0.5 items-center">
                     <div className="day-label">Día/Hora</div>
                     {hours.map((hour) => (
                         <div
                             key={hour}
-                            className="relative h-[50px] flex items-start justify-center"
+                            className="relative h-[40px] flex items-start justify-center"
                         >
-                            <span className="absolute top-0 origin-left -rotate-45 whitespace-nowrap text-sm text-gray-600 mt-2.5">
+                            <span className="absolute top-0 origin-left -rotate-45 whitespace-nowrap text-xs text-gray-600 mt-2.5">
                                 {hour}
                             </span>
                         </div>
@@ -149,7 +159,7 @@ export default function Schedule({ onScheduleSave }) {
                 {days.map((day) => (
                     <div
                         key={day.name}
-                        className="grid grid-cols-[120px_repeat(24,minmax(45px,1fr))] gap-0.5 items-center"
+                        className="grid grid-cols-[120px_repeat(48,minmax(30px,1fr))] gap-0.5 items-center"
                     >
                         <div className="p-2 font-medium text-left sticky left-0 bg-white z-10 text-sm">
                             {day.name}
@@ -157,7 +167,7 @@ export default function Schedule({ onScheduleSave }) {
                         {hours.map((_, index) => (
                             <div
                                 key={`${day.name}-${index}`}
-                                className={`h-[35px] border border-gray-200 rounded cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:border-blue-400
+                                className={`h-[30px] border border-gray-200 rounded cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:border-blue-400
                   ${selectedSlots[`${day.name}-${index}`] ? 'bg-blue-500 border-blue-500' : ''}`}
                                 onMouseDown={() =>
                                     handleMouseDown(day.name, index)

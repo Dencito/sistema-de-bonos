@@ -32,7 +32,7 @@ export default function ModalCreateCompany() {
                 try {
                     const data = await countriesService.getAll();
                     setCountries(data?.data);
-                } catch (error) {
+                } catch {
                     errorMsg('Failed to fetch countries');
                 }
             }
@@ -42,7 +42,7 @@ export default function ModalCreateCompany() {
                 try {
                     const data = await countriesService.getStates(country);
                     setRegions(data?.data);
-                } catch (error) {
+                } catch {
                     errorMsg('Failed to fetch regions');
                 }
             }
@@ -76,7 +76,6 @@ export default function ModalCreateCompany() {
             }
             errorMsg(message);
         } catch (error) {
-            console.log(error);
             const {
                 response: { data: dataError },
             } = error;

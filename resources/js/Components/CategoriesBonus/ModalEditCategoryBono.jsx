@@ -26,7 +26,7 @@ export default function ModalEditCategoryBono({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al actualizar la categoría');
         } finally {
             setLoading(false);

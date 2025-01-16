@@ -53,7 +53,7 @@ export default function ModalEditUser({
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al actualizar el usuario');
         } finally {
             setLoading(false);
@@ -829,8 +829,12 @@ export default function ModalEditUser({
                     <Input showCount maxLength={60} />
                 </Form.Item>
 
-                <Form.Item initialValue="Chile" name="nationality" label="Nacionalidad">
-                <Select showSearch placeholder="Nacionalidad">
+                <Form.Item
+                    initialValue="Chile"
+                    name="nationality"
+                    label="Nacionalidad"
+                >
+                    <Select showSearch placeholder="Nacionalidad">
                         {countries.map((country) => (
                             <Select.Option
                                 key={country.name}

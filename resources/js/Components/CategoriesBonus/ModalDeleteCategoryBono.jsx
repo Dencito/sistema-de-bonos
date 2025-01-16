@@ -19,7 +19,7 @@ export default function ModalDeleteCategoryBono({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al eliminar la categoría');
         }
     };

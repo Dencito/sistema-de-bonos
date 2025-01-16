@@ -17,7 +17,7 @@ export default function ModalDeleteBranch({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al eliminar la sucursal');
         }
     };

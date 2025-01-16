@@ -8,7 +8,6 @@ import ModalViewUser from '@/Components/Users/ModalViewUser';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
 import FilterModal from '@/Components/Users/FilterModal';
 import MobileButton from '@/Components/MobileButton';
-import ExcelManager from '@/Components/Users/ExcelManager';
 import { CustomTable } from '@components-v2/CustomTable';
 import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssignCategories';
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';

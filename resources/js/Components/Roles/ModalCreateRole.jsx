@@ -50,7 +50,7 @@ export default function ModalCreateRole() {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al crear el rol');
         }
     };

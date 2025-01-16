@@ -30,7 +30,7 @@ export const SelectAssignBonuses = ({
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al asignar bonos');
         }
     };
@@ -51,7 +51,7 @@ export const SelectAssignBonuses = ({
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al eliminar bonos');
         }
     };

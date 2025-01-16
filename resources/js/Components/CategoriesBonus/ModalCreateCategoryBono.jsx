@@ -26,7 +26,7 @@ export default function ModalCreateCategoryBono() {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al crear la categoría de bono');
         } finally {
             setLoading(false);

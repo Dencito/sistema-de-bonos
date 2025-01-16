@@ -18,7 +18,7 @@ export default function ModalDeleteRole({ data }) {
             } else {
                 errorMsg(response.message);
             }
-        } catch (error) {
+        } catch {
             errorMsg('Error al eliminar el rol');
         }
     };

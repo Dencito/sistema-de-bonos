@@ -21,7 +21,7 @@ export default function ScheduleModal({ open, onClose, onSave, initialValue }) {
             title="Seleccionar Horarios"
             open={open}
             onCancel={onClose}
-            width={1000}
+            width={10000}
             footer={[
                 <Button key="cancel" onClick={onClose}>
                     Cancelar

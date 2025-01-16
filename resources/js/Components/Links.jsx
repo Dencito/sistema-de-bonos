@@ -11,7 +11,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { useState } from 'react';
-import { roleDisplayNames, allowedRoles, roleNames } from '@/Utils/constants';
+import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
 
 export const Links = ({ role, roles }) => {
     const formattedRoles = roles.map((role) => ({
@@ -20,19 +20,18 @@ export const Links = ({ role, roles }) => {
     }));
 
     function getSubdomain() {
-        var url = document.location.href;
         var host = document.location.host;
         var partes = host.split('.');
         var subdominio = partes[0];
-        
+
         if (subdominio === 'www') {
             subdominio = '';
         }
-        
+
         return subdominio;
     }
-    
-    const isTickets = (getSubdomain() === "tickets");
+
+    const isTickets = getSubdomain() === 'tickets';
 
     const path = window.location.pathname;
     const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +58,8 @@ export const Links = ({ role, roles }) => {
                     icon: <MapPinHouse />,
                     label: 'Sucursales',
                     link: '/branches',
-                    autorized: allowedRoles.branches.includes(role) && !isTickets,
+                    autorized:
+                        allowedRoles.branches.includes(role) && !isTickets,
                 },
                 {
                     key: '3',
@@ -113,7 +113,7 @@ export const Links = ({ role, roles }) => {
                             </span>
                         </Link>
                     )}
-                    {item?.link === '/users' && !isTickets  && (
+                    {item?.link === '/users' && !isTickets && (
                         <div className="border-none">
                             {/* Etiqueta que despliega el colapso */}
                             <div

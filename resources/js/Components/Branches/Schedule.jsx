@@ -24,7 +24,8 @@ export default function Schedule({ onScheduleSave }) {
         return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
 
-    const hours = Array.from({ length: 48 }, (_, i) => {
+    const hours = Array.from({ length: 49 }, (_, i) => {
+        if (i === 48) return '24:00';
         const hour = Math.floor(i / 2);
         const minute = i % 2 === 0 ? '00' : '30';
         return `${hour.toString().padStart(2, '0')}:${minute}`;
@@ -252,7 +253,7 @@ export default function Schedule({ onScheduleSave }) {
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">
             <div className="overflow-x-auto pt-10">
-                <div className="grid grid-cols-[120px_repeat(48,minmax(30px,1fr))] gap-0.5 items-center">
+                <div className="grid grid-cols-[120px_repeat(49,minmax(30px,1fr))] gap-0.5 items-center">
                     <div className="day-label">Día/Hora</div>
                     {hours.map((hour) => (
                         <div
@@ -269,7 +270,7 @@ export default function Schedule({ onScheduleSave }) {
                 {days.map((day) => (
                     <div
                         key={day.name}
-                        className="grid grid-cols-[120px_repeat(48,minmax(30px,1fr))] gap-0.5 items-center"
+                        className="grid grid-cols-[120px_repeat(49,minmax(30px,1fr))] gap-0.5 items-center"
                     >
                         <div className="p-2 font-medium text-left sticky left-0 bg-white z-10 text-sm">
                             {day.name}

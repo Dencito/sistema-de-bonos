@@ -131,11 +131,18 @@ export default function Schedule({ onScheduleSave }) {
             };
         });
 
-        // Actualizar slots bloqueados
+        // Actualizar slots bloqueados, excluyendo el último slot de cada rango
         const newBlockedSlots = { ...blockedSlots };
         Object.entries(selectedSlots).forEach(([slot, isSelected]) => {
             if (isSelected) {
-                newBlockedSlots[slot] = true;
+                const [day, hour] = slot.split('-');
+                const hourNum = parseInt(hour);
+                const hours = groupedByDay[day];
+                
+                // Si no es el último slot del rango, bloquearlo
+                if (hourNum !== Math.max(...hours)) {
+                    newBlockedSlots[slot] = true;
+                }
             }
         });
         setBlockedSlots(newBlockedSlots);

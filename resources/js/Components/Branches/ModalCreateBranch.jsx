@@ -301,7 +301,7 @@ export default function ModalCreateBranch({ companies }) {
                                     }
                                     type="primary"
                                 >
-                                    Configurar Horarios Disponibles
+                                    Agregar Horarios
                                 </Button>
                                 {availableSchedules.length > 0 && (
                                     <Tag color="green">
@@ -341,7 +341,7 @@ export default function ModalCreateBranch({ companies }) {
                     </Form.Item>
 
                     <Form.Item>
-                        <Space>
+                        <Space style={{ marginTop: 16 }}>
                             <Button onClick={handleCloseModal}>Cancelar</Button>
                             <Button
                                 type="primary"

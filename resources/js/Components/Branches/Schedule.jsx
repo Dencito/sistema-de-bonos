@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, message, Popconfirm } from 'antd';
-import { SaveOutlined, EditOutlined, DeleteOutlined, ClearOutlined, CloseOutlined } from '@ant-design/icons';
+import { SaveOutlined, ClearOutlined, CloseOutlined } from '@ant-design/icons';
 import { days } from '@components/Branches/days';
 
 export default function Schedule({ onScheduleSave }) {
@@ -46,7 +46,9 @@ export default function Schedule({ onScheduleSave }) {
         if (isSelecting.active && selectionStart) {
             const newSelectedSlots = { ...selectedSlots };
 
-            const startDay = days.findIndex((d) => d.name === selectionStart.day);
+            const startDay = days.findIndex(
+                (d) => d.name === selectionStart.day
+            );
             const currentDay = days.findIndex((d) => d.name === day);
             const startHour = selectionStart.hour;
 
@@ -108,7 +110,10 @@ export default function Schedule({ onScheduleSave }) {
                 if (i === hours.length || hours[i] !== prevHour + 1) {
                     const start = `${Math.floor(rangeStart / 2)
                         .toString()
-                        .padStart(2, '0')}:${rangeStart % 2 === 0 ? '00' : '30'}`;
+                        .padStart(
+                            2,
+                            '0'
+                        )}:${rangeStart % 2 === 0 ? '00' : '30'}`;
                     const end = `${Math.floor(prevHour / 2)
                         .toString()
                         .padStart(2, '0')}:${prevHour % 2 === 0 ? '00' : '30'}`;
@@ -138,14 +143,14 @@ export default function Schedule({ onScheduleSave }) {
                 const [day, hour] = slot.split('-');
                 const hourNum = parseInt(hour);
                 const hours = groupedByDay[day];
-                
+
                 // Si no es el último slot del rango, bloquearlo
                 if (hourNum !== Math.max(...hours)) {
                     newBlockedSlots[slot] = true;
                 }
             }
         });
-        
+
         if (editingIndex !== null) {
             const newSchedules = [...savedSchedules];
             newSchedules[editingIndex] = schedules[0];
@@ -162,44 +167,18 @@ export default function Schedule({ onScheduleSave }) {
         message.success('Turno guardado exitosamente');
     };
 
-    const handleEditSchedule = (index) => {
-        const schedule = savedSchedules[index];
-        setEditingSchedule(schedule);
-        setEditingIndex(index);
-
-        // Convertir el horario guardado a slots seleccionados
-        const newSelectedSlots = {};
-        schedule.ranges.forEach((range) => {
-            const startHour = parseInt(range.start_time.split(':')[0]) * 2 +
-                (range.start_time.split(':')[1] === '30' ? 1 : 0);
-            const endHour = parseInt(range.end_time.split(':')[0]) * 2 +
-                (range.end_time.split(':')[1] === '30' ? 1 : 0);
-            
-            for (let h = startHour; h <= endHour; h++) {
-                newSelectedSlots[`${schedule.day}-${h}`] = true;
-            }
-        });
-
-        // Eliminar los slots bloqueados correspondientes
-        const newBlockedSlots = { ...blockedSlots };
-        Object.keys(newSelectedSlots).forEach((slot) => {
-            delete newBlockedSlots[slot];
-        });
-
-        setBlockedSlots(newBlockedSlots);
-        setSelectedSlots(newSelectedSlots);
-    };
-
     const handleCancelEdit = () => {
         if (editingSchedule) {
             // Restaurar los slots bloqueados del horario que se estaba editando
             const newBlockedSlots = { ...blockedSlots };
             editingSchedule.ranges.forEach((range) => {
-                const startHour = parseInt(range.start_time.split(':')[0]) * 2 +
+                const startHour =
+                    parseInt(range.start_time.split(':')[0]) * 2 +
                     (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                const endHour = parseInt(range.end_time.split(':')[0]) * 2 +
+                const endHour =
+                    parseInt(range.end_time.split(':')[0]) * 2 +
                     (range.end_time.split(':')[1] === '30' ? 1 : 0);
-                
+
                 for (let h = startHour; h < endHour; h++) {
                     newBlockedSlots[`${editingSchedule.day}-${h}`] = true;
                 }
@@ -211,27 +190,6 @@ export default function Schedule({ onScheduleSave }) {
         setEditingIndex(null);
     };
 
-    const handleDeleteSchedule = (index) => {
-        const schedule = savedSchedules[index];
-        const newBlockedSlots = { ...blockedSlots };
-        schedule.ranges.forEach((range) => {
-            const startHour = parseInt(range.start_time.split(':')[0]) * 2 +
-                (range.start_time.split(':')[1] === '30' ? 1 : 0);
-            const endHour = parseInt(range.end_time.split(':')[0]) * 2 +
-                (range.end_time.split(':')[1] === '30' ? 1 : 0);
-            
-            for (let h = startHour; h <= endHour; h++) {
-                delete newBlockedSlots[`${schedule.day}-${h}`];
-            }
-        });
-
-        setBlockedSlots(newBlockedSlots);
-        const newSchedules = [...savedSchedules];
-        newSchedules.splice(index, 1);
-        setSavedSchedules(newSchedules);
-        message.success('Turno eliminado exitosamente');
-    };
-
     const handleClearAll = () => {
         setBlockedSlots({});
         setSelectedSlots({});
@@ -240,15 +198,6 @@ export default function Schedule({ onScheduleSave }) {
         setEditingIndex(null);
         message.success('Todos los turnos han sido eliminados');
     };
-
-    // Agrupar horarios por día
-    const groupedSchedules = savedSchedules.reduce((acc, schedule) => {
-        if (!acc[schedule.day]) {
-            acc[schedule.day] = [];
-        }
-        acc[schedule.day].push(...schedule.ranges);
-        return acc;
-    }, {});
 
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">
@@ -279,14 +228,21 @@ export default function Schedule({ onScheduleSave }) {
                             <div
                                 key={`${day.name}-${index}`}
                                 className={`h-[30px] border border-gray-200 rounded cursor-pointer transition-all duration-200 
-                                    ${blockedSlots[`${day.name}-${index}`] 
-                                        ? 'bg-gray-300 cursor-not-allowed' 
-                                        : selectedSlots[`${day.name}-${index}`]
-                                            ? 'bg-blue-500 border-blue-500'
-                                            : 'hover:bg-blue-50 hover:border-blue-400'
+                                    ${
+                                        blockedSlots[`${day.name}-${index}`]
+                                            ? 'bg-gray-300 cursor-not-allowed'
+                                            : selectedSlots[
+                                                    `${day.name}-${index}`
+                                                ]
+                                              ? 'bg-blue-500 border-blue-500'
+                                              : 'hover:bg-blue-50 hover:border-blue-400'
                                     }`}
-                                onMouseDown={() => handleMouseDown(day.name, index)}
-                                onMouseEnter={() => handleMouseEnter(day.name, index)}
+                                onMouseDown={() =>
+                                    handleMouseDown(day.name, index)
+                                }
+                                onMouseEnter={() =>
+                                    handleMouseEnter(day.name, index)
+                                }
                                 onMouseUp={handleMouseUp}
                             />
                         ))}
@@ -299,7 +255,10 @@ export default function Schedule({ onScheduleSave }) {
                     type="primary"
                     icon={<SaveOutlined />}
                     onClick={handleSaveSchedule}
-                    disabled={Object.values(selectedSlots).filter(Boolean).length === 0}
+                    disabled={
+                        Object.values(selectedSlots).filter(Boolean).length ===
+                        0
+                    }
                 >
                     {editingSchedule ? 'Guardar Cambios' : 'Guardar Turno'}
                 </Button>
@@ -313,7 +272,7 @@ export default function Schedule({ onScheduleSave }) {
                         Cancelar Edición
                     </Button>
                 )}
-                
+
                 <Popconfirm
                     title="¿Estás seguro de eliminar todos los turnos?"
                     onConfirm={handleClearAll}
@@ -330,60 +289,6 @@ export default function Schedule({ onScheduleSave }) {
                     </Button>
                 </Popconfirm>
             </div>
-
-            {Object.entries(groupedSchedules).length > 0 && (
-                <Card title="Turnos Guardados" className="mt-4">
-                    {Object.entries(groupedSchedules).map(([day, ranges]) => (
-                        <div key={day} className="mb-4">
-                            <div className="font-medium mb-2">{day}:</div>
-                            {ranges.map((range, rangeIndex) => (
-                                <div key={rangeIndex} className="ml-4 mb-1">
-                                    {range.start_time} a {range.end_time}
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                    <div className="mt-4 border-t pt-4">
-                        {savedSchedules.map((schedule, index) => (
-                            <div key={index} className="flex items-center justify-between mb-2">
-                                <div>
-                                    <strong>{schedule.day}:</strong>{' '}
-                                    {schedule.ranges.map((range, rangeIndex) => (
-                                        <span key={rangeIndex}>
-                                            {range.start_time} a {range.end_time}
-                                            {rangeIndex < schedule.ranges.length - 1 ? ' - ' : ''}
-                                        </span>
-                                    ))}
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button
-                                        type="default"
-                                        icon={<EditOutlined />}
-                                        onClick={() => handleEditSchedule(index)}
-                                        disabled={editingSchedule !== null}
-                                    >
-                                        Editar
-                                    </Button>
-                                    <Popconfirm
-                                        title="¿Estás seguro de eliminar este turno?"
-                                        onConfirm={() => handleDeleteSchedule(index)}
-                                        okText="Sí"
-                                        cancelText="No"
-                                    >
-                                        <Button
-                                            type="default"
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                        >
-                                            Eliminar
-                                        </Button>
-                                    </Popconfirm>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            )}
         </Card>
     );
 }

@@ -303,12 +303,14 @@ export default function ModalCreateBranch({ companies }) {
                                 >
                                     Agregar Horarios
                                 </Button>
+                                {/* TODO: check it */}
                                 {availableSchedules.length > 0 && (
                                     <Tag color="green">
                                         {availableSchedules.length} horarios
                                         configurados
                                     </Tag>
                                 )}
+                                <Tag color="green">0 horarios creados</Tag>
                             </Space>
                         </Card>
 

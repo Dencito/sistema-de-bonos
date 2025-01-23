@@ -306,11 +306,13 @@ export default function ModalCreateBranch({ companies }) {
                                 {/* TODO: check it */}
                                 {availableSchedules.length > 0 && (
                                     <Tag color="green">
-                                        {availableSchedules.length} horarios
-                                        configurados
+                                        {availableSchedules?.length}{' '}
+                                        {availableSchedules?.length === 1
+                                            ? 'turno'
+                                            : 'turnos'}{' '}
+                                        configurado
                                     </Tag>
                                 )}
-                                <Tag color="green">0 horarios creados</Tag>
                             </Space>
                         </Card>
 

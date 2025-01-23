@@ -26,10 +26,15 @@ export default function ModalViewBranch({ data, statuses, companies }) {
             result += `\nTurno ${String.fromCharCode(65 + index)}\n`;
             item.schedules.forEach((schedule) => {
                 const day = schedule.day;
-                const ranges = schedule.ranges
-                    .map((range) => `${range.start_time} - ${range.end_time}`)
-                    .join(' | ');
-                result += `${day}: ${ranges}\n`;
+                const filteredRanges = schedule.ranges.filter(
+                    range => !(range.start_time === "00:00" && range.end_time === "00:00")
+                );
+                if (filteredRanges.length > 0) {
+                    const ranges = filteredRanges
+                        .map((range) => `${range.start_time} - ${range.end_time}`)
+                        .join(' | ');
+                    result += `${day}: ${ranges}\n`;
+                }
             });
         });
         return result.trim();

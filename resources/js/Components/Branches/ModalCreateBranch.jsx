@@ -301,7 +301,7 @@ export default function ModalCreateBranch({ companies }) {
                                     }
                                     type="primary"
                                 >
-                                    Agregar Horarios
+                                    Agregar turno
                                 </Button>
                                 {/* TODO: check it */}
                                 {availableSchedules.length > 0 && (
@@ -310,7 +310,7 @@ export default function ModalCreateBranch({ companies }) {
                                         {availableSchedules?.length === 1
                                             ? 'turno'
                                             : 'turnos'}{' '}
-                                        configurado
+                                        turno
                                     </Tag>
                                 )}
                             </Space>

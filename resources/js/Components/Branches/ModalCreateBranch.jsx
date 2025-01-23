@@ -308,9 +308,8 @@ export default function ModalCreateBranch({ companies }) {
                                     <Tag color="green">
                                         {availableSchedules?.length}{' '}
                                         {availableSchedules?.length === 1
-                                            ? 'turno'
-                                            : 'turnos'}{' '}
-                                        turno
+                                            ? 'turno creado'
+                                            : 'turnos creados'}{' '}
                                     </Tag>
                                 )}
                             </Space>

@@ -22,10 +22,36 @@ export default function ModalViewBranch({ data, statuses, companies }) {
 
     const formatSchedule = (data) => {
         let result = '';
+
+        const maxDayLength = Math.max(
+            ...data.flatMap((item) =>
+                item.schedules.map((schedule) => schedule.day.length)
+            )
+        );
+
+        const maxRangeLength = Math.max(
+            ...data.flatMap((item) =>
+                item.schedules.flatMap((schedule) =>
+                    schedule.ranges
+                        .filter(
+                            (range) =>
+                                !(
+                                    range.start_time === '00:00' &&
+                                    range.end_time === '00:00'
+                                )
+                        )
+                        .map(
+                            (range) =>
+                                `${range.start_time} - ${range.end_time}`.length
+                        )
+                )
+            )
+        );
+
         data.forEach((item, index) => {
             result += `\nTurno ${String.fromCharCode(65 + index)}\n`;
             item.schedules.forEach((schedule) => {
-                const day = schedule.day;
+                const day = schedule.day.padEnd(maxDayLength, ' ');
                 const filteredRanges = schedule.ranges.filter(
                     (range) =>
                         !(
@@ -38,8 +64,9 @@ export default function ModalViewBranch({ data, statuses, companies }) {
                         .map(
                             (range) => `${range.start_time} - ${range.end_time}`
                         )
-                        .join(' | ');
-                    result += `${day}: ${ranges}\n`;
+                        .join(' | ')
+                        .padEnd(maxRangeLength, ' ');
+                    result += `${day} : ${ranges}\n`;
                 }
             });
         });
@@ -261,7 +288,12 @@ export default function ModalViewBranch({ data, statuses, companies }) {
                 <div className="schedules">
                     {parsedSchedules.length > 0 ? (
                         <>
-                            <pre className="whitespace-pre-line">
+                            <pre
+                                style={{
+                                    fontFamily: 'monospace',
+                                    whiteSpace: 'pre',
+                                }}
+                            >
                                 {formatSchedule(parsedSchedules)}
                             </pre>
                         </>

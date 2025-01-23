@@ -1,18 +1,7 @@
 import { useState } from 'react';
-import {
-    Button,
-    Divider,
-    Form,
-    Input,
-    Modal,
-    Select,
-    Space,
-    Card,
-    Tag,
-} from 'antd';
+import { Button, Divider, Form, Input, Modal, Select, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
-import { days } from './days';
 
 export default function ModalViewBranch({ data, statuses, companies }) {
     const [showModal, setShowModal] = useState(false);
@@ -27,6 +16,23 @@ export default function ModalViewBranch({ data, statuses, companies }) {
 
     const handleOpenModal = () => {
         setShowModal(true);
+    };
+
+    const parsedSchedules = JSON.parse(data.available_schedules || '[]');
+
+    const formatSchedule = (data) => {
+        let result = '';
+        data.forEach((item, index) => {
+            result += `\nTurno ${String.fromCharCode(65 + index)}\n`;
+            item.schedules.forEach((schedule) => {
+                const day = schedule.day;
+                const ranges = schedule.ranges
+                    .map((range) => `${range.start_time} - ${range.end_time}`)
+                    .join(' | ');
+                result += `${day}: ${ranges}\n`;
+            });
+        });
+        return result.trim();
     };
 
     return (
@@ -134,7 +140,6 @@ export default function ModalViewBranch({ data, statuses, companies }) {
                     </Select>
                 </Form.Item>
 
-                {/* Dirección de la sucursal */}
                 <Divider className="font-bold text-3xl">Dirección</Divider>
                 <div className="flex gap-5">
                     <Form.Item
@@ -241,148 +246,19 @@ export default function ModalViewBranch({ data, statuses, companies }) {
                     </Form.Item>
                 </div>
 
-                {/* Turnos */}
                 <Divider className="font-bold text-3xl">Turnos</Divider>
-                <Form.List name="shifts">
-                    {(fields) => (
-                        <div
-                            style={{
-                                display: 'flex',
-                                rowGap: 16,
-                                flexDirection: 'column',
-                            }}
-                        >
-                            {fields.map((field) => (
-                                <Card
-                                    size="small"
-                                    title={`Turno ${field.name + 1}`}
-                                    key={field.key}
-                                >
-                                    <div className="flex flex-wrap justify-between">
-                                        <Form.Item
-                                            className="w-5/12"
-                                            label="Desde"
-                                            name={[field.name, 'day_init']}
-                                            rules={[
-                                                {
-                                                    required: true,
-                                                    message:
-                                                        getValidationRequiredMessage,
-                                                },
-                                            ]}
-                                        >
-                                            <Select
-                                                showSearch
-                                                placeholder="Seleccionar día"
-                                            >
-                                                {days?.map((day) => (
-                                                    <Select.Option
-                                                        key={day?.id}
-                                                        value={day?.name}
-                                                    >
-                                                        {day?.name}
-                                                    </Select.Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                        <Form.Item
-                                            className="w-5/12"
-                                            label="Hasta"
-                                            name={[field.name, 'day_end']}
-                                            rules={[
-                                                {
-                                                    required: true,
-                                                    message:
-                                                        getValidationRequiredMessage,
-                                                },
-                                            ]}
-                                        >
-                                            <Select
-                                                showSearch
-                                                placeholder="Seleccionar día"
-                                            >
-                                                {days?.map((day) => (
-                                                    <Select.Option
-                                                        disabled={form
-                                                            .getFieldsValue()
-                                                            .shifts?.some(
-                                                                (shift) =>
-                                                                    shift?.day ===
-                                                                    day?.name
-                                                            )}
-                                                        key={day?.id}
-                                                        value={day?.name}
-                                                    >
-                                                        {day?.name}
-                                                    </Select.Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                    </div>
-                                    <Form.Item label="Horarios">
-                                        <Form.List
-                                            name={[field.name, 'schedules']}
-                                        >
-                                            {(subFields) => (
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                    }}
-                                                >
-                                                    {subFields.map(
-                                                        (subField) => (
-                                                            <Space
-                                                                key={
-                                                                    subField.key
-                                                                }
-                                                            >
-                                                                <Form.Item
-                                                                    label="Hora de inicio"
-                                                                    name={[
-                                                                        subField.name,
-                                                                        'start',
-                                                                    ]}
-                                                                    rules={[
-                                                                        {
-                                                                            required: true,
-                                                                            message:
-                                                                                getValidationRequiredMessage,
-                                                                        },
-                                                                    ]}
-                                                                >
-                                                                    <Input type="time" />
-                                                                </Form.Item>
-                                                                <Form.Item
-                                                                    label="Hora de fin"
-                                                                    name={[
-                                                                        subField.name,
-                                                                        'end',
-                                                                    ]}
-                                                                    rules={[
-                                                                        {
-                                                                            required: true,
-                                                                            message:
-                                                                                getValidationRequiredMessage,
-                                                                        },
-                                                                    ]}
-                                                                >
-                                                                    <Input type="time" />
-                                                                </Form.Item>
-                                                            </Space>
-                                                        )
-                                                    )}
-                                                </div>
-                                            )}
-                                        </Form.List>
-                                    </Form.Item>
-                                </Card>
-                            ))}
-                        </div>
+                <div className="schedules">
+                    {parsedSchedules.length > 0 ? (
+                        <>
+                            <pre className="whitespace-pre-line">
+                                {formatSchedule(parsedSchedules)}
+                            </pre>
+                        </>
+                    ) : (
+                        <p>No hay turnos creados</p>
                     )}
-                </Form.List>
+                </div>
 
-                {/* Disponibilidad de los bonos */}
                 <Divider className="font-bold text-3xl">
                     Disponibilidad de los bonos
                 </Divider>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, message, Popconfirm, List, Tag, Typography } from 'antd';
-import { SaveOutlined, ClearOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Button, Card, message, Popconfirm } from 'antd';
+import { SaveOutlined, ClearOutlined } from '@ant-design/icons';
 import { days } from '@components/Branches/days';
 
 export default function Schedule({ onScheduleSave }) {
@@ -32,26 +32,26 @@ export default function Schedule({ onScheduleSave }) {
     });
 
     const colorVariants = [
-        'bg-green-300',   // Verde claro
-        'bg-red-300',     // Rojo claro
-        'bg-blue-300',    // Azul claro
-        'bg-purple-300',  // Morado claro
-        'bg-yellow-300',  // Amarillo claro
-        'bg-pink-300',    // Rosa claro
-        'bg-indigo-300',  // Índigo claro
-        'bg-teal-300',    // Verde azulado
-        'bg-orange-300',  // Naranja claro
-        'bg-cyan-300',    // Cian claro
-        'bg-lime-300',    // Lima claro
+        'bg-green-300', // Verde claro
+        'bg-red-300', // Rojo claro
+        'bg-blue-300', // Azul claro
+        'bg-purple-300', // Morado claro
+        'bg-yellow-300', // Amarillo claro
+        'bg-pink-300', // Rosa claro
+        'bg-indigo-300', // Índigo claro
+        'bg-teal-300', // Verde azulado
+        'bg-orange-300', // Naranja claro
+        'bg-cyan-300', // Cian claro
+        'bg-lime-300', // Lima claro
         'bg-fuchsia-300', // Fucsia claro
         'bg-emerald-300', // Esmeralda claro
-        'bg-violet-300',  // Violeta claro
-        'bg-amber-300',   // Ámbar claro
-        'bg-rose-300',    // Rosa oscuro
-        'bg-sky-300',     // Celeste claro
-        'bg-green-200',   // Verde más claro
-        'bg-blue-200',    // Azul más claro
-        'bg-purple-200',  // Morado más claro
+        'bg-violet-300', // Violeta claro
+        'bg-amber-300', // Ámbar claro
+        'bg-rose-300', // Rosa oscuro
+        'bg-sky-300', // Celeste claro
+        'bg-green-200', // Verde más claro
+        'bg-blue-200', // Azul más claro
+        'bg-purple-200', // Morado más claro
     ];
 
     const getRandomColor = () => {
@@ -62,15 +62,17 @@ export default function Schedule({ onScheduleSave }) {
         }
 
         // Filtrar los colores que no han sido usados
-        const availableColors = colorVariants.filter(color => !usedColors.includes(color));
-        
+        const availableColors = colorVariants.filter(
+            (color) => !usedColors.includes(color)
+        );
+
         // Seleccionar un color aleatorio de los disponibles
         const randomIndex = Math.floor(Math.random() * availableColors.length);
         const selectedColor = availableColors[randomIndex];
-        
+
         // Agregar el color seleccionado a la lista de usados
-        setUsedColors(prev => [...prev, selectedColor]);
-        
+        setUsedColors((prev) => [...prev, selectedColor]);
+
         return selectedColor;
     };
 
@@ -144,13 +146,13 @@ export default function Schedule({ onScheduleSave }) {
         // Agrupar slots por día y encontrar el último slot de cada día
         const slotsByDay = {};
         const lastSlotByDay = {};
-        Object.keys(selectedSlots).forEach(slot => {
+        Object.keys(selectedSlots).forEach((slot) => {
             const [day, hour] = slot.split('-');
             if (!slotsByDay[day]) {
                 slotsByDay[day] = [];
             }
             slotsByDay[day].push(parseInt(hour));
-            
+
             if (!lastSlotByDay[day] || parseInt(hour) > lastSlotByDay[day]) {
                 lastSlotByDay[day] = parseInt(hour);
             }
@@ -165,19 +167,21 @@ export default function Schedule({ onScheduleSave }) {
 
         // Agrupar los rangos por día
         const groupedSchedules = schedules.reduce((acc, schedule) => {
-            const existingDay = acc.find(s => s.day === schedule.day);
+            const existingDay = acc.find((s) => s.day === schedule.day);
             if (existingDay) {
                 existingDay.ranges.push({
                     start_time: schedule.start_time,
-                    end_time: schedule.end_time
+                    end_time: schedule.end_time,
                 });
             } else {
                 acc.push({
                     day: schedule.day,
-                    ranges: [{
-                        start_time: schedule.start_time,
-                        end_time: schedule.end_time
-                    }]
+                    ranges: [
+                        {
+                            start_time: schedule.start_time,
+                            end_time: schedule.end_time,
+                        },
+                    ],
                 });
             }
             return acc;
@@ -185,8 +189,8 @@ export default function Schedule({ onScheduleSave }) {
 
         // Ordenar los días según el orden en el array days
         groupedSchedules.sort((a, b) => {
-            const dayIndexA = days.findIndex(d => d.name === a.day);
-            const dayIndexB = days.findIndex(d => d.name === b.day);
+            const dayIndexA = days.findIndex((d) => d.name === a.day);
+            const dayIndexB = days.findIndex((d) => d.name === b.day);
             return dayIndexA - dayIndexB;
         });
 
@@ -194,15 +198,15 @@ export default function Schedule({ onScheduleSave }) {
         const shiftData = {
             name: `Turno ${currentShiftName}`,
             schedules: groupedSchedules,
-            color: shiftColor
+            color: shiftColor,
         };
 
         setSavedSchedules([...savedSchedules, shiftData]);
-        
+
         // Actualizar slots bloqueados y sus colores
         const newBlockedSlots = { ...blockedSlots };
         const newBlockedSlotsColors = { ...blockedSlotsColors };
-        Object.keys(selectedSlots).forEach(slot => {
+        Object.keys(selectedSlots).forEach((slot) => {
             const [day, hour] = slot.split('-');
             if (parseInt(hour) !== lastSlotByDay[day]) {
                 newBlockedSlots[slot] = true;
@@ -213,7 +217,7 @@ export default function Schedule({ onScheduleSave }) {
         setBlockedSlots(newBlockedSlots);
         setBlockedSlotsColors(newBlockedSlotsColors);
         setSelectedSlots({});
-        
+
         onScheduleSave([...savedSchedules, shiftData]);
         message.success('Turno guardado exitosamente');
     };
@@ -236,78 +240,84 @@ export default function Schedule({ onScheduleSave }) {
 
         // Procesar cada grupo de horas consecutivas
         const ranges = [];
-        groups.forEach(group => {
+        groups.forEach((group) => {
             const startHour = group[0];
             const endHour = group[group.length - 1];
 
             if (startHour >= 48) {
                 // Si todo el grupo está después de medianoche
                 ranges.push({
-                    day: days[(days.findIndex(d => d.name === day) + 1) % days.length].name,
-                    start_time: `${Math.floor((startHour - 48) / 2).toString().padStart(2, '0')}:${(startHour - 48) % 2 === 0 ? '00' : '30'}`,
-                    end_time: `${Math.floor((endHour - 48) / 2).toString().padStart(2, '0')}:${(endHour - 48) % 2 === 0 ? '00' : '30'}`
+                    day: days[
+                        (days.findIndex((d) => d.name === day) + 1) %
+                            days.length
+                    ].name,
+                    start_time: `${Math.floor((startHour - 48) / 2)
+                        .toString()
+                        .padStart(
+                            2,
+                            '0'
+                        )}:${(startHour - 48) % 2 === 0 ? '00' : '30'}`,
+                    end_time: `${Math.floor((endHour - 48) / 2)
+                        .toString()
+                        .padStart(
+                            2,
+                            '0'
+                        )}:${(endHour - 48) % 2 === 0 ? '00' : '30'}`,
                 });
             } else if (endHour < 48) {
                 // Si todo el grupo está antes de medianoche
                 ranges.push({
                     day,
-                    start_time: `${Math.floor(startHour / 2).toString().padStart(2, '0')}:${startHour % 2 === 0 ? '00' : '30'}`,
-                    end_time: `${Math.floor(endHour / 2).toString().padStart(2, '0')}:${endHour % 2 === 0 ? '00' : '30'}`
+                    start_time: `${Math.floor(startHour / 2)
+                        .toString()
+                        .padStart(
+                            2,
+                            '0'
+                        )}:${startHour % 2 === 0 ? '00' : '30'}`,
+                    end_time: `${Math.floor(endHour / 2)
+                        .toString()
+                        .padStart(2, '0')}:${endHour % 2 === 0 ? '00' : '30'}`,
                 });
             } else {
                 // Si el grupo cruza la medianoche, separar en dos rangos
-                const midnightIndex = group.findIndex(h => h >= 48);
+                const midnightIndex = group.findIndex((h) => h >= 48);
                 const beforeMidnight = group.slice(0, midnightIndex);
                 const afterMidnight = group.slice(midnightIndex);
 
                 if (beforeMidnight.length > 0) {
                     ranges.push({
                         day,
-                        start_time: `${Math.floor(beforeMidnight[0] / 2).toString().padStart(2, '0')}:${beforeMidnight[0] % 2 === 0 ? '00' : '30'}`,
-                        end_time: '24:00'
+                        start_time: `${Math.floor(beforeMidnight[0] / 2)
+                            .toString()
+                            .padStart(
+                                2,
+                                '0'
+                            )}:${beforeMidnight[0] % 2 === 0 ? '00' : '30'}`,
+                        end_time: '24:00',
                     });
                 }
 
                 if (afterMidnight.length > 0) {
                     ranges.push({
-                        day: days[(days.findIndex(d => d.name === day) + 1) % days.length].name,
+                        day: days[
+                            (days.findIndex((d) => d.name === day) + 1) %
+                                days.length
+                        ].name,
                         start_time: '00:00',
-                        end_time: `${Math.floor((afterMidnight[afterMidnight.length - 1] - 48) / 2).toString().padStart(2, '0')}:${(afterMidnight[afterMidnight.length - 1] - 48) % 2 === 0 ? '00' : '30'}`
+                        end_time: `${Math.floor(
+                            (afterMidnight[afterMidnight.length - 1] - 48) / 2
+                        )
+                            .toString()
+                            .padStart(
+                                2,
+                                '0'
+                            )}:${(afterMidnight[afterMidnight.length - 1] - 48) % 2 === 0 ? '00' : '30'}`,
                     });
                 }
             }
         });
 
         return ranges;
-    };
-
-    const handleDeleteShift = (index) => {
-        const newSchedules = savedSchedules.filter((_, i) => i !== index);
-        setSavedSchedules(newSchedules);
-        
-        // Limpiar los slots bloqueados del turno eliminado
-        const deletedShift = savedSchedules[index];
-        const newBlockedSlots = { ...blockedSlots };
-        const newBlockedSlotsColors = { ...blockedSlotsColors };
-
-        deletedShift.schedules.forEach(schedule => {
-            schedule.ranges.forEach(range => {
-                const startHour = parseInt(range.start_time.split(':')[0]) * 2 +
-                    (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                const endHour = parseInt(range.end_time.split(':')[0]) * 2 +
-                    (range.end_time.split(':')[1] === '30' ? 1 : 0);
-
-                for (let h = startHour; h < endHour; h++) {
-                    delete newBlockedSlots[`${schedule.day}-${h}`];
-                    delete newBlockedSlotsColors[`${schedule.day}-${h}`];
-                }
-            });
-        });
-
-        setBlockedSlots(newBlockedSlots);
-        setBlockedSlotsColors(newBlockedSlotsColors);
-        onScheduleSave(newSchedules);
-        message.success('Turno eliminado exitosamente');
     };
 
     const handleClearAll = () => {
@@ -317,10 +327,6 @@ export default function Schedule({ onScheduleSave }) {
         setSavedSchedules([]);
         setUsedColors([]); // Reiniciar los colores usados
         message.success('Todos los turnos han sido eliminados');
-    };
-
-    const formatTimeRange = (ranges) => {
-        return ranges.map(range => `${range.start_time} - ${range.end_time}`).join(', ');
     };
 
     return (
@@ -400,7 +406,9 @@ export default function Schedule({ onScheduleSave }) {
                                 className={`h-[30px] border border-gray-200 rounded cursor-pointer transition-all duration-200 
                                     ${
                                         blockedSlots[`${day.name}-${index}`]
-                                            ? blockedSlotsColors[`${day.name}-${index}`] || 'bg-gray-300'
+                                            ? blockedSlotsColors[
+                                                  `${day.name}-${index}`
+                                              ] || 'bg-gray-300'
                                             : selectedSlots[
                                                     `${day.name}-${index}`
                                                 ]

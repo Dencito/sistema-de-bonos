@@ -29,7 +29,6 @@ export default function ModalEditBranch({ data, statuses }) {
         useState(false);
     const [availableSchedules, setAvailableSchedules] = useState([]);
     const [bonusSchedules, setBonusSchedules] = useState([]);
-
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
 

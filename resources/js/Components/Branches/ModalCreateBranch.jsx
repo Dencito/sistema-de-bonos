@@ -90,6 +90,9 @@ export default function ModalCreateBranch({ companies }) {
 
     const handleCloseModal = () => {
         setCountry('');
+        setAvailableSchedules([]);
+        setBonusSchedules([]);
+        form.resetFields();
         setLoading(false);
         setShowModal(false);
     };

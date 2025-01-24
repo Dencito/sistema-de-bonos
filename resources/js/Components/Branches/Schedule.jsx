@@ -78,9 +78,7 @@ export default function Schedule({ onScheduleSave }) {
 
     const handleMouseDown = (day, hour) => {
         if (savedSchedules.length === 3) {
-            message.error(
-                'Se ha alcanzado el límite máximo de 3 turnos.'
-            );
+            message.error('Se ha alcanzado el límite máximo de 3 turnos.');
             return;
         }
         if (blockedSlots[`${day}-${hour}`]) return;
@@ -389,17 +387,19 @@ export default function Schedule({ onScheduleSave }) {
             </div>
 
             <div className="mt-4 flex gap-2">
-                {savedSchedules.length !== 3 && <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    onClick={handleSaveSchedule}
-                    disabled={
-                        Object.values(selectedSlots).filter(Boolean).length ===
-                        0
-                    }
-                >
-                    Guardar Turno
-                </Button>}
+                {savedSchedules.length !== 3 && (
+                    <Button
+                        type="primary"
+                        icon={<SaveOutlined />}
+                        onClick={handleSaveSchedule}
+                        disabled={
+                            Object.values(selectedSlots).filter(Boolean)
+                                .length === 0
+                        }
+                    >
+                        Guardar Turno
+                    </Button>
+                )}
 
                 <Popconfirm
                     title="¿Estás seguro de eliminar todos los turnos?"

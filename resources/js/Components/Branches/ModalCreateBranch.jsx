@@ -301,7 +301,9 @@ export default function ModalCreateBranch({ companies }) {
                                     }
                                     type="primary"
                                 >
-                                    {availableSchedules.length === 3 ? "Ver turnos": "Agregar turno"}
+                                    {availableSchedules.length === 3
+                                        ? 'Ver turnos'
+                                        : 'Agregar turno'}
                                 </Button>
                                 {availableSchedules.length > 0 && (
                                     <>

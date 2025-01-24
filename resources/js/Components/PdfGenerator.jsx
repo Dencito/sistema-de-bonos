@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import jsPDF from 'jspdf';
 import QRious from 'qrious';
 import { getCurrentDateTime } from '@utils/date';
 import { Button } from 'antd';
 
 export default function PdfGenerator({ user }) {
-    const [qrData, setQrData] = useState('Juanito Perez');
     const nombre = user?.username || user?.first_name;
     const local = user?.branch?.name || 'Sin sucursal';
     const fecha = getCurrentDateTime();

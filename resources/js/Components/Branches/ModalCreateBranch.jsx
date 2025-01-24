@@ -303,14 +303,21 @@ export default function ModalCreateBranch({ companies }) {
                                 >
                                     Agregar turno
                                 </Button>
-                                {/* TODO: check it */}
                                 {availableSchedules.length > 0 && (
-                                    <Tag color="green">
-                                        {availableSchedules?.length}{' '}
-                                        {availableSchedules?.length === 1
-                                            ? 'turno creado'
-                                            : 'turnos creados'}{' '}
-                                    </Tag>
+                                    <>
+                                        <Tag color="green">
+                                            {availableSchedules.length}{' '}
+                                            {availableSchedules.length === 1
+                                                ? 'turno creado'
+                                                : 'turnos creados'}
+                                        </Tag>
+                                        {availableSchedules.length === 3 && (
+                                            <Tag color="orange">
+                                                Se ha alcanzado el límite máximo
+                                                de 3 turnos.
+                                            </Tag>
+                                        )}
+                                    </>
                                 )}
                             </Space>
                         </Card>

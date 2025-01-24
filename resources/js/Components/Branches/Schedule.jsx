@@ -331,52 +331,6 @@ export default function Schedule({ onScheduleSave }) {
 
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">
-            {/* {savedSchedules.length > 0 && (
-                <div className="mb-4">
-                    <List
-                        size="small"
-                        header={<div className="font-semibold">Turnos Guardados</div>}
-                        bordered
-                        dataSource={savedSchedules}
-                        renderItem={(shift, index) => (
-                            <List.Item
-                                className="bg-gray-900"
-                                actions={[
-                                    <Popconfirm
-                                        key="delete"
-                                        title="¿Estás seguro de eliminar este turno?"
-                                        onConfirm={() => handleDeleteShift(index)}
-                                        okText="Sí"
-                                        cancelText="No"
-                                    >
-                                        <Button
-                                            type="link"
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                        >
-                                            Eliminar
-                                        </Button>
-                                    </Popconfirm>
-                                ]}
-                            >
-                                <div className="text-white">
-                                    <Tag className={`${shift.color} text-gray-900 border-0 font-semibold`}>
-                                        {shift.name}
-                                    </Tag>
-                                    <div className="text-sm mt-1">
-                                        {shift.schedules.map((schedule, i) => (
-                                            <div key={i} className="text-gray-300">
-                                                {schedule.day}: {formatTimeRange(schedule.ranges)}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </List.Item>
-                        )}
-                    />
-                </div>
-            )}
- */}
             <div className="overflow-x-auto pt-10">
                 <div className="grid grid-cols-[120px_repeat(49,minmax(30px,1fr))] gap-0.5 items-center">
                     <div className="day-label">Día/Hora</div>

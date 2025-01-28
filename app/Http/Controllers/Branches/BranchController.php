@@ -3,24 +3,19 @@
 namespace App\Http\Controllers\Branches;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
+use App\Mail\BranchCreatedMail;
+use App\Models\AvailableBonusDay;
+use App\Models\AvailableBonusSchedule;
 use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Status;
 use App\Models\Shift;
 use App\Models\ShiftSchedule;
-use App\Models\AvailableBonusDay; //shifts available bonus
-use App\Models\AvailableBonusSchedule; //schedules to available bonus
-
-
-use Illuminate\Support\Facades\Validator;
+use App\Models\Status;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Mail\BranchCreatedMail;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-//use App\Events\UpdateBranchEvent;
-
-
+use Illuminate\Support\Facades\Validator;
+// use App\Events\UpdateBranchEvent;
 use Inertia\Inertia;
 
 class BranchController extends Controller
@@ -30,43 +25,40 @@ class BranchController extends Controller
      */
     public function index(Request $request)
     {
-        
-        //UpdateBranchEvent::dispatch('Hello World! I am an event 😄');
-        //event(new UpdateBranchEvent('Hello World! I am an event 😄'));
-        
+        // UpdateBranchEvent::dispatch('Hello World! I am an event 😄');
+        // event(new UpdateBranchEvent('Hello World! I am an event 😄'));
+
         if (!auth()->user()->hasAnyRole(1, 2, 3)) {
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
-        
+
         $companySelectSession = $request->session()->get('selected_company');
-        
+
         if (auth()->user()->hasAnyRole(3, 4, 5)) {
             $request->company = $companySelectSession;
         }
-        $companies = Company::all()->map(function($company) {
+        $companies = Company::all()->map(function ($company) {
             return [
                 'id' => $company->id,
                 'name' => $company->name,
             ];
         });
         $statuses = Status::all();
-        
+
         if ($companies->isEmpty()) {
             abort(403, 'No tienes permiso para acceder a esta página. Debe existir al menos una empresa.');
         }
         $branches = Branch::with(['shifts', 'users', 'shifts.schedules', 'availableBonusDays.schedules', 'status', 'company'])
-        ->when($request->name, function ($query, $name) {
-            $query->where('name', 'like', "%{$name}%");
-        })
-        ->when($request->status, function ($query, $status) {
-            $query->whereHas('status', function ($q) use ($status) {
-                $q->where('name', $status);
-            });
-        })
-        ->get();
+            ->when($request->name, function ($query, $name) {
+                $query->where('name', 'like', "%{$name}%");
+            })
+            ->when($request->status, function ($query, $status) {
+                $query->whereHas('status', function ($q) use ($status) {
+                    $q->where('name', $status);
+                });
+            })
+            ->get();
 
-        
-        
         $data = [
             'companies' => $companies,
             'statuses' => $statuses,
@@ -194,7 +186,6 @@ class BranchController extends Controller
                 'data' => $branch,
                 'status' => 201
             ], 201);
-
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'No se encontró la empresa especificada',
@@ -210,7 +201,8 @@ class BranchController extends Controller
         }
     }
 
-    public function getBranchByName($name) {
+    public function getBranchByName($name)
+    {
         $branch = Branch::where('name', $name)->firstOrFail();
         return $branch;
     }
@@ -223,7 +215,6 @@ class BranchController extends Controller
 
         // Validar los datos entrantes
         $validator = Validator::make($request->all(), [
-            'id' => 'required|exists:branches,id',
             'creationDate' => 'required|date',
             'name' => 'required|string',
             'numberOfEmployees' => 'required|integer',
@@ -258,8 +249,8 @@ class BranchController extends Controller
 
         // Verificar si el nombre ya existe en otra sucursal
         $existingBranch = Branch::where('name', $request->name)
-                                ->where('id', '!=', $request->id)
-                                ->first();
+            ->where('id', '!=', $request->id)
+            ->first();
 
         if ($existingBranch) {
             return response()->json(['message' => 'El nombre de la sucursal ya existe', 'error' => true], 400);
@@ -337,19 +328,18 @@ class BranchController extends Controller
                     'day_end' => $shiftData['day_end'],
                 ]);
             } else {
-
-               $shift = $branch->shifts()->create([
-                   'day_init' => $shiftData['day_init'],
-                   'day_end' => $shiftData['day_end'],
+                $shift = $branch->shifts()->create([
+                    'day_init' => $shiftData['day_init'],
+                    'day_end' => $shiftData['day_end'],
                 ]);
-                
+
                 foreach ($shiftData['schedules'] as $schedule) {
                     $shift->schedules()->create([
                         'start' => $schedule['start'],
                         'end' => $schedule['end'],
                     ]);
                 }
-                
+
                 $shiftFound = $branch->shifts()->with('schedules')->findOrFail($shift->id);
             }
 
@@ -378,7 +368,7 @@ class BranchController extends Controller
         }
 
         // Eliminar los turnos que no están en la solicitud
-        //$branch->shifts()->whereNotIn('id', $requestShiftIds)->delete();
+        // $branch->shifts()->whereNotIn('id', $requestShiftIds)->delete();
 
         return response()->json(['message' => 'Turnos actualizados exitosamente.', 'sendData' => $request->shifts, 'data' => $branch], 200);
     }
@@ -405,18 +395,17 @@ class BranchController extends Controller
                     'day' => $shiftData['day'],
                 ]);
             } else {
-
-               $shift = $branch->availableBonusDays()->create([
-                   'day' => $shiftData['day'],
+                $shift = $branch->availableBonusDays()->create([
+                    'day' => $shiftData['day'],
                 ]);
-                
+
                 foreach ($shiftData['schedules'] as $schedule) {
                     $shift->schedules()->create([
                         'start' => $schedule['start'],
                         'end' => $schedule['end'],
                     ]);
                 }
-                
+
                 $shiftFound = $branch->availableBonusDays()->with('schedules')->findOrFail($shift->id);
             }
 
@@ -445,7 +434,7 @@ class BranchController extends Controller
         }
 
         // Eliminar los turnos que no están en la solicitud
-        //$branch->shifts()->whereNotIn('id', $requestShiftIds)->delete();
+        // $branch->shifts()->whereNotIn('id', $requestShiftIds)->delete();
 
         return response()->json(['message' => 'Turnos actualizados exitosamente.', 'sendData' => $request->shifts, 'data' => $branch], 200);
     }
@@ -473,7 +462,7 @@ class BranchController extends Controller
         $shift->delete();
 
         return response()->json(['message' => 'Turno eliminado exitosamente.'], 200);
-    } 
+    }
 
     public function deleteShiftAvailableBonusDays(Request $request)
     {
@@ -498,7 +487,7 @@ class BranchController extends Controller
         $shift->delete();
 
         return response()->json(['message' => 'Turno eliminado exitosamente.'], 200);
-    } 
+    }
 
     /**
      * Remove the specified resource from storage.
@@ -508,21 +497,19 @@ class BranchController extends Controller
         if (!auth()->user()->hasAnyRole(1, 2)) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
-        
+
         $branch = Branch::find($request->id);
 
         if (!$branch) {
             return response()->json(['message' => 'La sucursal no existe o ya fue eliminada', 'error' => true], 400);
         }
-        //broadcast(new UpdateBranchEvent($branch, auth()->user()))->toOthers();
+        // broadcast(new UpdateBranchEvent($branch, auth()->user()))->toOthers();
 
         $branch->delete();
-
 
         return response()->json([
             'error' => false,
             'message' => 'La sucursal ha sido eliminada exitosamente',
         ]);
-
     }
 }

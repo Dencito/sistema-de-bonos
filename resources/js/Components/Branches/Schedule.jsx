@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, message, Popconfirm } from 'antd';
-import { SaveOutlined, ClearOutlined } from '@ant-design/icons';
+import {
+    SaveOutlined,
+    ClearOutlined,
+    EditOutlined,
+    DeleteOutlined,
+} from '@ant-design/icons';
 import { days } from '@components/Branches/days';
 
-export default function Schedule({ onScheduleSave }) {
+export default function Schedule({
+    onScheduleSave,
+    isEditing,
+    initialSchedules = [],
+}) {
     const [selectedSlots, setSelectedSlots] = useState({});
     const [savedSchedules, setSavedSchedules] = useState([]);
     const [blockedSlots, setBlockedSlots] = useState({});
@@ -14,6 +23,7 @@ export default function Schedule({ onScheduleSave }) {
         isSelecting: false,
     });
     const [selectionStart, setSelectionStart] = useState(null);
+    const [editingSchedule, setEditingSchedule] = useState(null);
 
     useEffect(() => {
         const handleGlobalMouseUp = () => {
@@ -23,6 +33,43 @@ export default function Schedule({ onScheduleSave }) {
         window.addEventListener('mouseup', handleGlobalMouseUp);
         return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
+
+    useEffect(() => {
+        if (initialSchedules && initialSchedules.length > 0) {
+            const newBlockedSlots = {};
+            const newBlockedSlotsColors = {};
+
+            initialSchedules.forEach((schedule) => {
+                schedule.schedules.forEach((dailySchedule) => {
+                    const { day, ranges } = dailySchedule;
+                    ranges.forEach((range) => {
+                        const startParts = range.start_time.split(':');
+                        const endParts = range.end_time.split(':');
+
+                        const startHour = parseInt(startParts[0]);
+                        const startMinute = startParts[1] === '30' ? 1 : 0;
+                        const endHour = parseInt(endParts[0]);
+                        const endMinute = endParts[1] === '30' ? 1 : 0;
+
+                        if (!isNaN(startHour) && !isNaN(endHour)) {
+                            const startSlot = startHour * 2 + startMinute;
+                            const endSlot = endHour * 2 + endMinute;
+
+                            for (let h = startSlot; h <= endSlot; h++) {
+                                const slotKey = `${day}-${h}`;
+                                newBlockedSlots[slotKey] = true;
+                                newBlockedSlotsColors[slotKey] = schedule.color;
+                            }
+                        }
+                    });
+                });
+            });
+
+            setBlockedSlots(newBlockedSlots);
+            setBlockedSlotsColors(newBlockedSlotsColors);
+            setSavedSchedules(initialSchedules);
+        }
+    }, [initialSchedules]);
 
     const hours = Array.from({ length: 49 }, (_, i) => {
         if (i === 48) return '24:00';
@@ -143,91 +190,89 @@ export default function Schedule({ onScheduleSave }) {
             return;
         }
 
-        // Generar el siguiente nombre de turno (A, B, C, etc.)
-        const nextShiftLetter = String.fromCharCode(65 + savedSchedules.length);
-        const currentShiftName = nextShiftLetter;
-
-        // Agrupar slots por día y encontrar el último slot de cada día
+        // Agrupar slots por día
         const slotsByDay = {};
-        const lastSlotByDay = {};
         Object.keys(selectedSlots).forEach((slot) => {
             const [day, hour] = slot.split('-');
             if (!slotsByDay[day]) {
                 slotsByDay[day] = [];
             }
             slotsByDay[day].push(parseInt(hour));
-
-            if (!lastSlotByDay[day] || parseInt(hour) > lastSlotByDay[day]) {
-                lastSlotByDay[day] = parseInt(hour);
-            }
         });
 
-        // Procesar los slots de cada día
-        const schedules = [];
-        Object.entries(slotsByDay).forEach(([day, hours]) => {
-            const ranges = processOvernight(day, hours);
-            schedules.push(...ranges);
-        });
-
-        // Agrupar los rangos por día
-        const groupedSchedules = schedules.reduce((acc, schedule) => {
-            const existingDay = acc.find((s) => s.day === schedule.day);
-            if (existingDay) {
-                existingDay.ranges.push({
-                    start_time: schedule.start_time,
-                    end_time: schedule.end_time,
-                });
-            } else {
-                acc.push({
-                    day: schedule.day,
-                    ranges: [
-                        {
-                            start_time: schedule.start_time,
-                            end_time: schedule.end_time,
-                        },
-                    ],
-                });
+        // Crear schedules
+        const groupedSchedules = Object.entries(slotsByDay).map(
+            ([day, hours]) => {
+                hours.sort((a, b) => a - b);
+                const ranges = processOvernight(day, hours);
+                return {
+                    day,
+                    ranges: ranges.map((range) => ({ ...range })),
+                };
             }
-            return acc;
-        }, []);
+        );
 
-        // Ordenar los días según el orden en el array days
+        // Ordenar por día
         groupedSchedules.sort((a, b) => {
             const dayIndexA = days.findIndex((d) => d.name === a.day);
             const dayIndexB = days.findIndex((d) => d.name === b.day);
             return dayIndexA - dayIndexB;
         });
 
-        const shiftColor = getRandomColor();
-        const shiftData = {
-            name: `Turno ${currentShiftName}`,
-            schedules: groupedSchedules,
-            color: shiftColor,
-        };
+        let updatedSchedules;
+        if (editingSchedule) {
+            // Si estamos editando, actualizar el turno existente
+            updatedSchedules = savedSchedules.map((schedule) =>
+                schedule === editingSchedule
+                    ? {
+                          ...schedule,
+                          schedules: groupedSchedules,
+                      }
+                    : schedule
+            );
+            setEditingSchedule(null); // Salir del modo edición
+        } else {
+            // Si es un nuevo turno, crear uno nuevo
+            const nextShiftLetter = String.fromCharCode(
+                65 + savedSchedules.length
+            );
+            const currentShiftName = nextShiftLetter;
+            const shiftColor = getRandomColor();
 
-        setSavedSchedules([...savedSchedules, shiftData]);
+            const shiftData = {
+                name: `Turno ${currentShiftName}`,
+                color: shiftColor,
+                schedules: groupedSchedules,
+            };
+            updatedSchedules = [...savedSchedules, shiftData];
+        }
 
-        // Actualizar slots bloqueados y sus colores
+        // Actualizar slots bloqueados
         const newBlockedSlots = { ...blockedSlots };
         const newBlockedSlotsColors = { ...blockedSlotsColors };
+
         Object.keys(selectedSlots).forEach((slot) => {
             const [day, hour] = slot.split('-');
-            if (parseInt(hour) !== lastSlotByDay[day]) {
-                newBlockedSlots[slot] = true;
-                newBlockedSlotsColors[slot] = shiftColor;
-            }
+            const slotKey = `${day}-${hour}`;
+            newBlockedSlots[slotKey] = true;
+            newBlockedSlotsColors[slotKey] = editingSchedule
+                ? editingSchedule.color
+                : updatedSchedules[updatedSchedules.length - 1].color;
         });
 
         setBlockedSlots(newBlockedSlots);
         setBlockedSlotsColors(newBlockedSlotsColors);
+        setSavedSchedules(updatedSchedules);
         setSelectedSlots({});
-
-        onScheduleSave([...savedSchedules, shiftData]);
-        message.success('Turno guardado exitosamente');
+        onScheduleSave(updatedSchedules);
+        message.success(
+            editingSchedule
+                ? 'Turno actualizado exitosamente'
+                : 'Turno guardado exitosamente'
+        );
     };
 
     const processOvernight = (day, hours) => {
-        // Agrupar las horas consecutivas
         hours.sort((a, b) => a - b);
         const groups = [];
         let currentGroup = [hours[0]];
@@ -242,36 +287,26 @@ export default function Schedule({ onScheduleSave }) {
         }
         groups.push(currentGroup);
 
-        // Procesar cada grupo de horas consecutivas
         const ranges = [];
         groups.forEach((group) => {
             const startHour = group[0];
             const endHour = group[group.length - 1];
 
             if (startHour >= 48) {
-                // Si todo el grupo está después de medianoche
                 ranges.push({
-                    day: days[
-                        (days.findIndex((d) => d.name === day) + 1) %
-                            days.length
-                    ].name,
                     start_time: `${Math.floor((startHour - 48) / 2)
                         .toString()
-                        .padStart(
-                            2,
-                            '0'
-                        )}:${(startHour - 48) % 2 === 0 ? '00' : '30'}`,
+                        .padStart(2, '0')}:${
+                        (startHour - 48) % 2 === 0 ? '00' : '30'
+                    }`,
                     end_time: `${Math.floor((endHour - 48) / 2)
                         .toString()
-                        .padStart(
-                            2,
-                            '0'
-                        )}:${(endHour - 48) % 2 === 0 ? '00' : '30'}`,
+                        .padStart(2, '0')}:${
+                        (endHour - 48) % 2 === 0 ? '00' : '30'
+                    }`,
                 });
             } else if (endHour < 48) {
-                // Si todo el grupo está antes de medianoche
                 ranges.push({
-                    day,
                     start_time: `${Math.floor(startHour / 2)
                         .toString()
                         .padStart(
@@ -283,39 +318,35 @@ export default function Schedule({ onScheduleSave }) {
                         .padStart(2, '0')}:${endHour % 2 === 0 ? '00' : '30'}`,
                 });
             } else {
-                // Si el grupo cruza la medianoche, separar en dos rangos
                 const midnightIndex = group.findIndex((h) => h >= 48);
                 const beforeMidnight = group.slice(0, midnightIndex);
                 const afterMidnight = group.slice(midnightIndex);
 
                 if (beforeMidnight.length > 0) {
                     ranges.push({
-                        day,
                         start_time: `${Math.floor(beforeMidnight[0] / 2)
                             .toString()
-                            .padStart(
-                                2,
-                                '0'
-                            )}:${beforeMidnight[0] % 2 === 0 ? '00' : '30'}`,
+                            .padStart(2, '0')}:${
+                            beforeMidnight[0] % 2 === 0 ? '00' : '30'
+                        }`,
                         end_time: '24:00',
                     });
                 }
 
                 if (afterMidnight.length > 0) {
                     ranges.push({
-                        day: days[
-                            (days.findIndex((d) => d.name === day) + 1) %
-                                days.length
-                        ].name,
                         start_time: '00:00',
                         end_time: `${Math.floor(
                             (afterMidnight[afterMidnight.length - 1] - 48) / 2
                         )
                             .toString()
-                            .padStart(
-                                2,
-                                '0'
-                            )}:${(afterMidnight[afterMidnight.length - 1] - 48) % 2 === 0 ? '00' : '30'}`,
+                            .padStart(2, '0')}:${
+                            (afterMidnight[afterMidnight.length - 1] - 48) %
+                                2 ===
+                            0
+                                ? '00'
+                                : '30'
+                        }`,
                     });
                 }
             }
@@ -330,8 +361,127 @@ export default function Schedule({ onScheduleSave }) {
         setSelectedSlots({});
         setSavedSchedules([]);
         setUsedColors([]); // Reiniciar los colores usados
+        onScheduleSave([]); // Notificar al padre que los horarios se han limpiado
         message.success('Todos los turnos han sido eliminados');
     };
+
+    const handleEditSchedule = (shift) => {
+        const newSelectedSlots = {};
+        shift.schedules.forEach((dailySchedule) => {
+            const { day, ranges } = dailySchedule;
+            ranges.forEach((range) => {
+                const startHour =
+                    parseInt(range.start_time.split(':')[0]) * 2 +
+                    (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                const endHour =
+                    parseInt(range.end_time.split(':')[0]) * 2 +
+                    (range.end_time.split(':')[1] === '30' ? 1 : 0);
+
+                for (let h = startHour; h <= endHour; h++) {
+                    newSelectedSlots[`${day}-${h}`] = true;
+                }
+            });
+        });
+
+        const newBlockedSlots = { ...blockedSlots };
+        Object.keys(newSelectedSlots).forEach((slot) => {
+            delete newBlockedSlots[slot];
+        });
+
+        setBlockedSlots(newBlockedSlots);
+        setSelectedSlots(newSelectedSlots);
+        setEditingSchedule(shift);
+    };
+
+    const handleDeleteSchedule = (shift) => {
+        // Eliminar los slots del turno eliminado
+        const newBlockedSlots = { ...blockedSlots };
+        const newBlockedSlotsColors = { ...blockedSlotsColors };
+
+        // Remover los slots del turno a eliminar
+        shift.schedules.forEach((dailySchedule) => {
+            const { day, ranges } = dailySchedule;
+            ranges.forEach((range) => {
+                const startParts = range.start_time.split(':');
+                const endParts = range.end_time.split(':');
+                const startHour =
+                    parseInt(startParts[0]) * 2 +
+                    (startParts[1] === '30' ? 1 : 0);
+                const endHour =
+                    parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+
+                for (let h = startHour; h <= endHour; h++) {
+                    const slotKey = `${day}-${h}`;
+                    delete newBlockedSlots[slotKey];
+                    delete newBlockedSlotsColors[slotKey];
+                }
+            });
+        });
+
+        // Actualizar el estado con los nuevos slots
+        setBlockedSlots(newBlockedSlots);
+        setBlockedSlotsColors(newBlockedSlotsColors);
+
+        // Actualizar la lista de turnos
+        const newSchedules = savedSchedules.filter(
+            (schedule) => schedule !== shift
+        );
+        setSavedSchedules(newSchedules);
+
+        // Notificar al componente padre del cambio
+        onScheduleSave(newSchedules);
+
+        message.success('Turno eliminado correctamente');
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSchedule(null);
+        setSelectedSlots({});
+        // Restore blocked slots from saved schedules
+        const newBlockedSlots = {};
+        const newBlockedSlotsColors = {};
+        savedSchedules.forEach((schedule) => {
+            schedule.schedules.forEach((dailySchedule) => {
+                const { day, ranges } = dailySchedule;
+                ranges.forEach((range) => {
+                    const startParts = range.start_time.split(':');
+                    const endParts = range.end_time.split(':');
+                    const startHour =
+                        parseInt(startParts[0]) * 2 +
+                        (startParts[1] === '30' ? 1 : 0);
+                    const endHour =
+                        parseInt(endParts[0]) * 2 +
+                        (endParts[1] === '30' ? 1 : 0);
+                    for (let h = startHour; h <= endHour; h++) {
+                        const slotKey = `${day}-${h}`;
+                        newBlockedSlots[slotKey] = true;
+                        newBlockedSlotsColors[slotKey] = schedule.color;
+                    }
+                });
+            });
+        });
+        setBlockedSlots(newBlockedSlots);
+        setBlockedSlotsColors(newBlockedSlotsColors);
+    };
+
+    const groupedSchedules = savedSchedules.reduce((acc, schedule) => {
+        if (!schedule.schedules || !Array.isArray(schedule.schedules)) {
+            return acc;
+        }
+
+        schedule.schedules.forEach((item) => {
+            if (!item.day || !Array.isArray(item.ranges)) {
+                return;
+            }
+            const { day, ranges } = item;
+            if (!acc[day]) {
+                acc[day] = [];
+            }
+            acc[day].push(...ranges);
+        });
+
+        return acc;
+    }, {});
 
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">
@@ -372,7 +522,11 @@ export default function Schedule({ onScheduleSave }) {
                                                 ]
                                               ? 'bg-blue-500 border-blue-500'
                                               : 'hover:bg-blue-50 hover:border-blue-400'
-                                    } cursor-${blockedSlots[`${day.name}-${index}`] ? 'not-allowed' : 'pointer'}`}
+                                    } cursor-${
+                                        blockedSlots[`${day.name}-${index}`]
+                                            ? 'not-allowed'
+                                            : 'pointer'
+                                    }`}
                                 onMouseDown={() =>
                                     handleMouseDown(day.name, index)
                                 }
@@ -387,7 +541,7 @@ export default function Schedule({ onScheduleSave }) {
             </div>
 
             <div className="mt-4 flex gap-2">
-                {savedSchedules.length !== 3 && (
+                {(savedSchedules.length !== 3 || editingSchedule) && (
                     <Button
                         type="primary"
                         icon={<SaveOutlined />}
@@ -397,7 +551,13 @@ export default function Schedule({ onScheduleSave }) {
                                 .length === 0
                         }
                     >
-                        Guardar Turno
+                        {editingSchedule ? 'Guardar Cambios' : 'Guardar Turno'}
+                    </Button>
+                )}
+
+                {editingSchedule && (
+                    <Button type="default" onClick={handleCancelEdit}>
+                        Cancelar Edición
                     </Button>
                 )}
 
@@ -417,6 +577,102 @@ export default function Schedule({ onScheduleSave }) {
                     </Button>
                 </Popconfirm>
             </div>
+            {isEditing && Object.entries(groupedSchedules).length > 0 && (
+                <Card title="Turnos Guardados">
+                    <div className="mt-2 pt-2 space-y-4">
+                        {savedSchedules.map((scheduleItem, index) => (
+                            <div
+                                key={index}
+                                className="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
+                            >
+                                <div className="flex-1">
+                                    <div className="text-lg font-semibold mb-2 text-gray-700">
+                                        {scheduleItem.name}
+                                    </div>
+                                    <div className="grid gap-2">
+                                        {scheduleItem.schedules.map(
+                                            (dailySchedule, dayIndex) => (
+                                                <div
+                                                    key={dayIndex}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <span className="font-medium min-w-[100px] text-gray-600">
+                                                        {dailySchedule.day}:
+                                                    </span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {dailySchedule.ranges.map(
+                                                            (
+                                                                range,
+                                                                rangeIndex
+                                                            ) => (
+                                                                <span
+                                                                    key={
+                                                                        rangeIndex
+                                                                    }
+                                                                    className="bg-white px-3 py-1 rounded border border-gray-200"
+                                                                >
+                                                                    {
+                                                                        range.start_time
+                                                                    }{' '}
+                                                                    a{' '}
+                                                                    {
+                                                                        range.end_time
+                                                                    }
+                                                                </span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                                {isEditing && (
+                                    <div className="flex gap-2 ml-4">
+                                        <Button
+                                            type="default"
+                                            icon={<EditOutlined />}
+                                            onClick={() =>
+                                                handleEditSchedule(scheduleItem)
+                                            }
+                                            disabled={editingSchedule !== null}
+                                        >
+                                            {editingSchedule === scheduleItem
+                                                ? 'Editando...'
+                                                : 'Editar'}
+                                        </Button>
+                                        <Popconfirm
+                                            title="¿Estás seguro de eliminar este turno?"
+                                            onConfirm={() =>
+                                                handleDeleteSchedule(
+                                                    scheduleItem
+                                                )
+                                            }
+                                            okText="Sí"
+                                            cancelText="No"
+                                            disabled={
+                                                editingSchedule === scheduleItem
+                                            }
+                                        >
+                                            <Button
+                                                type="default"
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                disabled={
+                                                    editingSchedule ===
+                                                    scheduleItem
+                                                }
+                                            >
+                                                Eliminar
+                                            </Button>
+                                        </Popconfirm>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+            )}
         </Card>
     );
 }

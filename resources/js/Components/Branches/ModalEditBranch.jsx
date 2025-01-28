@@ -66,7 +66,7 @@ export default function ModalEditBranch({ data, statuses }) {
     useEffect(() => {
         const getCountries = async () => {
             if (showModal) {
-                const data = await countriesService.getStates(country);
+                const data = await countriesService.getAll();
                 setCountries(data?.data);
             }
         };
@@ -85,8 +85,8 @@ export default function ModalEditBranch({ data, statuses }) {
             setLoading(true);
             const response = await branchService.update(data?.id, {
                 ...values,
-                availableSchedules: JSON.stringify(availableSchedules),
-                bonusSchedules: JSON.stringify(bonusSchedules),
+                available_schedules: JSON.stringify(availableSchedules || []),
+                bonus_schedules: JSON.stringify(bonusSchedules || []),
             });
 
             if (response.success) {
@@ -348,34 +348,17 @@ export default function ModalEditBranch({ data, statuses }) {
                                     }
                                     type="primary"
                                 >
-                                    Configurar Horarios Disponibles
+                                    Editar Turnos
                                 </Button>
                                 {availableSchedules?.length > 0 && (
                                     <Tag color="green">
-                                        {availableSchedules?.length} horarios
-                                        configurados
+                                        {availableSchedules?.length}{' '}
+                                        {availableSchedules?.length === 1
+                                            ? 'turno creado'
+                                            : 'turnos creados'}
                                     </Tag>
                                 )}
                             </Space>
-                            <ul>
-                                {availableSchedules?.map((schedule, index) => (
-                                    <li key={index}>
-                                        <strong>{schedule?.day}</strong> -{' '}
-                                        {schedule?.ranges?.map(
-                                            (range, rangeIndex) => (
-                                                <span key={rangeIndex}>
-                                                    {range?.start_time} -{' '}
-                                                    {range?.end_time}
-                                                    {rangeIndex <
-                                                    schedule?.ranges?.length - 1
-                                                        ? ', '
-                                                        : ''}
-                                                </span>
-                                            )
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
                         </Card>
 
                         <Card title="Horarios de Bonos" size="small">
@@ -418,7 +401,7 @@ export default function ModalEditBranch({ data, statuses }) {
                     </Space>
 
                     <Form.Item>
-                        <Space>
+                        <Space style={{ marginTop: '16px' }}>
                             <Button onClick={handleCloseModal}>Cancelar</Button>
                             <Button
                                 type="primary"
@@ -433,6 +416,7 @@ export default function ModalEditBranch({ data, statuses }) {
             </Modal>
 
             <ScheduleModal
+                isEditing={true}
                 open={availableScheduleModalVisible}
                 onClose={() => setAvailableScheduleModalVisible(false)}
                 onSave={handleAvailableScheduleSave}
@@ -440,6 +424,7 @@ export default function ModalEditBranch({ data, statuses }) {
             />
 
             <ScheduleModal
+                isEditing={true}
                 open={bonusScheduleModalVisible}
                 onClose={() => setBonusScheduleModalVisible(false)}
                 onSave={handleBonusScheduleSave}

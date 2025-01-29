@@ -124,11 +124,10 @@ export default function Schedule({
     };
 
     const handleMouseDown = (day, hour) => {
-        if (savedSchedules.length === 3) {
+        if (savedSchedules.length === 3 && !editingSchedule) {
             message.error('Se ha alcanzado el límite máximo de 3 turnos.');
             return;
         }
-        if (blockedSlots[`${day}-${hour}`]) return;
 
         setIsSelecting(true);
         setSelectionStart({ day, hour });
@@ -159,9 +158,7 @@ export default function Schedule({
                     h++
                 ) {
                     const slotKey = `${days[d].name}-${h}`;
-                    if (!blockedSlots[slotKey]) {
-                        newSelectedSlots[slotKey] = isSelecting.isSelecting;
-                    }
+                    newSelectedSlots[slotKey] = isSelecting.isSelecting;
                 }
             }
 
@@ -176,12 +173,10 @@ export default function Schedule({
 
     const toggleSlot = (day, hour) => {
         const slotKey = `${day}-${hour}`;
-        if (!blockedSlots[slotKey]) {
-            setSelectedSlots((prev) => ({
-                ...prev,
-                [slotKey]: !prev[slotKey],
-            }));
-        }
+        setSelectedSlots((prev) => ({
+            ...prev,
+            [slotKey]: !prev[slotKey],
+        }));
     };
 
     const handleSaveSchedule = () => {
@@ -508,34 +503,32 @@ export default function Schedule({
                         <div className="p-2 font-medium text-left sticky left-0 bg-white z-10 text-sm">
                             {day.name}
                         </div>
-                        {hours.map((_, index) => (
-                            <div
-                                key={`${day.name}-${index}`}
-                                className={`h-[30px] border border-gray-200 rounded cursor-pointer transition-all duration-200 
-                                    ${
-                                        blockedSlots[`${day.name}-${index}`]
-                                            ? blockedSlotsColors[
-                                                  `${day.name}-${index}`
-                                              ] || 'bg-gray-300'
-                                            : selectedSlots[
-                                                    `${day.name}-${index}`
-                                                ]
-                                              ? 'bg-blue-500 border-blue-500'
-                                              : 'hover:bg-blue-50 hover:border-blue-400'
-                                    } cursor-${
-                                        blockedSlots[`${day.name}-${index}`]
-                                            ? 'not-allowed'
-                                            : 'pointer'
-                                    }`}
-                                onMouseDown={() =>
-                                    handleMouseDown(day.name, index)
-                                }
-                                onMouseEnter={() =>
-                                    handleMouseEnter(day.name, index)
-                                }
-                                onMouseUp={handleMouseUp}
-                            />
-                        ))}
+                        {hours.map((_, index) => {
+                            const slotKey = `${day.name}-${index}`;
+                            const isBlocked = blockedSlots[slotKey];
+                            const isSelected = selectedSlots[slotKey];
+
+                            return (
+                                <div
+                                    key={`${day.name}-${index}`}
+                                    className={`h-[30px] border border-gray-200 rounded cursor-pointer transition-all duration-200 
+                                        ${
+                                            isSelected
+                                                ? 'bg-blue-500 border-blue-500'
+                                                : isBlocked
+                                                ? blockedSlotsColors[slotKey] || 'bg-gray-300'
+                                                : 'hover:bg-blue-50 hover:border-blue-400'
+                                        }`}
+                                    style={{
+                                        background: isBlocked && !isSelected ? blockedSlotsColors[slotKey] : undefined,
+                                        opacity: isBlocked && !isSelected ? '0.7' : '1'
+                                    }}
+                                    onMouseDown={() => handleMouseDown(day.name, index)}
+                                    onMouseEnter={() => handleMouseEnter(day.name, index)}
+                                    onMouseUp={handleMouseUp}
+                                />
+                            );
+                        })}
                     </div>
                 ))}
             </div>

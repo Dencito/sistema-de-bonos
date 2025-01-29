@@ -256,11 +256,13 @@ export default function Schedule({
         // Agrupar slots por día
         const slotsByDay = {};
         Object.keys(selectedSlots).forEach((slot) => {
-            const [day, hour] = slot.split('-');
-            if (!slotsByDay[day]) {
-                slotsByDay[day] = [];
+            if (selectedSlots[slot]) { // Solo procesar slots que están seleccionados
+                const [day, hour] = slot.split('-');
+                if (!slotsByDay[day]) {
+                    slotsByDay[day] = [];
+                }
+                slotsByDay[day].push(parseInt(hour));
             }
-            slotsByDay[day].push(parseInt(hour));
         });
 
         // Crear schedules
@@ -310,17 +312,27 @@ export default function Schedule({
             updatedSchedules = [...savedSchedules, shiftData];
         }
 
-        // Actualizar slots bloqueados
-        const newBlockedSlots = { ...blockedSlots };
-        const newBlockedSlotsColors = { ...blockedSlotsColors };
+        // Limpiar todos los slots bloqueados existentes
+        const newBlockedSlots = {};
+        const newBlockedSlotsColors = {};
 
-        Object.keys(selectedSlots).forEach((slot) => {
-            const [day, hour] = slot.split('-');
-            const slotKey = `${day}-${hour}`;
-            newBlockedSlots[slotKey] = true;
-            newBlockedSlotsColors[slotKey] = editingSchedule
-                ? editingSchedule.color
-                : updatedSchedules[updatedSchedules.length - 1].color;
+        // Reconstruir los slots bloqueados desde cero
+        updatedSchedules.forEach((schedule) => {
+            schedule.schedules.forEach((dailySchedule) => {
+                const { day, ranges } = dailySchedule;
+                ranges.forEach((range) => {
+                    const startParts = range.start_time.split(':');
+                    const endParts = range.end_time.split(':');
+                    const startHour = parseInt(startParts[0]) * 2 + (startParts[1] === '30' ? 1 : 0);
+                    const endHour = parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+
+                    for (let h = startHour; h <= endHour; h++) {
+                        const slotKey = `${day}-${h}`;
+                        newBlockedSlots[slotKey] = true;
+                        newBlockedSlotsColors[slotKey] = schedule.color;
+                    }
+                });
+            });
         });
 
         setBlockedSlots(newBlockedSlots);
@@ -334,6 +346,127 @@ export default function Schedule({
                 : 'Turno guardado exitosamente'
         );
     };
+
+    const handleEditSchedule = (shift) => {
+        const newSelectedSlots = {};
+        
+        // Limpiar los slots bloqueados del turno que se va a editar
+        const newBlockedSlots = { ...blockedSlots };
+        const newBlockedSlotsColors = { ...blockedSlotsColors };
+        
+        shift.schedules.forEach((dailySchedule) => {
+            const { day, ranges } = dailySchedule;
+            ranges.forEach((range) => {
+                const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
+
+                for (let h = startHour; h <= endHour; h++) {
+                    const slotKey = `${day}-${h}`;
+                    newSelectedSlots[slotKey] = true;
+                    delete newBlockedSlots[slotKey];
+                    delete newBlockedSlotsColors[slotKey];
+                }
+            });
+        });
+
+        setBlockedSlots(newBlockedSlots);
+        setBlockedSlotsColors(newBlockedSlotsColors);
+        setSelectedSlots(newSelectedSlots);
+        setEditingSchedule(shift);
+    };
+
+    const handleClearAll = () => {
+        setBlockedSlots({});
+        setBlockedSlotsColors({});
+        setSelectedSlots({});
+        setSavedSchedules([]);
+        setUsedColors([]); // Reiniciar los colores usados
+        onScheduleSave([]); // Notificar al padre que los horarios se han limpiado
+        message.success('Todos los turnos han sido eliminados');
+    };
+
+    const handleDeleteSchedule = (shift) => {
+        // Eliminar los slots del turno eliminado
+        const newBlockedSlots = { ...blockedSlots };
+        const newBlockedSlotsColors = { ...blockedSlotsColors };
+
+        // Remover los slots del turno a eliminar
+        shift.schedules.forEach((dailySchedule) => {
+            const { day, ranges } = dailySchedule;
+            ranges.forEach((range) => {
+                const startParts = range.start_time.split(':');
+                const endParts = range.end_time.split(':');
+                const startHour = parseInt(startParts[0]) * 2 + (startParts[1] === '30' ? 1 : 0);
+                const endHour = parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+
+                for (let h = startHour; h <= endHour; h++) {
+                    const slotKey = `${day}-${h}`;
+                    delete newBlockedSlots[slotKey];
+                    delete newBlockedSlotsColors[slotKey];
+                }
+            });
+        });
+
+        // Actualizar el estado con los nuevos slots
+        setBlockedSlots(newBlockedSlots);
+        setBlockedSlotsColors(newBlockedSlotsColors);
+
+        // Actualizar la lista de turnos
+        const newSchedules = savedSchedules.filter(
+            (schedule) => schedule !== shift
+        );
+        setSavedSchedules(newSchedules);
+
+        // Notificar al componente padre del cambio
+        onScheduleSave(newSchedules);
+
+        message.success('Turno eliminado correctamente');
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSchedule(null);
+        setSelectedSlots({});
+        // Restore blocked slots from saved schedules
+        const newBlockedSlots = {};
+        const newBlockedSlotsColors = {};
+        savedSchedules.forEach((schedule) => {
+            schedule.schedules.forEach((dailySchedule) => {
+                const { day, ranges } = dailySchedule;
+                ranges.forEach((range) => {
+                    const startParts = range.start_time.split(':');
+                    const endParts = range.end_time.split(':');
+                    const startHour = parseInt(startParts[0]) * 2 + (startParts[1] === '30' ? 1 : 0);
+                    const endHour = parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+                    for (let h = startHour; h <= endHour; h++) {
+                        const slotKey = `${day}-${h}`;
+                        newBlockedSlots[slotKey] = true;
+                        newBlockedSlotsColors[slotKey] = schedule.color;
+                    }
+                });
+            });
+        });
+        setBlockedSlots(newBlockedSlots);
+        setBlockedSlotsColors(newBlockedSlotsColors);
+    };
+
+    const groupedSchedules = savedSchedules.reduce((acc, schedule) => {
+        if (!schedule.schedules || !Array.isArray(schedule.schedules)) {
+            return acc;
+        }
+
+        schedule.schedules.forEach((item) => {
+            if (!item.day || !Array.isArray(item.ranges)) {
+                return;
+            }
+            const { day, ranges } = item;
+            if (!acc[day]) {
+                acc[day] = [];
+            }
+            acc[day].push(...ranges);
+        });
+
+        return acc;
+    }, {});
 
     const processOvernight = (day, hours) => {
         hours.sort((a, b) => a - b);
@@ -417,134 +550,6 @@ export default function Schedule({
 
         return ranges;
     };
-
-    const handleClearAll = () => {
-        setBlockedSlots({});
-        setBlockedSlotsColors({});
-        setSelectedSlots({});
-        setSavedSchedules([]);
-        setUsedColors([]); // Reiniciar los colores usados
-        onScheduleSave([]); // Notificar al padre que los horarios se han limpiado
-        message.success('Todos los turnos han sido eliminados');
-    };
-
-    const handleEditSchedule = (shift) => {
-        const newSelectedSlots = {};
-        shift.schedules.forEach((dailySchedule) => {
-            const { day, ranges } = dailySchedule;
-            ranges.forEach((range) => {
-                const startHour =
-                    parseInt(range.start_time.split(':')[0]) * 2 +
-                    (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                const endHour =
-                    parseInt(range.end_time.split(':')[0]) * 2 +
-                    (range.end_time.split(':')[1] === '30' ? 1 : 0);
-
-                for (let h = startHour; h <= endHour; h++) {
-                    newSelectedSlots[`${day}-${h}`] = true;
-                }
-            });
-        });
-
-        const newBlockedSlots = { ...blockedSlots };
-        Object.keys(newSelectedSlots).forEach((slot) => {
-            delete newBlockedSlots[slot];
-        });
-
-        setBlockedSlots(newBlockedSlots);
-        setSelectedSlots(newSelectedSlots);
-        setEditingSchedule(shift);
-    };
-
-    const handleDeleteSchedule = (shift) => {
-        // Eliminar los slots del turno eliminado
-        const newBlockedSlots = { ...blockedSlots };
-        const newBlockedSlotsColors = { ...blockedSlotsColors };
-
-        // Remover los slots del turno a eliminar
-        shift.schedules.forEach((dailySchedule) => {
-            const { day, ranges } = dailySchedule;
-            ranges.forEach((range) => {
-                const startParts = range.start_time.split(':');
-                const endParts = range.end_time.split(':');
-                const startHour =
-                    parseInt(startParts[0]) * 2 +
-                    (startParts[1] === '30' ? 1 : 0);
-                const endHour =
-                    parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
-
-                for (let h = startHour; h <= endHour; h++) {
-                    const slotKey = `${day}-${h}`;
-                    delete newBlockedSlots[slotKey];
-                    delete newBlockedSlotsColors[slotKey];
-                }
-            });
-        });
-
-        // Actualizar el estado con los nuevos slots
-        setBlockedSlots(newBlockedSlots);
-        setBlockedSlotsColors(newBlockedSlotsColors);
-
-        // Actualizar la lista de turnos
-        const newSchedules = savedSchedules.filter(
-            (schedule) => schedule !== shift
-        );
-        setSavedSchedules(newSchedules);
-
-        // Notificar al componente padre del cambio
-        onScheduleSave(newSchedules);
-
-        message.success('Turno eliminado correctamente');
-    };
-
-    const handleCancelEdit = () => {
-        setEditingSchedule(null);
-        setSelectedSlots({});
-        // Restore blocked slots from saved schedules
-        const newBlockedSlots = {};
-        const newBlockedSlotsColors = {};
-        savedSchedules.forEach((schedule) => {
-            schedule.schedules.forEach((dailySchedule) => {
-                const { day, ranges } = dailySchedule;
-                ranges.forEach((range) => {
-                    const startParts = range.start_time.split(':');
-                    const endParts = range.end_time.split(':');
-                    const startHour =
-                        parseInt(startParts[0]) * 2 +
-                        (startParts[1] === '30' ? 1 : 0);
-                    const endHour =
-                        parseInt(endParts[0]) * 2 +
-                        (endParts[1] === '30' ? 1 : 0);
-                    for (let h = startHour; h <= endHour; h++) {
-                        const slotKey = `${day}-${h}`;
-                        newBlockedSlots[slotKey] = true;
-                        newBlockedSlotsColors[slotKey] = schedule.color;
-                    }
-                });
-            });
-        });
-        setBlockedSlots(newBlockedSlots);
-        setBlockedSlotsColors(newBlockedSlotsColors);
-    };
-
-    const groupedSchedules = savedSchedules.reduce((acc, schedule) => {
-        if (!schedule.schedules || !Array.isArray(schedule.schedules)) {
-            return acc;
-        }
-
-        schedule.schedules.forEach((item) => {
-            if (!item.day || !Array.isArray(item.ranges)) {
-                return;
-            }
-            const { day, ranges } = item;
-            if (!acc[day]) {
-                acc[day] = [];
-            }
-            acc[day].push(...ranges);
-        });
-
-        return acc;
-    }, {});
 
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">

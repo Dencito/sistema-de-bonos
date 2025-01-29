@@ -123,9 +123,56 @@ export default function Schedule({
         return selectedColor;
     };
 
+    const isEdgeSlot = (day, hour) => {
+        // Si estamos editando, permitir seleccionar slots del turno actual
+        if (editingSchedule) {
+            const isCurrentScheduleSlot = editingSchedule.schedules.some(schedule => {
+                if (schedule.day !== day) return false;
+                return schedule.ranges.some(range => {
+                    const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                    const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
+                    return hour >= startHour && hour <= endHour;
+                });
+            });
+            if (isCurrentScheduleSlot) return true;
+        }
+
+        // Verificar si el slot es el primer o último slot de algún turno existente
+        for (const schedule of savedSchedules) {
+            if (schedule === editingSchedule) continue;
+            
+            const daySchedules = schedule.schedules.find(s => s.day === day);
+            if (!daySchedules) continue;
+
+            for (const range of daySchedules.ranges) {
+                const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
+
+                // Es un slot válido si es el primer o último slot del turno
+                if (hour === startHour || hour === endHour) {
+                    return true;
+                }
+
+                // Si está dentro del rango (excepto primer y último slot), no es válido
+                if (hour > startHour && hour < endHour) {
+                    return false;
+                }
+            }
+        }
+
+        // Si no hay slots bloqueados en este día y hora, está permitido
+        return !blockedSlots[`${day}-${hour}`];
+    };
+
     const handleMouseDown = (day, hour) => {
         if (savedSchedules.length === 3 && !editingSchedule) {
             message.error('Se ha alcanzado el límite máximo de 3 turnos.');
+            return;
+        }
+
+        // Solo permitir selección si es un slot del borde o está libre
+        if (!isEdgeSlot(day, hour)) {
+            message.error('Solo puedes seleccionar el primer o último slot de los turnos existentes');
             return;
         }
 
@@ -147,6 +194,8 @@ export default function Schedule({
             const currentDay = days.findIndex((d) => d.name === day);
             const startHour = selectionStart.hour;
 
+            // Verificar si todos los slots en el rango son válidos
+            let allSlotsValid = true;
             for (
                 let d = Math.min(startDay, currentDay);
                 d <= Math.max(startDay, currentDay);
@@ -157,12 +206,31 @@ export default function Schedule({
                     h <= Math.max(startHour, hour);
                     h++
                 ) {
-                    const slotKey = `${days[d].name}-${h}`;
-                    newSelectedSlots[slotKey] = isSelecting.isSelecting;
+                    if (!isEdgeSlot(days[d].name, h)) {
+                        allSlotsValid = false;
+                        break;
+                    }
                 }
+                if (!allSlotsValid) break;
             }
 
-            setSelectedSlots(newSelectedSlots);
+            if (allSlotsValid) {
+                for (
+                    let d = Math.min(startDay, currentDay);
+                    d <= Math.max(startDay, currentDay);
+                    d++
+                ) {
+                    for (
+                        let h = Math.min(startHour, hour);
+                        h <= Math.max(startHour, hour);
+                        h++
+                    ) {
+                        const slotKey = `${days[d].name}-${h}`;
+                        newSelectedSlots[slotKey] = isSelecting.isSelecting;
+                    }
+                }
+                setSelectedSlots(newSelectedSlots);
+            }
         }
     };
 
@@ -507,21 +575,38 @@ export default function Schedule({
                             const slotKey = `${day.name}-${index}`;
                             const isBlocked = blockedSlots[slotKey];
                             const isSelected = selectedSlots[slotKey];
-
+                            const isEdge = isEdgeSlot(day.name, index);
+                            const isEditingSlot = editingSchedule && editingSchedule.schedules.some(schedule => 
+                                schedule.day === day.name && schedule.ranges.some(range => {
+                                    const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                                    const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
+                                    return index >= startHour && index <= endHour;
+                                })
+                            );
+                            
+                            let slotStyle = '';
+                            if (isSelected) {
+                                slotStyle = 'bg-blue-600 border-blue-700 shadow-md';
+                            } else if (isEditingSlot) {
+                                slotStyle = `${blockedSlotsColors[slotKey]} border-yellow-500 border-2`;
+                            } else if (isBlocked) {
+                                if (isEdge) {
+                                    slotStyle = `${blockedSlotsColors[slotKey]} border-green-500 border-2 hover:brightness-110`;
+                                } else {
+                                    slotStyle = `${blockedSlotsColors[slotKey]} border-gray-500`;
+                                }
+                            } else if (isEdge) {
+                                slotStyle = 'bg-green-50 hover:bg-green-100 border-green-400 border-dashed border-2';
+                            } else {
+                                slotStyle = 'bg-gray-200 border-gray-300 cursor-not-allowed';
+                            }
+                            
                             return (
                                 <div
                                     key={`${day.name}-${index}`}
-                                    className={`h-[30px] border border-gray-200 rounded cursor-pointer transition-all duration-200 
-                                        ${
-                                            isSelected
-                                                ? 'bg-blue-500 border-blue-500'
-                                                : isBlocked
-                                                ? blockedSlotsColors[slotKey] || 'bg-gray-300'
-                                                : 'hover:bg-blue-50 hover:border-blue-400'
-                                        }`}
+                                    className={`h-[30px] border rounded cursor-pointer transition-all duration-200 ${slotStyle}`}
                                     style={{
-                                        background: isBlocked && !isSelected ? blockedSlotsColors[slotKey] : undefined,
-                                        opacity: isBlocked && !isSelected ? '0.7' : '1'
+                                        opacity: isSelected ? 1 : isBlocked ? 0.9 : 1,
                                     }}
                                     onMouseDown={() => handleMouseDown(day.name, index)}
                                     onMouseEnter={() => handleMouseEnter(day.name, index)}
@@ -644,7 +729,8 @@ export default function Schedule({
                                             okText="Sí"
                                             cancelText="No"
                                             disabled={
-                                                editingSchedule === scheduleItem
+                                                editingSchedule ===
+                                                scheduleItem
                                             }
                                         >
                                             <Button

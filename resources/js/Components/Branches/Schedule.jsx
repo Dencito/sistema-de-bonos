@@ -79,26 +79,10 @@ export default function Schedule({
     });
 
     const colorVariants = [
-        'bg-green-300', // Verde claro
-        'bg-red-300', // Rojo claro
-        'bg-blue-300', // Azul claro
-        'bg-purple-300', // Morado claro
-        'bg-yellow-300', // Amarillo claro
-        'bg-pink-300', // Rosa claro
-        'bg-indigo-300', // Índigo claro
-        'bg-teal-300', // Verde azulado
-        'bg-orange-300', // Naranja claro
-        'bg-cyan-300', // Cian claro
-        'bg-lime-300', // Lima claro
-        'bg-fuchsia-300', // Fucsia claro
-        'bg-emerald-300', // Esmeralda claro
-        'bg-violet-300', // Violeta claro
-        'bg-amber-300', // Ámbar claro
-        'bg-rose-300', // Rosa oscuro
-        'bg-sky-300', // Celeste claro
-        'bg-green-200', // Verde más claro
-        'bg-blue-200', // Azul más claro
-        'bg-purple-200', // Morado más claro
+        'bg-blue-400',    // Azul
+        'bg-red-400',     // Rojo
+        'bg-amber-400',   // Ámbar
+        'bg-emerald-400', // Esmeralda
     ];
 
     const getRandomColor = () => {
@@ -553,6 +537,16 @@ export default function Schedule({
 
     return (
         <Card className="p-5 max-w-[1400px] mx-auto select-none">
+            <div className="mb-4 text-sm text-gray-600">
+                <div className="flex items-center gap-2 mb-1">
+                    <div className="w-4 h-4 border-2 border-black"></div>
+                    <span>Slots disponibles para solapar con otros turnos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border border-gray-300"></div>
+                    <span>Slots disponibles para selección normal</span>
+                </div>
+            </div>
             <div className="overflow-x-auto pt-10">
                 <div className="grid grid-cols-[120px_repeat(49,minmax(30px,1fr))] gap-0.5 items-center">
                     <div className="day-label">Día/Hora</div>
@@ -590,33 +584,55 @@ export default function Schedule({
                             );
                             
                             let slotStyle = '';
+                            let tooltipText = '';
+
                             if (isSelected) {
-                                slotStyle = 'bg-blue-600 border-blue-700 shadow-md';
+                                // Slot seleccionado - Azul brillante con sombra
+                                slotStyle = 'bg-blue-500 border-blue-600 shadow-md hover:bg-blue-600 transition-all';
                             } else if (isEditingSlot) {
-                                slotStyle = `${blockedSlotsColors[slotKey]} border-yellow-500 border-2`;
+                                // Slot en edición - Color original con borde amarillo brillante y efecto de pulso
+                                slotStyle = `${blockedSlotsColors[slotKey]} border-yellow-400 border-2 animate-pulse`;
+                                tooltipText = 'Editando turno';
                             } else if (isBlocked) {
                                 if (isEdge) {
-                                    slotStyle = `${blockedSlotsColors[slotKey]} border-green-500 border-2 hover:brightness-110`;
+                                    // Slot bloqueado pero en el borde - Color original con borde negro
+                                    slotStyle = `${blockedSlotsColors[slotKey]} border-black border-2 hover:brightness-110 transition-all`;
+                                    tooltipText = 'Click para solapar con este turno';
                                 } else {
-                                    slotStyle = `${blockedSlotsColors[slotKey]} border-gray-500`;
+                                    // Slot bloqueado normal - Color original con borde gris
+                                    slotStyle = `${blockedSlotsColors[slotKey]} border-gray-400`;
                                 }
                             } else if (isEdge) {
-                                slotStyle = 'bg-green-50 hover:bg-green-100 border-green-400 border-dashed border-2';
+                                // Slot disponible para selección - Blanco con borde negro
+                                slotStyle = 'bg-white hover:bg-gray-50 border-black transition-all';
+                                tooltipText = 'Click para solapar con el turno adyacente';
                             } else {
-                                slotStyle = 'bg-gray-200 border-gray-300 cursor-not-allowed';
+                                // Slot no disponible - Blanco con borde gris
+                                slotStyle = 'bg-white border-gray-300 border cursor-not-allowed';
                             }
                             
                             return (
                                 <div
                                     key={`${day.name}-${index}`}
-                                    className={`h-[30px] border rounded cursor-pointer transition-all duration-200 ${slotStyle}`}
+                                    className={`h-[30px] border rounded cursor-pointer ${slotStyle} relative group`}
                                     style={{
-                                        opacity: isSelected ? 1 : isBlocked ? 0.9 : 1,
+                                        opacity: isSelected ? 1 : 
+                                                isEditingSlot ? 0.9 :
+                                                isBlocked ? 0.85 :
+                                                1,
+                                        transition: 'all 0.2s ease-in-out'
                                     }}
+                                    title={tooltipText}
                                     onMouseDown={() => handleMouseDown(day.name, index)}
                                     onMouseEnter={() => handleMouseEnter(day.name, index)}
                                     onMouseUp={handleMouseUp}
-                                />
+                                >
+                                    {tooltipText && (
+                                        <div className="absolute hidden group-hover:block bg-black text-white text-xs p-1 rounded whitespace-nowrap z-50 -top-7 left-1/2 transform -translate-x-1/2">
+                                            {tooltipText}
+                                        </div>
+                                    )}
+                                </div>
                             );
                         })}
                     </div>

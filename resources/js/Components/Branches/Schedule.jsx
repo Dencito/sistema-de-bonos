@@ -669,39 +669,38 @@ export default function Schedule({
                                     </div>
                                     <div className="grid gap-2">
                                         {scheduleItem.schedules.map(
-                                            (dailySchedule, dayIndex) => (
-                                                <div
-                                                    key={dayIndex}
-                                                    className="flex items-center gap-2"
-                                                >
-                                                    <span className="font-medium min-w-[100px] text-gray-600">
-                                                        {dailySchedule.day}:
-                                                    </span>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {dailySchedule.ranges.map(
-                                                            (
-                                                                range,
-                                                                rangeIndex
-                                                            ) => (
-                                                                <span
-                                                                    key={
-                                                                        rangeIndex
-                                                                    }
-                                                                    className="bg-white px-3 py-1 rounded border border-gray-200"
-                                                                >
-                                                                    {
-                                                                        range.start_time
-                                                                    }{' '}
-                                                                    a{' '}
-                                                                    {
-                                                                        range.end_time
-                                                                    }
-                                                                </span>
-                                                            )
-                                                        )}
+                                            (dailySchedule, dayIndex) => {
+                                                // Filtrar rangos válidos (que no sean 00:00 a 00:00)
+                                                const validRanges = dailySchedule.ranges.filter(
+                                                    range => !(range.start_time === '00:00' && range.end_time === '00:00')
+                                                );
+                                                
+                                                // Si no hay rangos válidos, no mostrar este día
+                                                if (validRanges.length === 0) return null;
+
+                                                return (
+                                                    <div
+                                                        key={dayIndex}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        <span className="font-medium min-w-[100px] text-gray-600">
+                                                            {dailySchedule.day}:
+                                                        </span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {validRanges.map(
+                                                                (range, rangeIndex) => (
+                                                                    <span
+                                                                        key={rangeIndex}
+                                                                        className="bg-white px-3 py-1 rounded border border-gray-200"
+                                                                    >
+                                                                        {range.start_time} a {range.end_time}
+                                                                    </span>
+                                                                )
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )
+                                                );
+                                            }
                                         )}
                                     </div>
                                 </div>

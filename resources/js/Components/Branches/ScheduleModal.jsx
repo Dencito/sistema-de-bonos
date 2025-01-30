@@ -2,36 +2,48 @@ import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import Schedule from './Schedule';
 
-export default function ScheduleModal({ open, onClose, onSave, initialValue }) {
+export default function ScheduleModal({
+    open,
+    onClose,
+    onSave,
+    initialValue,
+    isEditing,
+}) {
     const [selectedSchedule, setSelectedSchedule] = useState(
         initialValue || []
     );
 
-    const handleScheduleChange = (schedule) => {
-        setSelectedSchedule(schedule);
+    const handleScheduleChange = (schedules) => {
+        setSelectedSchedule(schedules);
     };
 
-    const handleOk = () => {
+    const handleSave = () => {
         onSave(selectedSchedule);
         onClose();
     };
 
     return (
         <Modal
-            title="Seleccionar Horarios"
+            title="Horarios"
             open={open}
             onCancel={onClose}
-            width={10000}
+            style={{ top: 20 }}
+            width={1200}
             footer={[
                 <Button key="cancel" onClick={onClose}>
                     Cancelar
                 </Button>,
-                <Button key="submit" type="primary" onClick={handleOk}>
+                <Button key="submit" type="primary" onClick={handleSave}>
                     Guardar
                 </Button>,
             ]}
         >
-            <Schedule onScheduleSave={handleScheduleChange} />
+            <Schedule
+                isEditing={isEditing}
+                onScheduleSave={handleScheduleChange}
+                initialSchedules={initialValue}
+                isModalOpen={open}
+            />
         </Modal>
     );
 }

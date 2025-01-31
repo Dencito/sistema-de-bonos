@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm, Head } from '@inertiajs/react';
+import { format } from 'date-fns';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ModalCreateUser from '@/Components/Users/ModalCreateUser';
 import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
@@ -360,6 +361,20 @@ export default function UserPage({
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
+            },
+            {
+                title: 'Fecha de ingreso',
+                key: 'created_at',
+                render: (_, user) => {
+                    const formattedDate = user?.created_at
+                        ? format(new Date(user.created_at), 'dd/MM/yyyy')
+                        : 'Fecha no disponible';
+                    return (
+                        <p className="font-bold rounded-lg p-1">
+                            {formattedDate}
+                        </p>
+                    );
+                },
             },
             {
                 title: 'Acciones',

@@ -337,6 +337,18 @@ export default function ModalCreateUser({
                     </span>
                 )}
                 <Form.Item
+                    name="entry_date"
+                    label="Fecha de Ingreso"
+                    rules={[
+                        {
+                            type: 'date',
+                            message: 'Por favor ingrese una fecha válida',
+                        },
+                    ]}
+                >
+                    <Input type="date" />
+                </Form.Item>
+                <Form.Item
                     name="birth_date"
                     label="Fecha de Nacimiento"
                     rules={[

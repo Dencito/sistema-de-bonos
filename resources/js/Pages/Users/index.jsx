@@ -198,6 +198,13 @@ export default function UserPage({
                 key: 'username',
             },
             {
+                title: 'Fecha de Ingreso',
+                key: 'entry_date',
+                render: (_, user) => (
+                    <span>{user.entry_date ? format(new Date(user.entry_date), 'dd/MM/yyyy') : '-'}</span>
+                ),
+            },
+            {
                 title: 'Correo',
                 dataIndex: 'email',
                 key: 'email',
@@ -300,6 +307,13 @@ export default function UserPage({
                 title: 'Nombre de usuario',
                 dataIndex: 'username',
                 key: 'username',
+            },
+            {
+                title: 'Fecha de Ingreso',
+                key: 'entry_date',
+                render: (_, user) => (
+                    <span>{user.entry_date ? format(new Date(user.entry_date), 'dd/MM/yyyy') : '-'}</span>
+                ),
             },
             {
                 title: 'Correo',

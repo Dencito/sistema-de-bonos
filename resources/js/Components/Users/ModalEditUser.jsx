@@ -279,6 +279,18 @@ export default function ModalEditUser({
                 >
                     <Input showCount maxLength={60} />
                 </Form.Item>
+                <Form.Item
+                    name="entry_date"
+                    label="Fecha de Ingreso"
+                    rules={[
+                        {
+                            type: 'date',
+                            message: 'Por favor ingrese una fecha válida',
+                        },
+                    ]}
+                >
+                    <Input type="date" />
+                </Form.Item>
                 <Form.Item name="phone" label="Número de teléfono">
                     <Input
                         name="phone"
@@ -501,6 +513,19 @@ export default function ModalEditUser({
                         placeholder="dd/mm/aaaa"
                         onChange={validateAge}
                     />
+                </Form.Item>
+
+                <Form.Item
+                    name="entry_date"
+                    label="Fecha de Ingreso"
+                    rules={[
+                        {
+                            type: 'date',
+                            message: 'Por favor ingrese una fecha válida',
+                        },
+                    ]}
+                >
+                    <Input type="date" />
                 </Form.Item>
 
                 <Form.Item

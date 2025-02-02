@@ -25,6 +25,7 @@ class User extends Authenticatable
         'rutDv',
         'code',
         'birth_date',
+        'entry_date',
         'email',
         'nationality',
         'address',
@@ -49,8 +50,21 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birth_date' => 'date',
+        'entry_date' => 'date',
         'password' => 'hashed',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($user) {
+            if (!$user->entry_date) {
+                $user->entry_date = now();
+            }
+        });
+    }
 
     public function role()
     {

@@ -79,9 +79,9 @@ export default function Schedule({
     });
 
     const colorVariants = [
-        'bg-blue-400',    // Azul
-        'bg-red-400',     // Rojo
-        'bg-amber-400',   // Ámbar
+        'bg-blue-400', // Azul
+        'bg-red-400', // Rojo
+        'bg-amber-400', // Ámbar
         'bg-emerald-400', // Esmeralda
     ];
 
@@ -110,27 +110,37 @@ export default function Schedule({
     const isEdgeSlot = (day, hour) => {
         // Si estamos editando, permitir seleccionar slots del turno actual
         if (editingSchedule) {
-            const isCurrentScheduleSlot = editingSchedule.schedules.some(schedule => {
-                if (schedule.day !== day) return false;
-                return schedule.ranges.some(range => {
-                    const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                    const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
-                    return hour >= startHour && hour <= endHour;
-                });
-            });
+            const isCurrentScheduleSlot = editingSchedule.schedules.some(
+                (schedule) => {
+                    if (schedule.day !== day) return false;
+                    return schedule.ranges.some((range) => {
+                        const startHour =
+                            parseInt(range.start_time.split(':')[0]) * 2 +
+                            (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                        const endHour =
+                            parseInt(range.end_time.split(':')[0]) * 2 +
+                            (range.end_time.split(':')[1] === '30' ? 1 : 0);
+                        return hour >= startHour && hour <= endHour;
+                    });
+                }
+            );
             if (isCurrentScheduleSlot) return true;
         }
 
         // Verificar si el slot es el primer o último slot de algún turno existente
         for (const schedule of savedSchedules) {
             if (schedule === editingSchedule) continue;
-            
-            const daySchedules = schedule.schedules.find(s => s.day === day);
+
+            const daySchedules = schedule.schedules.find((s) => s.day === day);
             if (!daySchedules) continue;
 
             for (const range of daySchedules.ranges) {
-                const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
+                const startHour =
+                    parseInt(range.start_time.split(':')[0]) * 2 +
+                    (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                const endHour =
+                    parseInt(range.end_time.split(':')[0]) * 2 +
+                    (range.end_time.split(':')[1] === '30' ? 1 : 0);
 
                 // Es un slot válido si es el primer o último slot del turno
                 if (hour === startHour || hour === endHour) {
@@ -156,7 +166,9 @@ export default function Schedule({
 
         // Solo permitir selección si es un slot del borde o está libre
         if (!isEdgeSlot(day, hour)) {
-            message.error('Solo puedes seleccionar el primer o último slot de los turnos existentes');
+            message.error(
+                'Solo puedes seleccionar el primer o último slot de los turnos existentes'
+            );
             return;
         }
 
@@ -240,7 +252,8 @@ export default function Schedule({
         // Agrupar slots por día
         const slotsByDay = {};
         Object.keys(selectedSlots).forEach((slot) => {
-            if (selectedSlots[slot]) { // Solo procesar slots que están seleccionados
+            if (selectedSlots[slot]) {
+                // Solo procesar slots que están seleccionados
                 const [day, hour] = slot.split('-');
                 if (!slotsByDay[day]) {
                     slotsByDay[day] = [];
@@ -307,8 +320,12 @@ export default function Schedule({
                 ranges.forEach((range) => {
                     const startParts = range.start_time.split(':');
                     const endParts = range.end_time.split(':');
-                    const startHour = parseInt(startParts[0]) * 2 + (startParts[1] === '30' ? 1 : 0);
-                    const endHour = parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+                    const startHour =
+                        parseInt(startParts[0]) * 2 +
+                        (startParts[1] === '30' ? 1 : 0);
+                    const endHour =
+                        parseInt(endParts[0]) * 2 +
+                        (endParts[1] === '30' ? 1 : 0);
 
                     for (let h = startHour; h <= endHour; h++) {
                         const slotKey = `${day}-${h}`;
@@ -333,16 +350,20 @@ export default function Schedule({
 
     const handleEditSchedule = (shift) => {
         const newSelectedSlots = {};
-        
+
         // Limpiar los slots bloqueados del turno que se va a editar
         const newBlockedSlots = { ...blockedSlots };
         const newBlockedSlotsColors = { ...blockedSlotsColors };
-        
+
         shift.schedules.forEach((dailySchedule) => {
             const { day, ranges } = dailySchedule;
             ranges.forEach((range) => {
-                const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
+                const startHour =
+                    parseInt(range.start_time.split(':')[0]) * 2 +
+                    (range.start_time.split(':')[1] === '30' ? 1 : 0);
+                const endHour =
+                    parseInt(range.end_time.split(':')[0]) * 2 +
+                    (range.end_time.split(':')[1] === '30' ? 1 : 0);
 
                 for (let h = startHour; h <= endHour; h++) {
                     const slotKey = `${day}-${h}`;
@@ -380,8 +401,11 @@ export default function Schedule({
             ranges.forEach((range) => {
                 const startParts = range.start_time.split(':');
                 const endParts = range.end_time.split(':');
-                const startHour = parseInt(startParts[0]) * 2 + (startParts[1] === '30' ? 1 : 0);
-                const endHour = parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+                const startHour =
+                    parseInt(startParts[0]) * 2 +
+                    (startParts[1] === '30' ? 1 : 0);
+                const endHour =
+                    parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
 
                 for (let h = startHour; h <= endHour; h++) {
                     const slotKey = `${day}-${h}`;
@@ -419,8 +443,12 @@ export default function Schedule({
                 ranges.forEach((range) => {
                     const startParts = range.start_time.split(':');
                     const endParts = range.end_time.split(':');
-                    const startHour = parseInt(startParts[0]) * 2 + (startParts[1] === '30' ? 1 : 0);
-                    const endHour = parseInt(endParts[0]) * 2 + (endParts[1] === '30' ? 1 : 0);
+                    const startHour =
+                        parseInt(startParts[0]) * 2 +
+                        (startParts[1] === '30' ? 1 : 0);
+                    const endHour =
+                        parseInt(endParts[0]) * 2 +
+                        (endParts[1] === '30' ? 1 : 0);
                     for (let h = startHour; h <= endHour; h++) {
                         const slotKey = `${day}-${h}`;
                         newBlockedSlots[slotKey] = true;
@@ -575,20 +603,48 @@ export default function Schedule({
                             const isBlocked = blockedSlots[slotKey];
                             const isSelected = selectedSlots[slotKey];
                             const isEdge = isEdgeSlot(day.name, index);
-                            const isEditingSlot = editingSchedule && editingSchedule.schedules.some(schedule => 
-                                schedule.day === day.name && schedule.ranges.some(range => {
-                                    const startHour = parseInt(range.start_time.split(':')[0]) * 2 + (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                                    const endHour = parseInt(range.end_time.split(':')[0]) * 2 + (range.end_time.split(':')[1] === '30' ? 1 : 0);
-                                    return index >= startHour && index <= endHour;
-                                })
-                            );
-                            
+                            const isEditingSlot =
+                                editingSchedule &&
+                                editingSchedule.schedules.some(
+                                    (schedule) =>
+                                        schedule.day === day.name &&
+                                        schedule.ranges.some((range) => {
+                                            const startHour =
+                                                parseInt(
+                                                    range.start_time.split(
+                                                        ':'
+                                                    )[0]
+                                                ) *
+                                                    2 +
+                                                (range.start_time.split(
+                                                    ':'
+                                                )[1] === '30'
+                                                    ? 1
+                                                    : 0);
+                                            const endHour =
+                                                parseInt(
+                                                    range.end_time.split(':')[0]
+                                                ) *
+                                                    2 +
+                                                (range.end_time.split(
+                                                    ':'
+                                                )[1] === '30'
+                                                    ? 1
+                                                    : 0);
+                                            return (
+                                                index >= startHour &&
+                                                index <= endHour
+                                            );
+                                        })
+                                );
+
                             let slotStyle = '';
                             let tooltipText = '';
 
                             if (isSelected) {
                                 // Slot seleccionado - Azul brillante con sombra
-                                slotStyle = 'bg-blue-500 border-blue-600 shadow-md hover:bg-blue-600 transition-all';
+                                slotStyle =
+                                    'bg-blue-500 border-blue-600 shadow-md hover:bg-blue-600 transition-all';
                             } else if (isEditingSlot) {
                                 // Slot en edición - Color original con borde amarillo brillante y efecto de pulso
                                 slotStyle = `${blockedSlotsColors[slotKey]} border-yellow-400 border-2 animate-pulse`;
@@ -597,34 +653,45 @@ export default function Schedule({
                                 if (isEdge) {
                                     // Slot bloqueado pero en el borde - Color original con borde negro
                                     slotStyle = `${blockedSlotsColors[slotKey]} border-black border-2 hover:brightness-110 transition-all`;
-                                    tooltipText = 'Click para solapar con este turno';
+                                    tooltipText =
+                                        'Click para solapar con este turno';
                                 } else {
                                     // Slot bloqueado normal - Color original con borde gris
                                     slotStyle = `${blockedSlotsColors[slotKey]} border-gray-400`;
                                 }
                             } else if (isEdge) {
                                 // Slot disponible para selección - Blanco con borde negro
-                                slotStyle = 'bg-white hover:bg-gray-50 border-black transition-all';
-                                tooltipText = 'Click para solapar con el turno adyacente';
+                                slotStyle =
+                                    'bg-white hover:bg-gray-50 border-black transition-all';
+                                tooltipText =
+                                    'Click para solapar con el turno adyacente';
                             } else {
                                 // Slot no disponible - Blanco con borde gris
-                                slotStyle = 'bg-white border-gray-300 border cursor-not-allowed';
+                                slotStyle =
+                                    'bg-white border-gray-300 border cursor-not-allowed';
                             }
-                            
+
                             return (
                                 <div
                                     key={`${day.name}-${index}`}
                                     className={`h-[30px] border rounded cursor-pointer ${slotStyle} relative group`}
                                     style={{
-                                        opacity: isSelected ? 1 : 
-                                                isEditingSlot ? 0.9 :
-                                                isBlocked ? 0.85 :
-                                                1,
-                                        transition: 'all 0.2s ease-in-out'
+                                        opacity: isSelected
+                                            ? 1
+                                            : isEditingSlot
+                                              ? 0.9
+                                              : isBlocked
+                                                ? 0.85
+                                                : 1,
+                                        transition: 'all 0.2s ease-in-out',
                                     }}
                                     title={tooltipText}
-                                    onMouseDown={() => handleMouseDown(day.name, index)}
-                                    onMouseEnter={() => handleMouseEnter(day.name, index)}
+                                    onMouseDown={() =>
+                                        handleMouseDown(day.name, index)
+                                    }
+                                    onMouseEnter={() =>
+                                        handleMouseEnter(day.name, index)
+                                    }
                                     onMouseUp={handleMouseUp}
                                 >
                                     {tooltipText && (
@@ -692,12 +759,20 @@ export default function Schedule({
                                         {scheduleItem.schedules.map(
                                             (dailySchedule, dayIndex) => {
                                                 // Filtrar rangos válidos (que no sean 00:00 a 00:00)
-                                                const validRanges = dailySchedule.ranges.filter(
-                                                    range => !(range.start_time === '00:00' && range.end_time === '00:00')
-                                                );
-                                                
+                                                const validRanges =
+                                                    dailySchedule.ranges.filter(
+                                                        (range) =>
+                                                            !(
+                                                                range.start_time ===
+                                                                    '00:00' &&
+                                                                range.end_time ===
+                                                                    '00:00'
+                                                            )
+                                                    );
+
                                                 // Si no hay rangos válidos, no mostrar este día
-                                                if (validRanges.length === 0) return null;
+                                                if (validRanges.length === 0)
+                                                    return null;
 
                                                 return (
                                                     <div
@@ -709,12 +784,23 @@ export default function Schedule({
                                                         </span>
                                                         <div className="flex flex-wrap gap-2">
                                                             {validRanges.map(
-                                                                (range, rangeIndex) => (
+                                                                (
+                                                                    range,
+                                                                    rangeIndex
+                                                                ) => (
                                                                     <span
-                                                                        key={rangeIndex}
+                                                                        key={
+                                                                            rangeIndex
+                                                                        }
                                                                         className="bg-white px-3 py-1 rounded border border-gray-200"
                                                                     >
-                                                                        {range.start_time} a {range.end_time}
+                                                                        {
+                                                                            range.start_time
+                                                                        }{' '}
+                                                                        a{' '}
+                                                                        {
+                                                                            range.end_time
+                                                                        }
                                                                     </span>
                                                                 )
                                                             )}
@@ -749,8 +835,7 @@ export default function Schedule({
                                             okText="Sí"
                                             cancelText="No"
                                             disabled={
-                                                editingSchedule ===
-                                                scheduleItem
+                                                editingSchedule === scheduleItem
                                             }
                                         >
                                             <Button

@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\User;
+use App\Models\Bonus;
+use App\Models\Branch;
+use App\Models\CategoryBonus;
+use App\Models\Company;
 use App\Models\Role;
 use App\Models\Status;
-use App\Models\CategoryBonus;
-use App\Models\Branch;
-use App\Models\Company;
-use App\Models\Bonus;
+use App\Models\User;
 use App\Models\UserBranches;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -65,7 +65,6 @@ class UserController extends Controller
         ]);
     }
 
-
     public function store(Request $request)
     {
         try {
@@ -76,7 +75,7 @@ class UserController extends Controller
                     return response()->json(['message' => 'El nombre de usuario ya existe', 'error' => true], 400);
                 }
             }
-        
+
             // Validar si 'email' no es null antes de la consulta
             if (!is_null($request->email)) {
                 $existingUser = User::where('email', $request->email)->first();
@@ -84,12 +83,12 @@ class UserController extends Controller
                     return response()->json(['message' => 'El correo electrónico ya existe', 'error' => true], 400);
                 }
             }
-        
+
             if (!is_null($request->rutNumbers) && !is_null($request->rutDv)) {
                 $existingUser = User::where('rutNumbers', $request->rutNumbers)
                     ->where('rutDv', $request->rutDv)
                     ->first();
-                
+
                 if ($existingUser) {
                     return response()->json(['message' => 'El RUT ya esta en uso.', 'error' => true], 400);
                 }
@@ -101,8 +100,6 @@ class UserController extends Controller
                     return response()->json(['message' => 'El telefono ya esta en uso.', 'error' => true], 400);
                 }
             }
-            
-            
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Error al verificar los datos del usuario', 'error' => true], 500);
         }
@@ -135,8 +132,6 @@ class UserController extends Controller
             'branches.*' => 'nullable',
         ]);
 
-
-        
         DB::beginTransaction();
         try {
             // Get role_id from role name
@@ -157,7 +152,7 @@ class UserController extends Controller
                 'phone' => $request->phone,
                 'rutNumbers' => $request->rutNumbers,
                 'rutDv' => $request->rutDv,
-                'code' =>  $this->generateUniqueCode(),
+                'code' => $this->generateUniqueCode(),
                 'birth_date' => $request->birth_date,
                 'email' => $request->email,
                 'nationality' => $request->nationality,
@@ -176,18 +171,16 @@ class UserController extends Controller
                 'role_id' => $role->id,
             ]);
 
-            //dd($request->branches);
-            
             $userId = $user->id;
-            if($request->branches) {
+            if ($request->branches) {
                 $branchIds = $request->branches;
                 // Iterar sobre los IDs de las sucursales para insertarlos en la tabla `user_branches`
                 foreach ($branchIds as $branchId) {
                     // Verificar si la relación ya existe para evitar duplicados
                     $existingUserBranch = UserBranches::where('user_id', $userId)
-                                                    ->where('branch_id', $branchId)
-                                                    ->first();
-        
+                        ->where('branch_id', $branchId)
+                        ->first();
+
                     if (!$existingUserBranch) {
                         // Crear una nueva relación en `user_branches`
                         UserBranches::create([
@@ -195,7 +188,7 @@ class UserController extends Controller
                             'branch_id' => $branchId,
                         ]);
                     }
-                }            
+                }
             }
             // Confirmar la transacción
             DB::commit();
@@ -212,17 +205,15 @@ class UserController extends Controller
         ]);
     }
 
-
     private function generateUniqueCode()
-{
-    do {
-        // Generar un número de 9 dígitos
-        $code = random_int(100000000, 999999999);
-    } while (User::where('code', $code)->exists());
+    {
+        do {
+            // Generar un número de 9 dígitos
+            $code = random_int(100000000, 999999999);
+        } while (User::where('code', $code)->exists());
 
-    return $code;
-}
-
+        return $code;
+    }
 
     public function update(Request $request, User $user)
     {
@@ -243,18 +234,18 @@ class UserController extends Controller
             // Validar si 'username' no es null antes de la consulta
             if (!is_null($request->username)) {
                 $existingUser = User::where('username', $request->username)
-                ->where('id', '!=', $user->id)
-                ->first();
+                    ->where('id', '!=', $user->id)
+                    ->first();
                 if ($existingUser) {
                     return response()->json(['message' => 'El nombre de usuario ya existe', 'error' => true], 400);
                 }
             }
-        
+
             // Validar si 'email' no es null antes de la consulta
             if (!is_null($request->email)) {
                 $existingUser = User::where('email', $request->email)
-                ->where('id', '!=', $user->id)
-                ->first();
+                    ->where('id', '!=', $user->id)
+                    ->first();
                 if ($existingUser) {
                     return response()->json(['message' => 'El correo electrónico ya existe', 'error' => true], 400);
                 }
@@ -263,8 +254,8 @@ class UserController extends Controller
             // Validar si 'phone' no es null antes de la consulta
             if (!is_null($request->phone)) {
                 $existingUser = User::where('phone', $request->phone)
-                ->where('id', '!=', $user->id)
-                ->first();
+                    ->where('id', '!=', $user->id)
+                    ->first();
                 if ($existingUser) {
                     return response()->json(['message' => 'El teléfono ya existe', 'error' => true], 400);
                 }
@@ -273,19 +264,19 @@ class UserController extends Controller
             // Validar si 'code' no es null antes de la consulta
             if (!is_null($request->code)) {
                 $existingUser = User::where('code', $request->code)
-                ->where('id', '!=', $user->id)
-                ->first();
+                    ->where('id', '!=', $user->id)
+                    ->first();
                 if ($existingUser) {
                     return response()->json(['message' => 'El codigo de usuario ya existe', 'error' => true], 400);
                 }
             }
-        
+
             if (!is_null($request->rutNumbers) && !is_null($request->rutDv)) {
                 $existingUser = User::where('rutNumbers', $request->rutNumbers)
                     ->where('rutDv', $request->rutDv)
                     ->where('id', '!=', $user->id)
                     ->first();
-                
+
                 if ($existingUser) {
                     return response()->json(['message' => 'El RUT ya esta en uso.', 'error' => true], 400);
                 }
@@ -348,18 +339,18 @@ class UserController extends Controller
             'branch_id' => $request->branch_id,
             'status_id' => $request->status_id,
             'category_bonus_id' => $request->category_bonus_id,
-            'role_id' =>  $request->role_id,
+            'role_id' => $request->role_id,
         ]);
 
         if ($request->has('branches')) {
             $user->branches()->sync($request->branches);
         }
 
-            return response()->json([
-                'error' => false,
-                'message' => 'Usuario actualizado exitosamente',
-            ]);
-        }
+        return response()->json([
+            'error' => false,
+            'message' => 'Usuario actualizado exitosamente',
+        ]);
+    }
 
     public function destroy(User $user)
     {
@@ -393,7 +384,6 @@ class UserController extends Controller
         ]);
     }
 
-
     public function assignMultipleBranches(Request $request)
     {
         // Validar los datos de la solicitud
@@ -402,21 +392,21 @@ class UserController extends Controller
             'branches' => 'required|array',
             'branches.*' => 'exists:branches,id',
         ]);
-    
+
         $bonusId = $validated['user_id'];
         $userIds = $validated['branches'];
-    
+
         // Comenzar una transacción para asegurar atomicidad
         DB::beginTransaction();
-    
+
         try {
             // Iterar sobre los IDs de los usuarios para insertarlos en la tabla `user_bonuses`
             foreach ($userIds as $userId) {
                 // Verificar si la relación ya existe para evitar duplicados
                 $existingUserBonus = UserBranches::where('user_id', $userId)
-                                                ->where('bonus_id', $bonusId)
-                                                ->first();
-    
+                    ->where('bonus_id', $bonusId)
+                    ->first();
+
                 if (!$existingUserBonus) {
                     // Crear una nueva relación en `user_bonuses`
                     UserBranches::create([
@@ -425,10 +415,10 @@ class UserController extends Controller
                     ]);
                 }
             }
-    
+
             // Confirmar la transacción
             DB::commit();
-    
+
             return response()->json([
                 'error' => false,
                 'message' => 'Usuarios asignados correctamente al bono',
@@ -439,5 +429,4 @@ class UserController extends Controller
             return response()->json(['error' => true, 'message' => 'Error al asignar usuarios', 'details' => $e->getMessage()], 500);
         }
     }
-
 }

@@ -434,14 +434,16 @@ export default function UserPage({
                 key: 'email',
             },
             {
-                title: 'Rut',
+                title: 'Rut/Código',
                 key: 'rut',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
-                        {user?.rutNumbers && user?.rutDv && (
+                        {user?.rutNumbers && user?.rutDv ? (
                             <>
-                                {user?.rutNumbers}-{user?.rutDv}
+                                {user.rutNumbers}-{user.rutDv}
                             </>
+                        ) : (
+                            <>{user?.code}</>
                         )}
                     </p>
                 ),

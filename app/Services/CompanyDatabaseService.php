@@ -188,7 +188,8 @@ class CompanyDatabaseService
                     $table->string('second_last_name')->nullable();
                     $table->string('phone')->unique()->nullable();
                     $table->date('birth_date')->nullable();
-                    $table->date('entry_date')->nullable();
+                    $table->date('entry_date')->default(now());
+                    $table->boolean('has_fingerprint')->default(false);
                     $table->string('email')->unique()->nullable();
                     $table->timestamp('email_verified_at')->nullable();
                     $table->string('nationality')->nullable();

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'code',
         'birth_date',
         'entry_date',
+        'has_fingerprint',
         'email',
         'nationality',
         'address',
@@ -52,6 +53,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'birth_date' => 'date',
         'entry_date' => 'date',
+        'has_fingerprint' => 'boolean',
         'password' => 'hashed',
     ];
 

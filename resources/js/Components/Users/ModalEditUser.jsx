@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, Select } from 'antd';
+import { Form, Input, Select, Switch } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import {
     getValidationEmailMessage,
@@ -291,6 +291,15 @@ export default function ModalEditUser({
                 >
                     <Input type="date" />
                 </Form.Item>
+                {(userType === 'trabajador' || userType === 'jugador') && (
+                    <Form.Item
+                        name="has_fingerprint"
+                        label="Huella Digital Registrada"
+                        valuePropName="checked"
+                    >
+                        <Switch />
+                    </Form.Item>
+                )}
                 <Form.Item name="phone" label="Número de teléfono">
                     <Input
                         name="phone"
@@ -527,7 +536,15 @@ export default function ModalEditUser({
                 >
                     <Input type="date" />
                 </Form.Item>
-
+                {(userType === 'trabajador' || userType === 'jugador') && (
+                    <Form.Item
+                        name="has_fingerprint"
+                        label="Huella Digital Registrada"
+                        valuePropName="checked"
+                    >
+                        <Switch />
+                    </Form.Item>
+                )}
                 <Form.Item
                     name="email"
                     label="Correo Electrónico"

@@ -15,9 +15,19 @@ import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { roleDisplayNames } from '@/Utils/constants';
 
 const FingerprintIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2C7.6 2 4 5.6 4 10v4c0 3.3 2.7 6 6 6h4c4.4 0 8-3.6 8-8V10c0-4.4-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6v2c0 3.3-2.7 6-6 6s-6-2.7-6-6v-2c0-3.3 2.7-6 6-6z"/>
-        <path d="M12 6c-2.2 0-4 1.8-4 4v2c0 2.2 1.8 4 4 4s4-1.8 4-4v-2c0-2.2-1.8-4-4-4zm0 2c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2s-2-.9-2-2v-2c0-1.1.9-2 2-2z"/>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <path d="M12 2C7.6 2 4 5.6 4 10v4c0 3.3 2.7 6 6 6h4c4.4 0 8-3.6 8-8V10c0-4.4-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6v2c0 3.3-2.7 6-6 6s-6-2.7-6-6v-2c0-3.3 2.7-6 6-6z" />
+        <path d="M12 6c-2.2 0-4 1.8-4 4v2c0 2.2 1.8 4 4 4s4-1.8 4-4v-2c0-2.2-1.8-4-4-4zm0 2c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2s-2-.9-2-2v-2c0-1.1.9-2 2-2z" />
     </svg>
 );
 
@@ -209,7 +219,11 @@ export default function UserPage({
                 title: 'Fecha de Ingreso',
                 key: 'entry_date',
                 render: (_, user) => (
-                    <span>{user.entry_date ? format(new Date(user.entry_date), 'dd/MM/yyyy') : '-'}</span>
+                    <span>
+                        {user.entry_date
+                            ? format(new Date(user.entry_date), 'dd/MM/yyyy')
+                            : '-'}
+                    </span>
                 ),
             },
             {
@@ -320,7 +334,11 @@ export default function UserPage({
                 title: 'Fecha de Ingreso',
                 key: 'entry_date',
                 render: (_, user) => (
-                    <span>{user.entry_date ? format(new Date(user.entry_date), 'dd/MM/yyyy') : '-'}</span>
+                    <span>
+                        {user.entry_date
+                            ? format(new Date(user.entry_date), 'dd/MM/yyyy')
+                            : '-'}
+                    </span>
                 ),
             },
             {
@@ -385,20 +403,6 @@ export default function UserPage({
                 ),
             },
             {
-                title: 'Fecha de ingreso',
-                key: 'created_at',
-                render: (_, user) => {
-                    const formattedDate = user?.created_at
-                        ? format(new Date(user.created_at), 'dd/MM/yyyy')
-                        : 'Fecha no disponible';
-                    return (
-                        <p className="font-bold rounded-lg p-1">
-                            {formattedDate}
-                        </p>
-                    );
-                },
-            },
-            {
                 title: 'Acciones',
                 key: 'actions',
                 render: (_, user) => (
@@ -430,15 +434,25 @@ export default function UserPage({
                     </div>
                 ),
             },
-            ...(data.role === 'trabajador' ? [{
-                title: 'Huella Digital',
-                key: 'has_fingerprint',
-                render: (_, user) => (
-                    <span style={{ color: user.has_fingerprint ? '#52c41a' : '#ff4d4f' }}>
-                        <FingerprintIcon />
-                    </span>
-                ),
-            }] : []),
+            ...(data.role === 'trabajador'
+                ? [
+                      {
+                          title: 'Huella Digital',
+                          key: 'has_fingerprint',
+                          render: (_, user) => (
+                              <span
+                                  style={{
+                                      color: user.has_fingerprint
+                                          ? '#52c41a'
+                                          : '#ff4d4f',
+                                  }}
+                              >
+                                  <FingerprintIcon />
+                              </span>
+                          ),
+                      },
+                  ]
+                : []),
         ],
         jugador: [
             {
@@ -571,15 +585,25 @@ export default function UserPage({
                     </div>
                 ),
             },
-            ...(data.role === 'jugador' ? [{
-                title: 'Huella Digital',
-                key: 'has_fingerprint',
-                render: (_, user) => (
-                    <span style={{ color: user.has_fingerprint ? '#52c41a' : '#ff4d4f' }}>
-                        <FingerprintIcon />
-                    </span>
-                ),
-            }] : []),
+            ...(data.role === 'jugador'
+                ? [
+                      {
+                          title: 'Huella Digital',
+                          key: 'has_fingerprint',
+                          render: (_, user) => (
+                              <span
+                                  style={{
+                                      color: user.has_fingerprint
+                                          ? '#52c41a'
+                                          : '#ff4d4f',
+                                  }}
+                              >
+                                  <FingerprintIcon />
+                              </span>
+                          ),
+                      },
+                  ]
+                : []),
         ],
     };
 

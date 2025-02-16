@@ -73,7 +73,7 @@ class HandleInertiaRequests extends Middleware
                 ...parent::share($request),
                 'auth' => [
                     'users' => $users->count(),
-                ],
+                ]
             ];
         }
 

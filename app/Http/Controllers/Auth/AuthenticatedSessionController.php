@@ -48,7 +48,7 @@ class AuthenticatedSessionController extends Controller
             Log::info('username: ' . $request->login);
 
             if (!$user || !Hash::check($decryptedPassword, $user->password)) {
-                throw new \Exception('Las credenciales no son correctas');
+                abort(403, 'Las credenciales no son correctas');
             }
 
             Auth::login($user);
@@ -56,12 +56,12 @@ class AuthenticatedSessionController extends Controller
 
             if ($user->status_id !== 1) {
                 Auth::logout();
-                throw new \Exception('Tu cuenta fue bloqueada o se encuentra eliminada.');
+                abort(403, 'Tu cuenta fue bloqueada o se encuentra eliminada.');
             }
 
             if ($user->hasAnyRole(6)) {
                 Auth::logout();
-                throw new \Exception('Tu cuenta no tiene permisos para acceder a la plataforma.');
+                abort(403, 'Tu cuenta no tiene permisos para acceder a la plataforma.');
             }
 
             return redirect()->intended(route('dashboard'));

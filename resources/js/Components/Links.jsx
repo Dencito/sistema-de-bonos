@@ -32,146 +32,140 @@ export const Links = ({ role, roles }) => {
     }
 
     const isTickets = getSubdomain() === 'tickets';
-
     const path = window.location.pathname;
     const [isOpen, setIsOpen] = useState(false);
 
+    const menuItems = [
+        {
+            key: '0',
+            icon: <Home size={20} />,
+            label: 'Inicio',
+            link: '/',
+            autorized: true,
+        },
+        {
+            key: '1',
+            icon: <Building2 size={20} />,
+            label: 'Empresas',
+            link: '/companies',
+            autorized: allowedRoles.companies.includes(role),
+        },
+        {
+            key: '2',
+            icon: <MapPinHouse size={20} />,
+            label: 'Sucursales',
+            link: '/branches',
+            autorized: allowedRoles.branches.includes(role) && !isTickets,
+        },
+        {
+            key: '3',
+            icon: <Users size={20} />,
+            label: 'Usuarios',
+            link: '/users',
+            children: formattedRoles,
+            autorized: !isTickets,
+        },
+        {
+            key: '4',
+            icon: <ChartBarStacked size={20} />,
+            label: 'Categorias bonos',
+            link: '/categories-bonus',
+            autorized: !isTickets,
+        },
+        {
+            key: '5',
+            icon: <SquareStack size={20} />,
+            label: 'Roles',
+            link: '/roles',
+            autorized: allowedRoles.roles.includes(role) && !isTickets,
+        },
+        {
+            key: '6',
+            icon: <SquareStack size={20} />,
+            label: 'Estados',
+            link: '/statuses',
+            autorized: allowedRoles.status.includes(role) && !isTickets,
+        },
+        {
+            key: '7',
+            icon: <SquareStack size={20} />,
+            label: 'Obtener monto totales',
+            link: '/total-amounts',
+            autorized: false,
+        },
+    ];
+
     return (
-        <div>
-            {[
-                {
-                    key: '0',
-                    icon: <Home />,
-                    label: 'Inicio',
-                    link: '/',
-                    autorized: true,
-                },
-                {
-                    key: '1',
-                    icon: <Building2 />,
-                    label: 'Empresas',
-                    link: '/companies',
-                    autorized: allowedRoles.companies.includes(role),
-                },
-                {
-                    key: '2',
-                    icon: <MapPinHouse />,
-                    label: 'Sucursales',
-                    link: '/branches',
-                    autorized:
-                        allowedRoles.branches.includes(role) && !isTickets,
-                },
-                {
-                    key: '3',
-                    icon: <Users />,
-                    label: 'Usuarios',
-                    link: '/users',
-                    children: formattedRoles,
-                    autorized: !isTickets,
-                },
-                {
-                    key: '4',
-                    icon: <ChartBarStacked />,
-                    label: 'Categorias bonos',
-                    link: '/categories-bonus',
-                    autorized: !isTickets,
-                },
-                {
-                    key: '5',
-                    icon: <SquareStack />,
-                    label: 'Roles',
-                    link: '/roles',
-                    autorized: allowedRoles.roles.includes(role) && !isTickets,
-                },
-                {
-                    key: '6',
-                    icon: <SquareStack />,
-                    label: 'Estados',
-                    link: '/statuses',
-                    autorized: allowedRoles.status.includes(role) && !isTickets,
-                },
-                {
-                    key: '7',
-                    icon: <SquareStack />,
-                    label: 'Obtener monto totales',
-                    link: '/total-amounts',
-                    autorized: false,
-                },
-            ].map((item) => (
+        <div className="space-y-1">
+            {menuItems.map((item) => (
                 <div key={item.key}>
                     {item.autorized && item?.link !== '/users' && (
                         <Link
-                            className={`transition-all duration-300 my-2 ${path === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`}
+                            className={`group flex items-center space-x-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                                ${path === item?.link 
+                                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md' 
+                                    : 'text-gray-600 hover:bg-cyan-50 hover:text-cyan-600'
+                                }`}
                             href={item?.link}
-                            selected
                         >
-                            {item.icon}{' '}
-                            <span
-                                className={`text-base ${path === item?.link && 'font-bold'}`}
-                            >
-                                {item.label}
+                            <span className={`${path === item?.link ? 'text-white' : 'text-gray-400 group-hover:text-cyan-500'}`}>
+                                {item.icon}
                             </span>
+                            <span>{item.label}</span>
                         </Link>
                     )}
+                    
                     {item?.link === '/users' && !isTickets && (
                         <div className="border-none">
-                            {/* Etiqueta que despliega el colapso */}
                             <div
-                                onClick={() => setIsOpen(!isOpen)} // Alterna el colapso al hacer clic
-                                className={`transition-all duration-300 ${
-                                    path === item?.link
-                                        ? 'bg-cyan-300'
-                                        : 'hover:bg-cyan-300'
-                                } flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2 cursor-pointer`}
-                            >
-                                {/* Contenido principal del menú */}
-                                <span
-                                    className={`text-base flex gap-2 rounded-lg  ${
-                                        path === item?.link ? 'font-bold' : ''
+                                onClick={() => setIsOpen(!isOpen)}
+                                className={`group flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer
+                                    ${path.startsWith('/users') 
+                                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md' 
+                                        : 'text-gray-600 hover:bg-cyan-50 hover:text-cyan-600'
                                     }`}
-                                >
-                                    {item.icon} {item.label}{' '}
-                                    {isOpen ? (
-                                        <ChevronRight />
-                                    ) : (
-                                        <ChevronDown />
-                                    )}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <span className={`${path.startsWith('/users') ? 'text-white' : 'text-gray-400 group-hover:text-cyan-500'}`}>
+                                        {item.icon}
+                                    </span>
+                                    <span>{item.label}</span>
+                                </div>
+                                <span className={`${path.startsWith('/users') ? 'text-white' : 'text-gray-400 group-hover:text-cyan-500'}`}>
+                                    {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                 </span>
                             </div>
 
-                            {/* Submenú colapsable con animación */}
-                            <div
-                                className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${
-                                    isOpen
-                                        ? 'max-h-40 opacity-100'
-                                        : 'max-h-0 opacity-0'
-                                }`}
+                            <div className={`overflow-hidden transition-all duration-300 ease-in-out
+                                ${isOpen ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}
                             >
-                                {item?.children &&
-                                    item?.children.map((subItem) => (
-                                        <Link
-                                            key={subItem?.name}
-                                            className="transition-all duration-300 hover:bg-cyan-300 flex gap-2 rounded-lg py-1 ps-12 text-base items-center space-x-2"
-                                            href={`${item.link}?role=${subItem?.name}`}
-                                        >
-                                            <span className="text-sm font-normal">
-                                                {subItem?.displayName}{' '}
-                                                {/* Usa displayName en lugar de name */}
-                                            </span>
-                                        </Link>
-                                    ))}
+                                {item?.children?.map((subItem) => (
+                                    <Link
+                                        key={subItem?.name}
+                                        className={`flex items-center space-x-3 rounded-lg px-4 py-2 text-sm transition-all duration-200 ms-6
+                                            ${path === `${item.link}?role=${subItem?.name}`
+                                                ? 'bg-cyan-50 text-cyan-600 font-medium'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-600'
+                                            }`}
+                                        href={`${item.link}?role=${subItem?.name}`}
+                                    >
+                                        <span>{subItem?.displayName}</span>
+                                    </Link>
+                                ))}
                             </div>
                         </div>
                     )}
                 </div>
             ))}
+            
             <Link
-                className="border-red-300 border hover:bg-red-400 hover:text-white transition-all w-full py-3 ps-3 rounded-lg duration-300 flex gap-2 text-base font-light items-center space-x-2"
+                className="mt-6 flex items-center space-x-3 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50"
                 as="button"
                 href={route('logout')}
                 method="post"
             >
-                <LogOut /> <span className="text-base">Salir</span>
+                <LogOut size={20} className="text-red-500" />
+                <span>Cerrar sesión</span>
             </Link>
         </div>
     );

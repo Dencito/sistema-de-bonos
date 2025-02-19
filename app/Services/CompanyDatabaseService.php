@@ -190,6 +190,7 @@ class CompanyDatabaseService
                     $table->date('birth_date')->nullable();
                     $table->date('entry_date')->nullable()->default(now());
                     $table->boolean('has_fingerprint')->default(false);
+                    $table->binary('fingerprint')->nullable();
                     $table->string('email')->unique()->nullable();
                     $table->timestamp('email_verified_at')->nullable();
                     $table->string('nationality')->nullable();

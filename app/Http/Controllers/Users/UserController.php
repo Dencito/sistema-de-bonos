@@ -437,4 +437,47 @@ class UserController extends Controller
             return response()->json(['error' => true, 'message' => 'Error al asignar usuarios', 'details' => $e->getMessage()], 500);
         }
     }
+
+    public function enroll(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|string',
+            'fingerprint' => 'required|file|mimetypes:application/octet-stream|max:10240',
+        ]);
+
+        $fingerprintData = file_get_contents($request->file('fingerprint')->getPathname());
+        Log::info('Fingerprint data: ' . $fingerprintData);
+        $user = User::find($request->id);
+        if ($user) {
+            $user->fingerprint = $fingerprintData;
+            $user->save();
+            return response()->json(['message' => 'User enrolled successfully.'], 200);
+        }
+        return response()->json(['message' => 'User not found.'], 404);
+    }
+
+    public function getFingerprintsByRole(Request $request)
+    {
+        $request->validate([
+            'role_ids' => 'required|regex:/^\d+(,\d+)*$/'
+        ]);
+
+        $roleIds = explode(',', $request->role_ids);
+
+        $users = User::with(['role', 'status'])
+            ->whereIn('role_id', $roleIds)
+            ->get(['id', 'username', 'fingerprint', 'role_id', 'status_id']);
+
+        return response()->json([
+            'data' => $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'fingerprint' => $user->fingerprint ? base64_encode($user->fingerprint) : null,
+                    'role' => $user->role->name,
+                    'status' => $user->status->name
+                ];
+            })
+        ]);
+    }
 }

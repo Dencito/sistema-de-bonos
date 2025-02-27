@@ -26,6 +26,8 @@ Route::get('/test-mail', function (Request $request) {
     return response()->json(['message' => 'Correo enviado exitosamente'], 200);
 });
 
+Route::post('/users/validate-rut', [UserController::class, 'ValidateRut']);
+
 Route::post('/users/enroll', [UserController::class, 'enroll']);
 
 Route::get('/users/fingerprints', [UserController::class, 'getFingerprintsByRole']);

@@ -438,42 +438,63 @@ class UserController extends Controller
         }
     }
 
-    public function enroll(Request $request)
+    public function ValidateRut(Request $request)
     {
         $request->validate([
-            'id' => 'required|string',
-            'fingerprint' => 'required|file|mimetypes:application/octet-stream|max:10240',
+            'rut' => 'required|string',
         ]);
 
-        $fingerprintData = file_get_contents($request->file('fingerprint')->getPathname());
-        Log::info('Fingerprint data: ' . $fingerprintData);
-        $user = User::find($request->id);
+        $user = User::where('rutNumbers', $request->rut)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Rut no encontrado'], 404);
+        }
+
+        return response()->json(['message' => 'Rut válido', 'user' => $user], 200);
+    }
+
+    public function enroll(Request $request)
+    {
+        $fingerprintsData = json_decode($request->input('fingerprints'), true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return response()->json(['message' => 'Invalid JSON format for fingerprints.'], 400);
+        }
+
+        $request->merge(['fingerprints' => $fingerprintsData['fingerprints']]);
+
+        $request->validate([
+            'rut' => 'required|string',
+            'fingerprints' => 'required|array|min:1|max:10',
+            'fingerprints.*.data' => 'required|string',
+        ]);
+
+        $user = User::where('rutNumbers', $request->rut)->first();
+
         if ($user) {
-            $user->fingerprint = $fingerprintData;
+            $fingerprints = $request->input('fingerprints');
+            $user->fingerprints = json_encode($fingerprints);
             $user->save();
             return response()->json(['message' => 'User enrolled successfully.'], 200);
         }
+
         return response()->json(['message' => 'User not found.'], 404);
     }
 
-    public function getFingerprintsByRole(Request $request)
+    public function getFingerprintsByRole()
     {
-        $request->validate([
-            'role_ids' => 'required|regex:/^\d+(,\d+)*$/'
-        ]);
-
-        $roleIds = explode(',', $request->role_ids);
-
         $users = User::with(['role', 'status'])
-            ->whereIn('role_id', $roleIds)
-            ->get(['id', 'username', 'fingerprint', 'role_id', 'status_id']);
+            ->whereIn('role_id', [5, 6])
+            ->whereNotNull('fingerprints')
+            ->where('fingerprints', '!=', '[]')
+            ->get(['id', 'username', 'fingerprints', 'role_id', 'status_id']);
 
         return response()->json([
             'data' => $users->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'username' => $user->username,
-                    'fingerprint' => $user->fingerprint ? base64_encode($user->fingerprint) : null,
+                    'fingerprints' => json_decode($user->fingerprints, true),
                     'role' => $user->role->name,
                     'status' => $user->status->name
                 ];

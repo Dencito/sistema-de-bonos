@@ -444,7 +444,9 @@ class UserController extends Controller
             'rut' => 'required|string',
         ]);
 
-        $user = User::where('rutNumbers', $request->rut)->first();
+        $user = User::where('rutNumbers', $request->rut)
+            ->whereIn('role_id', [1, 2, 3, 4, 5])
+            ->first();
 
         if (!$user) {
             return response()->json(['message' => 'Rut no encontrado'], 404);
@@ -456,7 +458,7 @@ class UserController extends Controller
     public function enroll(Request $request)
     {
         $fingerprintsData = json_decode($request->input('fingerprints'), true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             return response()->json(['message' => 'Invalid JSON format for fingerprints.'], 400);
         }
@@ -464,12 +466,15 @@ class UserController extends Controller
         $request->merge(['fingerprints' => $fingerprintsData['fingerprints']]);
 
         $request->validate([
-            'rut' => 'required|string',
+            'rutOrCode' => 'required|string',
             'fingerprints' => 'required|array|min:1|max:10',
             'fingerprints.*.data' => 'required|string',
         ]);
 
-        $user = User::where('rutNumbers', $request->rut)->first();
+        $user = User::where('rutNumbers', $request->rutOrCode)
+            ->Where('code', $request->rutOrCode)
+            ->whereIn('role_id', [5, 6])
+            ->first();
 
         if ($user) {
             $fingerprints = $request->input('fingerprints');

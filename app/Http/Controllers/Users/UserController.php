@@ -441,18 +441,18 @@ class UserController extends Controller
     public function ValidateRut(Request $request)
     {
         $request->validate([
-            'rut' => 'required|string',
+            'username' => 'required|string',
         ]);
 
-        $user = User::where('rutNumbers', $request->rut)
+        $user = User::where('username', $request->username)
             ->whereIn('role_id', [1, 2, 3, 4, 5])
             ->first();
 
-        if (!$user) {
-            return response()->json(['message' => 'Rut no encontrado'], 404);
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            throw new \Exception('Las credenciales no son correctas');
         }
 
-        return response()->json(['message' => 'Rut válido', 'user' => $user], 200);
+        return response()->json(['message' => 'usuario válido', 'user' => $user], 200);
     }
 
     public function enroll(Request $request)
@@ -472,7 +472,7 @@ class UserController extends Controller
         ]);
 
         $user = User::where('rutNumbers', $request->rutOrCode)
-            ->Where('code', $request->rutOrCode)
+            ->orWhere('code', $request->rutOrCode)
             ->whereIn('role_id', [5, 6])
             ->first();
 

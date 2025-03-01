@@ -442,11 +442,16 @@ class UserController extends Controller
     {
         $request->validate([
             'username' => 'required|string',
+            'password' => 'required|string',
         ]);
+
+        Log::info($request->all());
 
         $user = User::where('username', $request->username)
             ->whereIn('role_id', [1, 2, 3, 4, 5])
             ->first();
+
+        Log::info($user);
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw new \Exception('Las credenciales no son correctas');

@@ -8,6 +8,7 @@ import { ConfigProvider } from '@/Utils/antd';
 import esES from 'antd/locale/es_ES';
 import { MessageProvider } from './Contexts/MessageShow';
 import { VITE_APP_NAME } from '@utils/env';
+import { ThemeProvider } from './Contexts/DarkModeProvider';
 
 createInertiaApp({
     title: (title) => `${title} - ${VITE_APP_NAME}`,
@@ -21,9 +22,11 @@ createInertiaApp({
 
         root.render(
             <ConfigProvider locale={esES}>
-                <MessageProvider>
-                    <App {...props} />
-                </MessageProvider>
+                <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+                    <MessageProvider>
+                        <App {...props} />
+                    </MessageProvider>
+                </ThemeProvider>
             </ConfigProvider>
         );
     },

@@ -72,16 +72,21 @@ export const TableDataBranches = ({
                     render={(_, branch) => (
                         <div className="flex flex-wrap gap-3">
                             <ModalViewBranch
+                                key={`view_${branch.id}`}
                                 data={branch}
                                 statuses={statuses}
                                 companies={companies}
                             />
                             <ModalEditBranch
+                                key={`edit_${branch.id}`}
                                 data={branch}
                                 statuses={statuses}
                                 companies={companies}
                             />
-                            <ModalDeleteBranch data={branch} />
+                            <ModalDeleteBranch 
+                                key={`delete_${branch.id}`}
+                                data={branch} 
+                            />
                         </div>
                     )}
                 />

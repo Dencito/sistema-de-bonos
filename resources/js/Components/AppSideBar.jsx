@@ -24,6 +24,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/Components/ui/sidebar';
+import { DarkModeToggle } from './DarkModeToggle';
 
 export function AppSidebar({ role, roles, user }) {
     const formattedRoles =
@@ -114,32 +115,38 @@ export function AppSidebar({ role, roles, user }) {
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupContent>
-                        <div className="ps-5">
-                            <div>
-                                <span className="font-semibold">Empresa:</span>
-                                <p className="mb-3 text-lg font-bold uppercase">
-                                    {getSubdomain()}
-                                </p>
-                                {user && (
-                                    <>
-                                        <span className="font-semibold">
-                                            Usuario:
-                                        </span>
-                                        <p className="mb-3 text-sm font-bold uppercase">
-                                            {user.username}
-                                        </p>
-                                        <span className="font-semibold">
-                                            Rol:
-                                        </span>
-                                        <p className="mb-3 text-sm font-bold uppercase">
-                                            {roleDisplayNames[role]}
-                                        </p>
-                                    </>
-                                )}
-                            </div>
-                            <hr />
-                        </div>
                         <SidebarMenu>
+                            <SidebarMenuItem>
+                                <div className="ps-5">
+                                    <div>
+                                        <span className="font-semibold">
+                                            Empresa:
+                                        </span>
+                                        <p className="mb-3 text-lg font-bold uppercase">
+                                            {getSubdomain()}
+                                        </p>
+                                        {user && (
+                                            <>
+                                                <span className="font-semibold">
+                                                    Usuario:
+                                                </span>
+                                                <p className="mb-3 text-sm font-bold uppercase">
+                                                    {user.username}
+                                                </p>
+                                                <span className="font-semibold">
+                                                    Rol:
+                                                </span>
+                                                <p className="mb-3 text-sm font-bold uppercase">
+                                                    {roleDisplayNames[role]}
+                                                </p>
+                                            </>
+                                        )}
+
+                                        <DarkModeToggle />
+                                        <hr className='my-3' />
+                                    </div>
+                                </div>
+                            </SidebarMenuItem>
                             {menuItems.map(
                                 (item) =>
                                     item.autorized && (

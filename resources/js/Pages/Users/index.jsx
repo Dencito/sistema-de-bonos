@@ -13,6 +13,19 @@ import { CustomTable } from '@components-v2/CustomTable';
 import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssignCategories';
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { roleDisplayNames } from '@/Utils/constants';
+import { DataTable } from '@/Components/Tables/DataTable';
+import { Badge } from '@/Components/ui/badge';
+import { Circle, MoreHorizontal } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu';
+import { Button } from '@/Components/ui/button';
+import { getBgStatus } from '@/Utils/getBgStatus';
 
 const FingerprintIcon = () => (
     <svg
@@ -43,6 +56,7 @@ export default function UserPage({
     bonuses,
     filters,
 }) {
+    console.log(users);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
         username: filters.username || '',
@@ -67,18 +81,9 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${
-                            branch?.status?.name === 'Activo'
-                                ? 'bg-green-300'
-                                : branch?.status?.name === 'Inactivo'
-                                  ? 'bg-red-200'
-                                  : branch?.status?.name === 'En revisión'
-                                    ? 'bg-orange-300'
-                                    : branch?.status?.name === 'Borrado'
-                                      ? 'bg-red-400'
-                                      : ''
-                        } 
-                                font-bold rounded-full text-center p-1 w-6 h-6`}
+                        className={`${getBgStatus(
+                            branch?.status?.name
+                        )} font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
             },
@@ -776,6 +781,257 @@ export default function UserPage({
         );
     };
 
+    const columns2 = {
+        'super-admin': [
+            {
+                accessorKey: 'username',
+                header: () => <div>Nombre de usuario</div>,
+                cell: ({ row }) => {
+                    return (
+                        <div className="font-medium">
+                            {row.getValue('username')}
+                        </div>
+                    );
+                },
+            },
+            {
+                accessorKey: 'email',
+                header: () => <div>Correo electrónico</div>,
+                cell: ({ row }) => {
+                    return (
+                        <div className="font-medium">
+                            {row.getValue('email')}
+                        </div>
+                    );
+                },
+            },
+            {
+                accessorKey: 'branch',
+                header: () => <div>Sucursal</div>,
+                cell: ({ row }) => {
+                    return (
+                        <div className="font-medium">
+                            {row.getValue('branch')?.name}
+                        </div>
+                    );
+                },
+            },
+            {
+                accessorKey: 'status',
+                header: () => <div>Estado</div>,
+                cell: ({ row }) => {
+                    return (
+                        <Circle
+                            fill={getBgStatus(row?.getValue('status')?.name)}
+                            color={getBgStatus(row?.getValue('status')?.name)}
+                        />
+                    );
+                },
+            },
+            {
+                accessorKey: 'role',
+                header: () => <div>Rol</div>,
+                cell: ({ row }) => {
+                    return (
+                        <div className="font-medium">
+                            {row.getValue('role')?.name}
+                        </div>
+                    );
+                },
+            },
+            {
+                accessorKey: 'actions',
+                header: () => <div>Acciones</div>,
+                cell: ({ row }) => {
+                    return (
+                        <DropdownMenu hover={true}>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick="">
+                                    Editar jugador
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                    Eliminar jugador
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    );
+                },
+            },
+        ],
+        jugador: [
+            {
+                accessorKey: 'first_name',
+                header: 'Nombres',
+                cell: ({ row: { original: user } }) => {
+                    return (
+                        <p className="rounded-lg p-1">
+                            {user?.first_name} {user?.second_name}
+                        </p>
+                    );
+                },
+            },
+            {
+                accessorKey: 'last_names',
+                header: 'Apellidos',
+                cell: ({ row: { original: user } }) => (
+                    <p className="rounded-lg p-1">
+                        {user?.first_last_name} {user?.second_last_name}
+                    </p>
+                ),
+            },
+            {
+                accessorKey: 'email',
+                header: 'Correo electrónico',
+                cell: ({ row }) => (
+                    <p className="rounded-lg p-1">{row?.getValue('email')}</p>
+                ),
+            },
+            {
+                accessorKey: 'rut',
+                header: 'Rut/Código',
+                cell: ({ row: { original: user } }) => (
+                    <p className="rounded-lg p-1">
+                        {user?.rutNumbers && user?.rutDv ? (
+                            <>
+                                {user?.rutNumbers}-{user?.rutDv}
+                            </>
+                        ) : (
+                            <>{user?.code}</>
+                        )}
+                    </p>
+                ),
+            },
+            {
+                accessorKey: 'phone',
+                header: 'Numero de teléfono',
+                cell: ({ row: { original: user } }) => (
+                    <p className="rounded-lg p-1">
+                        {user?.prefix} {user?.phone}
+                    </p>
+                ),
+            },
+            {
+                header: 'Sucursales',
+                accessorKey: 'branches',
+                cell: ({ row }) => (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger>
+                            Ver sucursales
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuLabel>
+                                Mis sucursales
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {row?.getValue('branches')?.map((branch) => (
+                                <DropdownMenuItem key={branch?.id}>
+                                    {branch?.name}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ),
+            },
+            {
+                header: 'Estado',
+                accessorKey: 'status',
+                cell: ({ row: { original: user } }) => (
+                    <Circle
+                        fill={getBgStatus(user?.status?.name)}
+                        color={getBgStatus(user?.status?.name)}
+                    />
+                ),
+            },
+            {
+                header: 'Rol',
+                accessorKey: 'role',
+                cell: ({ row }) => (
+                    <p className="font-bold rounded-lg p-1">
+                        {roleDisplayNames[row?.getValue('role')?.name] ||
+                            row?.getValue('role')?.name}
+                    </p>
+                ),
+            },
+            {
+                header: 'Acciones',
+                accessorKey: 'actions',
+                cell: ({ cell }) => <></>,
+            },
+            {
+                header: 'Huella Digital',
+                accessorKey: 'has_fingerprint',
+                cell: ({ row }) => (
+                    <span
+                        style={{
+                            color: row?.getValue('has_fingerprint')
+                                ? '#52c41a'
+                                : '#ff4d4f',
+                        }}
+                    >
+                        <FingerprintIcon />
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'actions',
+                header: () => <div>Acciones</div>,
+                cell: ({ row: { original: user } }) => {
+                    return (
+                        <DropdownMenu hover={true}>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick="">
+                                    Editar jugador
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                    Eliminar jugador
+                                </DropdownMenuItem>
+                                <ModalViewUser
+                                    statuses={statuses}
+                                    companies={companies}
+                                    branches={branches}
+                                    roles={roles}
+                                    data={user}
+                                    userType={data?.role}
+                                    roleDisplayNames={roleDisplayNames}
+                                />
+                                <ModalEditUser
+                                    statuses={statuses}
+                                    companies={companies}
+                                    branches={branches}
+                                    roles={roles}
+                                    data={{
+                                        ...user,
+                                        branches: user?.branches?.map(
+                                            (branch) => branch?.id
+                                        ),
+                                    }}
+                                    userType={data?.role}
+                                    roleDisplayNames={roleDisplayNames}
+                                />
+                                <ModalDeleteUser data={user} />
+                                <ModalCreateBonus data={user} />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    );
+                },
+            },
+        ],
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -788,13 +1044,14 @@ export default function UserPage({
             }
         >
             <Head title={`Usuarios ${data.role || 'todos'}`} />
-            <header className="flex items-center justify-between bg-white p-4 shadow-sm">
+            <header className="flex items-center justify-betwee p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className="text-4xl font-bold">
-                    {roleDisplayNames[data.role] || 'Todos los usuarios'}
+                    {roleDisplayNames[data?.role] || 'Todos los usuarios'}
                 </h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
+                <DataTable columns={columns2[data?.role]} data={users} />
                 <div className="w-full">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">

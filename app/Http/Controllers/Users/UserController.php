@@ -511,4 +511,87 @@ class UserController extends Controller
             })
         ]);
     }
+
+    private function validateSchedules($branch)
+    {
+        $currentTime = now();
+        $currentDay = strtolower($currentTime->format('l')); // Get current day name in lowercase
+        $currentTimeStr = $currentTime->format('H:i');
+
+        // If bonus_schedules is null, no bonuses are available
+        if ($branch->bonus_schedules === null) {
+            return false;
+        }
+
+        $bonusSchedules = json_decode($branch->bonus_schedules, true);
+        
+        // Check if current time falls within any of the bonus schedules
+        foreach ($bonusSchedules as $schedule) {
+            $daySchedules = collect($schedule['schedules'])
+                ->firstWhere('day', ucfirst($currentDay));
+
+            if ($daySchedules) {
+                foreach ($daySchedules['ranges'] as $range) {
+                    $startTime = $range['start_time'];
+                    $endTime = $range['end_time'];
+
+                    // Handle special case for midnight (24:00)
+                    if ($endTime === '24:00') {
+                        $endTime = '23:59';
+                    }
+
+                    if ($this->isTimeInRange($currentTimeStr, $startTime, $endTime)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function isTimeInRange($time, $start, $end)
+    {
+        $time = strtotime($time);
+        $start = strtotime($start);
+        $end = strtotime($end);
+
+        // If end time is less than start time, it means the range crosses midnight
+        if ($end < $start) {
+            return $time >= $start || $time <= $end;
+        }
+
+        return $time >= $start && $time <= $end;
+    }
+
+    public function getBonusesAvailablesUserById($id)
+    {
+        try {
+            $user = User::with([
+                'bonuses',
+                'categoryBonus',
+                'branches.company',
+                'status',
+                'role'
+            ])->findOrFail($id);
+
+            // Add schedule validation for each branch
+            $user->branches->transform(function ($branch) {
+                $branch->is_bonus_available = $this->validateSchedules($branch);
+                return $branch;
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $user
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los bonos del usuario',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

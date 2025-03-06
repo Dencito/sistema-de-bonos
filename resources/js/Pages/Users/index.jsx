@@ -565,6 +565,7 @@ export default function UserPage({
                         <ModalViewUser
                             statuses={statuses}
                             companies={companies}
+                            categories={categories}
                             branches={branches}
                             roles={roles}
                             data={user}
@@ -574,6 +575,7 @@ export default function UserPage({
                         <ModalEditUser
                             statuses={statuses}
                             companies={companies}
+                            categories={categories}
                             branches={branches}
                             roles={roles}
                             data={{
@@ -1051,7 +1053,7 @@ export default function UserPage({
                 </h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
-                <DataTable columns={columns2[data?.role]} data={users} />
+                {/* <DataTable columns={columns2[data?.role]} data={users} /> */}
                 <div className="w-full">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">

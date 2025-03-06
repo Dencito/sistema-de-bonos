@@ -142,7 +142,7 @@ export function AppSidebar({ role, roles, user }) {
                                             </>
                                         )}
 
-                                        <DarkModeToggle />
+                                        {/* <DarkModeToggle /> */}
                                         <hr className='my-3' />
                                     </div>
                                 </div>

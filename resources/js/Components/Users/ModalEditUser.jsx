@@ -935,7 +935,7 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
 
-                <Form.Item name="category_id" label="Categorias de bonos">
+                <Form.Item name="category_bonus_id" label="Categorias de bonos">
                     <Select placeholder="Seleccione una categoria">
                         {categories?.map((category) => (
                             <Select.Option

@@ -12,6 +12,7 @@ export default function ModalViewUser({
     data,
     statuses,
     roles,
+    categories,
     branches,
     userType,
 }) {
@@ -715,9 +716,8 @@ export default function ModalViewUser({
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    name="role"
-                    label="Rol"
-                    initialValue={data?.role?.name}
+                    name="category_bonus_id"
+                    label="Categoria"
                     rules={[
                         {
                             required: true,
@@ -725,10 +725,10 @@ export default function ModalViewUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el rol">
-                        {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.name}>
-                                {roleDisplayNames[role?.name]}
+                    <Select placeholder="Seleccione la categoria">
+                        {categories?.map((category) => (
+                            <Select.Option key={category.id} value={category.id}>
+                                {category.name}
                             </Select.Option>
                         ))}
                     </Select>
@@ -742,7 +742,7 @@ export default function ModalViewUser({
             <CustomButton onClick={handleOpenModal} icon={<EyeOutlined />} />
             <Modal
                 style={{ top: 20 }}
-                title={`Ver Usuario ${data?.username || data?.firt_name}`}
+                title={`Ver Usuario ${data?.username || data?.first_name}`}
                 open={showModal}
                 cancelText="Cancelar"
                 onCancel={() => handleCloseModal()}

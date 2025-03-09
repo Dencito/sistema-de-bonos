@@ -113,7 +113,8 @@ class BranchController extends Controller
                 'company_id' => $request->company_id,
                 'status_id' => 1,
                 'available_schedules' => $request->available_schedules,
-                'bonus_schedules' => $request->bonus_schedules
+                'bonus_schedules' => $request->bonus_schedules,
+                'birthday_amount' => $request->birthday_amount
             ]);
 
             return response()->json([
@@ -124,7 +125,7 @@ class BranchController extends Controller
         }
     }
 
-    public function store(Request $request)
+    /* public function store(Request $request)
     {
         if (!auth()->user()->hasAnyRole(1, 2)) {
             abort(403, 'No tienes permiso para realizar esta acción.');
@@ -143,7 +144,8 @@ class BranchController extends Controller
             'branchAddressDeptOrHouse' => 'nullable|string|max:255',
             'company_id' => 'required',
             'available_schedules' => 'nullable|json',
-            'bonus_schedules' => 'nullable|json'
+            'bonus_schedules' => 'nullable|json',
+            'birthday_amount' => 'nullable|numeric'
         ]);
 
         if ($validator->fails()) {
@@ -199,7 +201,7 @@ class BranchController extends Controller
                 'status' => 500
             ], 500);
         }
-    }
+    } */
 
     public function getBranchByName($name)
     {
@@ -228,7 +230,8 @@ class BranchController extends Controller
             'branchAddressDeptOrHouse' => 'nullable|string',
             'status_id' => 'required|integer',
             'available_schedules' => 'nullable|json',
-            'bonus_schedules' => 'nullable|json'
+            'bonus_schedules' => 'nullable|json',
+            'birthday_amount' => 'nullable|numeric'
         ]);
 
         if ($validator->fails()) {
@@ -280,7 +283,8 @@ class BranchController extends Controller
             'company_id',
             'status_id',
             'available_schedules',
-            'bonus_schedules'
+            'bonus_schedules',
+            'birthday_amount'
         ]);
 
         // Detectar cambios
@@ -373,125 +377,6 @@ class BranchController extends Controller
         return response()->json(['message' => 'Turnos actualizados exitosamente.', 'sendData' => $request->shifts, 'data' => $branch], 200);
     }
 
-    public function updateShiftsAvailableBonusDays(Request $request)
-    {
-        if (!auth()->user()->hasAnyRole(1, 2)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-        $branch = Branch::findOrFail($request->branch_id);
-
-        // IDs de turnos que vienen en la solicitud
-        $requestShiftIds = collect($request->available_bonus_days)->pluck('id')->filter();
-        // Actualizar o crear turnos
-        foreach ($request->available_bonus_days as $index => $shiftData) {
-            if (isset($shiftData['id'])) {
-                $shift = AvailableBonusDay::find($shiftData['id']);
-                if (!$shift) {
-                    return response()->json(['message' => 'El turno ' . ($index + 1) . ' no fue encontrado o se encuentra borrado. Por favor, refresque la ventana.'], 404);
-                }
-                // Actualizar turno existente
-                $shift = $branch->availableBonusDays()->findOrFail($shiftData['id']);
-                $shift->update([
-                    'day' => $shiftData['day'],
-                ]);
-            } else {
-                $shift = $branch->availableBonusDays()->create([
-                    'day' => $shiftData['day'],
-                ]);
-
-                foreach ($shiftData['schedules'] as $schedule) {
-                    $shift->schedules()->create([
-                        'start' => $schedule['start'],
-                        'end' => $schedule['end'],
-                    ]);
-                }
-
-                $shiftFound = $branch->availableBonusDays()->with('schedules')->findOrFail($shift->id);
-            }
-
-            $existingScheduleIds = [];
-            foreach ($shiftData['schedules'] as $scheduleData) {
-                if (isset($scheduleData['id'])) {
-                    // Actualizar horario existente
-                    $schedule = $shift->schedules()->findOrFail($scheduleData['id']);
-                    $schedule->update([
-                        'start' => $scheduleData['start'],
-                        'end' => $scheduleData['end'],
-                    ]);
-                    $existingScheduleIds[] = $scheduleData['id'];
-                } else {
-                    // Crear nuevo horario
-                    $newSchedule = $shift->schedules()->create([
-                        'start' => $scheduleData['start'],
-                        'end' => $scheduleData['end'],
-                    ]);
-                    $existingScheduleIds[] = $newSchedule->id;
-                }
-            }
-
-            // Eliminar los horarios que no están en la solicitud
-            $shift->schedules()->whereNotIn('id', $existingScheduleIds)->delete();
-        }
-
-        // Eliminar los turnos que no están en la solicitud
-        // $branch->shifts()->whereNotIn('id', $requestShiftIds)->delete();
-
-        return response()->json(['message' => 'Turnos actualizados exitosamente.', 'sendData' => $request->shifts, 'data' => $branch], 200);
-    }
-
-    public function deleteShift(Request $request)
-    {
-        if (!auth()->user()->hasAnyRole(1, 2)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-        $shift = Shift::find($request->id);
-
-        if (!$shift) {
-            return response()->json(['message' => 'El turno no fue encontrado o se encuentra borrado. Por favor, refresque la ventana.'], 404);
-        }
-
-        // Obtener la sucursal a la que pertenece el turno
-        $branch = $shift->branch;
-
-        // Verificar si la sucursal tiene más de un turno
-        if ($branch->shifts()->count() <= 1) {
-            return response()->json(['message' => 'No se puede eliminar el turno porque la sucursal solo tiene un turno.'], 400);
-        }
-
-        // Eliminar el turno
-        $shift->delete();
-
-        return response()->json(['message' => 'Turno eliminado exitosamente.'], 200);
-    }
-
-    public function deleteShiftAvailableBonusDays(Request $request)
-    {
-        if (!auth()->user()->hasAnyRole(1, 2)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-        $shift = AvailableBonusDay::find($request->id);
-
-        if (!$shift) {
-            return response()->json(['message' => 'El turno no fue encontrado o se encuentra borrado. Por favor, refresque la ventana.'], 404);
-        }
-
-        // Obtener la sucursal a la que pertenece el turno
-        $branch = $shift->branch;
-
-        // Verificar si la sucursal tiene más de un turno
-        if ($branch->availableBonusDays()->count() <= 1) {
-            return response()->json(['message' => 'No se puede eliminar el turno de los bonos porque la sucursal solo tiene uno.'], 400);
-        }
-
-        // Eliminar el turno
-        $shift->delete();
-
-        return response()->json(['message' => 'Turno eliminado exitosamente.'], 200);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Request $request)
     {
         if (!auth()->user()->hasAnyRole(1, 2)) {

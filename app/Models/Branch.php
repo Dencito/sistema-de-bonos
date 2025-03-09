@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\CompanyScope;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Branch extends Model
 {
@@ -31,9 +32,18 @@ class Branch extends Model
         'company_id',
         'status_id',
         'available_schedules',
-        'bonus_schedules'
+        'bonus_schedules',
+        'birthday_amount'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'birthday_amount' => 'decimal:2'
+    ];
 
     public function shifts()
     {
@@ -68,5 +78,21 @@ class Branch extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+    
+    /**
+     * Get all totems for the branch.
+     */
+    public function totems(): HasMany
+    {
+        return $this->hasMany(Totem::class);
+    }
+    
+    /**
+     * Get all shift records for the branch.
+     */
+    public function shiftRecords(): HasMany
+    {
+        return $this->hasMany(ShiftRecord::class);
     }
 }

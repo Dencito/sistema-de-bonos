@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Companies\CompanyController;
+use App\Http\Controllers\Shifts\ShiftRecordController;
+use App\Http\Controllers\Tickets\TicketController;
+use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Users\UserController;
 use App\Mail\BranchCreatedMail;
 use App\Models\Company;
@@ -33,3 +36,11 @@ Route::post('/users/validate-rut', [UserController::class, 'ValidateRut']);
 Route::post('/users/enroll', [UserController::class, 'enroll']);
 
 Route::get('/users/fingerprints', [UserController::class, 'getFingerprintsByRole']);
+
+Route::apiResource('tickets', TicketController::class);
+
+Route::apiResource('totems', TotemController::class);
+
+Route::apiResource('shifts', ShiftRecordController::class);
+
+Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);

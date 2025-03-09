@@ -20,6 +20,10 @@ class CompanyDatabaseService
             $branchesTable = $request->slug . '_branches';
             $userBranchesTable = $request->slug . '_user_branches';
             $categoryBonusesTable = $request->slug . '_category_bonuses';
+            $ticketsTable = $request->slug . '_tickets';
+            $totemsTable = $request->slug . '_totems';
+            $shiftsTable = $request->slug . '_shifts';
+
 
             // 1. Crear tabla de estados (no tiene dependencias)
             if (!Schema::hasTable($statusesTable)) {
@@ -110,7 +114,7 @@ class CompanyDatabaseService
                     'companyAddressStreet' => $request->companyAddressStreet,
                     'companyAddressNumber' => $request->companyAddressNumber,
                     'max_branches' => $request->max_branches,
-                    'domain' => $request->slug . '.' . env('APP_DOMAIN', 'localhost'),
+                    'domain' => $request->slug . '.' . env('GODADDY_DOMAIN'),
                     'slug' => $request->slug,
                     'schema_name' => $request->slug,
                     'settings' => json_encode([]),
@@ -162,6 +166,7 @@ class CompanyDatabaseService
                     $table->string('branchAddressDeptOrHouse')->nullable();
                     $table->json('available_schedules')->nullable();
                     $table->json('bonus_schedules')->nullable();
+                    $table->decimal('birthday_amount', 10, 2)->default(0.00);
                     $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
                     $table->foreignId('company_id')->constrained($companiesTable)->onDelete('cascade');
                     $table->timestamps();
@@ -253,8 +258,9 @@ class CompanyDatabaseService
             if (!Schema::hasTable($bonusesTable)) {
                 Schema::create($bonusesTable, function ($table) use ($usersTable) {
                     $table->id();
-                    $table->decimal('amount', 10, 2);
+                    $table->decimal('amount', 10, 2)->default(0);
                     $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->boolean('active')->default(true);
                     $table->dateTime('start_datetime')->nullable();
                     $table->dateTime('end_datetime')->nullable();
                     $table->timestamps();
@@ -267,6 +273,45 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
                     $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->timestamps();
+                });
+            }
+
+            // 9. Creat tabla de totems 
+            if (!Schema::hasTable($totemsTable)) {
+                Schema::create($totemsTable, function ($table) use ($branchesTable) {
+                    $table->id();
+                    $table->string('name')->nullable();
+                    $table->string('code')->unique();
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->boolean('active')->default(true);
+                    $table->timestamps();
+                });
+            }
+
+            // 10. Crear tabla de tickets (depende de usuarios y tomos)
+            if (!Schema::hasTable($ticketsTable)) {
+                Schema::create($ticketsTable, function ($table) use ($usersTable, $totemsTable) {
+                        $table->id();
+                        $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                        $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
+                        $table->decimal('total_amount', 10, 2)->default(0);
+                        $table->boolean('active')->default(true);
+                        $table->timestamp('created_at')->useCurrent();  
+                        $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                });
+            }
+
+            // 11. Crear tabla de turnos (depende de usuarios y sucursales)
+            if (!Schema::hasTable($shiftsTable)) {
+                Schema::create($shiftsTable, function ($table) use ($usersTable, $branchesTable) {
+                    $table->id();
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->foreignId('opened_by_user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('closed_by_user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->timestamp('opening_time')->useCurrent();
+                    $table->timestamp('closing_time')->nullable();
+                    $table->enum('status', ['open', 'closed'])->default('open');
                     $table->timestamps();
                 });
             }

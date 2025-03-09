@@ -160,6 +160,23 @@ export default function ModalCreateBranch({ companies }) {
                             maxLength={4}
                         />
                     </Form.Item>
+                    <Form.Item
+                        name="birthday_amount"
+                        label="Monto de bono de cumpleaños"
+                        rules={[
+                            {
+                                required: true,
+                                message: getValidationRequiredMessage,
+                            },
+                        ]}
+                    >
+                        <Input
+                            name="birthday_amount"
+                            onChange={onlyNumberInput}
+                            showCount
+                            maxLength={15}
+                        />
+                    </Form.Item>
 
                     <Divider className="font-bold text-3xl">Dirección</Divider>
 

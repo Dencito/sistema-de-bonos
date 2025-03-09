@@ -139,6 +139,18 @@ export default function ModalViewBranch({ data, statuses, companies }) {
                     <Input type="number" />
                 </Form.Item>
                 <Form.Item
+                    name="birthday_amount"
+                    label="Monto de bono de cumpleaños"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                    ]}
+                >
+                    <Input type="number" />
+                </Form.Item>
+                <Form.Item
                     name="company_id"
                     label="Seleccione la empresa"
                     rules={[

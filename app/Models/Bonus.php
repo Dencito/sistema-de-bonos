@@ -14,7 +14,15 @@ class Bonus extends Model
         'amount',
         'start_datetime',
         'end_datetime',
-        'user_id'
+        'user_id',
+        'active'
+    ];
+    
+    protected $casts = [
+        'active' => 'boolean',
+        'start_datetime' => 'datetime',
+        'end_datetime' => 'datetime',
+        'amount' => 'decimal:2'
     ];
 
     // Relación con el modelo User (un bono pertenece a un usuario)
@@ -26,5 +34,13 @@ class Bonus extends Model
     public function categories()
     {
         return $this->belongsToMany(CategoryBonus::class, 'category_bonuses_bonuses', 'bonus_id', 'category_id');
+    }
+    
+    /**
+     * Scope a query to only include active bonuses.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
     }
 }

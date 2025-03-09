@@ -484,6 +484,7 @@ class UserController extends Controller
         if ($user) {
             $fingerprints = $request->input('fingerprints');
             $user->fingerprints = json_encode($fingerprints);
+            $user->has_fingerprint = true;
             $user->save();
             return response()->json(['message' => 'User enrolled successfully.'], 200);
         }
@@ -571,6 +572,7 @@ class UserController extends Controller
                 'bonuses',
                 'categoryBonus',
                 'branches.company',
+                'branches.totem',
                 'status',
                 'role'
             ])->findOrFail($id);

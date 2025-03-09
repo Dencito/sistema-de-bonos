@@ -341,6 +341,10 @@ export default function ModalCreateUser({
                     label="Fecha de Ingreso"
                     rules={[
                         {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                        {
                             type: 'date',
                             message: 'Por favor ingrese una fecha válida',
                         },

@@ -70,11 +70,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/{id}', [BranchController::class, 'update'])->name('branches.update');
         Route::delete('/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
         
-        Route::put('/shifts', [BranchController::class, 'updateShifts'])->name('branches.updateShifts');
-        Route::delete('/shifts/{id}', [BranchController::class, 'deleteShift'])->name('branches.deleteShift');
-        Route::put('/shifts-available-bonus-days', [BranchController::class, 'updateShiftsAvailableBonusDays'])->name('branches.updateShiftsAvailableBonusDays');
-        Route::delete('/shifts-available-bonus-days/{id}', [BranchController::class, 'deleteShiftAvailableBonusDays'])->name('branches.deleteShiftAvailableBonusDays');
-        
         Route::put('/shift-day', [BranchController::class, 'updateShiftDay'])->name('branches.updateShiftDay');
         Route::put('/schedule', [BranchController::class, 'updateSchedule'])->name('branches.updateSchedule');
         Route::post('/schedule/{shift_id}', [BranchController::class, 'addSchedule'])->name('branches.addSchedule');

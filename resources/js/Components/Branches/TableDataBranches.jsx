@@ -49,6 +49,13 @@ export const TableDataBranches = ({
                     )}
                 />
                 <Column
+                    title="Bono por cumpleaños"
+                    key="birthday_amount"
+                    render={(_, branch) => (
+                        <p>{branch.birthday_amount}</p>
+                    )}
+                />
+                <Column
                     title="Estado"
                     key="status"
                     render={(_, branch) => (

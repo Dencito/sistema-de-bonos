@@ -179,6 +179,24 @@ export default function ModalEditBranch({ data, statuses }) {
                     </Form.Item>
 
                     <Form.Item
+                        name="birthday_amount"
+                        label="Monto de bono de cumpleaños"
+                        rules={[
+                            {
+                                required: true,
+                                message: getValidationRequiredMessage,
+                            },
+                        ]}
+                    >
+                        <Input
+                            name="birthday_amount"
+                            onChange={onlyNumberInput}
+                            showCount
+                            maxLength={15}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
                         name="status_id"
                         label="Estado"
                         rules={[

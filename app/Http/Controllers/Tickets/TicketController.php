@@ -10,7 +10,8 @@ class TicketController extends Controller
 {
     public function index()
     {
-        return Ticket::all();
+        return Ticket::with(['user', 'totem', 'totem.branch'])
+            ->get();
     }
 
     public function store(Request $request)

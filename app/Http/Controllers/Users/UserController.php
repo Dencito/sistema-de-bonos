@@ -498,13 +498,16 @@ class UserController extends Controller
             ->whereIn('role_id', [5, 6])
             ->whereNotNull('fingerprints')
             ->where('fingerprints', '!=', '[]')
-            ->get(['id', 'username', 'fingerprints', 'role_id', 'status_id']);
+            ->where('has_fingerprint', true)
+            ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id']);
 
         return response()->json([
             'data' => $users->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'username' => $user->username,
+                    'firstName' => $user->first_name,
+                    'lastName' => $user->first_last_name,
                     'fingerprints' => json_decode($user->fingerprints, true),
                     'role' => $user->role->name,
                     'status' => $user->status->name
@@ -571,8 +574,10 @@ class UserController extends Controller
             $user = User::with([
                 'bonuses',
                 'categoryBonus',
+                'branches:id,company_id',
                 'branches.company',
                 'branches.totem',
+                'branches.shifts',
                 'status',
                 'role'
             ])->findOrFail($id);

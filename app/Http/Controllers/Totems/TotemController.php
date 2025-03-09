@@ -10,7 +10,7 @@ class TotemController extends Controller
 {
     public function index()
     {
-        return Totem::all();
+        return Totem::with(['branch'])->get();
     }
 
     public function store(Request $request)

@@ -285,7 +285,8 @@ class CompanyDatabaseService
                     $table->string('code')->unique();
                     $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
                     $table->boolean('active')->default(true);
-                    $table->timestamps();
+                    $table->timestamp('created_at')->useCurrent();  
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
             }
 
@@ -307,12 +308,13 @@ class CompanyDatabaseService
                 Schema::create($shiftsTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
                     $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
-                    $table->foreignId('opened_by_user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('closed_by_user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->timestamp('opening_time')->useCurrent();
-                    $table->timestamp('closing_time')->nullable();
+                    $table->foreignId('opened_by_user_id')->constrained($usersTable)->onDelete('cascade')->nullable();
+                    $table->foreignId('closed_by_user_id')->constrained($usersTable)->onDelete('cascade')->nullable();
+                    $table->timestamp('opening_time')->useCurrent()->nullable();
+                    $table->timestamp('closing_time')->nullable()->nullable();
                     $table->enum('status', ['open', 'closed'])->default('open');
-                    $table->timestamps();
+                    $table->timestamp('created_at')->useCurrent();  
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
             }
 

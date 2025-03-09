@@ -47,7 +47,7 @@ class Branch extends Model
 
     public function shifts()
     {
-        return $this->hasMany(Shift::class);
+        return $this->hasMany(ShiftRecord::class);
     }
 
     public function schedules()
@@ -83,9 +83,9 @@ class Branch extends Model
     /**
      * Get all totems for the branch.
      */
-    public function totems(): HasMany
+    public function totem()
     {
-        return $this->hasMany(Totem::class);
+        return $this->hasOne(Totem::class);
     }
     
     /**

@@ -17,11 +17,9 @@ class Ticket extends Model
         'user_id',
         'totem_id',
         'total_amount',
-        'active'
     ];
     
     protected $casts = [
-        'active' => 'boolean',
         'total_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
@@ -41,14 +39,6 @@ class Ticket extends Model
     public function totem(): BelongsTo
     {
         return $this->belongsTo(Totem::class);
-    }
-    
-    /**
-     * Scope a query to only include active tickets.
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('active', true);
     }
     
     /**

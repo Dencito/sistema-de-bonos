@@ -579,7 +579,9 @@ class UserController extends Controller
                 'branches.totem',
                 'branches.shifts',
                 'status',
-                'role'
+                'role',
+                'tickets',
+                'bonuses',
             ])->findOrFail($id);
 
             // Add schedule validation for each branch

@@ -18,7 +18,13 @@ import {
 import { Button } from '@/components/ui/button';
 import cn from 'classnames';
 
-export function DataTable({ columns, data, className, rowKeyField = 'id', ...props }) {
+export function DataTable({
+    columns,
+    data,
+    className,
+    rowKeyField = 'id',
+    ...props
+}) {
     const table = useReactTable({
         data,
         columns,

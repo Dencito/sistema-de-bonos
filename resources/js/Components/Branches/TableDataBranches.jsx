@@ -51,9 +51,7 @@ export const TableDataBranches = ({
                 <Column
                     title="Bono por cumpleaños"
                     key="birthday_amount"
-                    render={(_, branch) => (
-                        <p>{branch.birthday_amount}</p>
-                    )}
+                    render={(_, branch) => <p>{branch.birthday_amount}</p>}
                 />
                 <Column
                     title="Estado"
@@ -90,9 +88,9 @@ export const TableDataBranches = ({
                                 statuses={statuses}
                                 companies={companies}
                             />
-                            <ModalDeleteBranch 
+                            <ModalDeleteBranch
                                 key={`delete_${branch.id}`}
-                                data={branch} 
+                                data={branch}
                             />
                         </div>
                     )}

@@ -727,7 +727,10 @@ export default function ModalViewUser({
                 >
                     <Select placeholder="Seleccione la categoria">
                         {categories?.map((category) => (
-                            <Select.Option key={category.id} value={category.id}>
+                            <Select.Option
+                                key={category.id}
+                                value={category.id}
+                            >
                                 {category.name}
                             </Select.Option>
                         ))}

@@ -7,5 +7,5 @@ export const getBgStatus = (status) => {
             ? '#FDBA08'
             : status === 'Borrado'
               ? '#F56565'
-              : ''
-}
+              : '';
+};

@@ -4,16 +4,15 @@ namespace App\Models;
 
 use App\Traits\CompanyScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, CompanyScope;
-
 
     protected $fillable = [
         'first_name',
@@ -27,6 +26,7 @@ class User extends Authenticatable
         'code',
         'birth_date',
         'entry_date',
+        'fingerprints',
         'has_fingerprint',
         'email',
         'nationality',
@@ -42,7 +42,7 @@ class User extends Authenticatable
         'status_id',
         'company_id',
         'category_bonus_id',
-        'role_id', 
+        'role_id',
     ];
 
     protected $hidden = [
@@ -61,7 +61,7 @@ class User extends Authenticatable
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($user) {
             if (!$user->entry_date) {
                 $user->entry_date = now();
@@ -134,9 +134,9 @@ class User extends Authenticatable
 
     public function branches()
     {
-        $prefix = config('company.prefix'); // Obtén el prefijo
-        $pivotTable = $prefix ? $prefix . '_user_branches' : 'user_branches'; // Tabla pivote con prefijo
-    
+        $prefix = config('company.prefix');  // Obtén el prefijo
+        $pivotTable = $prefix ? $prefix . '_user_branches' : 'user_branches';  // Tabla pivote con prefijo
+
         return $this->belongsToMany(Branch::class, $pivotTable, 'user_id', 'branch_id');
     }
 
@@ -144,12 +144,22 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Company::class, 'company_id');
     }
-    
+
     /**
      * Get all tickets for the user.
      */
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function setFingerprintsAttribute($value)
+    {
+        $this->attributes['fingerprints'] = json_encode($value);
+    }
+
+    public function getFingerprintsAttribute($value)
+    {
+        return json_decode($value, true);
     }
 }

@@ -143,7 +143,7 @@ export function AppSidebar({ role, roles, user }) {
                                         )}
 
                                         {/* <DarkModeToggle /> */}
-                                        <hr className='my-3' />
+                                        <hr className="my-3" />
                                     </div>
                                 </div>
                             </SidebarMenuItem>

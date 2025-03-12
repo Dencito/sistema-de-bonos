@@ -47,7 +47,7 @@ import {
     MultiSelectorItem,
     MultiSelectorList,
     MultiSelectorTrigger,
-  } from "@/components/ui/multi-select";
+} from '@/components/ui/multi-select';
 // Base schema for common fields
 const baseUserSchema = {
     username: z
@@ -1046,10 +1046,14 @@ export default function ModalViewUser({
                     control={form.control}
                     name="branches"
                     render={({ field }) => {
-                        const selectedBranches = field.value?.map(id => 
-                            branches?.find(b => b.id === id)?.name
-                        ).filter(Boolean) || [];
-                        
+                        const selectedBranches =
+                            field.value
+                                ?.map(
+                                    (id) =>
+                                        branches?.find((b) => b.id === id)?.name
+                                )
+                                .filter(Boolean) || [];
+
                         return (
                             <FormItem>
                                 <FormLabel>Sucursales</FormLabel>
@@ -1057,9 +1061,15 @@ export default function ModalViewUser({
                                     <MultiSelector
                                         values={selectedBranches}
                                         onValuesChange={(newValues) => {
-                                            const newIds = newValues.map(name => 
-                                                branches?.find(b => b.name === name)?.id
-                                            ).filter(Boolean);
+                                            const newIds = newValues
+                                                .map(
+                                                    (name) =>
+                                                        branches?.find(
+                                                            (b) =>
+                                                                b.name === name
+                                                        )?.id
+                                                )
+                                                .filter(Boolean);
                                             field.onChange(newIds);
                                         }}
                                         loop
@@ -1095,7 +1105,9 @@ export default function ModalViewUser({
                         <FormItem>
                             <FormLabel>Categoría</FormLabel>
                             <Select
-                                onValueChange={(value) => field.onChange(parseInt(value))}
+                                onValueChange={(value) =>
+                                    field.onChange(parseInt(value))
+                                }
                                 defaultValue={field.value?.toString()}
                             >
                                 <FormControl>

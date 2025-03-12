@@ -244,7 +244,7 @@ const MultiSelectorTrigger = forwardRef(
 
 MultiSelectorTrigger.displayName = 'MultiSelectorTrigger';
 
-const MultiSelectorInput = forwardRef(({ className, ...props }, ref) => {
+const MultiSelectorInput = forwardRef(({ className, ...props }) => {
     const {
         setOpen,
         inputValue,

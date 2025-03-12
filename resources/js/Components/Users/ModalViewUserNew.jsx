@@ -6,7 +6,6 @@ import { EyeOutlined } from '@ant-design/icons';
 import { roleDisplayNames } from '@/Utils/constants';
 import {
     Sheet,
-    SheetClose,
     SheetContent,
     SheetDescription,
     SheetFooter,
@@ -237,7 +236,6 @@ export default function ModalViewUser({
     };
 
     const onSubmit = (values) => {
-        console.log(values);
         // Add your submit logic here
         setInitialValues(values);
         setIsOpen(false);

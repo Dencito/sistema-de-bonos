@@ -13,8 +13,6 @@ import { CustomTable } from '@components-v2/CustomTable';
 import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssignCategories';
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { roleDisplayNames } from '@/Utils/constants';
-import { DataTable } from '@/Components/Tables/DataTable';
-import { Badge } from '@/Components/ui/badge';
 import { Circle, MoreHorizontal } from 'lucide-react';
 import {
     DropdownMenu,
@@ -56,7 +54,6 @@ export default function UserPage({
     bonuses,
     filters,
 }) {
-    console.log(users);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
         username: filters.username || '',
@@ -844,7 +841,7 @@ export default function UserPage({
             {
                 accessorKey: 'actions',
                 header: () => <div>Acciones</div>,
-                cell: ({ row }) => {
+                cell: () => {
                     return (
                         <DropdownMenu hover={true}>
                             <DropdownMenuTrigger asChild>
@@ -964,7 +961,7 @@ export default function UserPage({
             {
                 header: 'Acciones',
                 accessorKey: 'actions',
-                cell: ({ cell }) => <></>,
+                cell: () => <></>,
             },
             {
                 header: 'Huella Digital',

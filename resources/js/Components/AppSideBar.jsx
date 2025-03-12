@@ -12,19 +12,16 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
-import { VITE_PRIMARY_SUBDOMAIN } from '@/Utils/env';
 
 import {
     Sidebar,
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/Components/ui/sidebar';
-import { DarkModeToggle } from './DarkModeToggle';
 
 export function AppSidebar({ role, roles, user }) {
     const formattedRoles =

@@ -11,12 +11,12 @@ use App\Models\Role;
 use App\Models\Status;
 use App\Models\User;
 use App\Models\UserBranches;
+use App\Models\FingerprintLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-
 class UserController extends Controller
 {
     public function index(Request $request)
@@ -221,8 +221,10 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        // Obtener el ID del rol del usuario autenticado
         $userRoleId = auth()->user()->role_id;
 
+        // Verificar que el rol del usuario a eliminar no sea mayor o igual al rol del usuario autenticado
         $userRoleIdToUpdate = $user->role_id;
 
         if ($userRoleIdToUpdate <= $userRoleId) {
@@ -233,6 +235,7 @@ class UserController extends Controller
         }
 
         try {
+            // Validar si 'username' no es null antes de la consulta
             if (!is_null($request->username)) {
                 $existingUser = User::where('username', $request->username)
                     ->where('id', '!=', $user->id)
@@ -242,6 +245,7 @@ class UserController extends Controller
                 }
             }
 
+            // Validar si 'email' no es null antes de la consulta
             if (!is_null($request->email)) {
                 $existingUser = User::where('email', $request->email)
                     ->where('id', '!=', $user->id)
@@ -251,6 +255,7 @@ class UserController extends Controller
                 }
             }
 
+            // Validar si 'phone' no es null antes de la consulta
             if (!is_null($request->phone)) {
                 $existingUser = User::where('phone', $request->phone)
                     ->where('id', '!=', $user->id)
@@ -260,6 +265,7 @@ class UserController extends Controller
                 }
             }
 
+            // Validar si 'code' no es null antes de la consulta
             if (!is_null($request->code)) {
                 $existingUser = User::where('code', $request->code)
                     ->where('id', '!=', $user->id)
@@ -348,10 +354,6 @@ class UserController extends Controller
             $user->branches()->sync($request->branches);
         }
 
-        if (in_array($user->role_id, [5, 6])) {
-            cache()->forget('fingerprints_by_role_' . implode('_', [5, 6]));
-        }
-
         return response()->json([
             'error' => false,
             'message' => 'Usuario actualizado exitosamente',
@@ -360,8 +362,10 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        // Obtener el ID del rol del usuario autenticado
         $userRoleId = auth()->user()->role_id;
 
+        // Verificar que el usuario no se esté eliminando a sí mismo
         if ($user->id === auth()->id()) {
             return response()->json([
                 'error' => true,
@@ -369,6 +373,7 @@ class UserController extends Controller
             ], 403);
         }
 
+        // Verificar que el rol del usuario a eliminar no sea mayor o igual al rol del usuario autenticado
         $userRoleIdToDelete = $user->role_id;
 
         if ($userRoleIdToDelete <= $userRoleId) {
@@ -378,6 +383,7 @@ class UserController extends Controller
             ], 403);
         }
 
+        // Eliminar al usuario
         $user->delete();
 
         if (in_array($user->role_id, [5, 6])) {
@@ -470,36 +476,30 @@ class UserController extends Controller
             'fingerprints.*.data' => 'required|string',
         ]);
 
-        $updated = User::where(function ($query) use ($request) {
-            $query
-                ->where('rutNumbers', $request->rutOrCode)
-                ->orWhere('code', $request->rutOrCode)
-                ->whereIn('role_id', [5, 6]);
-        })
-            ->update([
-                'fingerprints' => $request->input('fingerprints'),
-                'has_fingerprint' => true,
-            ]);
+        $user = User::where('rutNumbers', $request->rutOrCode)
+            ->orWhere('code', $request->rutOrCode)
+            ->whereIn('role_id', [5, 6])
+            ->first();
 
-        if ($updated) {
-            cache()->forget('fingerprints_by_role_' . implode('_', [5, 6]));
-
+        if ($user) {
+            $fingerprints = $request->input('fingerprints');
+            $user->fingerprints = json_encode($fingerprints);
+            $user->has_fingerprint = true;
+            $user->save();
             return response()->json(['message' => 'User enrolled successfully.'], 200);
         }
 
-        return response()->json(['message' => 'User not found with rutOrCode:' . $request->rutOrCode], 404);
+        return response()->json(['message' => 'User not found.'], 404);
     }
 
     public function getFingerprintsByRole()
     {
-        $users = cache()->remember('fingerprints_by_role_' . implode('_', [5, 6]), 120 * 60, function () {
-            return User::with(['role:id,name', 'status:id,name'])
-                ->whereIn('role_id', [5, 6])
-                ->whereNotNull('fingerprints')
-                ->where('fingerprints', '!=', '[]')
-                ->where('has_fingerprint', true)
-                ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id']);
-        });
+        $users = User::with(['role', 'status'])
+            ->whereIn('role_id', [5, 6])
+            ->whereNotNull('fingerprints')
+            ->where('fingerprints', '!=', '[]')
+            ->where('has_fingerprint', true)
+            ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
 
         return response()->json([
             'data' => $users->map(function ($user) {
@@ -508,8 +508,10 @@ class UserController extends Controller
                     'username' => $user->username,
                     'firstName' => $user->first_name,
                     'lastName' => $user->first_last_name,
-                    'fingerprints' => $user->fingerprints,
+                    'rut' => $user->rutNumbers . '-' . $user->rutDv,
+                    'fingerprints' => json_decode($user->fingerprints, true),
                     'role' => $user->role->name,
+                    'status' => $user->status->name
                 ];
             })
         ]);
@@ -518,7 +520,7 @@ class UserController extends Controller
     private function validateSchedules($branch)
     {
         $currentTime = now();
-        $currentDay = strtolower($currentTime->format('l'));  // Get current day name in lowercase
+        $currentDay = strtolower($currentTime->format('l')); // Get current day name in lowercase
         $currentTimeStr = $currentTime->format('H:i');
 
         // If bonus_schedules is null, no bonuses are available
@@ -527,7 +529,7 @@ class UserController extends Controller
         }
 
         $bonusSchedules = json_decode($branch->bonus_schedules, true);
-
+        
         // Check if current time falls within any of the bonus schedules
         foreach ($bonusSchedules as $schedule) {
             $daySchedules = collect($schedule['schedules'])
@@ -567,8 +569,9 @@ class UserController extends Controller
         return $time >= $start && $time <= $end;
     }
 
-    public function getBonusesAvailablesUserById($id)
+    public function getBonusesAvailablesUserById($id, $totemId)
     {
+
         try {
             $user = User::with([
                 'bonuses',
@@ -581,6 +584,7 @@ class UserController extends Controller
                 'role',
                 'tickets',
                 'bonuses',
+                'fingerprintLogs',
             ])->findOrFail($id);
 
             // Add schedule validation for each branch
@@ -589,10 +593,17 @@ class UserController extends Controller
                 return $branch;
             });
 
+            $this->markFingerprint(new Request([
+                'totem_id' => $totemId,
+            ]), $id);
+            $bonusesAvailable = $user->bonuses->where('active', true);
+
             return response()->json([
                 'success' => true,
+                'bonuses' => $bonusesAvailable,
                 'data' => $user
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -600,5 +611,24 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function markFingerprint(Request $request, $userId)
+    {
+        $user = User::findOrFail($userId);
+        
+        $validated = $request->validate([
+            'totem_id' => 'required',
+        ]);
+        
+        $fingerprintLog = FingerprintLog::create([
+            'user_id' => $userId,
+            'totem_id' => $validated['totem_id'],
+        ]);
+        
+        return response()->json([
+            'message' => 'Huella registrada exitosamente',
+            'data' => $fingerprintLog
+        ], 201);
     }
 }

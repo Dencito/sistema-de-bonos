@@ -23,7 +23,7 @@ class CompanyDatabaseService
             $ticketsTable = $request->slug . '_tickets';
             $totemsTable = $request->slug . '_totems';
             $shiftsTable = $request->slug . '_shifts';
-
+            $fingerprintLogsTable = $request->slug . '_fingerprint_logs';
 
             // 1. Crear tabla de estados (no tiene dependencias)
             if (!Schema::hasTable($statusesTable)) {
@@ -313,6 +313,17 @@ class CompanyDatabaseService
                     $table->timestamp('closing_time')->nullable()->nullable();
                     $table->enum('status', ['open', 'closed'])->default('open');
                     $table->timestamp('created_at')->useCurrent();  
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                });
+            }
+
+            // 12. Crear tabla de registros de huellas (depende de usuarios y totems)
+            if (!Schema::hasTable($fingerprintLogsTable)) {
+                Schema::create($fingerprintLogsTable, function ($table) use ($usersTable, $totemsTable) {
+                    $table->id();
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
+                    $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
             }

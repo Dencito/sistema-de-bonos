@@ -162,4 +162,9 @@ class User extends Authenticatable
     {
         return json_decode($value, true);
     }
+
+    public function fingerprintLogs()
+    {
+        return $this->hasMany(FingerprintLog::class);
+    }
 }

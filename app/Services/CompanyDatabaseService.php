@@ -297,6 +297,7 @@ class CompanyDatabaseService
                         $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
                         $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
                         $table->decimal('total_amount', 10, 2)->default(0);
+                        $table->string('type');
                         $table->timestamp('created_at')->useCurrent();  
                         $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });

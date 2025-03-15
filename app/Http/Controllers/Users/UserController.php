@@ -10,6 +10,8 @@ use App\Models\Company;
 use App\Models\Role;
 use App\Models\Status;
 use App\Models\User;
+use App\Models\Totem;
+use App\Models\Ticket;
 use App\Models\UserBranches;
 use App\Models\FingerprintLog;
 use Illuminate\Http\Request;
@@ -569,7 +571,7 @@ class UserController extends Controller
         return $time >= $start && $time <= $end;
     }
 
-    public function getBonusesAvailablesUserById($id, $totemId)
+    public function getBonusesAvailablesUserById($id, $totemUUID)
     {
 
         try {
@@ -580,12 +582,36 @@ class UserController extends Controller
                 'branches.company',
                 'branches.totem',
                 'branches.shifts',
+                'categoryBonus',
                 'status',
                 'role',
                 'tickets',
                 'bonuses',
                 'fingerprintLogs',
             ])->findOrFail($id);
+
+            if($user->branches->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontraron sucursales para el usuario'
+                ], 404);
+            }
+
+            if(!$user){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no encontrado'
+                ], 404);
+            }
+
+            $totem = Totem::with('branch')->where('code', $totemUUID)->first();
+
+            if (!$totem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Totem no encontrado'
+                ], 404);
+            }
 
             // Add schedule validation for each branch
             $user->branches->transform(function ($branch) {
@@ -594,14 +620,61 @@ class UserController extends Controller
             });
 
             $this->markFingerprint(new Request([
-                'totem_id' => $totemId,
+                'totem_id' => $totem->id, 
             ]), $id);
-            $bonusesAvailable = $user->bonuses->where('active', true);
 
-            return response()->json([
+            $SumaBonosAdditionals = 0;
+            $SumaBonosCategory = 0;
+            $bonusesAvailable = [];
+
+            $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
+
+
+            foreach ($bonusesAvailableAdditionals as $bonus) {
+                $SumaBonosAdditionals += $bonus->amount;
+            }
+
+            $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
+                'active' => false
+            ]);
+
+            $tickets = [];
+
+            $ticket = null;
+
+            if($SumaBonosAdditionals > 0) {
+                $ticket = Ticket::create([
+                    'user_id' => $user->id,
+                    'totem_id' => $totem->id,
+                    'total_amount' => $SumaBonosAdditionals,
+                    'type' => 'bonus'
+                ]);
+                $tickets[] = $ticket;
+            }
+
+            $bonusesAvailableCategoryBonus = $user->categoryBonus;
+
+            if($bonusesAvailableCategoryBonus) {
+                $ticket = Ticket::create([
+                    'user_id' => $user->id,
+                    'totem_id' => $totem->id,
+                    'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
+                    'type' => 'category'
+                ]);
+                $SumaBonosCategory += $bonusesAvailableCategoryBonus->base_amount;
+                $tickets[] = $ticket;
+            }
+
+
+            return response()->json([   
                 'success' => true,
-                'bonuses' => $bonusesAvailable,
-                'data' => $user
+                'tickets' => $tickets,
+                'bonusesAvailableAdditionals' => array_values($bonusesAvailableAdditionals->toArray()),
+                'totalAdditionals' => $SumaBonosAdditionals,
+                'totalCategory' => $SumaBonosCategory,
+                'total' => $SumaBonosAdditionals + $SumaBonosCategory,
+                'totem' => $totem,
+                'data' => $user,
             ]);
 
         } catch (\Exception $e) {

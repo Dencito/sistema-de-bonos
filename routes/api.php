@@ -29,7 +29,7 @@ Route::get('/test-mail', function (Request $request) {
     return response()->json(['message' => 'Correo enviado exitosamente'], 200);
 });
 
-Route::get('/users/{id}/bonuses/{totemId}/totem', [UserController::class, 'getBonusesAvailablesUserById']);
+Route::get('/users/{id}/bonuses/{totemUUID}/totem', [UserController::class, 'getBonusesAvailablesUserById']);
 Route::post('/users/{userId}/attendance', [UserController::class, 'markFingerprint']);
 
 Route::post('/users/validate-rut', [UserController::class, 'ValidateRut']);

@@ -7,13 +7,13 @@ use App\Models\Bonus;
 use App\Models\Branch;
 use App\Models\CategoryBonus;
 use App\Models\Company;
+use App\Models\FingerprintLog;
 use App\Models\Role;
 use App\Models\Status;
-use App\Models\User;
-use App\Models\Totem;
 use App\Models\Ticket;
+use App\Models\Totem;
+use App\Models\User;
 use App\Models\UserBranches;
-use App\Models\FingerprintLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -336,7 +336,7 @@ class UserController extends Controller
             'code' => $request->code,
             'birth_date' => $request->birth_date,
             'entry_date' => $request->entry_date,
-            'has_fingerprint' => $request->has_fingerprint,
+            'has_fingerprint' => $request->filled('has_fingerprint') ? $request->has_fingerprint : $user->has_fingerprint,
             'email' => $request->email,
             'nationality' => $request->nationality,
             'address' => $request->address,
@@ -510,7 +510,7 @@ class UserController extends Controller
                 ->whereNotNull('fingerprints')
                 ->where('fingerprints', '!=', '[]')
                 ->where('has_fingerprint', true)
-            ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
+                ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
         });
         return response()->json([
             'data' => $users->map(function ($user) {
@@ -520,7 +520,7 @@ class UserController extends Controller
                     'firstName' => $user->first_name,
                     'lastName' => $user->first_last_name,
                     'rut' => $user->rutNumbers . '-' . $user->rutDv,
-                    'fingerprints' => json_decode($user->fingerprints, true),
+                    'fingerprints' => $user->fingerprints,
                     'role' => $user->role->name,
                 ];
             })
@@ -539,7 +539,7 @@ class UserController extends Controller
         }
 
         $bonusSchedules = json_decode($branch->bonus_schedules, true);
-        
+
         // Check if current time falls within any of the bonus schedules
         foreach ($bonusSchedules as $schedule) {
             $daySchedules = collect($schedule['schedules'])
@@ -581,7 +581,6 @@ class UserController extends Controller
 
     public function getBonusesAvailablesUserById($id, $totemUUID)
     {
-
         try {
             $user = User::with([
                 'bonuses',
@@ -598,14 +597,14 @@ class UserController extends Controller
                 'fingerprintLogs',
             ])->findOrFail($id);
 
-            if($user->branches->isEmpty()) {
+            if ($user->branches->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No se encontraron sucursales para el usuario'
                 ], 404);
             }
 
-            if(!$user){
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Usuario no encontrado'
@@ -628,7 +627,7 @@ class UserController extends Controller
             });
 
             $this->markFingerprint(new Request([
-                'totem_id' => $totem->id, 
+                'totem_id' => $totem->id,
             ]), $id);
 
             $SumaBonosAdditionals = 0;
@@ -636,7 +635,6 @@ class UserController extends Controller
             $bonusesAvailable = [];
 
             $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
-
 
             foreach ($bonusesAvailableAdditionals as $bonus) {
                 $SumaBonosAdditionals += $bonus->amount;
@@ -650,7 +648,7 @@ class UserController extends Controller
 
             $ticket = null;
 
-            if($SumaBonosAdditionals > 0) {
+            if ($SumaBonosAdditionals > 0) {
                 $ticket = Ticket::create([
                     'user_id' => $user->id,
                     'totem_id' => $totem->id,
@@ -660,14 +658,16 @@ class UserController extends Controller
                 $tickets[] = $ticket;
             }
 
-            $ticketsTypeBonusByUser = $user->tickets->where('type', 'category')
+            $ticketsTypeBonusByUser = $user
+                ->tickets
+                ->where('type', 'category')
                 ->where('created_at', '>=', now()->startOfDay())
                 ->where('created_at', '<=', now()->endOfDay())
                 ->first();
 
             $bonusesAvailableCategoryBonus = $user->categoryBonus;
 
-            if($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
+            if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
                 $ticket = Ticket::create([
                     'user_id' => $user->id,
                     'totem_id' => $totem->id,
@@ -678,8 +678,7 @@ class UserController extends Controller
                 $tickets[] = $ticket;
             }
 
-
-            return response()->json([   
+            return response()->json([
                 'success' => true,
                 'ticketsTypeBonusByUserInDay' => $ticketsTypeBonusByUser,
                 'tickets' => $tickets,
@@ -690,7 +689,6 @@ class UserController extends Controller
                 'totem' => $totem,
                 'data' => $user,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -703,16 +701,16 @@ class UserController extends Controller
     public function markFingerprint(Request $request, $userId)
     {
         $user = User::findOrFail($userId);
-        
+
         $validated = $request->validate([
             'totem_id' => 'required',
         ]);
-        
+
         $fingerprintLog = FingerprintLog::create([
             'user_id' => $userId,
             'totem_id' => $validated['totem_id'],
         ]);
-        
+
         return response()->json([
             'message' => 'Huella registrada exitosamente',
             'data' => $fingerprintLog

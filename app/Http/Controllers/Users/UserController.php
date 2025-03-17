@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+
 class UserController extends Controller
 {
     public function index(Request $request)
@@ -356,6 +357,10 @@ class UserController extends Controller
             $user->branches()->sync($request->branches);
         }
 
+        if (in_array($user->role_id, [5, 6])) {
+            cache()->forget('fingerprints_by_role_' . implode('_', [5, 6]));
+        }
+
         return response()->json([
             'error' => false,
             'message' => 'Usuario actualizado exitosamente',
@@ -385,7 +390,6 @@ class UserController extends Controller
             ], 403);
         }
 
-        // Eliminar al usuario
         $user->delete();
 
         if (in_array($user->role_id, [5, 6])) {
@@ -478,31 +482,36 @@ class UserController extends Controller
             'fingerprints.*.data' => 'required|string',
         ]);
 
-        $user = User::where('rutNumbers', $request->rutOrCode)
-            ->orWhere('code', $request->rutOrCode)
-            ->whereIn('role_id', [5, 6])
-            ->first();
+        $updated = User::where(function ($query) use ($request) {
+            $query
+                ->where('rutNumbers', $request->rutOrCode)
+                ->orWhere('code', $request->rutOrCode)
+                ->whereIn('role_id', [5, 6]);
+        })
+            ->update([
+                'fingerprints' => $request->input('fingerprints'),
+                'has_fingerprint' => true,
+            ]);
 
-        if ($user) {
-            $fingerprints = $request->input('fingerprints');
-            $user->fingerprints = json_encode($fingerprints);
-            $user->has_fingerprint = true;
-            $user->save();
+        if ($updated) {
+            cache()->forget('fingerprints_by_role_' . implode('_', [5, 6]));
+
             return response()->json(['message' => 'User enrolled successfully.'], 200);
         }
 
-        return response()->json(['message' => 'User not found.'], 404);
+        return response()->json(['message' => 'User not found with rutOrCode:' . $request->rutOrCode], 404);
     }
 
     public function getFingerprintsByRole()
     {
-        $users = User::with(['role', 'status'])
-            ->whereIn('role_id', [5, 6])
-            ->whereNotNull('fingerprints')
-            ->where('fingerprints', '!=', '[]')
-            ->where('has_fingerprint', true)
+        $users = cache()->remember('fingerprints_by_role_' . implode('_', [5, 6]), 120 * 60, function () {
+            return User::with(['role:id,name', 'status:id,name'])
+                ->whereIn('role_id', [5, 6])
+                ->whereNotNull('fingerprints')
+                ->where('fingerprints', '!=', '[]')
+                ->where('has_fingerprint', true)
             ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
-
+        });
         return response()->json([
             'data' => $users->map(function ($user) {
                 return [
@@ -513,7 +522,6 @@ class UserController extends Controller
                     'rut' => $user->rutNumbers . '-' . $user->rutDv,
                     'fingerprints' => json_decode($user->fingerprints, true),
                     'role' => $user->role->name,
-                    'status' => $user->status->name
                 ];
             })
         ]);
@@ -522,7 +530,7 @@ class UserController extends Controller
     private function validateSchedules($branch)
     {
         $currentTime = now();
-        $currentDay = strtolower($currentTime->format('l')); // Get current day name in lowercase
+        $currentDay = strtolower($currentTime->format('l'));  // Get current day name in lowercase
         $currentTimeStr = $currentTime->format('H:i');
 
         // If bonus_schedules is null, no bonuses are available
@@ -652,9 +660,14 @@ class UserController extends Controller
                 $tickets[] = $ticket;
             }
 
+            $ticketsTypeBonusByUser = $user->tickets->where('type', 'category')
+                ->where('created_at', '>=', now()->startOfDay())
+                ->where('created_at', '<=', now()->endOfDay())
+                ->first();
+
             $bonusesAvailableCategoryBonus = $user->categoryBonus;
 
-            if($bonusesAvailableCategoryBonus) {
+            if($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
                 $ticket = Ticket::create([
                     'user_id' => $user->id,
                     'totem_id' => $totem->id,
@@ -668,6 +681,7 @@ class UserController extends Controller
 
             return response()->json([   
                 'success' => true,
+                'ticketsTypeBonusByUserInDay' => $ticketsTypeBonusByUser,
                 'tickets' => $tickets,
                 'bonusesAvailableAdditionals' => array_values($bonusesAvailableAdditionals->toArray()),
                 'totalAdditionals' => $SumaBonosAdditionals,

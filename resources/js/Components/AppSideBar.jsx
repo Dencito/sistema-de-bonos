@@ -9,6 +9,7 @@ import {
     Users,
     ChevronDown,
     ChevronRight,
+    Fingerprint,
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
@@ -118,6 +119,13 @@ export function AppSidebar({ role, roles, user }) {
             label: 'Tickets',
             link: '/tickets',
             autorized: allowedRoles.tickets.includes(role),
+        },
+        {
+            key: '10',
+            icon: Fingerprint,
+            label: 'Registros de Huella',
+            link: '/fingerprint-logs',
+            autorized: allowedRoles.fingerprintLogs.includes(role),
         },
     ];
 

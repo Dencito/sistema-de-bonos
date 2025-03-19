@@ -16,6 +16,7 @@ export const allowedRoles = {
     allowedDuringWorkHours: ['trabajador', 'supervisor'],
     totems: ['duenio', 'super-admin', 'admin'],
     tickets: ['duenio', 'super-admin', 'admin'],
+    fingerprintLogs: ['duenio', 'super-admin', 'admin'],
 };
 
 export const roleNames = {

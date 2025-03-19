@@ -527,6 +527,166 @@ class UserController extends Controller
         ]);
     }
 
+    public function getBonusesAvailablesUserById($id, $totemUUID)
+    {
+        try {
+            $user = User::with([
+                'bonuses',
+                'categoryBonus',
+                'branches:id,company_id',
+                'branches.company',
+                'branches.totem',
+                'branches.shifts',
+                'categoryBonus',
+                'status',
+                'role',
+                'tickets',
+                'bonuses',
+                'fingerprintLogs',
+            ])->findOrFail($id);
+
+            if ($user->branches->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontraron sucursales para el usuario'
+                ], 404);
+            }
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no encontrado'
+                ], 404);
+            }
+
+            $totem = Totem::with('branch')->where('code', $totemUUID)->first();
+            $branch = $user->branches->find($totem->branch_id)->first();
+
+            if (!$branch) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sucursal no encontrada'
+                ], 404);
+            }
+
+            if (!$totem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Totem no encontrado'
+                ], 404);
+            }
+
+
+            $this->markFingerprint(new Request([
+                'totem_id' => $totem->id,
+            ]), $id);
+
+            $SumaBonosAdditionals = 0;
+            $SumaBonosCategory = 0;
+            $bonusesAvailable = [];
+
+            $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
+
+            foreach ($bonusesAvailableAdditionals as $bonus) {
+                $SumaBonosAdditionals += $bonus->amount;
+            }
+
+            $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
+                'active' => false
+            ]);
+
+            $tickets = [];
+
+            $ticket = null;
+
+            if ($SumaBonosAdditionals > 0) {
+                $ticket = Ticket::create([
+                    'user_id' => $user->id,
+                    'totem_id' => $totem->id,
+                    'total_amount' => $SumaBonosAdditionals,
+                    'type' => 'bonus'
+                ]);
+                $tickets[] = $ticket;
+            }
+
+            $ticketsTypeBonusByUser = $user
+                ->tickets
+                ->where('type', 'category')
+                ->where('created_at', '>=', now()->startOfDay())
+                ->where('created_at', '<=', now()->endOfDay())
+                ->first();
+
+            $bonusesAvailableCategoryBonus = $user->categoryBonus;
+
+            if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
+                $ticket = Ticket::create([
+                    'user_id' => $user->id,
+                    'totem_id' => $totem->id,
+                    'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
+                    'type' => 'category'
+                ]);
+                $tickes[] = $ticket;
+            }
+
+            $ticketsTypeBirthdayByUser = $user
+                ->tickets
+                ->where('type', 'birthday')
+                ->where('created_at', '>=', now()->startOfYear())
+                ->where('created_at', '<=', now()->endOfYear())
+                ->first();
+
+            // Verificar si hoy es el cumpleaños del usuario
+            $isBirthday = false;
+            if ($user->birth_date) {
+                $birthDate = \Carbon\Carbon::parse($user->birth_date);
+                $today = now();
+                $isBirthday = ($birthDate->month == $today->month && $birthDate->day == $today->day);
+            }
+
+            // Solo crear ticket de cumpleaños si es el cumpleaños del usuario y no ha recibido bono de cumpleaños este año
+            if (!$ticketsTypeBirthdayByUser && $isBirthday) {
+                $ticket = Ticket::create([
+                    'user_id' => $user->id,
+                    'totem_id' => $totem->id,
+                    'total_amount' => $branch->birthday_amount,
+                    'type' => 'birthday'
+                ]);
+                $tickets[] = $ticket;
+            }
+
+            return response()->json([
+                'datta' => [
+                    'tickets' => $tickets,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los bonos del usuario',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function markFingerprint(Request $request, $userId)
+    {
+        $user = User::findOrFail($userId);
+
+        $validated = $request->validate([
+            'totem_id' => 'required',
+        ]);
+
+        $fingerprintLog = FingerprintLog::create([
+            'user_id' => $userId,
+            'totem_id' => $validated['totem_id'],
+        ]);
+
+        return response()->json([
+            'message' => 'Huella registrada exitosamente',
+            'data' => $fingerprintLog
+        ], 201);
+    }
+
     private function validateSchedules($branch)
     {
         $currentTime = now();
@@ -577,147 +737,5 @@ class UserController extends Controller
         }
 
         return $time >= $start && $time <= $end;
-    }
-
-    public function getBonusesAvailablesUserById($id, $totemUUID)
-    {
-        try {
-            $user = User::with([
-                'bonuses',
-                'categoryBonus',
-                'branches:id,company_id',
-                'branches.company',
-                'branches.totem',
-                'branches.shifts',
-                'categoryBonus',
-                'status',
-                'role',
-                'tickets',
-                'bonuses',
-                'fingerprintLogs',
-            ])->findOrFail($id);
-
-            if ($user->branches->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se encontraron sucursales para el usuario'
-                ], 404);
-            }
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuario no encontrado'
-                ], 404);
-            }
-
-            $totem = Totem::with('branch')->where('code', $totemUUID)->first();
-            $branch = $user->branches->find($totem->branch_id);
-
-            if (!$branch) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sucursal no encontrada'
-                ], 404);
-            }
-
-            if (!$totem) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Totem no encontrado'
-                ], 404);
-            }
-
-            // Add schedule validation for each branch
-           /*  $user->branches->transform(function ($branch) {
-                $branch->is_bonus_available = $this->validateSchedules($branch);
-                return $branch;
-            }); */
-
-            $this->markFingerprint(new Request([
-                'totem_id' => $totem->id,
-            ]), $id);
-
-            $SumaBonosAdditionals = 0;
-            $SumaBonosCategory = 0;
-            $bonusesAvailable = [];
-
-            $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
-
-            foreach ($bonusesAvailableAdditionals as $bonus) {
-                $SumaBonosAdditionals += $bonus->amount;
-            }
-
-            $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
-                'active' => false
-            ]);
-
-            $tickets = [];
-
-            $ticket = null;
-
-            if ($SumaBonosAdditionals > 0) {
-                $ticket = Ticket::create([
-                    'user_id' => $user->id,
-                    'totem_id' => $totem->id,
-                    'total_amount' => $SumaBonosAdditionals,
-                    'type' => 'bonus'
-                ]);
-                $tickets[] = $ticket;
-            }
-
-            $ticketsTypeBonusByUser = $user
-                ->tickets
-                ->where('type', 'category')
-                ->where('created_at', '>=', now()->startOfDay())
-                ->where('created_at', '<=', now()->endOfDay())
-                ->first();
-
-            $bonusesAvailableCategoryBonus = $user->categoryBonus;
-
-            if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
-                $ticket = Ticket::create([
-                    'user_id' => $user->id,
-                    'totem_id' => $totem->id,
-                    'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
-                    'type' => 'category'
-                ]);
-                $SumaBonosCategory += $bonusesAvailableCategoryBonus->base_amount;
-                $tickets[] = $ticket;
-            }
-
-            return response()->json([
-                'branch' => $branch,
-                'data' => [
-                    'tickets' => $tickets,
-                    'total' => $SumaBonosAdditionals + $SumaBonosCategory
-                ],
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener los bonos del usuario',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function markFingerprint(Request $request, $userId)
-    {
-        $user = User::findOrFail($userId);
-
-        $validated = $request->validate([
-            'totem_id' => 'required',
-        ]);
-
-        $fingerprintLog = FingerprintLog::create([
-            'user_id' => $userId,
-            'totem_id' => $validated['totem_id'],
-        ]);
-
-        return response()->json([
-            'message' => 'Huella registrada exitosamente',
-            'data' => $fingerprintLog
-        ], 201);
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
+use App\Http\Controllers\Shifts\ShiftController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -136,6 +137,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [FingerprintLogController::class, 'store'])->name('fingerprint-logs.store');
         Route::put('/{fingerprintLog}', [FingerprintLogController::class, 'update'])->name('fingerprint-logs.update');
         Route::delete('/{fingerprintLog}', [FingerprintLogController::class, 'destroy'])->name('fingerprint-logs.destroy');
+    });
+
+    Route::prefix('shifts')->group(function() {
+        Route::get('/', [ShiftController::class, 'index'])->name('shifts.index');
+        Route::get('/status', [ShiftController::class, 'getShiftStatus'])->name('shifts.status');
+        Route::post('/start', [ShiftController::class, 'startShift'])->name('shifts.start');
+        Route::post('/end', [ShiftController::class, 'endShift'])->name('shifts.end');
     });
 
 });

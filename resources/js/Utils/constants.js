@@ -17,6 +17,7 @@ export const allowedRoles = {
     totems: ['duenio', 'super-admin', 'admin'],
     tickets: ['duenio', 'super-admin', 'admin'],
     fingerprintLogs: ['duenio', 'super-admin', 'admin'],
+    shiftControl: ['trabajador'],
 };
 
 export const roleNames = {

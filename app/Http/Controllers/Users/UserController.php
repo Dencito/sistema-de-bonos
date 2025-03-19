@@ -612,6 +612,14 @@ class UserController extends Controller
             }
 
             $totem = Totem::with('branch')->where('code', $totemUUID)->first();
+            $branch = $user->branches->find($totem->branch_id);
+
+            if (!$branch) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sucursal no encontrada'
+                ], 404);
+            }
 
             if (!$totem) {
                 return response()->json([
@@ -621,10 +629,10 @@ class UserController extends Controller
             }
 
             // Add schedule validation for each branch
-            $user->branches->transform(function ($branch) {
+           /*  $user->branches->transform(function ($branch) {
                 $branch->is_bonus_available = $this->validateSchedules($branch);
                 return $branch;
-            });
+            }); */
 
             $this->markFingerprint(new Request([
                 'totem_id' => $totem->id,
@@ -679,15 +687,11 @@ class UserController extends Controller
             }
 
             return response()->json([
-                'success' => true,
-                'ticketsTypeBonusByUserInDay' => $ticketsTypeBonusByUser,
-                'tickets' => $tickets,
-                'bonusesAvailableAdditionals' => array_values($bonusesAvailableAdditionals->toArray()),
-                'totalAdditionals' => $SumaBonosAdditionals,
-                'totalCategory' => $SumaBonosCategory,
-                'total' => $SumaBonosAdditionals + $SumaBonosCategory,
-                'totem' => $totem,
-                'data' => $user,
+                'branch' => $branch,
+                'data' => [
+                    'tickets' => $tickets,
+                    'total' => $SumaBonosAdditionals + $SumaBonosCategory
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([

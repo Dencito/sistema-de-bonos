@@ -14,6 +14,8 @@ export const allowedRoles = {
     status: ['duenio', 'super-admin'],
     createBonusCategory: ['duenio', 'super-admin'],
     allowedDuringWorkHours: ['trabajador', 'supervisor'],
+    totems: ['duenio', 'super-admin', 'admin'],
+    tickets: ['duenio', 'super-admin', 'admin'],
 };
 
 export const roleNames = {

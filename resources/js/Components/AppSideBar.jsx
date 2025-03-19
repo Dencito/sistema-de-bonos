@@ -104,6 +104,20 @@ export function AppSidebar({ role, roles, user }) {
             label: 'Obtener monto totales',
             link: '/total-amounts',
             autorized: false,
+        },  
+        {
+            key: '8',
+            icon: SquareStack,
+            label: 'Tótems',
+            link: '/totems',
+            autorized: allowedRoles.totems.includes(role),
+        },
+        {
+            key: '9',
+            icon: SquareStack,
+            label: 'Tickets',
+            link: '/tickets',
+            autorized: allowedRoles.tickets.includes(role),
         },
     ];
 

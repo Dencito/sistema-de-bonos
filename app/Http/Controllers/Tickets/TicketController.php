@@ -5,13 +5,18 @@ namespace App\Http\Controllers\Tickets;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Inertia\Inertia;
 
 class TicketController extends Controller
 {
     public function index()
     {
-        return Ticket::with(['user', 'totem', 'totem.branch'])
+        $tickets = Ticket::with(['user', 'totem', 'totem.branch'])
             ->get();
+            
+        return Inertia::render('Tickets/index', [
+            'tickets' => $tickets
+        ]);
     }
 
     public function store(Request $request)

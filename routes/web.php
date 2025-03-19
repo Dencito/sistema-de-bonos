@@ -10,6 +10,7 @@ use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Totems\TotemController;
+use App\Http\Controllers\Tickets\TicketController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -120,6 +121,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [TotemController::class, 'store'])->name('totems.store');
         Route::put('/{totem}', [TotemController::class, 'update'])->name('totems.update');
         Route::delete('/{totem}', [TotemController::class, 'destroy'])->name('totems.destroy');
+    });
+
+    Route::prefix('tickets')->group(function() {
+        Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
+        Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
+        Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
+        Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
     });
 
 });

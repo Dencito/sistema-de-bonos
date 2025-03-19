@@ -140,19 +140,32 @@ class ShiftController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $branch = $user->branch;
         
-        if (!$branch) {
-            return Inertia::render('Shifts/index', [
-                'shifts' => [],
-                'error' => 'El usuario no tiene una sucursal asignada'
-            ]);
+        // Si el usuario es dueño, super-admin o admin, mostrar todos los turnos
+        if (in_array($user->role->name, ['duenio', 'super-admin', 'admin'])) {
+            $shifts = ShiftRecord::with(['openedBy:id,first_name,first_last_name,second_last_name', 
+                                        'closedBy:id,first_name,first_last_name,second_last_name', 
+                                        'branch:id,name'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            // Para otros roles, solo mostrar los turnos de su sucursal
+            $branch = $user->branch;
+            
+            if (!$branch) {
+                return Inertia::render('Shifts/index', [
+                    'shifts' => [],
+                    'error' => 'El usuario no tiene una sucursal asignada'
+                ]);
+            }
+            
+            $shifts = ShiftRecord::forBranch($branch->id)
+                ->with(['openedBy:id,first_name,first_last_name,second_last_name', 
+                       'closedBy:id,first_name,first_last_name,second_last_name', 
+                       'branch:id,name'])
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
-        
-        $shifts = ShiftRecord::forBranch($branch->id)
-            ->with(['openedBy', 'closedBy', 'branch'])
-            ->orderBy('created_at', 'desc')
-            ->get();
         
         return Inertia::render('Shifts/index', [
             'shifts' => $shifts

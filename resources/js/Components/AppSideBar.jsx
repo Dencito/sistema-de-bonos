@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import {
     Building2,
     ChartBarStacked,
+    Clock,
     Home,
     LogOut,
     MapPinHouse,
@@ -126,6 +127,13 @@ export function AppSidebar({ role, roles, user }) {
             label: 'Registros de Huella',
             link: '/fingerprint-logs',
             autorized: allowedRoles.fingerprintLogs.includes(role),
+        },
+        {
+            key: '11',
+            icon: Clock,
+            label: 'Registro de Turnos',
+            link: '/shifts',
+            autorized: allowedRoles.shifts.includes(role),
         },
     ];
 

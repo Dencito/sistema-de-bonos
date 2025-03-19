@@ -18,6 +18,7 @@ export const allowedRoles = {
     tickets: ['duenio', 'super-admin', 'admin'],
     fingerprintLogs: ['duenio', 'super-admin', 'admin'],
     shiftControl: ['trabajador'],
+    shifts: ['duenio', 'super-admin', 'admin', 'trabajador'],
 };
 
 export const roleNames = {

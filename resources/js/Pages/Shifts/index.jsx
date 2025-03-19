@@ -22,7 +22,6 @@ const columns = [
         title: 'Abierto por',
         key: 'opened_by',
         render: (_, record) => {
-            console.log(record);
             if (!record.opened_by) return 'N/A';
             const firstName = record.opened_by.first_name || '';
             const lastName = record.opened_by.first_last_name || '';

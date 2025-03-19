@@ -9,6 +9,7 @@ use App\Http\Controllers\Statuses\StatusController;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Bonuses\BonusController;
+use App\Http\Controllers\Totems\TotemController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -112,6 +113,13 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [BonusController::class, 'destroy'])->name('bonuses.destroy');
         Route::post('/assign-multiple-users', [BonusController::class, 'assignMultipleUsers'])->name('bonuses.assignMultipleUsers');
         Route::post('/destroy-multiple-users', [BonusController::class, 'destroyMultipleUsers'])->name('bonuses.destroyMultipleUsers');
+    });
+
+    Route::prefix('totems')->group(function() {
+        Route::get('/', [TotemController::class, 'index'])->name('totems.index');
+        Route::post('/', [TotemController::class, 'store'])->name('totems.store');
+        Route::put('/{totem}', [TotemController::class, 'update'])->name('totems.update');
+        Route::delete('/{totem}', [TotemController::class, 'destroy'])->name('totems.destroy');
     });
 
 });

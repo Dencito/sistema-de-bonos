@@ -3,24 +3,50 @@
 namespace App\Http\Controllers\Totems;
 
 use App\Models\Totem;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Inertia\Inertia;
 
 class TotemController extends Controller
 {
     public function index()
     {
-        return Totem::with(['branch'])->get();
+        $totems = Totem::with(['branch'])->get();
+        $branches = Branch::all();
+        
+        return Inertia::render('Totems/index', [
+            'totems' => $totems,
+            'branches' => $branches,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:totems',
-            'branch_id' => 'required|exists:branches,id',
+            'code' => 'required|string',
+            'branch_id' => 'required',
             'active' => 'nullable|boolean'
         ]);
+
+        $code = Totem::where('code', $validated['code'])->first();
+        if ($code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Código de tótem ya existe'
+            ], 409);
+        }
+        $branch = Branch::find($validated['branch_id']);
+
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sucursal no encontrada'
+            ], 409);
+        }
+
+        
 
         return Totem::create($validated);
     }

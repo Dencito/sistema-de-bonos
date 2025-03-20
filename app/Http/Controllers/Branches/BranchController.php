@@ -48,7 +48,7 @@ class BranchController extends Controller
         if ($companies->isEmpty()) {
             abort(403, 'No tienes permiso para acceder a esta página. Debe existir al menos una empresa.');
         }
-        $branches = Branch::with(['shifts', 'users', 'shifts.schedules', 'availableBonusDays.schedules', 'status', 'company'])
+        $branches = Branch::with(['shifts', 'users', 'status', 'company'])
             ->when($request->name, function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })

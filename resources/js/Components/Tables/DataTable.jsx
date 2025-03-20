@@ -14,8 +14,8 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from '@/Components/ui/table';
+import { Button } from '@/Components/ui/button';
 import cn from 'classnames';
 
 export function DataTable({

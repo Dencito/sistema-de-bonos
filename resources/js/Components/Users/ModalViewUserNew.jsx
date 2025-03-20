@@ -12,7 +12,7 @@ import {
     SheetHeader,
     SheetTitle,
     SheetTrigger,
-} from '@/components/ui/sheet';
+} from '@/Components/ui/sheet';
 import {
     Form,
     FormControl,
@@ -20,16 +20,16 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from '@/components/ui/form';
+} from '@/Components/ui/form';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+} from '@/Components/ui/select';
+import { Input } from '@/Components/ui/input';
+import { Button } from '@/Components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -37,7 +37,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/Components/ui/dialog';
 import { countries } from '@/Utils/countries.json';
 import {
     MultiSelector,
@@ -46,7 +46,7 @@ import {
     MultiSelectorItem,
     MultiSelectorList,
     MultiSelectorTrigger,
-} from '@/components/ui/multi-select';
+} from '@/Components/ui/multi-select';
 // Base schema for common fields
 const baseUserSchema = {
     username: z

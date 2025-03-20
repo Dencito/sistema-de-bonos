@@ -1,10 +1,10 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/Components/ui/badge';
 import {
     Command,
     CommandItem,
     CommandEmpty,
     CommandList,
-} from '@/components/ui/command';
+} from '@/Components/ui/command';
 import { cn } from '@/lib/utils';
 import { Command as CommandPrimitive } from 'cmdk';
 import { X as RemoveIcon, Check } from 'lucide-react';

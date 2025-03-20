@@ -12,13 +12,13 @@ export const allowedRoles = {
     branches: ['duenio', 'super-admin', 'admin'],
     roles: ['duenio', 'super-admin'],
     status: ['duenio', 'super-admin'],
-    createBonusCategory: ['duenio', 'super-admin'],
+    createBonusCategory: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
     allowedDuringWorkHours: ['trabajador', 'supervisor'],
-    totems: ['duenio', 'super-admin', 'admin'],
-    tickets: ['duenio', 'super-admin', 'admin'],
-    fingerprintLogs: ['duenio', 'super-admin', 'admin'],
-    shiftControl: ['trabajador'],
-    shifts: ['duenio', 'super-admin', 'admin', 'trabajador'],
+    totems: ['duenio', 'super-admin', 'admin', 'supervisor'],
+    tickets: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+    fingerprintLogs: ['duenio', 'super-admin', 'admin', 'supervisor'],
+    shiftControl: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+    shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
 };
 
 export const roleNames = {

@@ -22,7 +22,7 @@ createInertiaApp({
 
         root.render(
             <ConfigProvider locale={esES}>
-                <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+                <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
                     <MessageProvider>
                         <App {...props} />
                     </MessageProvider>

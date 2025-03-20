@@ -5,7 +5,7 @@ import {
     getValidationEmailMessage,
     getValidationRequiredMessage,
 } from '@utils/messagesValidationes';
-import { CustomButton } from '@/Components-v2/CustomButton';
+import { CustomButton } from '@/components-v2/CustomButton';
 import { roleDisplayNames } from '@/Utils/constants';
 
 export default function ModalViewUser({

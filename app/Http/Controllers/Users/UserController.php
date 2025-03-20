@@ -591,9 +591,6 @@ class UserController extends Controller
                 $SumaBonosAdditionals += $bonus->amount;
             }
 
-            $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
-                'active' => false
-            ]);
 
             $tickets = [];
 
@@ -608,7 +605,10 @@ class UserController extends Controller
                 ]);
                 $tickets[] = $ticket;
             }
-
+            $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
+                'active' => false
+            ]);
+            
             $ticketsTypeBonusByUser = $user
                 ->tickets
                 ->where('type', 'category')

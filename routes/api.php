@@ -36,7 +36,7 @@ Route::post('/users/validate-rut', [UserController::class, 'ValidateRut']);
 
 Route::post('/users/enroll', [UserController::class, 'enroll']);
 
-Route::get('/users/fingerprints', [UserController::class, 'getFingerprintsByRole']);
+Route::get('/users/fingerprints/{totemUUID}/totem', [UserController::class, 'getFingerprintsByRole']);
 
 Route::apiResource('tickets', TicketController::class);
 

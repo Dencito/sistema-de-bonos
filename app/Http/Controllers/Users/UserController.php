@@ -502,18 +502,37 @@ class UserController extends Controller
         return response()->json(['message' => 'User not found with rutOrCode:' . $request->rutOrCode], 404);
     }
 
-    public function getFingerprintsByRole()
+    public function getFingerprintsByRole($totemUUID)
     {
-        $users = cache()->remember('fingerprints_by_role_' . implode('_', [5, 6]), 120 * 60, function () {
-            return User::with(['role:id,name', 'status:id,name'])
-                ->whereIn('role_id', [5, 6])
-                ->whereNotNull('fingerprints')
-                ->where('fingerprints', '!=', '[]')
-                ->where('has_fingerprint', true)
-                ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
-        });
+        $totem = Totem::with('branch')->where('code', $totemUUID)->first();
+        if (!$totem) {
+            return response()->json(['message' => 'Totem no encontrado'], 404);
+        }
+
+        $branch = $totem->branch;
+
+        $users = User::with(['role:id,name', 'status:id,name', 'branches'])
+            ->whereIn('role_id', [5, 6])
+            ->whereNotNull('fingerprints')
+            ->where('fingerprints', '!=', '[]')
+            ->where('has_fingerprint', true)
+            ->where(function($query) use ($branch) {
+                // Para jugadores (role_id = 6) buscar en la relación branches
+                $query->where(function($q) use ($branch) {
+                    $q->where('role_id', 6)
+                      ->whereHas('branches', function($q) use ($branch) {
+                          $q->where('branch_id', $branch->id);
+                      });
+                })
+                // Para trabajadores (role_id = 5) buscar en branch_id
+                ->orWhere(function($q) use ($branch) {
+                    $q->where('role_id', 5)
+                      ->where('branch_id', $branch->id);
+                });
+            })
+            ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
         return response()->json([
-            'data' => $users->map(function ($user) {
+            'data' => $users->map(function ($user) use ($branch) {
                 return [
                     'id' => $user->id,
                     'username' => $user->username,
@@ -522,6 +541,7 @@ class UserController extends Controller
                     'rut' => $user->rutNumbers . '-' . $user->rutDv,
                     'fingerprints' => $user->fingerprints,
                     'role' => $user->role->name,
+                    'branch' => $branch->name,
                 ];
             })
         ]);
@@ -576,25 +596,19 @@ class UserController extends Controller
                 ], 404);
             }
 
-
             $this->markFingerprint(new Request([
                 'totem_id' => $totem->id,
             ]), $id);
 
             $SumaBonosAdditionals = 0;
-            $SumaBonosCategory = 0;
             $bonusesAvailable = [];
+            $tickets = [];
 
             $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
 
             foreach ($bonusesAvailableAdditionals as $bonus) {
                 $SumaBonosAdditionals += $bonus->amount;
             }
-
-
-            $tickets = [];
-
-            $ticket = null;
 
             if ($SumaBonosAdditionals > 0) {
                 $ticket = Ticket::create([
@@ -605,10 +619,13 @@ class UserController extends Controller
                 ]);
                 $tickets[] = $ticket;
             }
+
+            // Desactivar los bonos utilizados
             $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
                 'active' => false
             ]);
             
+            // Verificar bono por categoría (una vez al día)
             $ticketsTypeBonusByUser = $user
                 ->tickets
                 ->where('type', 'category')
@@ -625,9 +642,10 @@ class UserController extends Controller
                     'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
                     'type' => 'category'
                 ]);
-                $tickes[] = $ticket;
+                $tickets[] = $ticket;
             }
 
+            // Verificar bono de cumpleaños (una vez al año)
             $ticketsTypeBirthdayByUser = $user
                 ->tickets
                 ->where('type', 'birthday')
@@ -635,7 +653,6 @@ class UserController extends Controller
                 ->where('created_at', '<=', now()->endOfYear())
                 ->first();
 
-            // Verificar si hoy es el cumpleaños del usuario
             $isBirthday = false;
             if ($user->birth_date) {
                 $birthDate = \Carbon\Carbon::parse($user->birth_date);
@@ -643,7 +660,6 @@ class UserController extends Controller
                 $isBirthday = ($birthDate->month == $today->month && $birthDate->day == $today->day);
             }
 
-            // Solo crear ticket de cumpleaños si es el cumpleaños del usuario y no ha recibido bono de cumpleaños este año
             if (!$ticketsTypeBirthdayByUser && $isBirthday) {
                 $ticket = Ticket::create([
                     'user_id' => $user->id,
@@ -655,7 +671,10 @@ class UserController extends Controller
             }
 
             return response()->json([
-                'datta' => [
+                'data' => [
+                    'branch' => [
+                        'name' => $branch->name,
+                    ],
                     'tickets' => $tickets,
                 ],
             ]);

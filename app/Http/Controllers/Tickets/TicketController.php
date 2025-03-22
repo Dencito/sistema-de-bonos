@@ -12,6 +12,7 @@ class TicketController extends Controller
     public function index()
     {
         $tickets = Ticket::with(['user', 'totem', 'totem.branch'])
+            ->orderBy('created_at', 'desc')
             ->get();
             
         return Inertia::render('Tickets/index', [

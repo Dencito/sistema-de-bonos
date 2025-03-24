@@ -14,6 +14,7 @@ use App\Models\Ticket;
 use App\Models\Totem;
 use App\Models\User;
 use App\Models\UserBranches;
+use App\Models\ShiftRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -448,7 +449,7 @@ class UserController extends Controller
         }
     }
 
-    public function ValidateRut(Request $request)
+    public function ValidateLoginTotem(Request $request)
     {
         $request->validate([
             'username' => 'required|string',
@@ -582,13 +583,6 @@ class UserController extends Controller
             $totem = Totem::with('branch')->where('code', $totemUUID)->first();
             $branch = $user->branches->find($totem->branch_id)->first();
 
-            if (!$branch) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sucursal no encontrada'
-                ], 404);
-            }
-
             if (!$totem) {
                 return response()->json([
                     'success' => false,
@@ -596,6 +590,18 @@ class UserController extends Controller
                 ], 404);
             }
 
+
+            $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
+                ->where('status', 'open')
+                ->first();
+
+            if (!$isOpenTurn) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta sucursal no tiene un turnos abiertos.'
+                ], 404);
+            }
+            
             $this->markFingerprint(new Request([
                 'totem_id' => $totem->id,
             ]), $id);

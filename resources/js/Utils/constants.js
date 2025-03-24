@@ -14,10 +14,10 @@ export const allowedRoles = {
     status: ['duenio', 'super-admin'],
     createBonusCategory: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
     allowedDuringWorkHours: ['trabajador', 'supervisor'],
-    totems: ['duenio', 'super-admin', 'admin', 'supervisor'],
+    totems: ['duenio', 'super-admin', 'admin'],
     tickets: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
     fingerprintLogs: ['duenio', 'super-admin', 'admin', 'supervisor'],
-    shiftControl: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+    shiftControl: ['trabajador'],
     shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
 };
 

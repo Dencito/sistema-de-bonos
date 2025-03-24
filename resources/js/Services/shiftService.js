@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-const API_URL = '/api';
-
 export const shiftService = {
     getShiftStatus: async () => {
         try {
@@ -41,7 +39,7 @@ export const shiftService = {
             console.error('Error al obtener todos los turnos:', error);
             throw error;
         }
-    }
+    },
 };
 
 export default shiftService;

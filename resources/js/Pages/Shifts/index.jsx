@@ -1,10 +1,7 @@
-import { lazy, Suspense } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
-
-const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
 const columns = [
     {
@@ -64,9 +61,13 @@ const columns = [
         key: 'status',
         render: (status) => {
             return (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        status === 'open'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                    }`}
+                >
                     {status === 'open' ? 'Abierto' : 'Cerrado'}
                 </span>
             );

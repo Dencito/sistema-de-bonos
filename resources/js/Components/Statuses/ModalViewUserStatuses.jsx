@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, Table } from 'antd';
-//import { Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { CustomButton } from '@components-v2/CustomButton';
 
 export default function ModalViewUserStatuses({ data, status }) {
@@ -30,15 +30,10 @@ export default function ModalViewUserStatuses({ data, status }) {
 
     return (
         <>
-            {/* <button
-                onClick={() => setShowModal(true)}
-                className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-            >
-                <Eye className='w-5 h-5' />
-            </button> */}
             <CustomButton
                 onClick={() => setShowModal(true)}
                 className="hover:border-green-300"
+                icon={<Eye className="w-5 h-5" />}
             >
                 Ver usuarios
             </CustomButton>

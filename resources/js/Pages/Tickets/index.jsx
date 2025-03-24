@@ -1,10 +1,7 @@
-import { lazy, Suspense } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
-
-const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
 const columns = [
     {
@@ -16,7 +13,9 @@ const columns = [
     {
         title: 'Usuario',
         key: 'user',
-        render: (_, record) => (record.user?.first_name + ' ' + record.user?.first_last_name) || 'N/A',
+        render: (_, record) =>
+            record.user?.first_name + ' ' + record.user?.first_last_name ||
+            'N/A',
     },
     {
         title: 'Tótem',
@@ -48,7 +47,6 @@ const columns = [
 ];
 
 export default function TicketPage({ auth, tickets }) {
-    console.log(tickets)
     return (
         <AuthenticatedLayout
             user={auth.user}

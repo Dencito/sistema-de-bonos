@@ -9,20 +9,23 @@ export function CustomButton({
     size,
     danger = false,
     title,
+    children,
     ...rest
 }) {
+    const hasContent = children || title;
+    
     return (
         <Button
             onClick={onClick}
             type={type}
             shape={shape}
-            icon={icon}
             size={size}
             loading={loading}
             danger={danger}
             {...rest}
         >
-            {title}
+            {icon && <span className={hasContent ? 'mr-2' : ''}>{icon}</span>}
+            {hasContent}
         </Button>
     );
 }

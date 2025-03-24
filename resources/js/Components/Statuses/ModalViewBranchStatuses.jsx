@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal, Table } from 'antd';
+import { Eye } from 'lucide-react';
 import { CustomButton } from '@components-v2/CustomButton';
 
 export default function ModalViewBranchStatuses({ data, status }) {
@@ -27,6 +28,7 @@ export default function ModalViewBranchStatuses({ data, status }) {
             <CustomButton
                 onClick={() => setShowModal(true)}
                 className="hover:border-green-300"
+                icon={<Eye className="w-5 h-5" />}
             >
                 Ver sucursales
             </CustomButton>

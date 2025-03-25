@@ -9,12 +9,12 @@ use App\Models\CategoryBonus;
 use App\Models\Company;
 use App\Models\FingerprintLog;
 use App\Models\Role;
+use App\Models\ShiftRecord;
 use App\Models\Status;
 use App\Models\Ticket;
 use App\Models\Totem;
 use App\Models\User;
 use App\Models\UserBranches;
-use App\Models\ShiftRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -454,6 +454,7 @@ class UserController extends Controller
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
+            'rutOrCode' => 'required|string',
         ]);
 
         $user = User::where('username', $request->username)
@@ -461,7 +462,20 @@ class UserController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            throw new \Exception('Las credenciales no son correctas');
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $userToEnroll = User::where(function ($query) use ($request) {
+            $query
+                ->where('rutNumbers', $request->rutOrCode)
+                ->orWhere('code', $request->rutOrCode);
+        })
+            ->whereIn('role_id', [5, 6])
+            ->where('has_fingerprint', false)
+            ->first();
+
+        if (!$userToEnroll) {
+            return response()->json(['message' => 'user to enroll not found'], 404);
         }
 
         return response()->json(['message' => 'usuario válido', 'user' => $user], 200);
@@ -486,9 +500,10 @@ class UserController extends Controller
         $updated = User::where(function ($query) use ($request) {
             $query
                 ->where('rutNumbers', $request->rutOrCode)
-                ->orWhere('code', $request->rutOrCode)
-                ->whereIn('role_id', [5, 6]);
+                ->orWhere('code', $request->rutOrCode);
         })
+            ->whereIn('role_id', [5, 6])
+            ->where('has_fingerprint', false)
             ->update([
                 'fingerprints' => $request->input('fingerprints'),
                 'has_fingerprint' => true,
@@ -517,21 +532,25 @@ class UserController extends Controller
             ->whereNotNull('fingerprints')
             ->where('fingerprints', '!=', '[]')
             ->where('has_fingerprint', true)
-            ->where(function($query) use ($branch) {
+            ->where(function ($query) use ($branch) {
                 // Para jugadores (role_id = 6) buscar en la relación branches
-                $query->where(function($q) use ($branch) {
-                    $q->where('role_id', 6)
-                      ->whereHas('branches', function($q) use ($branch) {
-                          $q->where('branch_id', $branch->id);
-                      });
-                })
-                // Para trabajadores (role_id = 5) buscar en branch_id
-                ->orWhere(function($q) use ($branch) {
-                    $q->where('role_id', 5)
-                      ->where('branch_id', $branch->id);
-                });
+                $query
+                    ->where(function ($q) use ($branch) {
+                        $q
+                            ->where('role_id', 6)
+                            ->whereHas('branches', function ($q) use ($branch) {
+                                $q->where('branch_id', $branch->id);
+                            });
+                    })
+                    // Para trabajadores (role_id = 5) buscar en branch_id
+                    ->orWhere(function ($q) use ($branch) {
+                        $q
+                            ->where('role_id', 5)
+                            ->where('branch_id', $branch->id);
+                    });
             })
             ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
+
         return response()->json([
             'data' => $users->map(function ($user) use ($branch) {
                 return [
@@ -590,7 +609,6 @@ class UserController extends Controller
                 ], 404);
             }
 
-
             $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
                 ->where('status', 'open')
                 ->first();
@@ -601,7 +619,7 @@ class UserController extends Controller
                     'message' => 'Esta sucursal no tiene un turnos abiertos.'
                 ], 404);
             }
-            
+
             $this->markFingerprint(new Request([
                 'totem_id' => $totem->id,
             ]), $id);
@@ -630,7 +648,7 @@ class UserController extends Controller
             $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
                 'active' => false
             ]);
-            
+
             // Verificar bono por categoría (una vez al día)
             $ticketsTypeBonusByUser = $user
                 ->tickets

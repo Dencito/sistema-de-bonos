@@ -569,8 +569,7 @@ class UserController extends Controller
 
     public function getBonusesAvailablesUserById($id, $totemUUID)
     {
-        try {
-            $user = User::with([
+        $user = User::with([
                 'bonuses',
                 'categoryBonus',
                 'branches:id,company_id',
@@ -583,29 +582,43 @@ class UserController extends Controller
                 'tickets',
                 'bonuses',
                 'fingerprintLogs',
-            ])->findOrFail($id);
-
-            if ($user->branches->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se encontraron sucursales para el usuario'
-                ], 404);
-            }
+            ])->find($id);
 
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Usuario no encontrado'
+                    'message' => 'El usuario autenticado no fue encontrado en nuestros registros.'
                 ], 404);
+            }
+
+            if($user->status_id !== 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El usuario autenticado no se encuentra activo.'
+                ], 403);
             }
 
             $totem = Totem::with('branch')->where('code', $totemUUID)->first();
             $branch = $user->branches->find($totem->branch_id)->first();
 
+            if (!$branch) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
+                ], 404);
+            }
+
+            if($branch->status_id !== 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La sucursal no se encuentra activa.'
+                ], 403);
+            }
+
             if (!$totem) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Totem no encontrado'
+                    'message' => 'El UUID del totem no fue encontrado en nuestros registros o no se encuentra configurado.'
                 ], 404);
             }
 
@@ -616,8 +629,8 @@ class UserController extends Controller
             if (!$isOpenTurn) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Esta sucursal no tiene un turnos abiertos.'
-                ], 404);
+                    'message' => 'La sucursal no tiene turnos abiertos, comuniquese con un trabajador.'
+                ], 409);
             }
 
             $this->markFingerprint(new Request([
@@ -696,19 +709,9 @@ class UserController extends Controller
 
             return response()->json([
                 'data' => [
-                    'branch' => [
-                        'name' => $branch->name,
-                    ],
                     'tickets' => $tickets,
                 ],
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener los bonos del usuario',
-                'error' => $e->getMessage()
-            ], 500);
-        }
     }
 
     public function markFingerprint(Request $request, $userId)

@@ -570,148 +570,142 @@ class UserController extends Controller
     public function getBonusesAvailablesUserById($id, $totemUUID)
     {
         $user = User::with([
-                'bonuses',
-                'categoryBonus',
-                'branches:id,company_id',
-                'branches.company',
-                'branches.totem',
-                'branches.shifts',
-                'categoryBonus',
-                'status',
-                'role',
-                'tickets',
-                'bonuses',
-                'fingerprintLogs',
-            ])->find($id);
+            'bonuses',
+            'categoryBonus',
+            'branches:id,company_id',
+            'branches.company',
+            'branches.totem',
+            'branches.shifts',
+            'categoryBonus',
+            'status',
+            'role',
+            'tickets',
+            'bonuses',
+            'fingerprintLogs',
+        ])->find($id);
 
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El usuario autenticado no fue encontrado en nuestros registros.'
-                ], 404);
-            }
-
-            if($user->status_id !== 1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El usuario autenticado no se encuentra activo.'
-                ], 403);
-            }
-
-            $totem = Totem::with('branch')->where('code', $totemUUID)->first();
-            $branch = $user->branches->find($totem->branch_id)->first();
-
-            if (!$branch) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
-                ], 404);
-            }
-
-            if($branch->status_id !== 1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'La sucursal no se encuentra activa.'
-                ], 403);
-            }
-
-            if (!$totem) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El UUID del totem no fue encontrado en nuestros registros o no se encuentra configurado.'
-                ], 404);
-            }
-
-            $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
-                ->where('status', 'open')
-                ->first();
-
-            if (!$isOpenTurn) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'La sucursal no tiene turnos abiertos, comuniquese con un trabajador.'
-                ], 409);
-            }
-
-            $this->markFingerprint(new Request([
-                'totem_id' => $totem->id,
-            ]), $id);
-
-            $SumaBonosAdditionals = 0;
-            $bonusesAvailable = [];
-            $tickets = [];
-
-            $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
-
-            foreach ($bonusesAvailableAdditionals as $bonus) {
-                $SumaBonosAdditionals += $bonus->amount;
-            }
-
-            if ($SumaBonosAdditionals > 0) {
-                $ticket = Ticket::create([
-                    'user_id' => $user->id,
-                    'totem_id' => $totem->id,
-                    'total_amount' => $SumaBonosAdditionals,
-                    'type' => 'bonus'
-                ]);
-                $tickets[] = $ticket;
-            }
-
-            // Desactivar los bonos utilizados
-            $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
-                'active' => false
-            ]);
-
-            // Verificar bono por categoría (una vez al día)
-            $ticketsTypeBonusByUser = $user
-                ->tickets
-                ->where('type', 'category')
-                ->where('created_at', '>=', now()->startOfDay())
-                ->where('created_at', '<=', now()->endOfDay())
-                ->first();
-
-            $bonusesAvailableCategoryBonus = $user->categoryBonus;
-
-            if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
-                $ticket = Ticket::create([
-                    'user_id' => $user->id,
-                    'totem_id' => $totem->id,
-                    'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
-                    'type' => 'category'
-                ]);
-                $tickets[] = $ticket;
-            }
-
-            // Verificar bono de cumpleaños (una vez al año)
-            $ticketsTypeBirthdayByUser = $user
-                ->tickets
-                ->where('type', 'birthday')
-                ->where('created_at', '>=', now()->startOfYear())
-                ->where('created_at', '<=', now()->endOfYear())
-                ->first();
-
-            $isBirthday = false;
-            if ($user->birth_date) {
-                $birthDate = \Carbon\Carbon::parse($user->birth_date);
-                $today = now();
-                $isBirthday = ($birthDate->month == $today->month && $birthDate->day == $today->day);
-            }
-
-            if (!$ticketsTypeBirthdayByUser && $isBirthday) {
-                $ticket = Ticket::create([
-                    'user_id' => $user->id,
-                    'totem_id' => $totem->id,
-                    'total_amount' => $branch->birthday_amount,
-                    'type' => 'birthday'
-                ]);
-                $tickets[] = $ticket;
-            }
-
+        if (!$user) {
             return response()->json([
-                'data' => [
-                    'tickets' => $tickets,
-                ],
+                'message' => 'El usuario autenticado no fue encontrado en nuestros registros.'
+            ], 404);
+        }
+
+        if ($user->status_id !== 1) {
+            return response()->json([
+                'message' => 'El usuario autenticado no se encuentra activo.'
+            ], 403);
+        }
+
+        $totem = Totem::with('branch')->where('code', $totemUUID)->first();
+        $branch = $user->branches->find($totem->branch_id)->first();
+
+        if (!$branch) {
+            return response()->json([
+                'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
+            ], 404);
+        }
+
+        if ($branch->status_id !== 1) {
+            return response()->json([
+                'message' => 'La sucursal no se encuentra activa.'
+            ], 403);
+        }
+
+        if (!$totem) {
+            return response()->json([
+                'message' => 'El UUID del totem no fue encontrado en nuestros registros o no se encuentra configurado.'
+            ], 404);
+        }
+
+        $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
+            ->where('status', 'open')
+            ->first();
+
+        if (!$isOpenTurn) {
+            return response()->json([
+                'message' => 'La sucursal no tiene turnos abiertos, comuniquese con un trabajador.'
+            ], 409);
+        }
+
+        $this->markFingerprint(new Request([
+            'totem_id' => $totem->id,
+        ]), $id);
+
+        $SumaBonosAdditionals = 0;
+        $bonusesAvailable = [];
+        $tickets = [];
+
+        $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
+
+        foreach ($bonusesAvailableAdditionals as $bonus) {
+            $SumaBonosAdditionals += $bonus->amount;
+        }
+
+        if ($SumaBonosAdditionals > 0) {
+            $ticket = Ticket::create([
+                'user_id' => $user->id,
+                'totem_id' => $totem->id,
+                'total_amount' => $SumaBonosAdditionals,
+                'type' => 'bonus'
             ]);
+            $tickets[] = $ticket;
+        }
+
+        // Desactivar los bonos utilizados
+        $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
+            'active' => false
+        ]);
+
+        // Verificar bono por categoría (una vez al día)
+        $ticketsTypeBonusByUser = $user
+            ->tickets
+            ->where('type', 'category')
+            ->where('created_at', '>=', now()->startOfDay())
+            ->where('created_at', '<=', now()->endOfDay())
+            ->first();
+
+        $bonusesAvailableCategoryBonus = $user->categoryBonus;
+
+        if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
+            $ticket = Ticket::create([
+                'user_id' => $user->id,
+                'totem_id' => $totem->id,
+                'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
+                'type' => 'category'
+            ]);
+            $tickets[] = $ticket;
+        }
+
+        // Verificar bono de cumpleaños (una vez al año)
+        $ticketsTypeBirthdayByUser = $user
+            ->tickets
+            ->where('type', 'birthday')
+            ->where('created_at', '>=', now()->startOfYear())
+            ->where('created_at', '<=', now()->endOfYear())
+            ->first();
+
+        $isBirthday = false;
+        if ($user->birth_date) {
+            $birthDate = \Carbon\Carbon::parse($user->birth_date);
+            $today = now();
+            $isBirthday = ($birthDate->month == $today->month && $birthDate->day == $today->day);
+        }
+
+        if (!$ticketsTypeBirthdayByUser && $isBirthday) {
+            $ticket = Ticket::create([
+                'user_id' => $user->id,
+                'totem_id' => $totem->id,
+                'total_amount' => $branch->birthday_amount,
+                'type' => 'birthday'
+            ]);
+            $tickets[] = $ticket;
+        }
+
+        return response()->json([
+            'data' => [
+                'tickets' => $tickets,
+            ],
+        ]);
     }
 
     public function markFingerprint(Request $request, $userId)

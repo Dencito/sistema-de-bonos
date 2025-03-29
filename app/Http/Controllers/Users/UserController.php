@@ -628,8 +628,9 @@ class UserController extends Controller
         }
 
         $this->markFingerprint(new Request([
-            'totem_id' => $totem->id,
-        ]), $id);
+            'user_id' => $user->id,
+            'totem_uuid' => $totem->code,
+        ]), true);
 
         $SumaBonosAdditionals = 0;
         $bonusesAvailable = [];
@@ -701,6 +702,13 @@ class UserController extends Controller
             $tickets[] = $ticket;
         }
 
+        //verifica si esta vacio
+        if($tickets === []) {
+            return response()->json([
+                'message' => 'No tienes bonos disponibles'
+            ], 404);
+        }
+
         return response()->json([
             'data' => [
                 'tickets' => $tickets,
@@ -708,18 +716,35 @@ class UserController extends Controller
         ]);
     }
 
-    public function markFingerprint(Request $request, $userId)
+    public function markFingerprint(Request $request, $isMarkPlayer = false)
     {
-        $user = User::findOrFail($userId);
-
         $validated = $request->validate([
-            'totem_id' => 'required',
+            'user_id' => 'required',
+            'totem_uuid' => 'required',
         ]);
+
+        $user = User::find($validated['user_id']);
+        $totem = Totem::with('branch')->where('code', $validated['totem_uuid'])->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
+
+        if (!$totem) {
+            return response()->json([
+                'message' => 'Totem no encontrado'
+            ], 404);
+        }
 
         $fingerprintLog = FingerprintLog::create([
-            'user_id' => $userId,
-            'totem_id' => $validated['totem_id'],
+            'user_id' => $user->id,
+            'totem_id' => $totem->id,
         ]);
+
+        if ($isMarkPlayer) {
+            return;
+        }
 
         return response()->json([
             'message' => 'Huella registrada exitosamente',

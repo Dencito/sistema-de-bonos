@@ -30,7 +30,8 @@ Route::get('/test-mail', function (Request $request) {
 });
 
 Route::get('/users/{id}/bonuses/{totemUUID}/totem', [UserController::class, 'getBonusesAvailablesUserById']);
-Route::post('/users/{userId}/attendance', [UserController::class, 'markFingerprint']);
+
+Route::post('/users/attendance', [UserController::class, 'markFingerprint']);
 
 Route::post('/users/totem/login', [UserController::class, 'ValidateLoginTotem']);
 

@@ -711,7 +711,14 @@ class UserController extends Controller
 
         return response()->json([
             'data' => [
-                'tickets' => $tickets,
+                'tickets' => $tickets->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'totalAmount' => $ticket->total_amount,
+                        'type' => $ticket->type,
+                        'createdAt' => $ticket->created_at,
+                    ];
+                }),
             ],
         ]);
     }
@@ -729,6 +736,12 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Usuario no encontrado'
             ], 404);
+        }
+
+        if($user->status_id !== 1) {
+            return response()->json([
+                'message' => 'El usuario no se encuentra activo'
+            ], 409);
         }
 
         if (!$totem) {

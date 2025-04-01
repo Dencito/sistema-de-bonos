@@ -50,6 +50,7 @@ export default function ModalCreateBonus({ data }) {
 
     const handleCloseModal = () => {
         setShowModal(false);
+        setLoading(false);
         form.resetFields();
     };
 

@@ -38,12 +38,7 @@ const columns = [
     },
 ];
 
-export default function FingerprintLogPage({
-    auth,
-    fingerprintLogs,
-    users,
-    totems,
-}) {
+export default function FingerprintLogPage({ auth, fingerprintLogs }) {
     return (
         <AuthenticatedLayout
             user={auth.user}

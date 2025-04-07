@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Branches\BranchController;
 use App\Http\Controllers\Companies\CompanyController;
 use App\Http\Controllers\Shifts\ShiftRecordController;
 use App\Http\Controllers\Tickets\TicketController;
@@ -46,3 +47,5 @@ Route::apiResource('totems', TotemController::class);
 Route::apiResource('shifts', ShiftRecordController::class);
 
 Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);
+
+Route::get('/branches', [BranchController::class, 'getBranches']);

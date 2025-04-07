@@ -259,11 +259,11 @@ class BranchController extends Controller
             return response()->json(['message' => 'El nombre de la sucursal ya existe', 'error' => true], 400);
         }
 
-        if (!auth()->user()->hasAnyRole(1,2) && ($branch->status_id !== $request->status_id)) {
+        if (!auth()->user()->hasAnyRole(1, 2) && ($branch->status_id !== $request->status_id)) {
             abort(403, 'No tienes permiso para cambiar el estado.');
         }
 
-        if (!auth()->user()->hasAnyRole(1,2) && ($branch->company_id !== $request->company_id)) {
+        if (!auth()->user()->hasAnyRole(1, 2) && ($branch->company_id !== $request->company_id)) {
             abort(403, 'No tienes permiso para cambiar la sucursal');
         }
 
@@ -395,6 +395,21 @@ class BranchController extends Controller
         return response()->json([
             'error' => false,
             'message' => 'La sucursal ha sido eliminada exitosamente',
+        ]);
+    }
+
+    public function getBranches()
+    {
+        $branches = Branch::all();
+        return response()->json([
+            'data' => [
+                'branches' => $branches->map(function ($branch) {
+                    return [
+                        'id' => $branch->id,
+                        'name' => $branch->name,
+                    ];
+                }),
+            ]
         ]);
     }
 }

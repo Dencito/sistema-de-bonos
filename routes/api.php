@@ -30,22 +30,28 @@ Route::get('/test-mail', function (Request $request) {
     return response()->json(['message' => 'Correo enviado exitosamente'], 200);
 });
 
-Route::get('/users/{id}/bonuses/{totemUUID}/totem', [UserController::class, 'getBonusesAvailablesUserById']);
+Route::prefix('users')->group(function () {
+    Route::get('/{id}/bonuses/{totemUUID}/totem', [UserController::class, 'getBonusesAvailablesUserById']);
 
-Route::post('/users/attendance', [UserController::class, 'markFingerprint']);
+    Route::post('/attendance', [UserController::class, 'markFingerprint']);
 
-Route::post('/users/totem/login', [UserController::class, 'ValidateLoginTotem']);
+    Route::post('/totem/login', [UserController::class, 'ValidateLoginTotem']);
 
-Route::post('/users/enroll', [UserController::class, 'enroll']);
+    Route::post('/enroll', [UserController::class, 'enroll']);
 
-Route::get('/users/fingerprints/{totemUUID}/totem', [UserController::class, 'getFingerprintsByRole']);
+    Route::get('/fingerprints/{totemUUID}/totem', [UserController::class, 'getFingerprintsByRole']);
+});
+
+Route::prefix('totems')->group(function () {
+    Route::post('/', [TotemController::class, 'associateWithBranch']);
+});
+
+Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);
+
+Route::get('/branches', [BranchController::class, 'getBranches']);
 
 Route::apiResource('tickets', TicketController::class);
 
 Route::apiResource('totems', TotemController::class);
 
 Route::apiResource('shifts', ShiftRecordController::class);
-
-Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);
-
-Route::get('/branches', [BranchController::class, 'getBranches']);

@@ -87,7 +87,7 @@ class TotemController extends Controller
             if ($code) {
                 return response()->json([
                     'message' => 'Código de tótem ya existe'
-                ], 409);
+                ], 200);
             }
 
             $branch = Branch::find($validated['branch_id']);

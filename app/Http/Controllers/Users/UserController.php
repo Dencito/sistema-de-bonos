@@ -555,7 +555,7 @@ class UserController extends Controller
             'data' => $users->map(function ($user) use ($branch) {
                 return [
                     'id' => $user->id,
-                    'username' => $user->username,
+                    'username' => $user->first_name . ' ' . $user->first_last_name,
                     'firstName' => $user->first_name,
                     'lastName' => $user->first_last_name,
                     'rut' => $user->rutNumbers . '-' . $user->rutDv,
@@ -702,8 +702,8 @@ class UserController extends Controller
             $tickets[] = $ticket;
         }
 
-        //verifica si esta vacio
-        if($tickets === []) {
+        // verifica si esta vacio
+        if ($tickets === []) {
             return response()->json([
                 'message' => 'No tienes bonos disponibles'
             ], 404);
@@ -738,7 +738,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        if($user->status_id !== 1) {
+        if ($user->status_id !== 1) {
             return response()->json([
                 'message' => 'El usuario no se encuentra activo'
             ], 409);

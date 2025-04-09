@@ -42,9 +42,7 @@ Route::prefix('users')->group(function () {
     Route::get('/fingerprints/{totemUUID}/totem', [UserController::class, 'getFingerprintsByRole']);
 });
 
-Route::prefix('totems')->group(function () {
-    Route::post('/', [TotemController::class, 'associateWithBranch']);
-});
+Route::post('/totems/associate-with-branch', [TotemController::class, 'associateWithBranch']);
 
 Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);
 

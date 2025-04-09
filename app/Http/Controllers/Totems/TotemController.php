@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Totem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class TotemController extends Controller
@@ -83,18 +84,18 @@ class TotemController extends Controller
                 'active' => 'nullable|boolean'
             ]);
 
-            $code = Totem::where('code', $validated['code'])->first();
-            if ($code) {
-                return response()->json([
-                    'message' => 'Código de tótem ya existe'
-                ], 200);
-            }
-
             $branch = Branch::find($validated['branch_id']);
             if (!$branch) {
                 return response()->json([
                     'message' => 'Sucursal no encontrada'
                 ], 409);
+            }
+
+            $totem = Totem::where('code', $validated['code'])->first();
+            if ($totem) {
+                return response()->json([
+                    'message' => 'El tótem ya existe'
+                ], 200);
             }
 
             $totem = Totem::create($validated);

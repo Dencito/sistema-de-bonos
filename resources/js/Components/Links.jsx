@@ -70,6 +70,13 @@ export const Links = ({ role, roles }) => {
                     autorized: !isTickets,
                 },
                 {
+                    key: '3',
+                    icon: <ChartBarStacked />,
+                    label: 'Reportes',
+                    link: '/reports',
+                    autorized: allowedRoles.branches.includes(role) && !isTickets,
+                },
+                {
                     key: '4',
                     icon: <ChartBarStacked />,
                     label: 'Categorias bonos',

@@ -13,6 +13,7 @@ use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
 use App\Http\Controllers\Shifts\ShiftController;
+use App\Http\Controllers\Reports\ReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -23,8 +24,8 @@ use App\Models\CategoryBonus;
 use App\Mail\RequestMoreBranchesMail;
 use Illuminate\Support\Facades\Mail;
 
-Route::get('/', function () {
-    return Inertia::render('Dashboard');
+    Route::get('/', function () {
+        return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -146,6 +147,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/end', [ShiftController::class, 'endShift'])->name('shifts.end');
     });
 
+    // Reports routes
+    Route::prefix('reports')->group(function() {
+        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/players/all', [ReportController::class, 'getAllPlayers'])->name('reports.players.all');
+        Route::get('/players/branch/{branchId}', [ReportController::class, 'getPlayersByBranch'])->name('reports.players.branch');
+        Route::get('/players/shift/{shiftId}', [ReportController::class, 'getPlayersByShift'])->name('reports.players.shift');
+        Route::get('/players/date', [ReportController::class, 'getPlayersByDate'])->name('reports.players.date');
+        Route::get('/players/top', [ReportController::class, 'getTopPlayers'])->name('reports.players.top');
+    });
 });
 
 Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');

@@ -597,6 +597,12 @@ class UserController extends Controller
         }
 
         $totem = Totem::with('branch')->where('code', $totemUUID)->first();
+        if (!$totem || !$totem->branch) {
+            return response()->json([
+                'message' => 'El UUID del totem no fue encontrado en nuestros registros o no se encuentra configurado.'
+            ], 404);
+        }
+
         $branch = $user->branches->find($totem->branch_id)->first();
 
         if (!$branch) {

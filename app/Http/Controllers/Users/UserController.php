@@ -633,11 +633,6 @@ class UserController extends Controller
             ], 409);
         }
 
-        $this->markFingerprint(new Request([
-            'user_id' => $user->id,
-            'totem_uuid' => $totem->code,
-        ]), true);
-
         $SumaBonosAdditionals = 0;
         $bonusesAvailable = [];
         $tickets = [];
@@ -714,6 +709,11 @@ class UserController extends Controller
                 'message' => 'No tienes bonos disponibles'
             ], 404);
         }
+
+        $this->markFingerprint(new Request([
+            'user_id' => $user->id,
+            'totem_uuid' => $totem->code,
+        ]), true);
 
         return response()->json([
             'data' => [

@@ -142,19 +142,18 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('shifts')->group(function() {
         Route::get('/', [ShiftController::class, 'index'])->name('shifts.index');
+        Route::post('/', [ShiftController::class, 'store'])->name('shifts.store');
+        Route::put('/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
+        Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
         Route::get('/status', [ShiftController::class, 'getShiftStatus'])->name('shifts.status');
         Route::post('/start', [ShiftController::class, 'startShift'])->name('shifts.start');
         Route::post('/end', [ShiftController::class, 'endShift'])->name('shifts.end');
     });
 
-    // Reports routes
     Route::prefix('reports')->group(function() {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/players/all', [ReportController::class, 'getAllPlayers'])->name('reports.players.all');
-        Route::get('/players/branch/{branchId}', [ReportController::class, 'getPlayersByBranch'])->name('reports.players.branch');
-        Route::get('/players/shift/{shiftId}', [ReportController::class, 'getPlayersByShift'])->name('reports.players.shift');
-        Route::get('/players/date', [ReportController::class, 'getPlayersByDate'])->name('reports.players.date');
-        Route::get('/players/top', [ReportController::class, 'getTopPlayers'])->name('reports.players.top');
+        Route::get('/players', [ReportController::class, 'playersReport'])->name('reports.players');
+        Route::get('/shift/{id}', [ReportController::class, 'shiftReport'])->name('reports.shift');
     });
 });
 

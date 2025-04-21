@@ -416,6 +416,9 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Tipo Ticket
                                         </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Valor
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -448,6 +451,9 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="font-medium">{log.ticket.type}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="font-medium">${log.ticket.total_amount}</span>
                                             </td>
                                         </tr>
                                     ))}

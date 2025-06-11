@@ -111,19 +111,7 @@ export const countriesService = {
 export const authService = {
     register: (values) => handleResponse(axios.post('/users/owner', values)),
     login: (values) => {
-        const iv = CryptoJS.lib.WordArray.random(16);
-        const key = CryptoJS.enc.Utf8.parse(VITE_PASSWORD_ENCRYPTION_KEY);
-
-        const encrypted = CryptoJS.AES.encrypt(values.password, key, {
-            iv: iv,
-            mode: CryptoJS.mode.CBC,
-            padding: CryptoJS.pad.Pkcs7,
-        });
-
-        const ivAndCiphertext = iv.concat(encrypted.ciphertext);
-        const encryptedPassword =
-            CryptoJS.enc.Base64.stringify(ivAndCiphertext);
-        const encryptedValues = { ...values, password: encryptedPassword };
-        return handleResponse(axios.post('/login', encryptedValues));
+        // Enviar las credenciales sin encriptar
+        return handleResponse(axios.post('/login', values));
     },
 };

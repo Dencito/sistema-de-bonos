@@ -49,6 +49,13 @@ class LoginRequest extends FormRequest
             RateLimiter::clear($this->throttleKey());
             return;
         }
+        
+        // Intentar autenticación con email como alternativa
+        if (Auth::attempt(['email' => $login, 'password' => $password], $this->boolean('remember'))) {
+            RateLimiter::clear($this->throttleKey());
+            return;
+        }
+        
         // Si no coincide con ninguno, incrementa el contador de intentos fallidos
         RateLimiter::hit($this->throttleKey());
 

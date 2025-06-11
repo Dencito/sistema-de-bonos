@@ -4,14 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Models\User;
 use App\Providers\RouteServiceProvider;
-use App\Services\EncryptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,42 +30,34 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        try {
-            $encryptedPassword = $request->password;
+        $request->authenticate();
 
-            Log::info('password encriptada recibida: ' . $encryptedPassword);
+        $request->session()->regenerate();
 
-            $decryptedPassword = EncryptionService::decryptPassword($encryptedPassword);
-
-            Log::info('password desencriptada: ' . $decryptedPassword);
-
-            $user = User::where('username', $request->login)->first();
-
-            Log::info('username: ' . $request->login);
-
-            if (!$user || !Hash::check($decryptedPassword, $user->password)) {
-                throw new \Exception('Las credenciales no son correctas');
-            }
-
-            Auth::login($user);
-            $request->session()->regenerate();
-
-            if ($user->status_id !== 1) {
-                Auth::logout();
-                throw new \Exception('Tu cuenta fue bloqueada o se encuentra eliminada.');
-            }
-
-            if ($user->hasAnyRole(6)) {
-                Auth::logout();
-                throw new \Exception('Tu cuenta no tiene permisos para acceder a la plataforma.');
-            }
-
-            return redirect()->intended(route('dashboard'));
-        } catch (\Exception $e) {
+        // Verificar estado del usuario
+        $user = Auth::user();
+        if ($user->status_id !== 1) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
             return back()->withErrors([
-                'email' => $e->getMessage(),
-            ])->onlyInput('email');
+                'login' => 'Tu cuenta fue bloqueada o se encuentra eliminada.',
+            ]);
         }
+
+        // Verificar rol del usuario
+        if ($user->hasAnyRole(6)) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return back()->withErrors([
+                'login' => 'Tu cuenta no tiene permisos para acceder a la plataforma.',
+            ]);
+        }
+
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

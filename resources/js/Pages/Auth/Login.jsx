@@ -12,7 +12,7 @@ export default function Login({ status, auth }) {
         password: '',
         remember: false,
     });
-    const { successMsg } = useMessage();
+    const { successMsg, errorMsg } = useMessage();
 
     useEffect(() => {
         return () => {
@@ -46,8 +46,11 @@ export default function Login({ status, auth }) {
             const response = await authService.login({ login, password });
             if (response.success) {
                 router.visit(route('dashboard'));
+            } else {
+                errorMsg(response.message);
             }
         } catch (error) {
+            errorMsg(error);
             console.error('Login request failed:', error);
         }
     };

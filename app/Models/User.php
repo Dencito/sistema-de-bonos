@@ -54,6 +54,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'entry_date' => 'date',
         'has_fingerprint' => 'boolean',
+        'password' => 'hashed',
     ];
 
     protected static function boot()
@@ -164,5 +165,15 @@ class User extends Authenticatable
     public function fingerprintLogs()
     {
         return $this->hasMany(FingerprintLog::class);
+    }
+    
+    /**
+     * Hash the password using Bcrypt explicitly
+     */
+    public function setPasswordAttribute($value)
+    {
+        if ($value) {
+            $this->attributes['password'] = bcrypt($value);
+        }
     }
 }

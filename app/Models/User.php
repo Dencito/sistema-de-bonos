@@ -54,7 +54,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'entry_date' => 'date',
         'has_fingerprint' => 'boolean',
-        'password' => 'hashed',
     ];
 
     protected static function boot()

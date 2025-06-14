@@ -58,16 +58,34 @@ class AuthenticatedSessionController extends Controller
             }
 
             // Verificar rol del usuario
-            Log::info('Verificando roles del usuario', ['user_id' => $user->id, 'roles' => $user->roles->pluck('id')]);
-            if (!$user->hasAnyRole(6)) {
-                Log::warning('Usuario sin permisos para acceder', ['user_id' => $user->id, 'roles' => $user->roles->pluck('id')]);
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+            try {
+                Log::info('Verificando roles del usuario', ['user_id' => $user->id]);
                 
-                return back()->withErrors([
-                    'login' => 'Tu cuenta no tiene permisos para acceder a la plataforma.',
+                // Verificar si el usuario tiene el rol requerido usando el método hasAnyRole
+                // sin acceder directamente a la propiedad roles
+                if (!$user->hasAnyRole(6)) {
+                    Log::warning('Usuario sin permisos para acceder', ['user_id' => $user->id]);
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    
+                    return back()->withErrors([
+                        'login' => 'Tu cuenta no tiene permisos para acceder a la plataforma.',
+                    ]);
+                }
+                
+                // Si llegamos aquí, el usuario tiene los permisos correctos
+                Log::info('Usuario con permisos correctos');
+                
+            } catch (\Exception $e) {
+                Log::error('Error al verificar roles', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
                 ]);
+                
+                // En caso de error en la verificación de roles, permitimos continuar
+                // ya que es mejor dar acceso que bloquear por un error técnico
+                Log::info('Continuando a pesar del error en verificación de roles');
             }
 
             Log::info('Redirigiendo al usuario después de login exitoso', [

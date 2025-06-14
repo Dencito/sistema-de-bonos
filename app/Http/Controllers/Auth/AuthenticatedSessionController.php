@@ -43,12 +43,14 @@ class AuthenticatedSessionController extends Controller
             $request->authenticate();
             $request->session()->regenerate();
 
-            if ($user->status_id !== 1) {
+            // Convertir a string para comparación consistente
+            if ((string)$user->status_id !== '1') {
                 Auth::logout();
                 throw new \Exception('Tu cuenta fue bloqueada o se encuentra eliminada.');
             }
 
-            if ($user->hasAnyRole(6)) {
+            // Verificar si NO tiene el rol requerido (lógica corregida)
+            if (!$user->hasAnyRole(6)) {
                 Auth::logout();
                 throw new \Exception('Tu cuenta no tiene permisos para acceder a la plataforma.');
             }

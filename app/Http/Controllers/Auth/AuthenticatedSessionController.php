@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -30,34 +31,35 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
-
-        $request->session()->regenerate();
-
-        // Verificar estado del usuario
-        $user = Auth::user();
-        if ($user->status_id !== 1) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        try {
+            // Aquí automáticamente buscará en la tabla con el prefijo correcto
+            // Por ejemplo: empresa1_users si el subdominio es empresa1
+            $user = User::where('username', $request->username)->first();
             
-            return back()->withErrors([
-                'login' => 'Tu cuenta fue bloqueada o se encuentra eliminada.',
-            ]);
-        }
+            if (!$user) {
+                throw new \Exception('Usuario no encontrado en esta empresa');
+            }
 
-        // Verificar rol del usuario
-        if ($user->hasAnyRole(6)) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            $request->authenticate();
+            $request->session()->regenerate();
+
+            if ($user->status_id !== 1) {
+                Auth::logout();
+                throw new \Exception('Tu cuenta fue bloqueada o se encuentra eliminada.');
+            }
+
+            if ($user->hasAnyRole(6)) {
+                Auth::logout();
+                throw new \Exception('Tu cuenta no tiene permisos para acceder a la plataforma.');
+            }
+
+            return redirect()->intended(route('dashboard'));
             
+        } catch (\Exception $e) {
             return back()->withErrors([
-                'login' => 'Tu cuenta no tiene permisos para acceder a la plataforma.',
-            ]);
+                'username' => $e->getMessage(),
+            ])->onlyInput('username');
         }
-
-        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

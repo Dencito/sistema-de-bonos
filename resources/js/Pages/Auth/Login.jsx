@@ -1,19 +1,17 @@
 import { useEffect } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
-import GuestLayout from '@layouts/GuestLayout';
+import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
-import { roleNames } from '@utils/constants';
-import { authService } from '@services/api';
-import axios from 'axios';
+import { roleNames } from '@/Utils/constants';
 
 export default function Login({ status, auth }) {
-    const { data, setData, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         login: '',
         password: '',
         remember: false,
     });
-    const { successMsg, errorMsg } = useMessage();
+    const { successMsg } = useMessage();
 
     useEffect(() => {
         return () => {
@@ -22,43 +20,17 @@ export default function Login({ status, auth }) {
     }, []);
 
     const handleCreateOwner = async (values) => {
-        try {
-            const { data } = await authService.register(values);
-            if (data) {
-                successMsg(data?.message);
-                router.visit(route('login'));
-            }
-        } catch (error) {
-            console.error('Error creating owner:', error);
-        }
-    };
+        const { data } = await axios.post(`/users/owner`, values);
+        router.visit(route('login'));
+        data && successMsg(data?.message)
+    }
 
-    const submit = async () => {
-        const { login, password } = data;
+    const submit = () => {
         if (auth?.users === 0) {
-            return handleCreateOwner({
-                username: login,
-                password,
-                role: roleNames.duenio,
-            });
-        }
-
-        try {
-            // Usar el formulario estándar de Laravel para la autenticación
-            // Esto permitirá que el backend maneje la redirección
-            await axios.post('/login', {
-                login,
-                password,
-            });
-            // No hacemos redirección manual, dejamos que el backend lo maneje
-            // La respuesta exitosa del backend incluirá la redirección
-        } catch (error) {
-            if (error.response && error.response.data && error.response.data.message) {
-                errorMsg(error.response.data.message);
-            } else {
-                errorMsg('Error al iniciar sesión');
-            }
-            console.error('Login request failed:', error);
+            const { login: username, password} = data
+            return handleCreateOwner({ username, password,  role: roleNames.duenio }) 
+        } else {
+            post(route('login')); // No es necesario llamar a e.preventDefault()
         }
     };
 
@@ -66,27 +38,17 @@ export default function Login({ status, auth }) {
         <GuestLayout>
             <Head title="Inicio de sesión" />
 
-            {status && (
-                <Alert
-                    message={status}
-                    type="success"
-                    showIcon
-                    className="mb-4"
-                />
-            )}
-            <h1 className="text-3xl font-bold mb-4">
-                {auth?.users === 0 ? 'Registrar Dueño' : 'Ingresar'}
-            </h1>
+            {status && <Alert message={status} type="success" showIcon className="mb-4" />}
+            <h1 className='text-3xl font-bold mb-4'>{auth?.users === 0 ? 'Registrar Dueño' : 'Ingresar'}</h1>
 
-            <Form onFinish={submit} layout="vertical">
+            <Form
+                onFinish={submit}
+                layout="vertical"
+            >
                 <Form.Item
-                    label={
-                        auth?.users === 0
-                            ? 'Nombre de usuario'
-                            : 'Usuario o Email o Teléfono'
-                    }
+                    label={auth?.users === 0 ? "Nombre de usuario" : "Usuario o Email o Teléfono"}
                     validateStatus={errors.login ? 'error' : ''}
-                    help={errors.login ? 'Credenciales incorrectas' : ''}
+                    help={errors.login ? "Credenciales incorrectas" : ''}
                 >
                     <Input
                         id="login"
@@ -123,22 +85,14 @@ export default function Login({ status, auth }) {
                 </Form.Item>
 
                 <Form.Item className="flex items-center justify-end">
-                    <Button
-                        type="primary"
-                        htmlType="submit"
-                        loading={processing}
-                        className="ms-4"
-                    >
+                    <Button type="primary" htmlType="submit" loading={processing} className="ms-4">
                         Ingresar
                     </Button>
                 </Form.Item>
             </Form>
-            <Link
-                href={route('password.request')}
-                className="text-sm text-gray-600 hover:text-gray-900"
-            >
-                ¿Olvidaste tu contraseña?
-            </Link>
+            <Link href={route('password.request')} className="text-sm text-gray-600 hover:text-gray-900">
+    ¿Olvidaste tu contraseña?
+</Link>
         </GuestLayout>
     );
 }

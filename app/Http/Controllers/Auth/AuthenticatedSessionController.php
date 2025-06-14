@@ -46,7 +46,7 @@ class AuthenticatedSessionController extends Controller
             $user = Auth::user();
             Log::info('Usuario autenticado', ['user_id' => $user->id, 'username' => $user->username, 'status_id' => $user->status_id]);
             
-            if ($user->status_id !== 1) {
+            if ((string)$user->status_id !== '1') {
                 Log::warning('Usuario bloqueado o eliminado', ['user_id' => $user->id, 'status_id' => $user->status_id]);
                 Auth::logout();
                 $request->session()->invalidate();
@@ -59,7 +59,7 @@ class AuthenticatedSessionController extends Controller
 
             // Verificar rol del usuario
             Log::info('Verificando roles del usuario', ['user_id' => $user->id, 'roles' => $user->roles->pluck('id')]);
-            if ($user->hasAnyRole(6)) {
+            if (!$user->hasAnyRole(6)) {
                 Log::warning('Usuario sin permisos para acceder', ['user_id' => $user->id, 'roles' => $user->roles->pluck('id')]);
                 Auth::logout();
                 $request->session()->invalidate();

@@ -5,6 +5,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { roleNames } from '@utils/constants';
 import { authService } from '@services/api';
+import axios from 'axios';
 
 export default function Login({ status, auth }) {
     const { data, setData, processing, errors, reset } = useForm({
@@ -43,14 +44,20 @@ export default function Login({ status, auth }) {
         }
 
         try {
-            const response = await authService.login({ login, password });
-            if (response.success) {
-                router.visit(route('dashboard'));
-            } else {
-                errorMsg(response.message);
-            }
+            // Usar el formulario estándar de Laravel para la autenticación
+            // Esto permitirá que el backend maneje la redirección
+            await axios.post('/login', {
+                login,
+                password,
+            });
+            // No hacemos redirección manual, dejamos que el backend lo maneje
+            // La respuesta exitosa del backend incluirá la redirección
         } catch (error) {
-            errorMsg(error);
+            if (error.response && error.response.data && error.response.data.message) {
+                errorMsg(error.response.data.message);
+            } else {
+                errorMsg('Error al iniciar sesión');
+            }
             console.error('Login request failed:', error);
         }
     };

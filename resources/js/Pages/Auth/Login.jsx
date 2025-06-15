@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useMessage, errorMsg } from '@contexts/MessageShow';
+import { useMessage, errorMsg } from '@/Contexts/MessageShow';
 import { roleNames } from '@/Utils/constants';
 import { authService } from '@/Services/api';
 

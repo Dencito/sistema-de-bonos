@@ -58,36 +58,8 @@ class AuthenticatedSessionController extends Controller
                 ]);
             }
 
-            // Verificar rol del usuario
-            try {
-                Log::info('Verificando roles del usuario', ['user_id' => $user->id]);
-                
-                // Verificar si el usuario tiene el rol requerido usando el método hasAnyRole
-                // sin acceder directamente a la propiedad roles
-                if (!$user->hasAnyRole(6)) {
-                    Log::warning('Usuario sin permisos para acceder', ['user_id' => $user->id]);
-                    Auth::logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-                    
-                    return back()->withErrors([
-                        'login' => 'Tu cuenta no tiene permisos para acceder a la plataforma.',
-                    ]);
-                }
-                
-                // Si llegamos aquí, el usuario tiene los permisos correctos
-                Log::info('Usuario con permisos correctos');
-                
-            } catch (\Exception $e) {
-                Log::error('Error al verificar roles', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage()
-                ]);
-                
-                // En caso de error en la verificación de roles, permitimos continuar
-                // ya que es mejor dar acceso que bloquear por un error técnico
-                Log::info('Continuando a pesar del error en verificación de roles');
-            }
+            // El usuario está activo, permitimos el acceso sin verificar roles
+            Log::info('Usuario activo, permitiendo acceso', ['user_id' => $user->id]);
 
             Log::info('Redirigiendo al usuario después de login exitoso', [
                 'user_id' => $user->id,

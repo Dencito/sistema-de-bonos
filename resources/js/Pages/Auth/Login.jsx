@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useMessage, errorMsg } from '@/Contexts/MessageShow';
+import { useMessage } from '@/contexts/MessageShow';
 import { roleNames } from '@/Utils/constants';
 import { authService } from '@/Services/api';
 
@@ -12,7 +12,7 @@ export default function Login({ status, auth }) {
         password: '',
         remember: false,
     });
-    const { successMsg } = useMessage();
+    const { successMsg, errorMsg } = useMessage();
 
     useEffect(() => {
         return () => {

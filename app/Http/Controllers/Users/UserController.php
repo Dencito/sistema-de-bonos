@@ -766,12 +766,14 @@ class UserController extends Controller
         ->latest()
         ->first();
         
-    if ($lastLog && $lastLog->created_at->diffInMinutes(now()) < 60) {
-        $minutesToWait = 60 - $lastLog->created_at->diffInMinutes(now());
-        return response()->json([
-            'message' => "Debes esperar {$minutesToWait} minutos más para registrar tu huella nuevamente en esta sucursal"
-        ], 429); // 429 Too Many Requests
-    }
+        if ($lastLog && $lastLog->created_at->diffInMinutes(now()) < 60) {
+            $minutesToWait = 60 - $lastLog->created_at->diffInMinutes(now());
+            $minutesToWait = intval($minutesToWait); // Asegura que sea un entero
+        
+            return response()->json([
+                'message' => "Debes esperar {$minutesToWait} minutos más para registrar tu huella nuevamente en esta sucursal"
+            ], 429);
+        }
         }
 
         $fingerprintLog = FingerprintLog::create([

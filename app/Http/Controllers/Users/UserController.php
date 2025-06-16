@@ -648,7 +648,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $SumaBonosAdditionals,
-                'type' => 'bonus'
+                'type' => 'Bono Adicional'
             ]);
             $tickets[] = $ticket;
         }
@@ -673,7 +673,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
-                'type' => 'category'
+                'type' => 'Bono Diario'
             ]);
             $tickets[] = $ticket;
         }
@@ -698,7 +698,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $branch->birthday_amount,
-                'type' => 'birthday'
+                'type' => 'Bono Cumpleaños'
             ]);
             $tickets[] = $ticket;
         }

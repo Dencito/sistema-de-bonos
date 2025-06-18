@@ -41,6 +41,7 @@ class UserController extends Controller
                     $q->where('name', $status);
                 });
             })
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $roles = Role::where('id', '>', $user->role_id)->get();

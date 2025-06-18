@@ -7,7 +7,7 @@ import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
 import ModalEditUser from '@/Components/Users/ModalEditUser';
 import ModalViewUser from '@/Components/Users/ModalViewUser';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
-import FilterModal from '@/Components/Users/FilterModal';
+// import FilterModal from '@/Components/Users/FilterModal';
 import MobileButton from '@/Components/MobileButton';
 import { CustomTable } from '@components-v2/CustomTable';
 import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssignCategories';
@@ -44,6 +44,9 @@ export default function UserPage({
     bonuses,
     filters,
 }) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState('');
+
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
         username: filters.username || '',
@@ -55,6 +58,24 @@ export default function UserPage({
         selectedRowKeys,
         onChange: setSelectedRowKeys,
     };
+
+    // Filtro frontend
+    const filteredUsers = users?.filter((user) => {
+        const search = searchTerm.toLowerCase();
+        const rut = (user.rutNumbers && user.rutDv) ? `${user.rutNumbers}-${user.rutDv}` : '';
+        const matchesSearch =
+            (user.username && user.username.toLowerCase().includes(search)) ||
+            (user.code && user.code.toLowerCase().includes(search)) ||
+            (user.first_name && user.first_name.toLowerCase().includes(search)) ||
+            (user.second_name && user.second_name.toLowerCase().includes(search)) ||
+            (user.first_last_name && user.first_last_name.toLowerCase().includes(search)) ||
+            (user.second_last_name && user.second_last_name.toLowerCase().includes(search)) ||
+            (rut && rut.toLowerCase().includes(search));
+        const matchesStatus =
+            !selectedStatus ||
+            (user.status && (user.status.name === selectedStatus || user.status === selectedStatus));
+        return matchesSearch && matchesStatus;
+    });
 
     const columns = {
         'super-admin': [
@@ -793,11 +814,25 @@ export default function UserPage({
                 <div className="w-full">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">
-                            <FilterModal
-                                filters={filters}
-                                statuses={statuses}
-                                roles={roles}
-                            />
+                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+    <input
+        type="text"
+        placeholder="Buscar por usuario, nombre, apellido o rut"
+        className="border rounded px-2 py-1 w-full sm:w-64"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+    />
+    <select
+        className="border rounded px-2 py-1 w-full sm:w-60"
+        value={selectedStatus}
+        onChange={e => setSelectedStatus(e.target.value)}
+    >
+        <option value="">Todos los estados</option>
+        {statuses.map(status => (
+            <option key={status.id} value={status.name}>{status.name}</option>
+        ))}
+    </select>
+</div>
                             <div className="flex gap-5">
                                 {data?.role && (
                                     <ModalCreateUser
@@ -819,7 +854,7 @@ export default function UserPage({
                         data.role === roleDisplayNames.jugador.toLowerCase() ? (
                             <CustomTable
                                 rowSelection={rowSelection}
-                                dataSource={users?.map((user) => ({
+                                dataSource={filteredUsers?.map((user) => ({
                                     ...user,
                                     key: user?.id,
                                 }))}
@@ -832,7 +867,7 @@ export default function UserPage({
                         ) : (
                             <CustomTable
                                 rowSelection={rowSelection}
-                                dataSource={users?.map((user) => ({
+                                dataSource={filteredUsers?.map((user) => ({
                                     ...user,
                                     key: user?.id,
                                 }))}

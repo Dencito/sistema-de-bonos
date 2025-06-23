@@ -649,7 +649,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $SumaBonosAdditionals,
-                'type' => 'Bono Adicional'
+                'type' => 'Bono Excepcional'
             ]);
             $tickets[] = $ticket;
         }
@@ -662,7 +662,7 @@ class UserController extends Controller
         // Verificar bono por categoría (una vez al día)
         $ticketsTypeBonusByUser = $user
             ->tickets
-            ->where('type', 'category')
+            ->where('type', 'Bono Diario')
             ->where('created_at', '>=', now()->startOfDay())
             ->where('created_at', '<=', now()->endOfDay())
             ->first();
@@ -682,7 +682,7 @@ class UserController extends Controller
         // Verificar bono de cumpleaños (una vez al año)
         $ticketsTypeBirthdayByUser = $user
             ->tickets
-            ->where('type', 'birthday')
+            ->where('type', 'Bono Cumpleaños')
             ->where('created_at', '>=', now()->startOfYear())
             ->where('created_at', '<=', now()->endOfYear())
             ->first();

@@ -591,7 +591,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        if ((string)$user->status_id !== '1') {
+        if ((string) $user->status_id !== '1') {
             return response()->json([
                 'message' => 'El usuario autenticado no se encuentra activo.'
             ], 403);
@@ -612,7 +612,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        if ((string)$branch->status_id !== '1') {
+        if ((string) $branch->status_id !== '1') {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa.'
             ], 403);
@@ -649,7 +649,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $SumaBonosAdditionals,
-                'type' => 'Bono Excepcional'
+                'type' => 'Bono Extraordinario'
             ]);
             $tickets[] = $ticket;
         }
@@ -745,7 +745,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        if ((string)$user->status_id !== '1') {
+        if ((string) $user->status_id !== '1') {
             return response()->json([
                 'message' => 'El usuario no se encuentra activo'
             ], 409);
@@ -757,24 +757,24 @@ class UserController extends Controller
             ], 404);
         }
 
-        if($isMarkPlayer === false){
+        if ($isMarkPlayer === false) {
             // Validar que haya pasado al menos 1 hora desde el último registro en la misma sucursal
-        $lastLog = FingerprintLog::query()
-        ->whereHas('totem', function ($query) use ($totem) {
-            $query->where('branch_id', $totem->branch_id);
-        })
-        ->where('user_id', $user->id)
-        ->latest()
-        ->first();
-        
-        if ($lastLog && $lastLog->created_at->diffInMinutes(now()) < 60) {
-            $minutesToWait = 60 - $lastLog->created_at->diffInMinutes(now());
-            $minutesToWait = intval($minutesToWait); // Asegura que sea un entero
-        
-            return response()->json([
-                'message' => "Debes esperar {$minutesToWait} minutos más para registrar tu huella nuevamente en esta sucursal"
-            ], 429);
-        }
+            $lastLog = FingerprintLog::query()
+                ->whereHas('totem', function ($query) use ($totem) {
+                    $query->where('branch_id', $totem->branch_id);
+                })
+                ->where('user_id', $user->id)
+                ->latest()
+                ->first();
+
+            if ($lastLog && $lastLog->created_at->diffInMinutes(now()) < 60) {
+                $minutesToWait = 60 - $lastLog->created_at->diffInMinutes(now());
+                $minutesToWait = intval($minutesToWait);  // Asegura que sea un entero
+
+                return response()->json([
+                    'message' => "Debes esperar {$minutesToWait} minutos más para registrar tu huella nuevamente en esta sucursal"
+                ], 429);
+            }
         }
 
         $fingerprintLog = FingerprintLog::create([

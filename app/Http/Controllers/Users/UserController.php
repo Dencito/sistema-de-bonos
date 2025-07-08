@@ -716,11 +716,13 @@ class UserController extends Controller
             'totem_uuid' => $totem->code,
         ]), true);
 
+        $ticketNumber = Cache::increment('one_shift_ticket_counter', 1);
+
         return response()->json([
             'data' => [
                 'tickets' => collect($tickets)->map(function ($ticket) {
                     return [
-                        'id' => $ticket->id,
+                        'number' => $ticketNumber,
                         'totalAmount' => $ticket->total_amount,
                         'type' => $ticket->type,
                         'createdAt' => $ticket->created_at,

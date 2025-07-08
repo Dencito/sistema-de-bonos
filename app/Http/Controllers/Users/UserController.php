@@ -16,6 +16,7 @@ use App\Models\Totem;
 use App\Models\User;
 use App\Models\UserBranches;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;

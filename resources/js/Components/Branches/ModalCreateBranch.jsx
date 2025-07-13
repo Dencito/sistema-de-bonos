@@ -37,13 +37,13 @@ export default function ModalCreateBranch({ companies }) {
         const getCountries = async () => {
             if (showModal) {
                 const data = await countriesService.getAll();
-                setCountries(data?.data);
+                setCountries(data);
             }
         };
         const getRegion = async () => {
             if (country && showModal) {
                 const data = await countriesService.getStates(country);
-                setRegions(data?.data);
+                setRegions(data);
             }
         };
         getCountries();
@@ -193,12 +193,13 @@ export default function ModalCreateBranch({ companies }) {
                             ]}
                         >
                             <Select
-                                onChange={() =>
+                                onChange={() => {
                                     setCountry(
                                         form?.getFieldsValue()
                                             ?.branchAddressCountry
-                                    )
-                                }
+                                    );
+                                    form.setFieldValue("branchAddressRegion", "");
+                                }}
                                 showSearch
                                 placeholder="Seleccionar país"
                             >
@@ -214,32 +215,42 @@ export default function ModalCreateBranch({ companies }) {
                         </Form.Item>
 
                         <Form.Item
-                            className="w-6/12"
-                            name="branchAddressRegion"
-                            label="Región"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: getValidationRequiredMessage,
-                                },
-                            ]}
-                        >
-                            <Select showSearch placeholder="Seleccionar region">
-                                {regions?.map((region) => (
-                                    <Select.Option
-                                        key={region?.name}
-                                        value={region?.name}
-                                    >
-                                        {region?.name}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    </div>
+    className="w-6/12"
+    name="branchAddressRegion"
+    label="Región"
+    rules={[
+        {
+            required: true,
+            message: getValidationRequiredMessage,
+        },
+    ]}
+>
+    <Select showSearch placeholder="Seleccionar región">
+        {(() => {
+            const selectedCountry = countries?.find(
+                (country) =>
+                    country?.name === form?.getFieldsValue()?.branchAddressCountry
+            );
+            const regions =
+                selectedCountry?.provinces ||
+                selectedCountry?.states ||
+                selectedCountry?.parishes ||
+                selectedCountry?.districts ||
+                [];
+            return regions.map((region) => (
+                <Select.Option key={region} value={region}>
+                    {region}
+                </Select.Option>
+            ));
+        })()}
+    </Select>
+</Form.Item>
 
-                    <Form.Item
-                        name="branchAddressProvince"
-                        label="Provincia"
+</div>
+
+<Form.Item
+    name="branchAddressProvince"
+    label="Provincia"
                         rules={[
                             {
                                 required: true,

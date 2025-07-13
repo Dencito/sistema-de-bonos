@@ -6,6 +6,8 @@ import {
     VITE_PASSWORD_ENCRYPTION_KEY,
 } from '@utils/env';
 
+import countries from '@utils/countries.json';
+
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
 axios.defaults.withCredentials = true;
@@ -115,22 +117,18 @@ export const roleService = {
 
 export const countriesService = {
     getAll: () =>
-        fetch(`${VITE_COUNTRIES_API_URL}/countries`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
-            },
-        }).then((res) => res.json()),
+        countries.countries,
 
-    getStates: (country) =>
-        fetch(`${VITE_COUNTRIES_API_URL}/countries/${country}/states`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${VITE_COUNTRIES_API_KEY}`,
-            },
-        }).then((res) => res.json()),
+    getStates: (country) => {
+        const c = countries?.countries.find((c) => c.name === country);
+        return (
+            c?.provinces ||
+            c?.states ||
+            c?.parishes ||
+            c?.districts ||
+            []
+        );
+    }
 };
 
 export const authService = {

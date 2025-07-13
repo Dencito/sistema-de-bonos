@@ -487,9 +487,13 @@ export default function UserPage({
                 ),
             },
             {
-                title: 'Correo',
-                dataIndex: 'email',
-                key: 'email',
+                title: 'Última marca',
+                key: 'fingerprintLogs',
+                render: (_, user) => (
+                    <p className="rounded-lg p-1">
+                        {user?.fingerprintLogs?.last()?.created_at}
+                    </p>
+                ),
             },
             {
                 title: 'Rut/Código',

@@ -27,7 +27,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $users = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch'])
+        $users = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch', 'fingerprintLogs'])
             ->when($request->username, function ($query, $username) {
                 $query->where('username', 'like', "%{$username}%");
             })

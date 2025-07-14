@@ -3,10 +3,14 @@
  * @param {Date | string} date - The date to format.
  * @returns {string} The formatted date string.
  */
+
+const timeZone = 'America/Santiago';
+
+
 export const formatDate = (date) => {
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate());
+    const month = String(d.getMonth() + 1);
     const year = d.getFullYear();
     return `${day}-${month}-${year}`;
 };
@@ -18,13 +22,15 @@ export const formatDate = (date) => {
  */
 export const formatDateTime = (date) => {
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate());
+    const month = String(d.getMonth() + 1);
     const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+    const hours = String(d.getHours());
+    const minutes = String(d.getMinutes());
+    const seconds = String(d.getSeconds());
+
+    console.log()
+    return `${date.toLocaleString().split('.')[0].split('T')[0]} ${date.toLocaleString().split('.')[0].split('T')[1]}`;
 };
 
 /**
@@ -49,8 +55,8 @@ export const getCurrentDate = () => {
  */
 export const getCurrentTime = () => {
     const d = new Date();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
+    const hours = String(d.getHours());
+    const minutes = String(d.getMinutes());
+    const seconds = String(d.getSeconds());
     return `${hours}:${minutes}:${seconds}`;
 };

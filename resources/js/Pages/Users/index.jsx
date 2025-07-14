@@ -14,7 +14,7 @@ import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssig
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
-import { formatDate } from '@/Utils/date';
+import { formatDateTime } from '@/Utils/date';
 
 const FingerprintIcon = () => (
     <svg
@@ -494,7 +494,7 @@ export default function UserPage({
                 key: 'fingerprintLogs',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
-                        {formatDate(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy')}
+                        {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy')}
                     </p>
                 ),
             },

@@ -31,7 +31,7 @@ export default function ModalCreateCompany() {
             if (showModal) {
                 try {
                     const data = await countriesService.getAll();
-                    setCountries(data?.data);
+                    setCountries(data);
                 } catch {
                     errorMsg('Failed to fetch countries');
                 }
@@ -41,7 +41,7 @@ export default function ModalCreateCompany() {
             if (country && showModal) {
                 try {
                     const data = await countriesService.getStates(country);
-                    setRegions(data?.data);
+                    setRegions(data);
                 } catch {
                     errorMsg('Failed to fetch regions');
                 }
@@ -172,11 +172,10 @@ export default function ModalCreateCompany() {
             >
                 {countries?.map((country) => (
                     <Select.Option
-                        key={country?.phone_code}
-                        value={country?.phone_code}
+                        key={country?.prefix}
+                        value={country?.prefix}
                     >
-                        {!country?.phone_code.includes('+') && '+'}
-                        {country?.phone_code}
+                        {country?.prefix}
                     </Select.Option>
                 ))}
             </Select>
@@ -198,11 +197,10 @@ export default function ModalCreateCompany() {
             >
                 {countries?.map((country) => (
                     <Select.Option
-                        key={country?.phone_code}
-                        value={country?.phone_code}
+                        key={country?.prefix}
+                        value={country?.prefix}
                     >
-                        {!country?.phone_code.includes('+') && '+'}
-                        {country?.phone_code}
+                        {country?.prefix}
                     </Select.Option>
                 ))}
             </Select>
@@ -706,12 +704,13 @@ export default function ModalCreateCompany() {
                         ]}
                     >
                         <Select
-                            onChange={() =>
+                            onChange={() => {
                                 setCountry(
                                     form?.getFieldsValue()
                                         ?.companyAddressCountry
-                                )
-                            }
+                                );
+                                form.setFieldValue('companyAddressRegion', '');
+                            }}
                             showSearch
                             placeholder="Seleccionar pais"
                         >
@@ -738,15 +737,26 @@ export default function ModalCreateCompany() {
                             },
                         ]}
                     >
-                        <Select showSearch placeholder="Seleccionar region">
-                            {regions?.map((region) => (
-                                <Select.Option
-                                    key={region?.name}
-                                    value={region?.name}
-                                >
-                                    {region?.name}
-                                </Select.Option>
-                            ))}
+                        <Select showSearch placeholder="Seleccionar región">
+                            {(() => {
+                                const selectedCountry = countries?.find(
+                                    (country) =>
+                                        country?.name ===
+                                        form?.getFieldsValue()
+                                            ?.companyAddressCountry
+                                );
+                                const regions =
+                                    selectedCountry?.provinces ||
+                                    selectedCountry?.states ||
+                                    selectedCountry?.parishes ||
+                                    selectedCountry?.districts ||
+                                    [];
+                                return regions.map((region) => (
+                                    <Select.Option key={region} value={region}>
+                                        {region}
+                                    </Select.Option>
+                                ));
+                            })()}
                         </Select>
                     </Form.Item>
                 </div>

@@ -49,7 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('companies')->group(function() {
         Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::post('/', [CompanyController::class, 'create'])->name('companies.create');
-        Route::put('/', [CompanyController::class, 'update'])->name('companies.update');
+        Route::put('/{id}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('/{id}', [CompanyController::class, 'destroy'])->name('companies.destroy');
         
         Route::post('/select', function (Request $request) {

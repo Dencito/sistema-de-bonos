@@ -28,13 +28,13 @@ export default function ModalEditCompany({ data }) {
         const getCountries = async () => {
             if (showModal) {
                 const data = await countriesService.getAll();
-                setCountries(data?.data);
+                setCountries(data);
             }
         };
         const getRegion = async () => {
             if (country && showModal) {
                 const data = await countriesService.getStates(country);
-                setRegions(data?.data);
+                setRegions(data);
             }
         };
         getCountries();
@@ -155,11 +155,10 @@ export default function ModalEditCompany({ data }) {
             >
                 {countries?.map((country) => (
                     <Select.Option
-                        key={country?.phone_code}
-                        value={country?.phone_code}
+                        key={country?.prefix}
+                        value={country?.prefix}
                     >
-                        {!country?.phone_code.includes('+') && '+'}
-                        {country?.phone_code}
+                        {country?.prefix}
                     </Select.Option>
                 ))}
             </Select>
@@ -180,11 +179,10 @@ export default function ModalEditCompany({ data }) {
             >
                 {countries?.map((country) => (
                     <Select.Option
-                        key={country?.phone_code}
-                        value={country?.phone_code}
+                        key={country?.prefix}
+                        value={country?.prefix}
                     >
-                        {!country?.phone_code.includes('+') && '+'}
-                        {country?.phone_code}
+                        {country?.prefix}
                     </Select.Option>
                 ))}
             </Select>
@@ -619,12 +617,13 @@ export default function ModalEditCompany({ data }) {
                         ]}
                     >
                         <Select
-                            onChange={() =>
+                            onChange={() => {
                                 setCountry(
                                     form?.getFieldsValue()
                                         ?.companyAddressCountry
-                                )
-                            }
+                                );
+                                form.setFieldValue('companyAddressRegion', '');
+                            }}
                             showSearch
                             placeholder="Seleccionar pais"
                         >
@@ -650,14 +649,25 @@ export default function ModalEditCompany({ data }) {
                         ]}
                     >
                         <Select showSearch placeholder="Seleccionar region">
-                            {regions?.map((region) => (
-                                <Select.Option
-                                    key={region?.name}
-                                    value={region?.name}
-                                >
-                                    {region?.name}
-                                </Select.Option>
-                            ))}
+                            {(() => {
+                                const selectedCountry = countries?.find(
+                                    (country) =>
+                                        country?.name ===
+                                        form?.getFieldsValue()
+                                            ?.companyAddressCountry
+                                );
+                                const regions =
+                                    selectedCountry?.provinces ||
+                                    selectedCountry?.states ||
+                                    selectedCountry?.parishes ||
+                                    selectedCountry?.districts ||
+                                    [];
+                                return regions.map((region) => (
+                                    <Select.Option key={region} value={region}>
+                                        {region}
+                                    </Select.Option>
+                                ));
+                            })()}
                         </Select>
                     </Form.Item>
                 </div>

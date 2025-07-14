@@ -67,13 +67,13 @@ export default function ModalEditBranch({ data, statuses }) {
         const getCountries = async () => {
             if (showModal) {
                 const data = await countriesService.getAll();
-                setCountries(data?.data);
+                setCountries(data);
             }
         };
         const getRegion = async () => {
             if (country && showModal) {
                 const data = await countriesService.getStates(country);
-                setRegions(data?.data);
+                setRegions(data);
             }
         };
         getCountries();
@@ -233,12 +233,16 @@ export default function ModalEditBranch({ data, statuses }) {
                             ]}
                         >
                             <Select
-                                onChange={() =>
+                                onChange={() => {
                                     setCountry(
                                         form?.getFieldsValue()
                                             ?.branchAddressCountry
+                                    );
+                                    form.setFieldValue(
+                                        'branchAddressRegion',
+                                        ''
                                     )
-                                }
+                                }}
                                 showSearch
                                 placeholder="Seleccionar país"
                             >
@@ -265,15 +269,26 @@ export default function ModalEditBranch({ data, statuses }) {
                             ]}
                         >
                             <Select showSearch placeholder="Seleccionar región">
-                                {regions?.map((region) => (
-                                    <Select.Option
-                                        key={region?.name}
-                                        value={region?.name}
-                                    >
-                                        {region?.name}
+                            {(() => {
+                                const selectedCountry = countries?.find(
+                                    (country) =>
+                                        country?.name ===
+                                        form?.getFieldsValue()
+                                            ?.branchAddressCountry
+                                );
+                                const regions =
+                                    selectedCountry?.provinces ||
+                                    selectedCountry?.states ||
+                                    selectedCountry?.parishes ||
+                                    selectedCountry?.districts ||
+                                    [];
+                                return regions.map((region) => (
+                                    <Select.Option key={region} value={region}>
+                                        {region}
                                     </Select.Option>
-                                ))}
-                            </Select>
+                                ));
+                            })()}
+                        </Select>
                         </Form.Item>
                     </div>
 

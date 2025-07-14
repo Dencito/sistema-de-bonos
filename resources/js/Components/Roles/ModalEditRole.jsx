@@ -24,13 +24,13 @@ export default function ModalEditRole({ data }) {
         const getCountries = async () => {
             if (showModal) {
                 const data = await countriesService.getAll();
-                setCountries(data?.data);
+                setCountries(data);
             }
         };
         const getRegion = async () => {
             if (country !== '' && showModal) {
                 const data = await countriesService.getStates(country);
-                setRegions(data?.data);
+                setRegions(data);
             }
         };
         getCountries();
@@ -257,6 +257,54 @@ export default function ModalEditRole({ data }) {
                     ]}
                 >
                     <Input showCount maxLength={50} />
+                </Form.Item>
+                <Form.Item
+                    name="country"
+                    label="País"
+                    rules={[{ required: true, message: 'Seleccione un país' }]}
+                    initialValue={data?.country}
+                >
+                    <Select
+                        showSearch
+                        allowClear
+                        placeholder="Seleccione un país"
+                        value={country}
+                        onChange={(value) => {
+                            setCountry(value);
+                            form.setFieldsValue({ region: undefined });
+                        }}
+                        filterOption={(input, option) =>
+                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                        }
+                    >
+                        {countries?.map((c) => (
+                            <Select.Option key={c.id} value={c.id}>
+                                {c.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item
+                    name="region"
+                    label="Región/Estado"
+                    rules={[{ required: true, message: 'Seleccione una región' }]}
+                    initialValue={data?.region}
+                >
+                    <Select
+                        showSearch
+                        allowClear
+                        placeholder={country ? "Seleccione una región" : "Seleccione un país primero"}
+                        disabled={!country}
+                        filterOption={(input, option) =>
+                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                        }
+                    >
+                        {regions?.map((r) => (
+                            <Select.Option key={r.id} value={r.id}>
+                                {r.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <div className="flex gap-3">
                     <Form.Item

@@ -14,6 +14,7 @@ import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssig
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
+import { formatDate } from '@/Utils/date';
 
 const FingerprintIcon = () => (
     <svg
@@ -59,13 +60,15 @@ export default function UserPage({
         onChange: setSelectedRowKeys,
     };
 
+    console.log(users);
+
     // Filtro frontend
     const filteredUsers = users?.filter((user) => {
         const search = searchTerm.toLowerCase();
         const rut = (user.rutNumbers && user.rutDv) ? `${user.rutNumbers}-${user.rutDv}` : '';
         const matchesSearch =
             (user.username && user.username.toLowerCase().includes(search)) ||
-            (user.code && user.code.toLowerCase().includes(search)) ||
+            (user.code && user.code.toString().toLowerCase()?.includes(search)) ||
             (user.first_name && user.first_name.toLowerCase().includes(search)) ||
             (user.second_name && user.second_name.toLowerCase().includes(search)) ||
             (user.first_last_name && user.first_last_name.toLowerCase().includes(search)) ||
@@ -491,7 +494,7 @@ export default function UserPage({
                 key: 'fingerprintLogs',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
-                        {user?.fingerprintLogs?.last()?.created_at}
+                        {formatDate(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy')}
                     </p>
                 ),
             },

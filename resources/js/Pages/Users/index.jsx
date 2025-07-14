@@ -15,6 +15,9 @@ import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
 import { formatDateTime } from '@/Utils/date';
+import { DownloadOutlined } from '@ant-design/icons';
+import { Button, message } from 'antd';
+import * as XLSX from 'xlsx';
 
 const FingerprintIcon = () => (
     <svg
@@ -47,6 +50,7 @@ export default function UserPage({
 }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
+    const [selectedBranch, setSelectedBranch] = useState('');
 
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
@@ -59,8 +63,68 @@ export default function UserPage({
         selectedRowKeys,
         onChange: setSelectedRowKeys,
     };
-
-    console.log(users);
+    // Función para exportar usuarios a Excel
+    const exportToExcel = () => {
+        try {
+            // Preparar los datos para exportar
+            const dataToExport = filteredUsers.map(user => {
+                // Datos básicos que todos los usuarios tienen
+                const baseData = {
+                    'Nombre de usuario': user.username || '',
+                    'Nombres': `${user.first_name || ''} ${user.second_name || ''}`.trim(),
+                    'Apellidos': `${user.first_last_name || ''} ${user.second_last_name || ''}`.trim(),
+                    'Correo': user.email || '',
+                    'Teléfono': `${user.prefix || ''} ${user.phone || ''}`.trim(),
+                    'Estado': user.status?.name || '',
+                    'Rol': roleDisplayNames[user.role?.name] || user.role?.name || '',
+                    'Fecha de creación': user.created_at ? new Date(user.created_at).toLocaleDateString('es-CL') : '',
+                    'Fecha de ingreso': user.entry_date ? new Date(user.entry_date).toLocaleDateString('es-CL') : '',
+                };
+                
+                // Datos específicos según el rol
+                if (user.role?.name === 'jugador') {
+                    // Para jugadores, mostrar código o RUT y sucursales
+                    return {
+                        ...baseData,
+                        'Código/RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : user.code || '',
+                        'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
+                        'Última marca': user.fingerprint_logs?.[0]?.created_at ? new Date(user.fingerprint_logs[0].created_at).toLocaleDateString('es-CL') : '',
+                        'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
+                    };
+                } else if (user.role?.name === 'trabajador') {
+                    // Para trabajadores
+                    return {
+                        ...baseData,
+                        'RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : '',
+                        'Sucursal': user.branch?.name || '',
+                        'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
+                    };
+                } else {
+                    // Para otros roles (admin, supervisor, etc)
+                    return {
+                        ...baseData,
+                        'Sucursal': user.branch?.name || '',
+                        'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
+                    };
+                }
+            });
+            
+            // Crear libro de Excel
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
+            
+            // Generar archivo y descargar
+            const date = new Date().toISOString().split('T')[0];
+            const fileName = `usuarios_${data.role || 'todos'}_${date}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            
+            message.success('Archivo exportado correctamente');
+        } catch (error) {
+            console.error('Error al exportar:', error);
+            message.error('Error al exportar los datos');
+        }
+    };
 
     // Filtro frontend
     const filteredUsers = users?.filter((user) => {
@@ -77,7 +141,15 @@ export default function UserPage({
         const matchesStatus =
             !selectedStatus ||
             (user.status && (user.status.name === selectedStatus || user.status === selectedStatus));
-        return matchesSearch && matchesStatus;
+        
+        // Filtro por sucursal
+        const matchesBranch = !selectedBranch || 
+            // Para trabajadores que tienen branch_id
+            (user.branch?.id === parseInt(selectedBranch)) ||
+            // Para jugadores y otros que tienen múltiples sucursales
+            (user.branches && user.branches.some(branch => branch.id === parseInt(selectedBranch)));
+            
+        return matchesSearch && matchesStatus && matchesBranch;
     });
 
     const columns = {
@@ -830,7 +902,7 @@ export default function UserPage({
         onChange={(e) => setSearchTerm(e.target.value)}
     />
     <select
-        className="border rounded px-2 py-1 w-full sm:w-60"
+        className="border rounded px-2 py-1 w-full sm:w-40"
         value={selectedStatus}
         onChange={e => setSelectedStatus(e.target.value)}
     >
@@ -839,6 +911,24 @@ export default function UserPage({
             <option key={status.id} value={status.name}>{status.name}</option>
         ))}
     </select>
+    <select
+        className="border rounded px-2 py-1 w-full sm:w-40"
+        value={selectedBranch}
+        onChange={e => setSelectedBranch(e.target.value)}
+    >
+        <option value="">Todas las sucursales</option>
+        {branches.map(branch => (
+            <option key={branch.id} value={branch.id}>{branch.name}</option>
+        ))}
+    </select>
+    <Button 
+        type="primary" 
+        icon={<DownloadOutlined />} 
+        onClick={exportToExcel}
+        className="bg-blue-500 text-white"
+    >
+        Exportar
+    </Button>
 </div>
                             <div className="flex gap-5">
                                 {data?.role && (

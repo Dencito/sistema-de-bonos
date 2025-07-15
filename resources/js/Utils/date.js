@@ -21,16 +21,27 @@ export const formatDate = (date) => {
  * @returns {string} The formatted date string with time.
  */
 export const formatDateTime = (date) => {
+    // Return a placeholder if date is undefined or null
+    if (!date) {
+        return 'N/A';
+    }
+    
     const d = new Date(date);
-    const day = String(d.getDate());
-    const month = String(d.getMonth() + 1);
+    
+    // Check if date is valid
+    if (isNaN(d.getTime())) {
+        return 'Invalid Date';
+    }
+    
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
-    const hours = String(d.getHours());
-    const minutes = String(d.getMinutes());
-    const seconds = String(d.getSeconds());
-
-    console.log()
-    return `${date.toString().split('.')[0].split('T')[0]} ${date.toString().split('.')[0].split('T')[1]}`;
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    
+    // Format the date using the constructed values instead of relying on toString()
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 /**

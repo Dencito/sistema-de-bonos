@@ -30,7 +30,7 @@ export const formatDateTime = (date) => {
     const seconds = String(d.getSeconds());
 
     console.log()
-    return `${date.toLocaleString().split('.')[0].split('T')[0]} ${date.toLocaleString().split('.')[0].split('T')[1]}`;
+    return `${date.toString().split('.')[0].split('T')[0]} ${date.toString().split('.')[0].split('T')[1]}`;
 };
 
 /**

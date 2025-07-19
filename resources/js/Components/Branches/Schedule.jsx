@@ -34,6 +34,8 @@ export default function Schedule({
         return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
 
+    console.log(JSON.stringify(savedSchedules));
+
     useEffect(() => {
         if (initialSchedules && initialSchedules.length > 0) {
             const newBlockedSlots = {};
@@ -127,35 +129,9 @@ export default function Schedule({
             if (isCurrentScheduleSlot) return true;
         }
 
-        // Verificar si el slot es el primer o último slot de algún turno existente
-        for (const schedule of savedSchedules) {
-            if (schedule === editingSchedule) continue;
-
-            const daySchedules = schedule.schedules.find((s) => s.day === day);
-            if (!daySchedules) continue;
-
-            for (const range of daySchedules.ranges) {
-                const startHour =
-                    parseInt(range.start_time.split(':')[0]) * 2 +
-                    (range.start_time.split(':')[1] === '30' ? 1 : 0);
-                const endHour =
-                    parseInt(range.end_time.split(':')[0]) * 2 +
-                    (range.end_time.split(':')[1] === '30' ? 1 : 0);
-
-                // Es un slot válido si es el primer o último slot del turno
-                if (hour === startHour || hour === endHour) {
-                    return true;
-                }
-
-                // Si está dentro del rango (excepto primer y último slot), no es válido
-                if (hour > startHour && hour < endHour) {
-                    return false;
-                }
-            }
-        }
-
-        // Si no hay slots bloqueados en este día y hora, está permitido
-        return !blockedSlots[`${day}-${hour}`];
+        // Permitir solapar en cualquier posición
+        // Siempre devolvemos true para permitir seleccionar cualquier slot
+        return true;
     };
 
     const handleMouseDown = (day, hour) => {
@@ -164,13 +140,7 @@ export default function Schedule({
             return;
         }
 
-        // Solo permitir selección si es un slot del borde o está libre
-        if (!isEdgeSlot(day, hour)) {
-            message.error(
-                'Solo puedes seleccionar el primer o último slot de los turnos existentes'
-            );
-            return;
-        }
+        // Permitir selección en cualquier slot, incluso si ya está ocupado por otro turno
 
         setIsSelecting(true);
         setSelectionStart({ day, hour });
@@ -189,9 +159,10 @@ export default function Schedule({
             );
             const currentDay = days.findIndex((d) => d.name === day);
             const startHour = selectionStart.hour;
-
-            // Verificar si todos los slots en el rango son válidos
-            let allSlotsValid = true;
+            
+            // Permitir seleccionar cualquier slot, incluso si ya está ocupado
+            // Siempre permitimos la selección
+            
             for (
                 let d = Math.min(startDay, currentDay);
                 d <= Math.max(startDay, currentDay);
@@ -202,31 +173,11 @@ export default function Schedule({
                     h <= Math.max(startHour, hour);
                     h++
                 ) {
-                    if (!isEdgeSlot(days[d].name, h)) {
-                        allSlotsValid = false;
-                        break;
-                    }
+                    const slotKey = `${days[d].name}-${h}`;
+                    newSelectedSlots[slotKey] = isSelecting.isSelecting;
                 }
-                if (!allSlotsValid) break;
             }
-
-            if (allSlotsValid) {
-                for (
-                    let d = Math.min(startDay, currentDay);
-                    d <= Math.max(startDay, currentDay);
-                    d++
-                ) {
-                    for (
-                        let h = Math.min(startHour, hour);
-                        h <= Math.max(startHour, hour);
-                        h++
-                    ) {
-                        const slotKey = `${days[d].name}-${h}`;
-                        newSelectedSlots[slotKey] = isSelecting.isSelecting;
-                    }
-                }
-                setSelectedSlots(newSelectedSlots);
-            }
+            setSelectedSlots(newSelectedSlots);
         }
     };
 
@@ -241,6 +192,51 @@ export default function Schedule({
             ...prev,
             [slotKey]: !prev[slotKey],
         }));
+    };
+
+    // Función para generar array de times basado en ranges
+    const generateTimesFromRanges = (ranges) => {
+        // Usar un Set para evitar duplicados automáticamente
+        const timeSet = new Set();
+        
+        ranges.forEach(range => {
+            // Ignorar rangos vacíos (00:00 a 00:00)
+            if (range.start_time === '00:00' && range.end_time === '00:00') {
+                return;
+            }
+            
+            const [startHour, startMin] = range.start_time.split(':').map(Number);
+            const [endHour, endMin] = range.end_time.split(':').map(Number);
+            
+            // Convertir a minutos desde medianoche
+            const startMinutes = startHour * 60 + startMin;
+            let endMinutes = endHour * 60 + endMin;
+            
+            // Si end_time es 24:00, convertir a minutos del día siguiente
+            if (endHour === 24) {
+                endMinutes = 24 * 60;
+            }
+            
+            // Generar intervalos de 30 minutos
+            for (let minutes = startMinutes; minutes <= endMinutes; minutes += 30) {
+                const hour = Math.floor(minutes / 60);
+                const min = minutes % 60;
+                const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+                
+                // Usar Set.add() en lugar de comprobar includes y push
+                timeSet.add(timeStr);
+            }
+        });
+        
+        // Convertir el Set a Array y ordenar
+        return Array.from(timeSet).sort((a, b) => {
+            // Convertir a minutos para comparar correctamente
+            const [aHour, aMin] = a.split(':').map(Number);
+            const [bHour, bMin] = b.split(':').map(Number);
+            const aMinutes = aHour * 60 + aMin;
+            const bMinutes = bHour * 60 + bMin;
+            return aMinutes - bMinutes;
+        });
     };
 
     const handleSaveSchedule = () => {
@@ -267,9 +263,11 @@ export default function Schedule({
             ([day, hours]) => {
                 hours.sort((a, b) => a - b);
                 const ranges = processOvernight(day, hours);
+                const timesArray = generateTimesFromRanges(ranges);
                 return {
                     day,
                     ranges: ranges.map((range) => ({ ...range })),
+                    times: timesArray,
                 };
             }
         );
@@ -309,11 +307,11 @@ export default function Schedule({
             updatedSchedules = [...savedSchedules, shiftData];
         }
 
-        // Limpiar todos los slots bloqueados existentes
+        // Mantenemos los slots bloqueados para visualización pero permitimos solapamiento
         const newBlockedSlots = {};
         const newBlockedSlotsColors = {};
 
-        // Reconstruir los slots bloqueados desde cero
+        // Guardar los colores de los slots para visualización
         updatedSchedules.forEach((schedule) => {
             schedule.schedules.forEach((dailySchedule) => {
                 const { day, ranges } = dailySchedule;
@@ -329,6 +327,7 @@ export default function Schedule({
 
                     for (let h = startHour; h <= endHour; h++) {
                         const slotKey = `${day}-${h}`;
+                        // Marcamos como bloqueado para visualización pero permitimos solapamiento
                         newBlockedSlots[slotKey] = true;
                         newBlockedSlotsColors[slotKey] = schedule.color;
                     }
@@ -351,7 +350,7 @@ export default function Schedule({
     const handleEditSchedule = (shift) => {
         const newSelectedSlots = {};
 
-        // Limpiar los slots bloqueados del turno que se va a editar
+        // Limpiar los slots bloqueados y colores del turno que se va a editar
         const newBlockedSlots = { ...blockedSlots };
         const newBlockedSlotsColors = { ...blockedSlotsColors };
 
@@ -368,6 +367,7 @@ export default function Schedule({
                 for (let h = startHour; h <= endHour; h++) {
                     const slotKey = `${day}-${h}`;
                     newSelectedSlots[slotKey] = true;
+                    // Eliminamos los bloques y colores del turno que estamos editando
                     delete newBlockedSlots[slotKey];
                     delete newBlockedSlotsColors[slotKey];
                 }
@@ -434,7 +434,7 @@ export default function Schedule({
     const handleCancelEdit = () => {
         setEditingSchedule(null);
         setSelectedSlots({});
-        // Restore blocked slots from saved schedules
+        // Restaurar los slots bloqueados y colores desde los horarios guardados
         const newBlockedSlots = {};
         const newBlockedSlotsColors = {};
         savedSchedules.forEach((schedule) => {
@@ -650,25 +650,13 @@ export default function Schedule({
                                 slotStyle = `${blockedSlotsColors[slotKey]} border-yellow-400 border-2 animate-pulse`;
                                 tooltipText = 'Editando turno';
                             } else if (isBlocked) {
-                                if (isEdge) {
-                                    // Slot bloqueado pero en el borde - Color original con borde negro
-                                    slotStyle = `${blockedSlotsColors[slotKey]} border-black border-2 hover:brightness-110 transition-all`;
-                                    tooltipText =
-                                        'Click para solapar con este turno';
-                                } else {
-                                    // Slot bloqueado normal - Color original con borde gris
-                                    slotStyle = `${blockedSlotsColors[slotKey]} border-gray-400`;
-                                }
-                            } else if (isEdge) {
-                                // Slot disponible para selección - Blanco con borde negro
-                                slotStyle =
-                                    'bg-white hover:bg-gray-50 border-black transition-all';
-                                tooltipText =
-                                    'Click para solapar con el turno adyacente';
+                                // Todos los slots bloqueados tienen borde negro para indicar que se pueden solapar
+                                slotStyle = `${blockedSlotsColors[slotKey]} border-black border-2 hover:brightness-110 transition-all`;
+                                tooltipText = 'Click para solapar con este turno';
                             } else {
-                                // Slot no disponible - Blanco con borde gris
+                                // Slot disponible - Blanco con borde negro
                                 slotStyle =
-                                    'bg-white border-gray-300 border cursor-not-allowed';
+                                    'bg-white hover:bg-gray-50 border-black border-2 transition-all';
                             }
 
                             return (

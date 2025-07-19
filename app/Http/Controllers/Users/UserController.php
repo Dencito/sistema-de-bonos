@@ -607,6 +607,13 @@ class UserController extends Controller
 
         $branch = $user->branches->find($totem->branch_id)->first();
 
+        
+        if (!$branch) {
+            return response()->json([
+                'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
+            ], 404);
+        }
+        
         $validateSchedules = $this->validateSchedules($branch->available_schedules);
         if (!$validateSchedules) {
             return response()->json([
@@ -620,13 +627,6 @@ class UserController extends Controller
                 'message' => 'La sucursal no se encuentra activa.'
             ], 403);
         }
-
-        if (!$branch) {
-            return response()->json([
-                'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
-            ], 404);
-        }
-
         if ((string) $branch->status_id !== '1') {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa.'

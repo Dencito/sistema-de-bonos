@@ -173,7 +173,7 @@ class UserController extends Controller
                 'afp' => $request->afp,
                 'childrens' => $request->childrens,
                 'username' => $request->username,
-                'password' => $request->password ? Hash::make($request->password) : null,
+                'password' => $request->password,
                 'branch_id' => $request->branch_id,
                 'status_id' => 1,
                 'company_id' => $company ? $company->id : null,
@@ -607,13 +607,12 @@ class UserController extends Controller
 
         $branch = $user->branches->find($totem->branch_id)->first();
 
-        
         if (!$branch) {
             return response()->json([
                 'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
             ], 404);
         }
-        
+
         $validateSchedules = $this->validateSchedules($branch->available_schedules);
         if (!$validateSchedules) {
             return response()->json([
@@ -830,7 +829,7 @@ class UserController extends Controller
             if (!isset($schedule['schedules']) || !is_array($schedule['schedules'])) {
                 continue;
             }
-            
+
             // Buscar el horario para el día actual
             $daySchedules = null;
             foreach ($schedule['schedules'] as $ds) {
@@ -846,7 +845,7 @@ class UserController extends Controller
                     if ($range['start_time'] === '00:00' && $range['end_time'] === '00:00') {
                         continue;
                     }
-                    
+
                     $startTime = $range['start_time'];
                     $endTime = $range['end_time'];
 

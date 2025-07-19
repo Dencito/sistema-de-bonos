@@ -607,6 +607,20 @@ class UserController extends Controller
 
         $branch = $user->branches->find($totem->branch_id)->first();
 
+        $validateSchedules = $this->validateSchedules($branch->available_schedules);
+        if (!$validateSchedules) {
+            return response()->json([
+                'message' => 'La sucursal no se encuentra activa.'
+            ], 403);
+        }
+
+        $validateBonusSchedules = $this->validateSchedules($branch->bonus_schedules);
+        if (!$validateBonusSchedules) {
+            return response()->json([
+                'message' => 'La sucursal no se encuentra activa.'
+            ], 403);
+        }
+
         if (!$branch) {
             return response()->json([
                 'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
@@ -807,23 +821,42 @@ class UserController extends Controller
         }
 
         $bonusSchedules = json_decode($branch->bonus_schedules, true);
+        if (!is_array($bonusSchedules)) {
+            return false;
+        }
 
         // Check if current time falls within any of the bonus schedules
         foreach ($bonusSchedules as $schedule) {
-            $daySchedules = collect($schedule['schedules'])
-                ->firstWhere('day', ucfirst($currentDay));
+            if (!isset($schedule['schedules']) || !is_array($schedule['schedules'])) {
+                continue;
+            }
+            
+            // Buscar el horario para el día actual
+            $daySchedules = null;
+            foreach ($schedule['schedules'] as $ds) {
+                if (isset($ds['day']) && strtolower($ds['day']) === ucfirst($currentDay)) {
+                    $daySchedules = $ds;
+                    break;
+                }
+            }
 
-            if ($daySchedules) {
+            if ($daySchedules && isset($daySchedules['ranges']) && is_array($daySchedules['ranges'])) {
                 foreach ($daySchedules['ranges'] as $range) {
+                    // Ignorar rangos vacíos (00:00 a 00:00)
+                    if ($range['start_time'] === '00:00' && $range['end_time'] === '00:00') {
+                        continue;
+                    }
+                    
                     $startTime = $range['start_time'];
                     $endTime = $range['end_time'];
 
-                    // Handle special case for midnight (24:00)
+                    // Para el caso de 24:00, usamos una comparación especial
                     if ($endTime === '24:00') {
-                        $endTime = '23:59';
-                    }
-
-                    if ($this->isTimeInRange($currentTimeStr, $startTime, $endTime)) {
+                        // Si la hora actual es después de la hora de inicio o es 00:00
+                        if ($this->isTimeInRange($currentTimeStr, $startTime, '23:59') || $currentTimeStr === '00:00') {
+                            return true;
+                        }
+                    } else if ($this->isTimeInRange($currentTimeStr, $startTime, $endTime)) {
                         return true;
                     }
                 }
@@ -835,11 +868,26 @@ class UserController extends Controller
 
     private function isTimeInRange($time, $start, $end)
     {
+        // Validar que los parámetros no sean nulos o vacíos
+        if (empty($time) || empty($start) || empty($end)) {
+            return false;
+        }
+
+        // Manejar caso especial de 00:00 (puede ser inicio o fin de día)
+        if ($time === '00:00' && $end === '00:00') {
+            return true;
+        }
+
         $time = strtotime($time);
         $start = strtotime($start);
         $end = strtotime($end);
 
-        // If end time is less than start time, it means the range crosses midnight
+        // Si alguna conversión falló, retornar false
+        if ($time === false || $start === false || $end === false) {
+            return false;
+        }
+
+        // Si la hora de fin es menor que la hora de inicio, significa que el rango cruza la medianoche
         if ($end < $start) {
             return $time >= $start || $time <= $end;
         }

@@ -87,6 +87,9 @@ class CompanyController extends Controller
      */
     public function create(Request $request)
     {
+        // Eliminar el límite de tiempo para esta operación pesada
+        set_time_limit(0);
+        
         $company = null;
         $directoryCreated = false;
         $godaddySubdomainCreated = false;
@@ -628,6 +631,9 @@ class CompanyController extends Controller
 
     public function destroy(Request $request)
     {
+        // Eliminar el límite de tiempo para esta operación pesada
+        set_time_limit(0);
+        
         try {
             if (!auth()->user()->hasAnyRole(1)) {
                 abort(403, 'No tienes permiso para realizar esta acción.');

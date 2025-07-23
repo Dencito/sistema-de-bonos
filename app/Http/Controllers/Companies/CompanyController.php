@@ -639,14 +639,14 @@ class CompanyController extends Controller
                 return response()->json(['message' => 'La empresa no existe', 'error' => true], 400);
             }
             
-            // Iniciar una transacción para asegurar la integridad
-            DB::beginTransaction();
+            // Guardar información relevante antes de eliminar
+            $slug = $company->slug;
+            $domain = $company->domain;
+            
+            // Ya no usamos transacciones aquí porque dropCompanyTables maneja su propia transacción
+            // y puede desactivar las restricciones de claves foráneas
             
             try {
-                // Guardar información relevante antes de eliminar
-                $slug = $company->slug;
-                $domain = $company->domain;
-                
                 // 1. Eliminar tablas de la empresa
                 $this->dropCompanyTables($slug);
                 
@@ -665,16 +665,26 @@ class CompanyController extends Controller
                 // 4. Eliminar el registro de la empresa en la base de datos
                 $company->delete();
                 
-                // Confirmar todos los cambios
-                DB::commit();
-                
                 return response()->json([
                     'error' => false,
                     'message' => 'La empresa ha sido eliminada exitosamente',
                 ]);
             } catch (\Throwable $e) {
-                // Si algo falla, revertir todos los cambios
-                DB::rollBack();
+                // Capturar y registrar el error pero no lanzarlo de nuevo
+                \Log::error('Error en proceso de eliminación de empresa: ' . $e->getMessage());
+                \Log::error($e->getTraceAsString());
+                
+                // Intenta continuar con la eliminación de la empresa en la base de datos
+                if ($company->exists) {
+                    try {
+                        $company->delete();
+                        \Log::info('Se eliminó el registro de la empresa a pesar de otros errores');
+                    } catch (\Exception $deleteException) {
+                        \Log::error('No se pudo eliminar el registro de la empresa: ' . $deleteException->getMessage());
+                    }
+                }
+                
+                // Re-lanzar la excepción para manejarla en el catch exterior
                 throw $e;
             }
         } catch (\Throwable $e) {

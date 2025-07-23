@@ -229,32 +229,53 @@ class CompanyController extends Controller
             
             // 1. Eliminar tablas si fueron creadas
             if ($tablesCreated && $slug) {
-                \Log::info('Eliminando tablas creadas para la empresa: ' . $slug);
-                $this->dropCompanyTables($slug);
+                try {
+                    \Log::info('Eliminando tablas creadas para la empresa: ' . $slug);
+                    $this->dropCompanyTables($slug);
+                } catch (\Exception $e) {
+                    \Log::warning('Error al eliminar tablas durante rollback: ' . $e->getMessage());
+                }
             }
             
             // 2. Eliminar subdominio en cPanel si fue creado
             if ($cpanelSubdomainCreated && $slug) {
-                \Log::info('Eliminando subdominio en cPanel: ' . $slug);
-                $this->deleteSubdomainFromCpanel($slug);
+                try {
+                    \Log::info('Eliminando subdominio en cPanel: ' . $slug);
+                    $this->deleteSubdomainFromCpanel($slug);
+                } catch (\Exception $e) {
+                    \Log::warning('Error al eliminar subdominio cPanel durante rollback: ' . $e->getMessage());
+                }
             }
             
             // 3. Eliminar subdominio en GoDaddy si fue creado
             if ($godaddySubdomainCreated && $slug) {
-                \Log::info('Eliminando subdominio en GoDaddy: ' . $slug);
-                $this->deleteSubdomainFromGoDaddy($slug);
+                try {
+                    \Log::info('Eliminando subdominio en GoDaddy: ' . $slug);
+                    $this->deleteSubdomainFromGoDaddy($slug);
+                } catch (\Exception $e) {
+                    \Log::warning('Error al eliminar subdominio GoDaddy durante rollback: ' . $e->getMessage());
+                }
             }
             
             // 4. Eliminar el directorio si fue creado
             if ($directoryCreated && $company && $company->domain) {
-                \Log::info('Eliminando directorio: ' . $company->domain);
-                $this->deleteCompanyDirectory($company);
+                try {
+                    \Log::info('Eliminando directorio: ' . $company->domain);
+                    $this->deleteCompanyDirectory($company);
+                } catch (\Exception $e) {
+                    \Log::warning('Error al eliminar directorio durante rollback: ' . $e->getMessage());
+                }
             }
             
             // 5. Eliminar el registro de la empresa en la base de datos
-            if ($company && $company->id) {
-                \Log::info('Eliminando registro de la empresa ID: ' . $company->id);
-                $company->delete();
+            if ($company && isset($company->id)) {
+                try {
+                    \Log::info('Eliminando registro de la empresa ID: ' . $company->id);
+                    // Usar consulta directa en lugar de métodos de modelo que podrían depender de transacciones
+                    DB::table('companies')->where('id', $company->id)->delete();
+                } catch (\Exception $e) {
+                    \Log::warning('Error al eliminar registro de empresa durante rollback: ' . $e->getMessage());
+                }
             }
             
             \Log::info('Rollback completado con éxito');

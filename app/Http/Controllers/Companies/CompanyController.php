@@ -348,28 +348,83 @@ class CompanyController extends Controller
     private function deleteSubdomainFromGoDaddy($slug)
     {
         try {
-            $domain = env('GODADDY_DOMAIN');
-            $baseUrl = 'https://api.godaddy.com/v1';
+            $domain = env('GODADDY_DOMAIN') ?: $this->godaddyService->getDomain();
+            $baseUrl = $this->godaddyService->getBaseUrl();
             
-            // Eliminar registro A
-            $response = Http::withHeaders([
+            \Log::info("Iniciando eliminación de registros DNS para {$slug}.{$domain}");
+            
+            // Primero obtenemos los registros actuales para validar
+            $recordsResponse = Http::withHeaders([
                 'Authorization' => "sso-key {$this->godaddyService->getApiKey()}:{$this->godaddyService->getApiSecret()}",
                 'Content-Type' => 'application/json',
             ])->withOptions([
                 'verify' => false
-            ])->delete("{$baseUrl}/domains/{$domain}/records/A/{$slug}");
+            ])->get("{$baseUrl}/domains/{$domain}/records");
             
-            // Eliminar registro CNAME
-            $response2 = Http::withHeaders([
-                'Authorization' => "sso-key {$this->godaddyService->getApiKey()}:{$this->godaddyService->getApiSecret()}",
-                'Content-Type' => 'application/json',
-            ])->withOptions([
-                'verify' => false
-            ])->delete("{$baseUrl}/domains/{$domain}/records/CNAME/cpanel.{$slug}");
+            if ($recordsResponse->successful()) {
+                $allRecords = $recordsResponse->json();
+                \Log::info("Registros DNS obtenidos. Encontrados: " . count($allRecords));
+                
+                // Filtrar registros relacionados con este subdominio
+                $recordsToDelete = array_filter($allRecords, function($record) use ($slug) {
+                    return ($record['name'] === $slug) || 
+                           ($record['name'] === "cpanel.{$slug}") || 
+                           (strpos($record['name'], "{$slug}.") === 0);
+                });
+                
+                if (count($recordsToDelete) > 0) {
+                    \Log::info("Registros a eliminar para {$slug}: " . count($recordsToDelete));
+                    
+                    // Eliminar cada registro individualmente
+                    foreach ($recordsToDelete as $record) {
+                        $recordType = $record['type'];
+                        $recordName = $record['name'];
+                        
+                        // La API de GoDaddy requiere usar PUT para actualizar registros (no hay DELETE directo)
+                        // Por lo tanto, enviamos un array vacío para ese tipo y nombre
+                        $response = Http::withHeaders([
+                            'Authorization' => "sso-key {$this->godaddyService->getApiKey()}:{$this->godaddyService->getApiSecret()}",
+                            'Content-Type' => 'application/json',
+                        ])->withOptions([
+                            'verify' => false
+                        ])->put("{$baseUrl}/domains/{$domain}/records/{$recordType}/{$recordName}", []);
+                        
+                        if ($response->successful()) {
+                            \Log::info("Registro eliminado: {$recordType} {$recordName}");
+                        } else {
+                            \Log::warning("Error al eliminar registro {$recordType} {$recordName}: " . $response->body());
+                            
+                            // Intentar método alternativo - reemplazar con array vacío
+                            $response2 = Http::withHeaders([
+                                'Authorization' => "sso-key {$this->godaddyService->getApiKey()}:{$this->godaddyService->getApiSecret()}",
+                                'Content-Type' => 'application/json',
+                            ])->withOptions([
+                                'verify' => false
+                            ])->put("{$baseUrl}/domains/{$domain}/records/{$recordType}", [[
+                                'data' => '',
+                                'name' => $recordName,
+                                'ttl' => 3600,
+                                'type' => $recordType
+                            ]]);
+                            
+                            if ($response2->successful()) {
+                                \Log::info("Registro {$recordType} {$recordName} reemplazado con vacío");
+                            } else {
+                                \Log::warning("No se pudo reemplazar el registro {$recordType} {$recordName}: " . $response2->body());
+                            }
+                        }
+                    }
+                } else {
+                    \Log::info("No se encontraron registros DNS para eliminar relacionados con {$slug}");
+                }
+            } else {
+                \Log::error("Error al obtener registros DNS: " . $recordsResponse->body());
+            }
             
             return true;
         } catch (\Throwable $e) {
             \Log::error('Error al eliminar subdominio de GoDaddy: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
         }
     }
     

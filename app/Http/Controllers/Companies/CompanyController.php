@@ -267,30 +267,49 @@ class CompanyController extends Controller
     private function dropCompanyTables($slug)
     {
         try {
+            // Desactivar verificación de claves foráneas temporalmente
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            
+            // Orden correcto: primero las tablas hijas, luego las padres
+            // Este orden debe respetar las dependencias de claves foráneas
             $tablesToDrop = [
-                $slug . '_fingerprint_logs',
-                $slug . '_shifts',
-                $slug . '_tickets',
-                $slug . '_totems',
-                $slug . '_user_branches',
-                $slug . '_bonuses',
-                $slug . '_category_bonuses',
-                $slug . '_users',
-                $slug . '_branches',
-                $slug . '_companies',
-                $slug . '_roles',
-                $slug . '_statuses',
+                // Tablas que dependen de otras tablas
+                $slug . '_fingerprint_logs',     // Depende de users y totems
+                $slug . '_tickets',              // Depende de users y totems
+                $slug . '_shifts',               // Depende de users y branches
+                $slug . '_user_branches',        // Depende de users y branches
+                $slug . '_bonuses',              // Depende de users
+                $slug . '_totems',               // Depende de branches
+                
+                // Tablas con dependencias medias
+                $slug . '_users',                // Depende de roles, status, branches, companies, category_bonuses
+                $slug . '_branches',             // Depende de status y companies
+                
+                // Tablas con menos dependientes
+                $slug . '_category_bonuses',     // Pocos o ningún dependiente
+                $slug . '_companies',            // Depende de status
+                $slug . '_roles',                // Pocos o ningún dependiente
+                $slug . '_statuses',             // Tabla base, eliminar al final
             ];
             
             foreach ($tablesToDrop as $table) {
                 if (Schema::hasTable($table)) {
-                    Schema::drop($table);
-                    \Log::info('Tabla eliminada: ' . $table);
+                    try {
+                        Schema::drop($table);
+                        \Log::info('Tabla eliminada: ' . $table);
+                    } catch (\Exception $tableException) {
+                        \Log::warning('No se pudo eliminar la tabla {$table}: ' . $tableException->getMessage());
+                    }
                 }
             }
             
+            // Reactivar verificación de claves foráneas
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
             return true;
         } catch (\Throwable $e) {
+            // Asegurarse de reactivar la verificación de claves foráneas incluso en caso de error
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
             \Log::error('Error al eliminar tablas: ' . $e->getMessage());
             throw $e;
         }

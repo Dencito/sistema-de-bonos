@@ -19,6 +19,38 @@ class GoDaddyService
         $this->baseUrl = 'https://api.godaddy.com/v1';
         $this->domain = config('services.godaddy.domain');
     }
+    
+    /**
+     * Obtener API Key de GoDaddy
+     */
+    public function getApiKey()
+    {
+        return $this->apiKey;
+    }
+    
+    /**
+     * Obtener API Secret de GoDaddy
+     */
+    public function getApiSecret()
+    {
+        return $this->apiSecret;
+    }
+    
+    /**
+     * Obtener URL base de GoDaddy API
+     */
+    public function getBaseUrl()
+    {
+        return $this->baseUrl;
+    }
+    
+    /**
+     * Obtener dominio configurado
+     */
+    public function getDomain()
+    {
+        return $this->domain;
+    }
 
     public function createSubdomain(string $subdomain)
     {

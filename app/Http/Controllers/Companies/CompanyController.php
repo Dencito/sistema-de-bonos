@@ -86,6 +86,13 @@ class CompanyController extends Controller
      */
     public function create(Request $request)
     {
+        $company = null;
+        $directoryCreated = false;
+        $godaddySubdomainCreated = false;
+        $cpanelSubdomainCreated = false;
+        $tablesCreated = false;
+        $slug = null;
+
         try {
             if (!auth()->user()->hasAnyRole(1)) {
                 abort(403, 'No tienes permiso para acceder a esta página.');
@@ -157,29 +164,214 @@ class CompanyController extends Controller
             $data['settings'] = json_encode([]);  // Agregar settings vacío
             $data['is_active'] = true;  // Activar la empresa por defecto
 
-            $company = Company::create($data);
+            DB::beginTransaction();
+            try {
+                // Paso 1: Crear registro en la base de datos
+                $company = Company::create($data);
+                
+                // Paso 2: Crear directorio de la empresa
+                $domain = $this->createCompanyDirectory($company);
+                $directoryCreated = true;
 
-            //Dentro tiene la validacion si es local o no
-            $domain = $this->createCompanyDirectory($company);
-
-            if(env("APP_ENV") === "prod") {
-                $this->godaddyService->createSubdomain( $slug);
-                $this->cpanelService->createSubdomain( $slug);
+                // Paso 3: Si estamos en producción, crear subdominios
+                if (env("APP_ENV") === "prod") {
+                    // Crear subdominios en GoDaddy
+                    $this->godaddyService->createSubdomain($slug);
+                    $godaddySubdomainCreated = true;
+                    
+                    // Crear subdominios en cPanel
+                    $this->cpanelService->createSubdomain($slug);
+                    $cpanelSubdomainCreated = true;
+                }
+                
+                // Paso 4: Crear tablas de la empresa
+                $this->companyDatabaseService->createCompanyTables($request);
+                $tablesCreated = true;
+                
+                // Si todo salió bien, confirmar la transacción
+                DB::commit();
+                
+                return response()->json([
+                    'message' => 'Empresa creada exitosamente',
+                    'company' => $company,
+                ], 201);
+            } catch (\Exception $e) {
+                // Revertir la transacción
+                DB::rollBack();
+                throw $e;
             }
-            $this->companyDatabaseService->createCompanyTables($request);
-
-            return response()->json([
-                'message' => 'Empresa creada exitosamente',
-                'company' => $company,
-            ], 201);
         } catch (\Throwable $e) {
             $this->logError($e, 'companies.create', [
                 'company_data' => $request->only(['name', 'rut', 'email'])
             ]);
+            
+            // Realizar rollback manual de los recursos creados
+            $this->rollbackCompanyCreation($company, $slug, $directoryCreated, $godaddySubdomainCreated, $cpanelSubdomainCreated, $tablesCreated);
+            
             return response()->json([
                 'message' => 'Error al crear la empresa: ' . $e->getMessage(),
                 'status' => 500
-            ], 500);;
+            ], 500);
+        }
+    }
+    
+    /**
+     * Rollback de la creación de una empresa si algo falla
+     */
+    private function rollbackCompanyCreation($company, $slug, $directoryCreated, $godaddySubdomainCreated, $cpanelSubdomainCreated, $tablesCreated)
+    {
+        try {
+            \Log::info('Iniciando rollback de creación de empresa');
+            
+            // 1. Eliminar tablas si fueron creadas
+            if ($tablesCreated && $slug) {
+                \Log::info('Eliminando tablas creadas para la empresa: ' . $slug);
+                $this->dropCompanyTables($slug);
+            }
+            
+            // 2. Eliminar subdominio en cPanel si fue creado
+            if ($cpanelSubdomainCreated && $slug) {
+                \Log::info('Eliminando subdominio en cPanel: ' . $slug);
+                $this->deleteSubdomainFromCpanel($slug);
+            }
+            
+            // 3. Eliminar subdominio en GoDaddy si fue creado
+            if ($godaddySubdomainCreated && $slug) {
+                \Log::info('Eliminando subdominio en GoDaddy: ' . $slug);
+                $this->deleteSubdomainFromGoDaddy($slug);
+            }
+            
+            // 4. Eliminar el directorio si fue creado
+            if ($directoryCreated && $company && $company->domain) {
+                \Log::info('Eliminando directorio: ' . $company->domain);
+                $this->deleteCompanyDirectory($company);
+            }
+            
+            // 5. Eliminar el registro de la empresa en la base de datos
+            if ($company && $company->id) {
+                \Log::info('Eliminando registro de la empresa ID: ' . $company->id);
+                $company->delete();
+            }
+            
+            \Log::info('Rollback completado con éxito');
+        } catch (\Throwable $e) {
+            \Log::error('Error durante el rollback de creación de empresa: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+        }
+    }
+    
+    /**
+     * Eliminar tablas creadas para una empresa
+     */
+    private function dropCompanyTables($slug)
+    {
+        try {
+            $tablesToDrop = [
+                $slug . '_fingerprint_logs',
+                $slug . '_shifts',
+                $slug . '_tickets',
+                $slug . '_totems',
+                $slug . '_user_branches',
+                $slug . '_bonuses',
+                $slug . '_category_bonuses',
+                $slug . '_users',
+                $slug . '_branches',
+                $slug . '_companies',
+                $slug . '_roles',
+                $slug . '_statuses',
+            ];
+            
+            foreach ($tablesToDrop as $table) {
+                if (Schema::hasTable($table)) {
+                    Schema::drop($table);
+                    \Log::info('Tabla eliminada: ' . $table);
+                }
+            }
+            
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Error al eliminar tablas: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    /**
+     * Eliminar subdominio de cPanel
+     */
+    private function deleteSubdomainFromCpanel($slug)
+    {
+        try {
+            $response = Http::withoutVerifying()
+                ->withHeaders([
+                    'Authorization' => "cpanel {$this->cpanelService->getUsername()}:{$this->cpanelService->getToken()}",
+                ])->post("{$this->cpanelService->getBaseUrl()}/execute/SubDomain/delsubdomain", [
+                    'domain' => $slug,
+                    'rootdomain' => env('GODADDY_DOMAIN')
+                ]);
+                
+            if ($response->failed()) {
+                \Log::error('Error al eliminar subdominio en cPanel: ' . $response->body());
+            }
+            
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Error al eliminar subdominio de cPanel: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Eliminar subdominio de GoDaddy
+     */
+    private function deleteSubdomainFromGoDaddy($slug)
+    {
+        try {
+            $domain = env('GODADDY_DOMAIN');
+            $baseUrl = 'https://api.godaddy.com/v1';
+            
+            // Eliminar registro A
+            $response = Http::withHeaders([
+                'Authorization' => "sso-key {$this->godaddyService->getApiKey()}:{$this->godaddyService->getApiSecret()}",
+                'Content-Type' => 'application/json',
+            ])->withOptions([
+                'verify' => false
+            ])->delete("{$baseUrl}/domains/{$domain}/records/A/{$slug}");
+            
+            // Eliminar registro CNAME
+            $response2 = Http::withHeaders([
+                'Authorization' => "sso-key {$this->godaddyService->getApiKey()}:{$this->godaddyService->getApiSecret()}",
+                'Content-Type' => 'application/json',
+            ])->withOptions([
+                'verify' => false
+            ])->delete("{$baseUrl}/domains/{$domain}/records/CNAME/cpanel.{$slug}");
+            
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Error al eliminar subdominio de GoDaddy: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Eliminar directorio de la empresa
+     */
+    private function deleteCompanyDirectory(Company $company)
+    {
+        try {
+            if (!$company->domain) {
+                return false;
+            }
+            
+            $sourceDir = base_path();
+            $parentDir = dirname($sourceDir);
+            $targetDir = $parentDir . DIRECTORY_SEPARATOR . $company->domain;
+            
+            if (File::exists($targetDir)) {
+                File::deleteDirectory($targetDir);
+                return true;
+            }
+            
+            return false;
+        } catch (\Throwable $e) {
+            \Log::error('Error al eliminar directorio de la empresa: ' . $e->getMessage());
         }
     }
 
@@ -420,23 +612,60 @@ class CompanyController extends Controller
             if (!auth()->user()->hasAnyRole(1)) {
                 abort(403, 'No tienes permiso para realizar esta acción.');
             }
+            
             $company = Company::find($request->id);
 
             if (!$company) {
                 return response()->json(['message' => 'La empresa no existe', 'error' => true], 400);
             }
-
-            $company->delete();
-
-            return response()->json([
-                'error' => false,
-                'message' => 'La empresa ha sido eliminada exitosamente',
-            ]);
+            
+            // Iniciar una transacción para asegurar la integridad
+            DB::beginTransaction();
+            
+            try {
+                // Guardar información relevante antes de eliminar
+                $slug = $company->slug;
+                $domain = $company->domain;
+                
+                // 1. Eliminar tablas de la empresa
+                $this->dropCompanyTables($slug);
+                
+                // 2. Si estamos en producción, eliminar subdominios
+                if (env("APP_ENV") === "prod") {
+                    // Eliminar subdominio en cPanel
+                    $this->deleteSubdomainFromCpanel($slug);
+                    
+                    // Eliminar subdominio en GoDaddy
+                    $this->deleteSubdomainFromGoDaddy($slug);
+                }
+                
+                // 3. Eliminar el directorio de la empresa
+                $this->deleteCompanyDirectory($company);
+                
+                // 4. Eliminar el registro de la empresa en la base de datos
+                $company->delete();
+                
+                // Confirmar todos los cambios
+                DB::commit();
+                
+                return response()->json([
+                    'error' => false,
+                    'message' => 'La empresa ha sido eliminada exitosamente',
+                ]);
+            } catch (\Throwable $e) {
+                // Si algo falla, revertir todos los cambios
+                DB::rollBack();
+                throw $e;
+            }
         } catch (\Throwable $e) {
             $this->logError($e, 'companies.destroy', [
                 'company_id' => $request->input('id')
             ]);
-            throw $e;
+            return response()->json([
+                'error' => true,
+                'message' => 'Error al eliminar la empresa: ' . $e->getMessage(),
+                'status' => 500
+            ], 500);
         }
     }
 

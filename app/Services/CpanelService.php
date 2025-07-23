@@ -20,6 +20,38 @@ class CpanelService
         $this->domain = config('services.cpanel.domain');
         $this->baseUrl = config('services.cpanel.host');
     }
+    
+    /**
+     * Obtener nombre de usuario de cPanel
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+    
+    /**
+     * Obtener token de cPanel
+     */
+    public function getToken()
+    {
+        return $this->token;
+    }
+    
+    /**
+     * Obtener dominio configurado
+     */
+    public function getDomain()
+    {
+        return $this->domain;
+    }
+    
+    /**
+     * Obtener URL base del API de cPanel
+     */
+    public function getBaseUrl()
+    {
+        return $this->baseUrl;
+    }
 
     public function createSubdomain(string $subdomain)
     {

@@ -90,6 +90,12 @@ class CompanyController extends Controller
         // Eliminar el límite de tiempo para esta operación pesada
         set_time_limit(0);
         
+        \Log::info('Iniciando creación de empresa', [
+            'request' => $request->only(['name', 'slug', 'rutNumbers', 'email', 'business']),
+            'ip' => $request->ip(),
+            'user_id' => auth()->id()
+        ]);
+        
         $company = null;
         $directoryCreated = false;
         $godaddySubdomainCreated = false;
@@ -102,6 +108,7 @@ class CompanyController extends Controller
                 abort(403, 'No tienes permiso para acceder a esta página.');
             }
 
+            \Log::info('Verificando permisos de usuario');
             $validator = Validator::make($request->all(), [
                 'creationDate' => 'required|date',
                 'db_name' => 'string',
@@ -134,16 +141,22 @@ class CompanyController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::warning('Validación fallida en creación de empresa', [
+                    'errors' => $validator->errors()->toArray()
+                ]);
                 return response()->json([
                     'message' => 'Error en la validación de los datos',
                     'errors' => $validator->errors(),
                     'status' => 400
                 ], 400);
             }
+            \Log::info('Validación exitosa de datos de empresa');
 
             // Verificar si ya existe una empresa con el mismo nombre
+            \Log::info('Verificando si ya existe una empresa con el mismo nombre', ['name' => $request->name]);
             $existingCompany = $this->getCompanyByName($request->name);
             if ($existingCompany) {
+                \Log::warning('Ya existe una empresa con este nombre', ['name' => $request->name, 'existing_id' => $existingCompany->id]);
                 return response()->json([
                     'message' => 'Ya existe una empresa con este nombre',
                     'status' => 400
@@ -151,8 +164,10 @@ class CompanyController extends Controller
             }
 
             // Verificar si ya existe una empresa con el mismo RUT
+            \Log::info('Verificando si ya existe una empresa con el mismo RUT', ['rutNumbers' => $request->rutNumbers]);
             $existingRut = $this->getRutByRutNumbers($request->rutNumbers);
             if ($existingRut) {
+                \Log::warning('Ya existe una empresa con este RUT', ['rutNumbers' => $request->rutNumbers, 'existing_id' => $existingRut->id]);
                 return response()->json([
                     'message' => 'Ya existe una empresa con este RUT',
                     'status' => 400
@@ -168,32 +183,52 @@ class CompanyController extends Controller
             $data['settings'] = json_encode([]);  // Agregar settings vacío
             $data['is_active'] = true;  // Activar la empresa por defecto
 
+            \Log::info('Iniciando transacción para creación de empresa', ['data' => $data]);
             DB::beginTransaction();
             try {
                 // Paso 1: Crear registro en la base de datos
+                \Log::info('Paso 1: Creando registro en la base de datos');
                 $company = Company::create($data);
+                \Log::info('Registro creado en la base de datos', ['company_id' => $company->id]);
                 
                 // Paso 2: Crear directorio de la empresa
+                \Log::info('Paso 2: Creando directorio de la empresa', ['company_id' => $company->id]);
                 $domain = $this->createCompanyDirectory($company);
                 $directoryCreated = true;
+                \Log::info('Directorio de empresa creado exitosamente', ['domain' => $domain]);
 
                 // Paso 3: Si estamos en producción, crear subdominios
                 if (env("APP_ENV") === "prod") {
                     // Crear subdominios en GoDaddy
-                    $this->godaddyService->createSubdomain($slug);
+                    \Log::info('Paso 3.1: Creando subdominio en GoDaddy', ['slug' => $slug]);
+                    $godaddyResult = $this->godaddyService->createSubdomain($slug);
                     $godaddySubdomainCreated = true;
+                    \Log::info('Subdominio en GoDaddy creado', ['slug' => $slug, 'result' => $godaddyResult]);
                     
                     // Crear subdominios en cPanel
-                    $this->cpanelService->createSubdomain($slug);
+                    \Log::info('Paso 3.2: Creando subdominio en cPanel', ['slug' => $slug]);
+                    $cpanelResult = $this->cpanelService->createSubdomain($slug);
                     $cpanelSubdomainCreated = true;
+                    \Log::info('Subdominio en cPanel creado', ['slug' => $slug, 'result' => $cpanelResult]);
+                } else {
+                    \Log::info('Saltando creación de subdominios (entorno no es producción)', ['env' => env("APP_ENV")]);
                 }
                 
                 // Paso 4: Crear tablas de la empresa
-                $this->companyDatabaseService->createCompanyTables($request);
+                \Log::info('Paso 4: Creando tablas de la empresa', ['slug' => $slug]);
+                $tablesResult = $this->companyDatabaseService->createCompanyTables($request);
                 $tablesCreated = true;
+                \Log::info('Tablas de empresa creadas exitosamente', ['result' => $tablesResult]);
                 
                 // Si todo salió bien, confirmar la transacción
+                \Log::info('Todos los pasos completados, confirmando transacción');
                 DB::commit();
+                
+                \Log::info('Empresa creada exitosamente', [
+                    'company_id' => $company->id,
+                    'domain' => $company->domain,
+                    'slug' => $company->slug
+                ]);
                 
                 return response()->json([
                     'message' => 'Empresa creada exitosamente',
@@ -710,11 +745,19 @@ class CompanyController extends Controller
         // Eliminar el límite de tiempo para esta operación pesada
         set_time_limit(0);
         
+        \Log::info('Iniciando eliminación de empresa', [
+            'company_id' => $request->id,
+            'ip' => $request->ip(),
+            'user_id' => auth()->id()
+        ]);
+        
         try {
             if (!auth()->user()->hasAnyRole(1)) {
+                \Log::warning('Intento de eliminación sin permisos', ['user_id' => auth()->id()]);
                 abort(403, 'No tienes permiso para realizar esta acción.');
             }
             
+            \Log::info('Buscando empresa a eliminar', ['id' => $request->id]);
             $company = Company::find($request->id);
 
             if (!$company) {
@@ -730,22 +773,39 @@ class CompanyController extends Controller
             
             try {
                 // 1. Eliminar tablas de la empresa
-                $this->dropCompanyTables($slug);
+                \Log::info('Paso 1: Eliminando tablas de la empresa', ['slug' => $slug]);
+                $tablesDropResult = $this->dropCompanyTables($slug);
+                \Log::info('Tablas eliminadas', ['result' => $tablesDropResult]);
                 
                 // 2. Si estamos en producción, eliminar subdominios
                 if (env("APP_ENV") === "prod") {
                     // Eliminar subdominio en cPanel
-                    $this->deleteSubdomainFromCpanel($slug);
+                    \Log::info('Paso 2.1: Eliminando subdominio en cPanel', ['slug' => $slug]);
+                    $cpanelResult = $this->deleteSubdomainFromCpanel($slug);
+                    \Log::info('Resultado de eliminación de subdominio en cPanel', ['result' => $cpanelResult]);
                     
                     // Eliminar subdominio en GoDaddy
-                    $this->deleteSubdomainFromGoDaddy($slug);
+                    \Log::info('Paso 2.2: Eliminando subdominio en GoDaddy', ['slug' => $slug]);
+                    $godaddyResult = $this->deleteSubdomainFromGoDaddy($slug);
+                    \Log::info('Resultado de eliminación de subdominio en GoDaddy', ['result' => $godaddyResult]);
+                } else {
+                    \Log::info('Saltando eliminación de subdominios (entorno no es producción)');
                 }
                 
                 // 3. Eliminar el directorio de la empresa
-                $this->deleteCompanyDirectory($company);
+                \Log::info('Paso 3: Eliminando directorio de la empresa', ['domain' => $company->domain]);
+                $directoryResult = $this->deleteCompanyDirectory($company);
+                \Log::info('Directorio eliminado', ['result' => $directoryResult]);
                 
                 // 4. Eliminar el registro de la empresa en la base de datos
+                \Log::info('Paso 4: Eliminando registro en la base de datos', ['company_id' => $company->id]);
                 $company->delete();
+                \Log::info('Registro de empresa eliminado exitosamente');
+                
+                \Log::info('Proceso de eliminación de empresa completado con éxito', [
+                    'company_id' => $request->id,
+                    'name' => $company->name
+                ]);
                 
                 return response()->json([
                     'error' => false,
@@ -753,16 +813,30 @@ class CompanyController extends Controller
                 ]);
             } catch (\Throwable $e) {
                 // Capturar y registrar el error pero no lanzarlo de nuevo
-                \Log::error('Error en proceso de eliminación de empresa: ' . $e->getMessage());
+                \Log::error('Error en proceso de eliminación de empresa: ' . $e->getMessage(), [
+                    'company_id' => $request->id,
+                    'slug' => $slug,
+                    'domain' => $domain,
+                    'exception' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
                 \Log::error($e->getTraceAsString());
                 
                 // Intenta continuar con la eliminación de la empresa en la base de datos
                 if ($company->exists) {
                     try {
+                        \Log::info('Intentando eliminar registro de la empresa a pesar de errores previos', ['company_id' => $company->id]);
                         $company->delete();
-                        \Log::info('Se eliminó el registro de la empresa a pesar de otros errores');
+                        \Log::info('Se eliminó el registro de la empresa a pesar de otros errores', ['company_id' => $request->id]);
                     } catch (\Exception $deleteException) {
-                        \Log::error('No se pudo eliminar el registro de la empresa: ' . $deleteException->getMessage());
+                        \Log::error('No se pudo eliminar el registro de la empresa', [
+                            'company_id' => $request->id,
+                            'exception' => get_class($deleteException),
+                            'message' => $deleteException->getMessage(),
+                            'file' => $deleteException->getFile(),
+                            'line' => $deleteException->getLine()
+                        ]);
                     }
                 }
                 

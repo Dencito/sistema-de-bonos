@@ -104,7 +104,7 @@ const trabajadorSchema = z.object({
     nationality: z.string().min(1, 'La nacionalidad es requerida'),
     address: z.string().min(1, 'La dirección es requerida').max(100),
     marital_status: z.string().min(1, 'El estado civil es requerido'),
-    pension: z.string().min(1, 'La previsión es requerida').max(20),
+    pension: z.string().min(1, 'La Comuna es requerida').max(20),
     health: z.string().min(1, 'La salud es requerida').max(20),
     afp: z.string().min(1, 'La AFP es requerida').max(20),
     childrens: z.string().min(1, 'El número de hijos es requerido').max(2),
@@ -773,7 +773,7 @@ export default function ModalViewUser({
                     name="pension"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Previsión</FormLabel>
+                            <FormLabel>Comuna</FormLabel>
                             <FormControl>
                                 <Input {...field} maxLength={20} />
                             </FormControl>

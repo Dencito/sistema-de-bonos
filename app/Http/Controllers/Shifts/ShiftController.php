@@ -77,6 +77,7 @@ class ShiftController extends Controller
         $shift = ShiftRecord::create([
             'branch_id' => $branch->id,
             'opened_by_user_id' => $user->id,
+            'closed_by_user_id' => null,  // Explicitly set to null since the shift is not closed yet
             'opening_time' => now(),
             'status' => 'open'
         ]);

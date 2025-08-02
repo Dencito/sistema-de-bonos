@@ -613,19 +613,19 @@ class UserController extends Controller
             ], 404);
         }
 
-        $validateSchedules = $this->validateSchedules($branch->available_schedules);
-        if (!$validateSchedules) {
-            return response()->json([
-                'message' => 'La sucursal no se encuentra activa.'
-            ], 403);
-        }
+        // $validateSchedules = $this->validateSchedules($branch->available_schedules);
+        // if (!$validateSchedules) {
+        //     return response()->json([
+        //         'message' => 'La sucursal no se encuentra activa.'
+        //     ], 403);
+        // }
 
-        $validateBonusSchedules = $this->validateSchedules($branch->bonus_schedules);
-        if (!$validateBonusSchedules) {
-            return response()->json([
-                'message' => 'La sucursal no se encuentra activa.'
-            ], 403);
-        }
+        // $validateBonusSchedules = $this->validateSchedules($branch->bonus_schedules);
+        // if (!$validateBonusSchedules) {
+        //     return response()->json([
+        //         'message' => 'La sucursal no se encuentra activa.'
+        //     ], 403);
+        // }
         if ((string) $branch->status_id !== '1') {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa.'

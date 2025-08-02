@@ -309,7 +309,7 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
                     $table->foreignId('opened_by_user_id')->constrained($usersTable)->onDelete('cascade')->nullable();
-                    $table->foreignId('closed_by_user_id')->constrained($usersTable)->onDelete('cascade')->nullable();
+                    $table->foreignId('closed_by_user_id')->nullable()->constrained($usersTable)->onDelete('cascade');
                     $table->timestamp('opening_time')->useCurrent()->nullable();
                     $table->timestamp('closing_time')->nullable()->nullable();
                     $table->enum('status', ['open', 'closed'])->default('open');

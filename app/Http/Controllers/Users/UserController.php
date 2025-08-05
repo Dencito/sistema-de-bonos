@@ -349,7 +349,7 @@ class UserController extends Controller
             'afp' => $request->afp,
             'childrens' => $request->childrens,
             'username' => $request->username,
-            'password' => $request->filled('password') ? Hash::make($validatedData['password']) : $user->password,
+            'password' => $request->filled('password') ? $validatedData['password'] : $user->password,
             'branch_id' => $request->branch_id,
             'status_id' => $request->status_id,
             'category_bonus_id' => $request->category_bonus_id,

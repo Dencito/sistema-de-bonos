@@ -24,6 +24,7 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -613,19 +614,31 @@ class UserController extends Controller
             ], 404);
         }
 
-        // $validateSchedules = $this->validateSchedules($branch->available_schedules);
-        // if (!$validateSchedules) {
-        //     return response()->json([
-        //         'message' => 'La sucursal no se encuentra activa.'
-        //     ], 403);
-        // }
+        // Validar available_schedules
+        $available_schedules = null;
+        if (isset($branch->available_schedules) && !empty($branch->available_schedules)) {
+            $available_schedules = is_string($branch->available_schedules) ? json_decode($branch->available_schedules, true) : $branch->available_schedules;
+        }
 
-        // $validateBonusSchedules = $this->validateSchedules($branch->bonus_schedules);
-        // if (!$validateBonusSchedules) {
-        //     return response()->json([
-        //         'message' => 'La sucursal no se encuentra activa.'
-        //     ], 403);
-        // }
+        $validateSchedules = $this->validateSchedules($available_schedules);
+        if (!$validateSchedules) {
+            return response()->json([
+                'message' => 'La sucursal no se encuentra activa en este horario.'
+            ], 403);
+        }
+
+        // Validar bonus_schedules
+        $bonus_schedules = null;
+        if (isset($branch->bonus_schedules) && !empty($branch->bonus_schedules)) {
+            $bonus_schedules = is_string($branch->bonus_schedules) ? json_decode($branch->bonus_schedules, true) : $branch->bonus_schedules;
+        }
+        
+        $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
+        if (!$validateBonusSchedules) {
+            return response()->json([
+                'message' => 'La sucursal no tiene bonos disponibles en este horario.'
+            ], 403);
+        }
         if ((string) $branch->status_id !== '1') {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa.'
@@ -808,24 +821,45 @@ class UserController extends Controller
         ], 201);
     }
 
-    private function validateSchedules($branch)
+    private function validateSchedules($schedules)
     {
-        $currentTime = now();
+        $currentTime = now()->setTimezone('America/Santiago');
         $currentDay = strtolower($currentTime->format('l'));  // Get current day name in lowercase
         $currentTimeStr = $currentTime->format('H:i');
 
-        // If bonus_schedules is null, no bonuses are available
-        if ($branch->bonus_schedules === null) {
+        // Si no hay horarios, retornamos false
+        if (empty($schedules)) {
             return false;
         }
 
-        $bonusSchedules = json_decode($branch->bonus_schedules, true);
-        if (!is_array($bonusSchedules)) {
+        // Si es un string JSON, lo decodificamos
+        if (is_string($schedules)) {
+            $schedules = json_decode($schedules, true);
+        }
+
+        // Verificamos que sea un array válido
+        if (!is_array($schedules)) {
             return false;
         }
 
-        // Check if current time falls within any of the bonus schedules
-        foreach ($bonusSchedules as $schedule) {
+        // Traducción de días de inglés a español
+        $dayTranslation = [
+            'monday' => 'lunes',
+            'tuesday' => 'martes',
+            'wednesday' => 'miércoles',
+            'thursday' => 'jueves',
+            'friday' => 'viernes',
+            'saturday' => 'sábado',
+            'sunday' => 'domingo'
+        ];
+        
+        // Traducir el día actual a español si está en inglés
+        if (isset($dayTranslation[$currentDay])) {
+            $currentDay = $dayTranslation[$currentDay];
+        }
+
+        // Check if current time falls within any of the schedules
+        foreach ($schedules as $schedule) {
             if (!isset($schedule['schedules']) || !is_array($schedule['schedules'])) {
                 continue;
             }
@@ -833,13 +867,24 @@ class UserController extends Controller
             // Buscar el horario para el día actual
             $daySchedules = null;
             foreach ($schedule['schedules'] as $ds) {
-                if (isset($ds['day']) && strtolower($ds['day']) === ucfirst($currentDay)) {
+                if (isset($ds['day']) && strtolower($ds['day']) === $currentDay) {
                     $daySchedules = $ds;
                     break;
                 }
             }
 
-            if ($daySchedules && isset($daySchedules['ranges']) && is_array($daySchedules['ranges'])) {
+            // Verificar si hay times disponibles para el día actual
+            if ($daySchedules && isset($daySchedules['times']) && is_array($daySchedules['times'])) {
+                // Recorrer los times en lugar de los ranges
+                foreach ($daySchedules['times'] as $time) {
+                    // Comparar directamente con la hora actual
+                    if ($currentTimeStr === $time) {
+                        return true;
+                    }
+                }
+            } 
+            // Si no hay times pero hay ranges, usar el método anterior como fallback
+            else if ($daySchedules && isset($daySchedules['ranges']) && is_array($daySchedules['ranges'])) {
                 foreach ($daySchedules['ranges'] as $range) {
                     // Ignorar rangos vacíos (00:00 a 00:00)
                     if ($range['start_time'] === '00:00' && $range['end_time'] === '00:00') {

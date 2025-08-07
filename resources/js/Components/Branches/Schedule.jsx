@@ -217,8 +217,8 @@ export default function Schedule({
                 endMinutes = 24 * 60;
             }
             
-            // Generar intervalos de 30 minutos
-            for (let minutes = startMinutes; minutes <= endMinutes; minutes += 30) {
+            // Generar intervalos de 1 minuto (minuto a minuto)
+            for (let minutes = startMinutes; minutes <= endMinutes; minutes++) {
                 const hour = Math.floor(minutes / 60);
                 const min = minutes % 60;
                 const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;

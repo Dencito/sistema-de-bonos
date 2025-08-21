@@ -806,6 +806,11 @@ class UserController extends Controller
             }
         }
 
+        // Contar el total de logs del usuario para determinar si es entrada o salida
+        $totalLogs = FingerprintLog::where('user_id', $user->id)->count();
+        $isEntry = ($totalLogs % 2 === 0); // Si el total actual es par, el próximo será impar (entrada)
+        $registrationType = $isEntry ? 'entrada' : 'salida';
+
         $fingerprintLog = FingerprintLog::create([
             'user_id' => $user->id,
             'totem_id' => $totem->id,
@@ -816,8 +821,11 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'message' => 'Huella registrada exitosamente',
-            'data' => $fingerprintLog
+            'message' => "Huella registrada exitosamente como {$registrationType}",
+            'data' => array_merge($fingerprintLog->toArray(), [
+                'type' => $registrationType,
+                'is_entry' => $isEntry
+            ])
         ], 201);
     }
 

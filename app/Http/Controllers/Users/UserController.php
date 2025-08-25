@@ -779,7 +779,7 @@ class UserController extends Controller
                 'tickets' => collect($tickets)->map(function ($ticket) use ($ticketNumber) {
                     return [
                         'totalAmount' => $ticket->total_amount,
-                        'bonusType' => $ticket->type,
+                        'type' => $ticket->type,
                         'createdAt' => $ticket->created_at,
                     ];
                 }),

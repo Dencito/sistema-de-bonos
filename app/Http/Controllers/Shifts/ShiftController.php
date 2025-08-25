@@ -82,8 +82,6 @@ class ShiftController extends Controller
             'status' => 'open'
         ]);
 
-        Cache::forever('one_shift_ticket_counter', 0);
-
         return response()->json([
             'message' => 'Turno iniciado correctamente',
             'status' => 'success',
@@ -128,8 +126,6 @@ class ShiftController extends Controller
             'closing_time' => now(),
             'status' => 'closed'
         ]);
-
-        Cache::forever('one_shift_ticket_counter', 0);
 
         return response()->json([
             'message' => 'Turno finalizado correctamente',

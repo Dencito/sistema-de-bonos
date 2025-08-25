@@ -774,15 +774,10 @@ class UserController extends Controller
         ]);
         \Log::info('Tickets 3');
 
-        $ticketNumber = Cache::increment('one_shift_ticket_counter', 1);
-
-        \Log::info('Ticket number: ' . $ticketNumber);
-
         return response()->json([
             'data' => [
                 'tickets' => collect($tickets)->map(function ($ticket) use ($ticketNumber) {
                     return [
-                        'number' => $ticketNumber,
                         'totalAmount' => $ticket->total_amount,
                         'bonusType' => $ticket->type,
                         'createdAt' => $ticket->created_at,

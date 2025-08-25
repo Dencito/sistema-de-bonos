@@ -24,7 +24,6 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -632,7 +631,7 @@ class UserController extends Controller
         if (isset($branch->bonus_schedules) && !empty($branch->bonus_schedules)) {
             $bonus_schedules = is_string($branch->bonus_schedules) ? json_decode($branch->bonus_schedules, true) : $branch->bonus_schedules;
         }
-        
+
         $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
         if (!$validateBonusSchedules) {
             return response()->json([
@@ -806,10 +805,8 @@ class UserController extends Controller
             }
         }
 
-        // Contar el total de logs del usuario para determinar si es entrada o salida
         $totalLogs = FingerprintLog::where('user_id', $user->id)->count();
-        $isEntry = ($totalLogs % 2 === 0); // Si el total actual es par, el próximo será impar (entrada)
-        $registrationType = $isEntry ? 'entrada' : 'salida';
+        $isEntry = ($totalLogs % 2 === 0);  // Si el total actual es par, el próximo será impar (entrada)
 
         $fingerprintLog = FingerprintLog::create([
             'user_id' => $user->id,
@@ -821,10 +818,9 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'message' => "Huella registrada exitosamente como {$registrationType}",
+            'message' => __('Huella registrada exitosamente como :attendanceType', ['attendanceType' => $isEntry ? 'Entrada' : 'Salida']),
             'data' => array_merge($fingerprintLog->toArray(), [
-                'type' => $registrationType,
-                'is_entry' => $isEntry
+                'attendanceType' => $isEntry ? 'Entrada' : 'Salida',
             ])
         ], 201);
     }
@@ -860,7 +856,7 @@ class UserController extends Controller
             'saturday' => 'sábado',
             'sunday' => 'domingo'
         ];
-        
+
         // Traducir el día actual a español si está en inglés
         if (isset($dayTranslation[$currentDay])) {
             $currentDay = $dayTranslation[$currentDay];
@@ -890,7 +886,7 @@ class UserController extends Controller
                         return true;
                     }
                 }
-            } 
+            }
             // Si no hay times pero hay ranges, usar el método anterior como fallback
             else if ($daySchedules && isset($daySchedules['ranges']) && is_array($daySchedules['ranges'])) {
                 foreach ($daySchedules['ranges'] as $range) {

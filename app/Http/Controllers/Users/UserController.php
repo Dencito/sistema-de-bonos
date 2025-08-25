@@ -784,7 +784,7 @@ class UserController extends Controller
                     return [
                         'number' => $ticketNumber,
                         'totalAmount' => $ticket->total_amount,
-                        'type' => $ticket->type,
+                        'bonusType' => $ticket->type,
                         'createdAt' => $ticket->created_at,
                     ];
                 }),

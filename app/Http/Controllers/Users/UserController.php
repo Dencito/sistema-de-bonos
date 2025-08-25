@@ -571,6 +571,14 @@ class UserController extends Controller
 
     public function getBonusesAvailablesUserById($id, $totemUUID)
     {
+        \Log::info('getBonusesAvailablesUserById called', [
+            'user_id' => $id,
+            'totem_uuid' => $totemUUID,
+            'request_url' => request()->fullUrl(),
+            'request_method' => request()->method(),
+            'request_headers' => request()->headers->all(),
+        ]);
+
         $user = User::with([
             'bonuses',
             'categoryBonus',
@@ -605,6 +613,8 @@ class UserController extends Controller
             ], 404);
         }
 
+        \Log::info('Totem encontrado: ' . $totem->branch_id);
+
         $branch = $user->branches->find($totem->branch_id)->first();
 
         if (!$branch) {
@@ -613,16 +623,21 @@ class UserController extends Controller
             ], 404);
         }
 
+        \Log::info('Sucursal encontrada: ' . $branch->id);
+
         // Validar available_schedules
         $available_schedules = null;
         if (isset($branch->available_schedules) && !empty($branch->available_schedules)) {
             $available_schedules = is_string($branch->available_schedules) ? json_decode($branch->available_schedules, true) : $branch->available_schedules;
         }
 
+        \Log::info('Horarios disponibles:');
+        
         $validateSchedules = $this->validateSchedules($available_schedules);
+        \Log::info('validateSchedules: ' . ($validateSchedules ? 'true' : 'false'));
         if (!$validateSchedules) {
             return response()->json([
-                'message' => 'La sucursal no se encuentra activa en este horario.'
+                'message' => 'La sucursal no se encuentra activa en este horario. 33'
             ], 403);
         }
 
@@ -631,6 +646,8 @@ class UserController extends Controller
         if (isset($branch->bonus_schedules) && !empty($branch->bonus_schedules)) {
             $bonus_schedules = is_string($branch->bonus_schedules) ? json_decode($branch->bonus_schedules, true) : $branch->bonus_schedules;
         }
+
+        \Log::info('Horarios de bonos:');
 
         $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
         if (!$validateBonusSchedules) {
@@ -644,15 +661,11 @@ class UserController extends Controller
             ], 403);
         }
 
-        if (!$totem) {
-            return response()->json([
-                'message' => 'El UUID del totem no fue encontrado en nuestros registros o no se encuentra configurado.'
-            ], 404);
-        }
-
         $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
             ->where('status', 'open')
             ->first();
+
+        \Log::info('Turno abierto: ' . $isOpenTurn);
 
         if (!$isOpenTurn) {
             return response()->json([
@@ -663,12 +676,17 @@ class UserController extends Controller
         $SumaBonosAdditionals = 0;
         $bonusesAvailable = [];
         $tickets = [];
+        \Log::info('Bonos adicionales: ' . $SumaBonosAdditionals);
+        \Log::info('Bonos disponibles');
+        \Log::info('Tickets: ');
 
         $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
 
         foreach ($bonusesAvailableAdditionals as $bonus) {
             $SumaBonosAdditionals += $bonus->amount;
         }
+
+        \Log::info('Bonos adicionales: 2' . $SumaBonosAdditionals);
 
         if ($SumaBonosAdditionals > 0) {
             $ticket = Ticket::create([
@@ -679,6 +697,8 @@ class UserController extends Controller
             ]);
             $tickets[] = $ticket;
         }
+
+        \Log::info('Bonos adicionales: 3' . $SumaBonosAdditionals);
 
         // Desactivar los bonos utilizados
         $user->bonuses()->whereIn('id', $bonusesAvailableAdditionals->pluck('id'))->update([
@@ -694,6 +714,8 @@ class UserController extends Controller
             ->first();
 
         $bonusesAvailableCategoryBonus = $user->categoryBonus;
+
+        \Log::info('bonusesAvailableCategoryBonus');
 
         if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
             $ticket = Ticket::create([
@@ -720,6 +742,8 @@ class UserController extends Controller
             $isBirthday = ($birthDate->month == $today->month && $birthDate->day == $today->day);
         }
 
+        \Log::info('isBirthday: ' . $isBirthday);
+
         if (!$ticketsTypeBirthdayByUser && $isBirthday) {
             $ticket = Ticket::create([
                 'user_id' => $user->id,
@@ -730,11 +754,13 @@ class UserController extends Controller
             $tickets[] = $ticket;
         }
 
+        \Log::info('tickets 2');
+
         // verifica si esta vacio
         if ($tickets === []) {
             return response()->json([
                 'message' => 'No tienes bonos disponibles'
-            ], 404);
+            ], 409);
         }
 
         $this->markFingerprint(new Request([
@@ -742,7 +768,15 @@ class UserController extends Controller
             'totem_uuid' => $totem->code,
         ]), true);
 
+        \Log::info('getBonusesAvailablesUserById called', [
+            'user_id' => $id,
+            'totem_uuid' => $totem->code
+        ]);
+        \Log::info('Tickets 3');
+
         $ticketNumber = Cache::increment('one_shift_ticket_counter', 1);
+
+        \Log::info('Ticket number: ' . $ticketNumber);
 
         return response()->json([
             'data' => [
@@ -760,18 +794,26 @@ class UserController extends Controller
 
     public function markFingerprint(Request $request, $isMarkPlayer = false)
     {
+        \Log::info('markFingerprint called', [
+            'user_id' => $request->user_id,
+            'totem_uuid' => $request->totem_uuid
+        ]);
         $validated = $request->validate([
             'user_id' => 'required',
             'totem_uuid' => 'required',
         ]);
 
         $user = User::find($validated['user_id']);
+        \Log::info('User found: ' . $user->id);
         $totem = Totem::with('branch')->where('code', $validated['totem_uuid'])->first();
+        \Log::info('Totem found: ' . $totem->id);
         if (!$user) {
             return response()->json([
                 'message' => 'Usuario no encontrado'
             ], 404);
         }
+
+        \Log::info('User status: ' . $user->status_id);
 
         if ((string) $user->status_id !== '1') {
             return response()->json([
@@ -779,11 +821,15 @@ class UserController extends Controller
             ], 409);
         }
 
+        \Log::info('Totem found: ' . $totem->id);
+
         if (!$totem) {
             return response()->json([
                 'message' => 'Totem no encontrado'
             ], 404);
         }
+
+        \Log::info('Totem found: ' . $totem->id);
 
         if ($isMarkPlayer === false) {
             // Validar que haya pasado al menos 1 hora desde el último registro en la misma sucursal
@@ -795,9 +841,13 @@ class UserController extends Controller
                 ->latest()
                 ->first();
 
+            \Log::info('Last log: ' . $lastLog->created_at);
+
             if ($lastLog && $lastLog->created_at->diffInMinutes(now()) < 60) {
                 $minutesToWait = 60 - $lastLog->created_at->diffInMinutes(now());
                 $minutesToWait = intval($minutesToWait);  // Asegura que sea un entero
+
+                \Log::info('Minutes to wait: ' . $minutesToWait);
 
                 return response()->json([
                     'message' => "Debes esperar {$minutesToWait} minutos más para registrar tu huella nuevamente en esta sucursal"
@@ -805,7 +855,9 @@ class UserController extends Controller
             }
         }
 
-        $totalLogs = FingerprintLog::where('user_id', $user->id)->count();
+        $totalLogs = FingerprintLog::where('user_id', $user->id)
+            ->where('totem_id', $totem->id)
+            ->count();
         $isEntry = ($totalLogs % 2 === 0);  // Si el total actual es par, el próximo será impar (entrada)
 
         $fingerprintLog = FingerprintLog::create([

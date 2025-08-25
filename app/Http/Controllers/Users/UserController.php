@@ -776,7 +776,7 @@ class UserController extends Controller
 
         return response()->json([
             'data' => [
-                'tickets' => collect($tickets)->map(function ($ticket) use ($ticketNumber) {
+                'tickets' => collect($tickets)->map(function ($ticket) {
                     return [
                         'totalAmount' => $ticket->total_amount,
                         'type' => $ticket->type,

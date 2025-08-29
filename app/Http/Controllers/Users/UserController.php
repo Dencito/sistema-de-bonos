@@ -626,35 +626,35 @@ class UserController extends Controller
         \Log::info('Sucursal encontrada: ' . $branch->id);
 
         // Validar available_schedules
-        $available_schedules = null;
+       /*  $available_schedules = null;
         if (isset($branch->available_schedules) && !empty($branch->available_schedules)) {
             $available_schedules = is_string($branch->available_schedules) ? json_decode($branch->available_schedules, true) : $branch->available_schedules;
         }
-
+ */
         \Log::info('Horarios disponibles:');
         
-        $validateSchedules = $this->validateSchedules($available_schedules);
+        /* $validateSchedules = $this->validateSchedules($available_schedules);
         \Log::info('validateSchedules: ' . ($validateSchedules ? 'true' : 'false'));
         if (!$validateSchedules) {
             return response()->json([
-                'message' => 'La sucursal no se encuentra activa en este horario. 33'
+                'message' => 'La sucursal no se encuentra activa en este horario'
             ], 403);
-        }
+        } */
 
         // Validar bonus_schedules
-        $bonus_schedules = null;
+       /*  $bonus_schedules = null;
         if (isset($branch->bonus_schedules) && !empty($branch->bonus_schedules)) {
             $bonus_schedules = is_string($branch->bonus_schedules) ? json_decode($branch->bonus_schedules, true) : $branch->bonus_schedules;
-        }
+        } */
 
         \Log::info('Horarios de bonos:');
 
-        $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
+        /* $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
         if (!$validateBonusSchedules) {
             return response()->json([
                 'message' => 'La sucursal no tiene bonos disponibles en este horario.'
             ], 403);
-        }
+        } */
         if ((string) $branch->status_id !== '1') {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa.'

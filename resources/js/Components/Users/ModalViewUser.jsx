@@ -475,7 +475,7 @@ export default function ModalViewUser({
                         </Select.Option>
                     </Select>
                 </Form.Item>
-                <Form.Item name="pension" label="Previción">
+                <Form.Item name="pension" label="Comuna">
                     <Input showCount maxLength={20} />
                 </Form.Item>
                 <Form.Item name="health" label="Salud">

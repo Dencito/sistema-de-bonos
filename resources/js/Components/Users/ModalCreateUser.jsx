@@ -452,7 +452,7 @@ export default function ModalCreateUser({
                 </Form.Item>
                 <Form.Item
                     name="pension"
-                    label="Previción"
+                    label="Comuna"
                     rules={[
                         {
                             required: true,
@@ -707,7 +707,7 @@ export default function ModalCreateUser({
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item name="category_id" label="Categorias de bonos">
+                <Form.Item name="category_bonus_id" label="Categorias de bonos">
                     <Select placeholder="Seleccione una categoria">
                         {categories?.map((category) => (
                             <Select.Option

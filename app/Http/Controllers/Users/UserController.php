@@ -328,32 +328,32 @@ class UserController extends Controller
         ]);
 
         $user->update([
-            'first_name' => $request->first_name,
-            'second_name' => $request->second_name,
-            'first_last_name' => $request->first_last_name,
-            'second_last_name' => $request->second_last_name,
-            'prefix' => $request->prefix,
-            'phone' => $request->phone,
-            'rutNumbers' => $request->rutNumbers,
-            'rutDv' => $request->rutDv,
-            'code' => $request->code,
-            'birth_date' => $request->birth_date,
-            'entry_date' => $request->entry_date,
+            'first_name' => $request->first_name ?? $user->first_name,
+            'second_name' => $request->second_name ?? $user->second_name,
+            'first_last_name' => $request->first_last_name ?? $user->first_last_name,
+            'second_last_name' => $request->second_last_name ?? $user->second_last_name,
+            'prefix' => $request->prefix ?? $user->prefix,
+            'phone' => $request->phone ?? $user->phone,
+            'rutNumbers' => $request->rutNumbers ?? $user->rutNumbers,
+            'rutDv' => $request->rutDv ?? $user->rutDv,
+            'code' => $request->code ?? $user->code,
+            'birth_date' => $request->birth_date ?? $user->birth_date,
+            'entry_date' => $request->entry_date ?? $user->entry_date,
             'has_fingerprint' => $request->filled('has_fingerprint') ? $request->has_fingerprint : $user->has_fingerprint,
-            'email' => $request->email,
-            'nationality' => $request->nationality,
-            'address' => $request->address,
-            'marital_status' => $request->marital_status,
-            'pension' => $request->pension,
-            'health' => $request->health,
-            'afp' => $request->afp,
-            'childrens' => $request->childrens,
-            'username' => $request->username,
+            'email' => $request->email ?? $user->email,
+            'nationality' => $request->nationality ?? $user->nationality,
+            'address' => $request->address ?? $user->address,
+            'marital_status' => $request->marital_status ?? $user->marital_status,
+            'pension' => $request->pension ?? $user->pension,
+            'health' => $request->health ?? $user->health,
+            'afp' => $request->afp ?? $user->afp,
+            'childrens' => $request->childrens ?? $user->childrens,
+            'username' => $request->username ?? $user->username,
             'password' => $request->filled('password') ? $validatedData['password'] : $user->password,
-            'branch_id' => $request->branch_id,
-            'status_id' => $request->status_id,
-            'category_bonus_id' => $request->category_bonus_id,
-            'role_id' => $request->role_id,
+            'branch_id' => $request->branch_id ?? $user->branch_id,
+            'status_id' => $request->status_id ?? $user->status_id,
+            'category_bonus_id' => $request->category_bonus_id ?? $user->category_bonus_id,
+            'role_id' => $request->role_id ?? $user->role_id,
         ]);
 
         if ($request->has('branches')) {
@@ -626,35 +626,35 @@ class UserController extends Controller
         \Log::info('Sucursal encontrada: ' . $branch->id);
 
         // Validar available_schedules
-       /*  $available_schedules = null;
+        $available_schedules = null;
         if (isset($branch->available_schedules) && !empty($branch->available_schedules)) {
             $available_schedules = is_string($branch->available_schedules) ? json_decode($branch->available_schedules, true) : $branch->available_schedules;
         }
- */
+
         \Log::info('Horarios disponibles:');
         
-        /* $validateSchedules = $this->validateSchedules($available_schedules);
+        $validateSchedules = $this->validateSchedules($available_schedules);
         \Log::info('validateSchedules: ' . ($validateSchedules ? 'true' : 'false'));
         if (!$validateSchedules) {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa en este horario'
             ], 403);
-        } */
+        }
 
         // Validar bonus_schedules
-       /*  $bonus_schedules = null;
+        $bonus_schedules = null;
         if (isset($branch->bonus_schedules) && !empty($branch->bonus_schedules)) {
             $bonus_schedules = is_string($branch->bonus_schedules) ? json_decode($branch->bonus_schedules, true) : $branch->bonus_schedules;
-        } */
+        }
 
         \Log::info('Horarios de bonos:');
 
-        /* $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
+        $validateBonusSchedules = $this->validateSchedules($bonus_schedules);
         if (!$validateBonusSchedules) {
             return response()->json([
                 'message' => 'La sucursal no tiene bonos disponibles en este horario.'
             ], 403);
-        } */
+        }
         if ((string) $branch->status_id !== '1') {
             return response()->json([
                 'message' => 'La sucursal no se encuentra activa.'
@@ -878,8 +878,12 @@ class UserController extends Controller
         $currentDay = strtolower($currentTime->format('l'));  // Get current day name in lowercase
         $currentTimeStr = $currentTime->format('H:i');
 
+        // Log para debugging (remove in production)
+        // \Log::info("validateSchedules - Current time: {$currentTimeStr}, Current day: {$currentDay}");
+
         // Si no hay horarios, retornamos false
         if (empty($schedules)) {
+            \Log::info("validateSchedules - No schedules provided");
             return false;
         }
 
@@ -890,6 +894,7 @@ class UserController extends Controller
 
         // Verificamos que sea un array válido
         if (!is_array($schedules)) {
+            \Log::info("validateSchedules - Invalid schedules array");
             return false;
         }
 
@@ -897,10 +902,10 @@ class UserController extends Controller
         $dayTranslation = [
             'monday' => 'lunes',
             'tuesday' => 'martes',
-            'wednesday' => 'miércoles',
+            'wednesday' => 'miercoles',
             'thursday' => 'jueves',
             'friday' => 'viernes',
-            'saturday' => 'sábado',
+            'saturday' => 'sabado',
             'sunday' => 'domingo'
         ];
 
@@ -909,55 +914,57 @@ class UserController extends Controller
             $currentDay = $dayTranslation[$currentDay];
         }
 
+        \Log::info("validateSchedules - Translated day: {$currentDay}");
+
         // Check if current time falls within any of the schedules
-        foreach ($schedules as $schedule) {
+        foreach ($schedules as $scheduleIndex => $schedule) {
             if (!isset($schedule['schedules']) || !is_array($schedule['schedules'])) {
+                \Log::info("validateSchedules - Schedule {$scheduleIndex} has no valid schedules array");
                 continue;
             }
+
+            $scheduleName = $schedule['name'] ?? "Schedule {$scheduleIndex}";
+            \Log::info("validateSchedules - Checking {$scheduleName}");
 
             // Buscar el horario para el día actual
             $daySchedules = null;
             foreach ($schedule['schedules'] as $ds) {
-                if (isset($ds['day']) && strtolower($ds['day']) === $currentDay) {
+                if (isset($ds['day']) && strtolower($ds['day']) === strtolower($currentDay)) {
                     $daySchedules = $ds;
+                    \Log::info("validateSchedules - Found day schedule for {$ds['day']} in {$scheduleName}");
                     break;
                 }
             }
 
-            // Verificar si hay times disponibles para el día actual
-            if ($daySchedules && isset($daySchedules['times']) && is_array($daySchedules['times'])) {
-                // Recorrer los times en lugar de los ranges
-                foreach ($daySchedules['times'] as $time) {
-                    // Comparar directamente con la hora actual
-                    if ($currentTimeStr === $time) {
-                        return true;
-                    }
-                }
+            if (!$daySchedules) {
+                \Log::info("validateSchedules - No day schedule found for {$currentDay} in {$scheduleName}");
+                continue;
             }
-            // Si no hay times pero hay ranges, usar el método anterior como fallback
-            else if ($daySchedules && isset($daySchedules['ranges']) && is_array($daySchedules['ranges'])) {
-                foreach ($daySchedules['ranges'] as $range) {
-                    // Ignorar rangos vacíos (00:00 a 00:00)
-                    if ($range['start_time'] === '00:00' && $range['end_time'] === '00:00') {
-                        continue;
-                    }
 
-                    $startTime = $range['start_time'];
-                    $endTime = $range['end_time'];
-
-                    // Para el caso de 24:00, usamos una comparación especial
-                    if ($endTime === '24:00') {
-                        // Si la hora actual es después de la hora de inicio o es 00:00
-                        if ($this->isTimeInRange($currentTimeStr, $startTime, '23:59') || $currentTimeStr === '00:00') {
-                            return true;
-                        }
-                    } else if ($this->isTimeInRange($currentTimeStr, $startTime, $endTime)) {
-                        return true;
-                    }
+            // Verificar si hay times disponibles para el día actual
+            if (isset($daySchedules['times']) && is_array($daySchedules['times'])) {
+                $timesCount = count($daySchedules['times']);
+                \Log::info("validateSchedules - Checking {$timesCount} times in {$scheduleName}");
+                
+                // Debug: Show first and last few times to verify the array content
+                $firstTimes = array_slice($daySchedules['times'], 0, 5);
+                $lastTimes = array_slice($daySchedules['times'], -5);
+                \Log::info("validateSchedules - {$scheduleName} first times: " . implode(', ', $firstTimes));
+                \Log::info("validateSchedules - {$scheduleName} last times: " . implode(', ', $lastTimes));
+                
+                // Buscar match exacto en el array de times
+                if (in_array($currentTimeStr, $daySchedules['times'])) {
+                    \Log::info("validateSchedules - MATCH FOUND! {$currentTimeStr} in {$scheduleName}");
+                    return true;
+                } else {
+                    \Log::info("validateSchedules - No match for {$currentTimeStr} in {$scheduleName}");
                 }
+            } else {
+                \Log::info("validateSchedules - No times array in {$scheduleName}");
             }
         }
 
+        \Log::info("validateSchedules - No matches found, returning false");
         return false;
     }
 

@@ -18,6 +18,11 @@ const columns = [
             'N/A',
     },
     {
+        title: 'Rol',
+        key: 'role',
+        render: (_, record) => record.user?.role?.name || 'N/A',
+    },
+    {
         title: 'Tótem',
         key: 'totem',
         render: (_, record) => record.totem?.name || 'N/A',

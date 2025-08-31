@@ -13,7 +13,7 @@ class FingerprintLogController extends Controller
 {
     public function index()
     {
-        $fingerprintLogs = FingerprintLog::with(['user', 'totem', 'totem.branch'])
+        $fingerprintLogs = FingerprintLog::with(['user', 'totem', 'totem.branch', 'user.role'])
             ->orderBy('created_at', 'desc')
             ->get();
             

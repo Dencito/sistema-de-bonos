@@ -619,7 +619,7 @@ export default function ModalEditUser({
                 </Form.Item>
                 <Form.Item
                     name="pension"
-                    label="Previción"
+                    label="Comuna"
                     rules={[
                         {
                             required: true,

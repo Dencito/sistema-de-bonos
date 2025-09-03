@@ -13,11 +13,19 @@ class FingerprintLogController extends Controller
 {
     public function index()
     {
-        $fingerprintLogs = FingerprintLog::with(['user', 'totem', 'totem.branch', 'user.role'])
+        $fingerprintLogs = FingerprintLog::with([
+                'user' => function($query) {
+                    $query->select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id');
+                },
+                'totem', 
+                'totem.branch', 
+                'user.role'
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
             
-        $users = User::all();
+        $users = User::select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id')
+            ->get();
         $totems = Totem::with('branch')->get();
         
         return Inertia::render('FingerprintLogs/index', [

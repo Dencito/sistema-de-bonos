@@ -578,14 +578,13 @@ class UserController extends Controller
             'branches.company',
             'branches.totem',
             'branches.shifts',
-            'categoryBonus',
             'status',
             'role',
             'tickets',
             'bonuses',
             'fingerprintLogs',
         ])
-        ->select('id', 'first_name', 'first_last_name', 'rutNumbers', 'rutDv', 'role_id', 'status_id')
+        ->select('id', 'first_name', 'first_last_name', 'rutNumbers', 'rutDv', 'role_id', 'status_id', 'category_bonus_id')
         ->find($id);
 
 
@@ -703,7 +702,7 @@ class UserController extends Controller
             ->first();
 
         $bonusesAvailableCategoryBonus = $user->categoryBonus;
-
+        
         if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
             $ticket = Ticket::create([
                 'user_id' => $user->id,

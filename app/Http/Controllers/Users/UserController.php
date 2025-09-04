@@ -683,12 +683,23 @@ class UserController extends Controller
             'active' => false
         ]);
 
-        // Verificar bono por categoría (una vez al día)
+        // Verificar bono diario (una vez al día, considerando turnos nocturnos)
+        $now = now();
+        $currentHour = $now->hour;
+        
+        // Si es madrugada (00:00 - 06:00), verificar desde las 06:00 del día anterior
+        // para evitar bonos del mismo turno nocturno
+        if ($currentHour >= 0 && $currentHour < 6) {
+            $startTime = $now->copy()->subDay()->setTime(6, 0, 0);
+        } else {
+            // Horario normal: verificar desde las 06:00 del día actual
+            $startTime = $now->copy()->setTime(6, 0, 0);
+        }
+        
         $ticketsTypeBonusByUser = $user
             ->tickets
             ->where('type', 'Bono Diario')
-            ->where('created_at', '>=', now()->startOfDay())
-            ->where('created_at', '<=', now()->endOfDay())
+            ->where('created_at', '>=', $startTime)
             ->first();
 
         $bonusesAvailableCategoryBonus = $user->categoryBonus;

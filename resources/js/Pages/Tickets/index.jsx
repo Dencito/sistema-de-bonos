@@ -42,7 +42,10 @@ const columns = [
         title: 'Fecha de Creación',
         dataIndex: 'created_at',
         key: 'ticket_created',
-        render: (date) => new Date(date).toLocaleDateString(),
+        render: (date) => {
+            const dateObj = new Date(date);
+            return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+        },
     },
 ];
 

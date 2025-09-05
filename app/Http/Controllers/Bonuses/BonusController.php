@@ -77,20 +77,18 @@ class BonusController extends Controller
 
     public function destroy(Request $request)
     {
-        if (!auth()->user()->hasAnyRole(1)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-        $categoryBonus = Bonus::find($request->id);
 
-        if (!$categoryBonus) {
-            return response()->json(['message' => 'La categoria no existe', 'error' => true], 400);
+        $bonus = Bonus::find($request->id);
+
+        if (!$bonus) {
+            return response()->json(['message' => 'El bono no existe', 'error' => true], 400);
         }
 
-        $categoryBonus->delete();
+        $bonus->delete();
 
         return response()->json([
             'error' => false,
-            'message' => 'La categoria ha sido eliminada exitosamente',
+            'message' => 'El bono ha sido eliminado exitosamente',
         ]);
     }
 

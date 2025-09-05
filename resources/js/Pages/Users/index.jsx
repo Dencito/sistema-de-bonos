@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm, Head } from '@inertiajs/react';
+import { useForm, Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ModalCreateUser from '@/Components/Users/ModalCreateUser';
@@ -18,6 +18,7 @@ import { formatDateTime } from '@/Utils/date';
 import { DownloadOutlined } from '@ant-design/icons';
 import { Button, message } from 'antd';
 import * as XLSX from 'xlsx';
+import { bonusService } from '@/Services/api';
 
 const FingerprintIcon = () => (
     <svg
@@ -80,7 +81,7 @@ export default function UserPage({
                     'Fecha de creación': user.created_at ? new Date(user.created_at).toLocaleDateString('es-CL') : '',
                     'Fecha de ingreso': user.entry_date ? new Date(user.entry_date).toLocaleDateString('es-CL') : '',
                 };
-                
+
                 // Datos específicos según el rol
                 if (user.role?.name === 'jugador') {
                     // Para jugadores, mostrar código o RUT y sucursales
@@ -108,17 +109,17 @@ export default function UserPage({
                     };
                 }
             });
-            
+
             // Crear libro de Excel
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
-            
+
             // Generar archivo y descargar
             const date = new Date().toISOString().split('T')[0];
             const fileName = `usuarios_${data.role || 'todos'}_${date}.xlsx`;
             XLSX.writeFile(workbook, fileName);
-            
+
             message.success('Archivo exportado correctamente');
         } catch (error) {
             console.error('Error al exportar:', error);
@@ -141,14 +142,14 @@ export default function UserPage({
         const matchesStatus =
             !selectedStatus ||
             (user.status && (user.status.name === selectedStatus || user.status === selectedStatus));
-        
+
         // Filtro por sucursal
-        const matchesBranch = !selectedBranch || 
+        const matchesBranch = !selectedBranch ||
             // Para trabajadores que tienen branch_id
             (user.branch?.id === parseInt(selectedBranch)) ||
             // Para jugadores y otros que tienen múltiples sucursales
             (user.branches && user.branches.some(branch => branch.id === parseInt(selectedBranch)));
-            
+
         return matchesSearch && matchesStatus && matchesBranch;
     });
 
@@ -239,17 +240,16 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${
-                            branch?.status?.name === 'Activo'
-                                ? 'bg-green-300'
-                                : branch?.status?.name === 'Inactivo'
-                                  ? 'bg-red-200'
-                                  : branch?.status?.name === 'En revisión'
+                        className={`${branch?.status?.name === 'Activo'
+                            ? 'bg-green-300'
+                            : branch?.status?.name === 'Inactivo'
+                                ? 'bg-red-200'
+                                : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                      ? 'bg-red-400'
-                                      : ''
-                        } 
+                                        ? 'bg-red-400'
+                                        : ''
+                            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -354,17 +354,16 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${
-                            branch?.status?.name === 'Activo'
-                                ? 'bg-green-300'
-                                : branch?.status?.name === 'Inactivo'
-                                  ? 'bg-red-200'
-                                  : branch?.status?.name === 'En revisión'
+                        className={`${branch?.status?.name === 'Activo'
+                            ? 'bg-green-300'
+                            : branch?.status?.name === 'Inactivo'
+                                ? 'bg-red-200'
+                                : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                      ? 'bg-red-400'
-                                      : ''
-                        } 
+                                        ? 'bg-red-400'
+                                        : ''
+                            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -466,17 +465,16 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${
-                            branch?.status?.name === 'Activo'
-                                ? 'bg-green-300'
-                                : branch?.status?.name === 'Inactivo'
-                                  ? 'bg-red-200'
-                                  : branch?.status?.name === 'En revisión'
+                        className={`${branch?.status?.name === 'Activo'
+                            ? 'bg-green-300'
+                            : branch?.status?.name === 'Inactivo'
+                                ? 'bg-red-200'
+                                : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                      ? 'bg-red-400'
-                                      : ''
-                        } 
+                                        ? 'bg-red-400'
+                                        : ''
+                            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -524,22 +522,22 @@ export default function UserPage({
             },
             ...(data.role === 'trabajador'
                 ? [
-                      {
-                          title: 'Huella Digital',
-                          key: 'has_fingerprint',
-                          render: (_, user) => (
-                              <span
-                                  style={{
-                                      color: user.has_fingerprint
-                                          ? '#52c41a'
-                                          : '#ff4d4f',
-                                  }}
-                              >
-                                  <FingerprintIcon />
-                              </span>
-                          ),
-                      },
-                  ]
+                    {
+                        title: 'Huella Digital',
+                        key: 'has_fingerprint',
+                        render: (_, user) => (
+                            <span
+                                style={{
+                                    color: user.has_fingerprint
+                                        ? '#52c41a'
+                                        : '#ff4d4f',
+                                }}
+                            >
+                                <FingerprintIcon />
+                            </span>
+                        ),
+                    },
+                ]
                 : []),
         ],
         jugador: [
@@ -620,17 +618,16 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${
-                            branch?.status?.name === 'Activo'
-                                ? 'bg-green-300'
-                                : branch?.status?.name === 'Inactivo'
-                                  ? 'bg-red-200'
-                                  : branch?.status?.name === 'En revisión'
+                        className={`${branch?.status?.name === 'Activo'
+                            ? 'bg-green-300'
+                            : branch?.status?.name === 'Inactivo'
+                                ? 'bg-red-200'
+                                : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                      ? 'bg-red-400'
-                                      : ''
-                        } 
+                                        ? 'bg-red-400'
+                                        : ''
+                            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -681,28 +678,58 @@ export default function UserPage({
             },
             ...(data.role === 'jugador'
                 ? [
-                      {
-                          title: 'Huella Digital',
-                          key: 'has_fingerprint',
-                          render: (_, user) => (
-                              <span
-                                  style={{
-                                      color: user.has_fingerprint
-                                          ? '#52c41a'
-                                          : '#ff4d4f',
-                                  }}
-                              >
-                                  <FingerprintIcon />
-                              </span>
-                          ),
-                      },
-                  ]
+                    {
+                        title: 'Huella Digital',
+                        key: 'has_fingerprint',
+                        render: (_, user) => (
+                            <span
+                                style={{
+                                    color: user.has_fingerprint
+                                        ? '#52c41a'
+                                        : '#ff4d4f',
+                                }}
+                            >
+                                <FingerprintIcon />
+                            </span>
+                        ),
+                    },
+                ]
                 : []),
         ],
     };
 
+    const handleDeleteBonus = async (bonusId) => {
+        try {
+            const response = await bonusService.delete(bonusId);
+            if (response.success) {
+                message.success('Bono eliminado correctamente');
+                router.visit(window.location.href, {
+                    preserveState: true,
+                });
+            } else {
+                message.error(response.message || 'Error al eliminar el bono');
+            }
+        } catch (error) {
+            message.error('Error al eliminar el bono');
+            console.error('Error deleting bonus:', error);
+        }
+    };
+
     const expandedRowRender = (user) => {
         const getBonusStatus = (bonus) => {
+
+            if (bonus.active) {
+                return {
+                    text: 'SIN RECIBIR',
+                    class: 'bg-green-100 text-green-800',
+                }
+            } else {
+                return {
+                    text: 'RECIBIDO',
+                    class: 'bg-red-100 text-red-800',
+                }
+            }
+
             const now = new Date();
             const startDate = bonus.start_datetime
                 ? new Date(bonus.start_datetime)
@@ -723,26 +750,26 @@ export default function UserPage({
             if (startDate && !endDate) {
                 return now < startDate
                     ? {
-                          text: 'Pendiente de activación',
-                          class: 'bg-yellow-100 text-yellow-800',
-                      }
+                        text: 'Pendiente de activación',
+                        class: 'bg-yellow-100 text-yellow-800',
+                    }
                     : {
-                          text: 'Activo sin vencimiento',
-                          class: 'bg-blue-100 text-blue-800',
-                      };
+                        text: 'Activo sin vencimiento',
+                        class: 'bg-blue-100 text-blue-800',
+                    };
             }
 
             // Solo tiene fecha de fin
             if (!startDate && endDate) {
                 return now > endDate
                     ? {
-                          text: 'Vencido',
-                          class: 'bg-red-100 text-red-800',
-                      }
+                        text: 'Vencido',
+                        class: 'bg-red-100 text-red-800',
+                    }
                     : {
-                          text: 'Activo',
-                          class: 'bg-green-100 text-green-800',
-                      };
+                        text: 'Activo',
+                        class: 'bg-green-100 text-green-800',
+                    };
             }
 
             // Tiene ambas fechas
@@ -770,96 +797,64 @@ export default function UserPage({
                     <h3 className="font-semibold text-lg">Bonos asignados</h3>
                 </div>
                 <div className="flex flex-wrap gap-3 overflow-x-auto pb-2">
-                    {user?.bonuses?.map((bonus) => {
-                        const status = getBonusStatus(bonus);
-                        return (
-                            <div
-                                key={bonus?.id}
-                                className="flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]"
-                            >
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="font-bold text-lg text-green-600">
-                                        ${bonus.amount.toLocaleString('es-CL')}
-                                    </span>
-                                    <div
-                                        className={`px-2 py-1 rounded-full text-xs ${status.class}`}
-                                    >
-                                        {status.text}
+                    {user?.bonuses
+                        ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        ?.map((bonus) => {
+                            const status = getBonusStatus(bonus);
+                            return (
+                                <div
+                                    key={bonus?.id}
+                                    className={` flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="font-bold text-lg">
+                                            ${bonus.amount.toLocaleString('es-CL')}
+                                        </span>
+                                        <div
+                                            className={`px-2 py-1 rounded-full font-bold text-xs ${status.class}`}
+                                        >
+                                            {status.text}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="space-y-1 text-sm">
-                                    {bonus.start_datetime ? (
+                                    <div className="space-y-1 text-sm">
                                         <div className="flex items-center text-gray-600">
                                             <span className="w-16 font-medium">
-                                                Inicio:
+                                                Activo:
+                                            </span>
+                                            <span>
+                                                {bonus.active ? 'Sí' : 'No'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center text-gray-600">
+                                            <span className="w-16 font-medium">
+                                                Creado:
                                             </span>
                                             <span>
                                                 {new Date(
-                                                    bonus.start_datetime
+                                                    bonus.created_at
                                                 ).toLocaleDateString('es-CL', {
                                                     year: 'numeric',
                                                     month: 'short',
                                                     day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
                                                 })}
                                             </span>
                                         </div>
-                                    ) : (
                                         <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">
-                                                Inicio:
-                                            </span>
-                                            <span className="italic">
-                                                No definido
-                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    handleDeleteBonus(
+                                                        bonus.id
+                                                    )
+                                                }
+                                                className="text-red-600 hover:text-red-800"
+                                            >
+                                                Eliminar
+                                            </button>
                                         </div>
-                                    )}
-                                    {bonus.end_datetime ? (
-                                        <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">
-                                                Fin:
-                                            </span>
-                                            <span>
-                                                {new Date(
-                                                    bonus.end_datetime
-                                                ).toLocaleDateString('es-CL', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">
-                                                Fin:
-                                            </span>
-                                            <span className="italic">
-                                                Sin vencimiento
-                                            </span>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center text-gray-600">
-                                        <span className="w-16 font-medium">
-                                            Creado:
-                                        </span>
-                                        <span>
-                                            {new Date(
-                                                bonus.created_at
-                                            ).toLocaleDateString('es-CL', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                            })}
-                                        </span>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
                 </div>
                 {(!user?.bonuses || user?.bonuses.length === 0) && (
                     <p className="text-gray-500 text-center py-4">
@@ -894,42 +889,42 @@ export default function UserPage({
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="text-gray-900 my-3 flex items-center justify-between">
                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-    <input
-        type="text"
-        placeholder="Buscar por usuario, nombre, apellido o rut"
-        className="border rounded px-2 py-1 w-full sm:w-64"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-    />
-    <select
-        className="border rounded px-2 py-1 w-full sm:w-40"
-        value={selectedStatus}
-        onChange={e => setSelectedStatus(e.target.value)}
-    >
-        <option value="">Todos los estados</option>
-        {statuses.map(status => (
-            <option key={status.id} value={status.name}>{status.name}</option>
-        ))}
-    </select>
-    <select
-        className="border rounded px-2 py-1 w-full sm:w-40"
-        value={selectedBranch}
-        onChange={e => setSelectedBranch(e.target.value)}
-    >
-        <option value="">Todas las sucursales</option>
-        {branches.map(branch => (
-            <option key={branch.id} value={branch.id}>{branch.name}</option>
-        ))}
-    </select>
-    <Button 
-        type="primary" 
-        icon={<DownloadOutlined />} 
-        onClick={exportToExcel}
-        className="bg-blue-500 text-white"
-    >
-        Exportar
-    </Button>
-</div>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por usuario, nombre, apellido o rut"
+                                    className="border rounded px-2 py-1 w-full sm:w-64"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <select
+                                    className="border rounded px-2 py-1 w-full sm:w-40"
+                                    value={selectedStatus}
+                                    onChange={e => setSelectedStatus(e.target.value)}
+                                >
+                                    <option value="">Todos los estados</option>
+                                    {statuses.map(status => (
+                                        <option key={status.id} value={status.name}>{status.name}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="border rounded px-2 py-1 w-full sm:w-40"
+                                    value={selectedBranch}
+                                    onChange={e => setSelectedBranch(e.target.value)}
+                                >
+                                    <option value="">Todas las sucursales</option>
+                                    {branches.map(branch => (
+                                        <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                    ))}
+                                </select>
+                                <Button
+                                    type="primary"
+                                    icon={<DownloadOutlined />}
+                                    onClick={exportToExcel}
+                                    className="bg-blue-500 text-white"
+                                >
+                                    Exportar
+                                </Button>
+                            </div>
                             <div className="flex gap-5">
                                 {data?.role && (
                                     <ModalCreateUser
@@ -948,7 +943,7 @@ export default function UserPage({
                         </div>
 
                         {data.role &&
-                        data.role === roleDisplayNames.jugador.toLowerCase() ? (
+                            data.role === roleDisplayNames.jugador.toLowerCase() ? (
                             <CustomTable
                                 rowSelection={rowSelection}
                                 dataSource={filteredUsers?.map((user) => ({
@@ -979,12 +974,12 @@ export default function UserPage({
                             />
                             {data?.role ===
                                 roleDisplayNames.trabajador.toLowerCase() && (
-                                <SelectAssignBonuses
-                                    setSelectedRowKeys={setSelectedRowKeys}
-                                    bonuses={bonuses}
-                                    selectedRowKeys={selectedRowKeys}
-                                />
-                            )}
+                                    <SelectAssignBonuses
+                                        setSelectedRowKeys={setSelectedRowKeys}
+                                        bonuses={bonuses}
+                                        selectedRowKeys={selectedRowKeys}
+                                    />
+                                )}
                         </div>
                     </div>
 

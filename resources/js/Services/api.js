@@ -93,6 +93,7 @@ export const categoryBonusService = {
 
 export const bonusService = {
     create: (values) => handleResponse(axios.post('/bonuses', values)),
+    delete: (id) => handleResponse(axios.delete(`/bonuses/${id}`)),
     assignMultipleUsers: (users, bonusId) =>
         handleResponse(
             axios.post('/bonuses/assign-multiple-users', {

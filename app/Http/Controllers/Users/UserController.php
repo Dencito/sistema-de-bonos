@@ -661,7 +661,26 @@ class UserController extends Controller
         $bonusesAvailable = [];
         $tickets = [];
 
-        $bonusesAvailableAdditionals = $user->bonuses->where('active', true);
+        $now = now();
+        
+        $bonusesAvailableAdditionals = $user->bonuses->filter(function($bonus) use ($now) {
+            // Check if bonus is active
+            if (!$bonus->active) {
+                return false;
+            }
+            
+            // Check if current time is after start_datetime (if set)
+            if ($bonus->start_datetime && $now->lt($bonus->start_datetime)) {
+                return false;
+            }
+            
+            // Check if current time is before end_datetime (if set)
+            if ($bonus->end_datetime && $now->gt($bonus->end_datetime)) {
+                return false;
+            }
+            
+            return true;
+        });
 
         foreach ($bonusesAvailableAdditionals as $bonus) {
             $SumaBonosAdditionals += $bonus->amount;
@@ -683,7 +702,6 @@ class UserController extends Controller
         ]);
 
         // Verificar bono diario (una vez al día, considerando turnos nocturnos)
-        $now = now();
         $currentHour = $now->hour;
         
         // Si es madrugada (00:00 - 06:00), verificar desde las 06:00 del día anterior

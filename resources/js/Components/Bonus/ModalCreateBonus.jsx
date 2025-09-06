@@ -17,10 +17,18 @@ export default function ModalCreateBonus({ data }) {
     const onCreate = async () => {
         try {
             const values = await form.validateFields();
+            const startDateTime = values.start_datetime?.format(
+                'YYYY-MM-DD HH:mm:ss'
+            );
+            const endDateTime = values.end_datetime?.format(
+                'YYYY-MM-DD HH:mm:ss'
+            );
 
             setLoading(true);
             const sendData = {
                 amount: values.amount,
+                start_datetime: startDateTime,
+                end_datetime: endDateTime,
                 user_id: data.id,
             };
 
@@ -100,6 +108,24 @@ export default function ModalCreateBonus({ data }) {
                                     e.preventDefault();
                                 }
                             }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item label="Fecha de inicio" name="start_datetime">
+                        <DatePicker
+                            showTime
+                            format="DD-MM-YYYY HH:mm:ss"
+                            placeholder="Seleccione fecha de inicio"
+                            style={{ width: '100%' }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item label="Fecha de fin" name="end_datetime">
+                        <DatePicker
+                            showTime
+                            format="DD-MM-YYYY HH:mm:ss"
+                            placeholder="Seleccione fecha de fin"
+                            style={{ width: '100%' }}
                         />
                     </Form.Item>
                 </Form>

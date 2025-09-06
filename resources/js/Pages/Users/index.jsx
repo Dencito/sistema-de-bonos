@@ -839,6 +839,60 @@ export default function UserPage({
                                                 })}
                                             </span>
                                         </div>
+                                        {bonus.start_datetime ? (
+                                            <div className="flex items-center text-gray-600">
+                                                <span className="w-16 font-medium">
+                                                    Inicio:
+                                                </span>
+                                                <span>
+                                                    {new Date(
+                                                        bonus.start_datetime
+                                                    ).toLocaleDateString('es-CL', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center text-gray-600">
+                                                <span className="w-16 font-medium">
+                                                    Inicio:
+                                                </span>
+                                                <span className="italic">
+                                                    No definido
+                                                </span>
+                                            </div>
+                                        )}
+                                        {bonus.end_datetime ? (
+                                            <div className="flex items-center text-gray-600">
+                                                <span className="w-16 font-medium">
+                                                    Fin:
+                                                </span>
+                                                <span>
+                                                    {new Date(
+                                                        bonus.end_datetime
+                                                    ).toLocaleDateString('es-CL', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center text-gray-600">
+                                                <span className="w-16 font-medium">
+                                                    Fin:
+                                                </span>
+                                                <span className="italic">
+                                                    Sin vencimiento
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center text-gray-600">
                                             <button
                                                 onClick={() =>

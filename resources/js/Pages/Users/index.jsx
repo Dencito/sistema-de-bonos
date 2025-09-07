@@ -12,7 +12,7 @@ import MobileButton from '@/Components/MobileButton';
 import { CustomTable } from '@components-v2/CustomTable';
 import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssignCategories';
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
-import { roleDisplayNames } from '@/Utils/constants';
+import { allowedRoles, roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
 import { formatDateTime } from '@/Utils/date';
 import { DownloadOutlined } from '@ant-design/icons';
@@ -209,6 +209,7 @@ export default function UserPage({
                             categories={categories}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
+                            role={auth?.role}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -291,6 +292,7 @@ export default function UserPage({
                             categories={categories}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
+                            role={auth?.role}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -405,6 +407,7 @@ export default function UserPage({
                             userWorkers={userWorkers}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
+                            role={auth?.role}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -515,6 +518,7 @@ export default function UserPage({
                             }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
+                            role={auth?.role}
                         />
                         <ModalDeleteUser data={user} />
                     </div>
@@ -670,9 +674,10 @@ export default function UserPage({
                             }}
                             userType={data?.role}
                             roleDisplayNames={roleDisplayNames}
+                            role={auth?.role}
                         />
                         <ModalDeleteUser data={user} />
-                        <ModalCreateBonus data={user} />
+                        {allowedRoles.createBonus.includes(auth?.role) && <ModalCreateBonus data={user} />}
                     </div>
                 ),
             },
@@ -717,18 +722,6 @@ export default function UserPage({
 
     const expandedRowRender = (user) => {
         const getBonusStatus = (bonus) => {
-
-            if (bonus.active) {
-                return {
-                    text: 'SIN RECIBIR',
-                    class: 'bg-green-100 text-green-800',
-                }
-            } else {
-                return {
-                    text: 'RECIBIDO',
-                    class: 'bg-red-100 text-red-800',
-                }
-            }
 
             const now = new Date();
             const startDate = bonus.start_datetime
@@ -810,21 +803,20 @@ export default function UserPage({
                                         <span className="font-bold text-lg">
                                             ${bonus.amount.toLocaleString('es-CL')}
                                         </span>
-                                        <div
-                                            className={`px-2 py-1 rounded-full font-bold text-xs ${status.class}`}
-                                        >
-                                            {status.text}
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div
+                                                className={`px-2 py-1 rounded-full font-bold text-xs ${status.class}`}
+                                            >
+                                                {status.text}
+                                            </div>
+                                            <div
+                                                className={`px-2 py-1 rounded-full font-bold text-xs ${bonus.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                                            >
+                                                {bonus.active ? 'NO RECIBIDO' : 'RECIBIDO'}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="space-y-1 text-sm">
-                                        <div className="flex items-center text-gray-600">
-                                            <span className="w-16 font-medium">
-                                                Activo:
-                                            </span>
-                                            <span>
-                                                {bonus.active ? 'Sí' : 'No'}
-                                            </span>
-                                        </div>
                                         <div className="flex items-center text-gray-600">
                                             <span className="w-16 font-medium">
                                                 Creado:
@@ -991,6 +983,7 @@ export default function UserPage({
                                         userWorkers={userWorkers}
                                         categories={categories}
                                         branches={branches}
+                                        role={auth?.role}
                                     />
                                 )}
                             </div>

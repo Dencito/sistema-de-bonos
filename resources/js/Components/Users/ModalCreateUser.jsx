@@ -18,6 +18,7 @@ export default function ModalCreateUser({
     userType,
     branches,
     categories = [],
+    role,
 }) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -708,8 +709,9 @@ export default function ModalCreateUser({
                     </Select>
                 </Form.Item>
                 <Form.Item name="category_bonus_id" label="Categorias de bonos">
-                    <Select placeholder="Seleccione una categoria">
+                    <Select disabled={role === 'trabajador'} placeholder="Seleccione una categoria">
                         {categories?.map((category) => (
+
                             <Select.Option
                                 key={category.id}
                                 value={category.id}

@@ -19,6 +19,7 @@ export const allowedRoles = {
     fingerprintLogs: ['duenio', 'super-admin', 'admin', 'supervisor'],
     shiftControl: ['trabajador'],
     shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+    createBonus: ['duenio', 'super-admin', 'admin', 'supervisor'],
 };
 
 export const roleNames = {

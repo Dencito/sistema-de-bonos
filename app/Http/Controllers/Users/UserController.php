@@ -42,6 +42,35 @@ class UserController extends Controller
                     $q->where('name', $status);
                 });
             })
+            ->select(
+                'first_name',
+                'second_name',
+                'first_last_name',
+                'second_last_name',
+                'prefix',
+                'phone',
+                'rutNumbers',
+                'rutDv',
+                'code',
+                'birth_date',
+                'entry_date',
+                'has_fingerprint',
+                'email',
+                'nationality',
+                'address',
+                'marital_status',
+                'pension',
+                'health',
+                'afp',
+                'childrens',
+                'username',
+                'password',
+                'branch_id',
+                'status_id',
+                'company_id',
+                'category_bonus_id',
+                'role_id',
+            )
             ->orderBy('created_at', 'desc')
             ->get();
 

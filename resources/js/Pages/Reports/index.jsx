@@ -98,7 +98,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                 .filter(log => log.ticket)
                 .forEach(log => {
                     const row = [
-                        log.user.username,
+                        `${log.user.first_name} ${log.user.second_name} ${log.user.first_last_name} ${log.user.second_last_name}`,
                         log.is_player ? 'Jugador' : 'Trabajador',
                         log.totem?.branch?.name || 'N/A',
                         format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),

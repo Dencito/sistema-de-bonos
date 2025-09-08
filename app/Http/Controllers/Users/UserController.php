@@ -43,6 +43,7 @@ class UserController extends Controller
                 });
             })
             ->select(
+                'id',
                 'first_name',
                 'second_name',
                 'first_last_name',

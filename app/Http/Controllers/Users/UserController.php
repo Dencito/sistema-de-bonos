@@ -614,7 +614,36 @@ class UserController extends Controller
             'bonuses',
             'fingerprintLogs',
         ])
-        ->select('id', 'first_name', 'first_last_name', 'rutNumbers', 'rutDv', 'role_id', 'status_id', 'category_bonus_id')
+        ->select(
+            'id',
+            'first_name',
+            'second_name',
+            'first_last_name',
+            'second_last_name',
+            'prefix',
+            'phone',
+            'rutNumbers',
+            'rutDv',
+            'code',
+            'birth_date',
+            'entry_date',
+            'has_fingerprint',
+            'email',
+            'nationality',
+            'address',
+            'marital_status',
+            'pension',
+            'health',
+            'afp',
+            'childrens',
+            'username',
+            'password',
+            'branch_id',
+            'status_id',
+            'company_id',
+            'category_bonus_id',
+            'role_id',
+        )
         ->find($id);
 
 

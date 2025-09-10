@@ -47,14 +47,16 @@ export default function ModalCreateUser({
         values.role = userType;
         try {
             setLoading(true);
+            console.log(values);
             const response = await userService.create(values);
+            console.log(response)
             if (response.success) {
                 successMsg(response.message);
                 router.visit(window.location.href, {
                     preserveState: true,
                 });
                 form.resetFields();
-                handleCloseModal();
+                //handleCloseModal();
             } else {
                 errorMsg(response.message);
             }
@@ -520,6 +522,31 @@ export default function ModalCreateUser({
                                 {branch.name}
                             </Select.Option>
                         ))}
+                    </Select>
+                </Form.Item>
+
+                <Form.Item name="cargo" label="Cargo">
+                    <Select placeholder="Seleccione un cargo">
+                        <Select.Option value="PASILLER@">PASILLER@</Select.Option>
+                        <Select.Option value="CAJER@">CAJER@</Select.Option>
+                        <Select.Option value="GUARDIA">GUARDIA</Select.Option>
+                        <Select.Option value="ANFITRION">ANFITRION</Select.Option>
+                        <Select.Option value="RECAUDADOR">RECAUDADOR</Select.Option>
+                        <Select.Option value="ASISTENTE">ASISTENTE</Select.Option>
+                        <Select.Option value="OTRO">OTRO</Select.Option>
+                    </Select>
+                </Form.Item>
+                <Form.Item name="levels" label="Niveles">
+                    <Select
+                        mode="multiple"
+                        placeholder="Seleccione los niveles"
+                        optionFilterProp="children"
+                    >
+                        <Select.Option value="Nivel 1">Nivel 1</Select.Option>
+                        <Select.Option value="Nivel 2">Nivel 2</Select.Option>
+                        <Select.Option value="Nivel 3">Nivel 3</Select.Option>
+                        <Select.Option value="Nivel 4">Nivel 4</Select.Option>
+                        <Select.Option value="Nivel 5">Nivel 5</Select.Option>
                     </Select>
                 </Form.Item>
             </>

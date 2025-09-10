@@ -217,6 +217,8 @@ class CompanyDatabaseService
                     $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('cascade');
                     $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('cascade');
                     $table->foreignId('category_bonus_id')->nullable()->constrained($categoryBonusesTable)->onDelete('cascade');
+                    $table->enum('cargo', ['PASILLER@', 'CAJER@', 'GUARDIA', 'ANFITRION', 'RECAUDADOR', 'ASISTENTE', 'OTRO'])->nullable();
+                    $table->json('levels')->nullable();
                     $table->timestamps();
                 });
 

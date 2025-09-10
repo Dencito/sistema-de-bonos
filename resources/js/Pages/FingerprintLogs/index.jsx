@@ -5,12 +5,6 @@ import MobileButton from '@/Components/MobileButton';
 
 const columns = [
     {
-        title: 'ID',
-        dataIndex: 'id',
-        key: 'fingerprint_id',
-        render: (id) => `Registro #${id}`,
-    },
-    {
         title: 'Usuario',
         key: 'user',
         render: (_, record) =>

@@ -71,6 +71,9 @@ class UserController extends Controller
                 'company_id',
                 'category_bonus_id',
                 'role_id',
+                'cargo',
+                'levels',
+                'fingerprints'
             )
             ->orderBy('created_at', 'desc')
             ->get();
@@ -168,6 +171,8 @@ class UserController extends Controller
             'role' => 'nullable|string',
             'branches' => 'nullable',
             'branches.*' => 'nullable',
+            'cargo' => 'nullable|string',
+            'levels' => 'nullable',
         ]);
 
         DB::beginTransaction();
@@ -209,6 +214,8 @@ class UserController extends Controller
                 'company_id' => $company ? $company->id : null,
                 'category_bonus_id' => $request->category_bonus_id,
                 'role_id' => $role->id,
+                'cargo' => $request->cargo,
+                'levels' => $request->levels,
             ]);
 
             $userId = $user->id;
@@ -355,6 +362,8 @@ class UserController extends Controller
             'role_id' => 'nullable',
             'branches' => 'nullable|array',
             'branches.*' => 'nullable',
+            'cargo' => 'nullable|string',
+            'levels' => 'nullable|array',
         ]);
 
         $user->update([
@@ -384,6 +393,8 @@ class UserController extends Controller
             'status_id' => $request->status_id ?? $user->status_id,
             'category_bonus_id' => $request->category_bonus_id ?? $user->category_bonus_id,
             'role_id' => $request->role_id ?? $user->role_id,
+            'cargo' => $request->cargo ?? $user->cargo,
+            'levels' => $request->levels ?? $user->levels,
         ]);
 
         if ($request->has('branches')) {
@@ -643,6 +654,8 @@ class UserController extends Controller
             'company_id',
             'category_bonus_id',
             'role_id',
+            'cargo',
+            'levels',
         )
         ->find($id);
 
@@ -848,7 +861,7 @@ class UserController extends Controller
             'totem_uuid' => 'required',
         ]);
 
-        $user = User::select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id')
+        $user = User::select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id', 'cargo', 'levels')
             ->find($validated['user_id']);
         $totem = Totem::with('branch')->where('code', $validated['totem_uuid'])->first();
         if (!$user) {

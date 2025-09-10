@@ -483,11 +483,11 @@ export default function UserPage({
                 ),
             },
             {
-                title: 'Rol',
-                key: 'role',
+                title: 'Cant. Huellas',
+                key: 'quantityFingerprint',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
+                        {user?.fingerprints?.length || 0}
                     </p>
                 ),
             },
@@ -637,11 +637,11 @@ export default function UserPage({
                 ),
             },
             {
-                title: 'Rol',
-                key: 'role',
+                title: 'Cant. Huellas',
+                key: 'quantityFingerprint',
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
-                        {roleDisplayNames[user?.role?.name] || user?.role?.name}
+                        {user?.fingerprints?.length || 0}
                     </p>
                 ),
             },

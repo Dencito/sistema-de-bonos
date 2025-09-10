@@ -98,12 +98,12 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                 .filter(log => log.ticket)
                 .forEach(log => {
                     const row = [
-                        `${log.user.first_name} ${log.user.second_name} ${log.user.first_last_name} ${log.user.second_last_name}`,
+                        `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
                         log.is_player ? 'Jugador' : 'Trabajador',
                         log.totem?.branch?.name || 'N/A',
                         format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
                         log.ticket.type,
-                        log.ticket.total_amount
+                        Math.floor(log.ticket.total_amount)
                     ];
                     csvContent += row.join(',') + '\n';
                 });
@@ -121,7 +121,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
                     log.ticket ? 'Sí' : 'No',
                     log.ticket ? log.ticket.type : 'N/A',
-                    log.ticket ? log.ticket.total_amount : '0'
+                    log.ticket ? Math.floor(log.ticket.total_amount) : '0'
                 ];
                 csvContent += row.join(',') + '\n';
             });
@@ -132,12 +132,12 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             csvContent += `Marcaciones Jugadores,${reportData.summary.player_marks}\n`;
             csvContent += `Marcaciones Trabajadores,${reportData.summary.worker_marks}\n`;
             csvContent += `Tickets Generados,${reportData.summary.tickets_count}\n`;
-            csvContent += `Total Monto,$${reportData.summary.total_amount}\n`;
+            csvContent += `Total Monto,$${Math.floor(reportData.summary.total_amount)}\n`;
             
             // Add ticket types summary
             csvContent += '\nTipo de Ticket,Cantidad,Monto\n';
             Object.entries(reportData.summary.ticket_types).forEach(([type, data]) => {
-                csvContent += `${type},${data.count},$${data.amount}\n`;
+                csvContent += `${type},${data.count},$${Math.floor(data.amount)}\n`;
             });
             
             filename = `reporte_turno_${reportData.shift.id}_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
@@ -330,7 +330,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             </div>
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <p className="text-sm text-gray-600">Total en bonos</p>
-                                <p className="text-2xl font-bold">${reportData.summary.total_amount}</p>
+                                <p className="text-2xl font-bold">${Math.floor(reportData.summary.total_amount)}</p>
                             </div>
                         </div>
                         
@@ -388,7 +388,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                                 {player.ticket_count}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                ${player.total_amount}
+                                                ${Math.floor(player.total_amount)}
                                             </td>
                                         </tr>
                                     ))}
@@ -453,7 +453,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                                 <span className="font-medium">{log.ticket.type}</span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="font-medium">${log.ticket.total_amount}</span>
+                                                <span className="font-medium">${Math.floor(log.ticket.total_amount)}</span>
                                             </td>
                                         </tr>
                                     ))}
@@ -539,7 +539,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             </div>
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <p className="text-sm text-gray-600">Total en bonos</p>
-                                <p className="text-2xl font-bold">${reportData.summary.total_amount}</p>
+                                <p className="text-2xl font-bold">${Math.floor(reportData.summary.total_amount)}</p>
                             </div>
                         </div>
                         

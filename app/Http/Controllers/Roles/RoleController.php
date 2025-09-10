@@ -16,7 +16,9 @@ class RoleController extends Controller
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
-        $roles = Role::where('id', '>', $user->role_id)->get();
+        $roles = Role::where('id', '>', $user->role_id)
+        ->with('users.categoryBonus')
+        ->get();
 
         // Preparar datos para pasar a la vista
         $data = [

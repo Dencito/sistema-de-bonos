@@ -35,6 +35,8 @@ export default function ModalEditUser({
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
 
+    console.log(data)
+
     const onUpdate = async (values) => {
         try {
             setLoading(true);
@@ -513,8 +515,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : Promise.reject(
-                                          'Debe ser mayor de 16 años'
-                                      ),
+                                        'Debe ser mayor de 16 años'
+                                    ),
                         },
                     ]}
                 >
@@ -728,6 +730,32 @@ export default function ModalEditUser({
                             ))}
                     </Select>
                 </Form.Item>
+
+
+                <Form.Item initialValue={data?.cargo} name="cargo" label="Cargo">
+                    <Select placeholder="Seleccione un cargo">
+                        <Select.Option value="PASILLER@">PASILLER@</Select.Option>
+                        <Select.Option value="CAJER@">CAJER@</Select.Option>
+                        <Select.Option value="GUARDIA">GUARDIA</Select.Option>
+                        <Select.Option value="ANFITRION">ANFITRION</Select.Option>
+                        <Select.Option value="RECAUDADOR">RECAUDADOR</Select.Option>
+                        <Select.Option value="ASISTENTE">ASISTENTE</Select.Option>
+                        <Select.Option value="OTRO">OTRO</Select.Option>
+                    </Select>
+                </Form.Item>
+                <Form.Item initialValue={data?.levels} name="levels" label="Niveles">
+                    <Select
+                        mode="multiple"
+                        placeholder="Seleccione los niveles"
+                        optionFilterProp="children"
+                    >
+                        <Select.Option value="Nivel 1">Nivel 1</Select.Option>
+                        <Select.Option value="Nivel 2">Nivel 2</Select.Option>
+                        <Select.Option value="Nivel 3">Nivel 3</Select.Option>
+                        <Select.Option value="Nivel 4">Nivel 4</Select.Option>
+                        <Select.Option value="Nivel 5">Nivel 5</Select.Option>
+                    </Select>
+                </Form.Item>
             </>
         ),
         JUGADOR: (
@@ -845,8 +873,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : value === undefined
-                                      ? Promise.resolve()
-                                      : Promise.reject(
+                                        ? Promise.resolve()
+                                        : Promise.reject(
                                             'Debe ser mayor de 16 años'
                                         ),
                         },

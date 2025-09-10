@@ -43,6 +43,8 @@ class User extends Authenticatable
         'company_id',
         'category_bonus_id',
         'role_id',
+        'cargo',
+        'levels',
     ];
 
     protected $hidden = [
@@ -55,6 +57,8 @@ class User extends Authenticatable
         'entry_date' => 'date',
         'has_fingerprint' => 'boolean',
         'password' => 'hashed',
+        'levels' => 'json',
+        'fingerprints' => 'json',
     ];
 
     protected static function boot()
@@ -156,8 +160,18 @@ class User extends Authenticatable
     {
         $this->attributes['fingerprints'] = json_encode($value);
     }
+    
+    public function setLevelsAttribute($value)
+    {
+        $this->attributes['levels'] = json_encode($value);
+    }
 
     public function getFingerprintsAttribute($value)
+    {
+        return json_decode($value, true);
+    }
+    
+    public function getLevelsAttribute($value)
     {
         return json_decode($value, true);
     }
@@ -166,7 +180,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(FingerprintLog::class);
     }
-    
+
     /**
      * Hash the password using Bcrypt explicitly
      */

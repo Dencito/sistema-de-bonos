@@ -524,23 +524,19 @@ export default function ModalViewUser({
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    name="role"
-                    label="Rol"
-                    initialValue={data?.role?.name}
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
+                    name="cargo"
+                    label="Cargo"
+                    initialValue={data?.cargo}
                 >
-                    <Select placeholder="Seleccione el rol">
-                        {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.name}>
-                                {roleDisplayNames[role?.name]}
-                            </Select.Option>
-                        ))}
-                    </Select>
+                    <Input showCount maxLength={20} />
+                </Form.Item>
+
+                <Form.Item
+                    name="levels"
+                    label="Niveles"
+                    initialValue={data?.levels}
+                >
+                    <Input showCount />
                 </Form.Item>
             </>
         ),

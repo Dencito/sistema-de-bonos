@@ -759,12 +759,16 @@ class UserController extends Controller
         }
 
         if ($SumaBonosAdditionals > 0) {
+            $branch->ticketNumber = $branch->ticketNumber + 1;
+            $branch->save();
+            
             $ticket = Ticket::create([
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $SumaBonosAdditionals,
-                'type' => 'Bono Extraordinario'
+                'type' => 'Bono Extraordinario',
             ]);
+            $ticket->ticket_number = $branch->ticketNumber;
             $tickets[] = $ticket;
         }
 
@@ -794,12 +798,16 @@ class UserController extends Controller
         $bonusesAvailableCategoryBonus = $user->categoryBonus;
         
         if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
+            $branch->ticketNumber = $branch->ticketNumber + 1;
+            $branch->save();
+                                                        
             $ticket = Ticket::create([
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
-                'type' => 'Bono Diario'
+                'type' => 'Bono Diario',
             ]);
+            $ticket->ticket_number = $branch->ticketNumber;
             $tickets[] = $ticket;
         }
 
@@ -820,12 +828,17 @@ class UserController extends Controller
 
 
         if (!$ticketsTypeBirthdayByUser && $isBirthday) {
+            $branch->ticketNumber = $branch->ticketNumber + 1;
+            $branch->save();
+            
             $ticket = Ticket::create([
                 'user_id' => $user->id,
                 'totem_id' => $totem->id,
                 'total_amount' => $branch->birthday_amount,
-                'type' => 'Bono Cumpleaños'
+                'type' => 'Bono Cumpleaños',
             ]);
+
+            $ticket->ticket_number = $branch->ticketNumber;
             $tickets[] = $ticket;
         }
 
@@ -848,6 +861,7 @@ class UserController extends Controller
                         'totalAmount' => $ticket->total_amount,
                         'type' => $ticket->type,
                         'createdAt' => $ticket->created_at,
+                        'ticketNumber' => $ticket->ticket_number,
                     ];
                 }),
             ],
@@ -868,6 +882,14 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Usuario no encontrado'
             ], 404);
+        }
+
+        $branch = $user->branch;
+
+        if (!$branch) {
+            return response()->json([
+                'message' => 'El usuario no tiene una sucursal asignada'
+            ], 400);
         }
 
         if ((string) $user->status_id !== '1') {
@@ -916,10 +938,14 @@ class UserController extends Controller
             return;
         }
 
+        $branch->ticketNumber = $branch->ticketNumber + 1;
+        $branch->save();
+
         return response()->json([
             'message' => __('Huella registrada exitosamente como :attendanceType', ['attendanceType' => $isEntry ? 'Entrada' : 'Salida']),
             'data' => array_merge($fingerprintLog->toArray(), [
                 'attendanceType' => $isEntry ? 'Entrada' : 'Salida',
+                'ticketNumber' => $branch->ticketNumber,
             ])
         ], 201);
     }

@@ -65,6 +65,9 @@ class ShiftController extends Controller
             ->open()
             ->first();
 
+        $branch->ticketNumber = 0;
+        $branch->save();
+
         if ($openShift) {
             return response()->json([
                 'message' => 'Ya existe un turno abierto para esta sucursal',

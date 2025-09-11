@@ -18,6 +18,7 @@ class Ticket extends Model
         'totem_id',
         'type',
         'total_amount',
+        'ticket_number',
     ];
     
     protected $casts = [

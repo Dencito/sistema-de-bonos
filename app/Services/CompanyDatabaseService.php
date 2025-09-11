@@ -167,6 +167,7 @@ class CompanyDatabaseService
                     $table->json('available_schedules')->nullable();
                     $table->json('bonus_schedules')->nullable();
                     $table->decimal('birthday_amount', 10, 2)->default(0.00);
+                    $table->integer('ticketNumber')->default(0);
                     $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
                     $table->foreignId('company_id')->constrained($companiesTable)->onDelete('cascade');
                     $table->timestamps();

@@ -33,7 +33,8 @@ class Branch extends Model
         'status_id',
         'available_schedules',
         'bonus_schedules',
-        'birthday_amount'
+        'birthday_amount',
+        'ticketNumber'
     ];
 
     /**

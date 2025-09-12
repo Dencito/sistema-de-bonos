@@ -241,7 +241,7 @@ export default function ModalEditBranch({ data, statuses }) {
                                     form.setFieldValue(
                                         'branchAddressRegion',
                                         ''
-                                    )
+                                    );
                                 }}
                                 showSearch
                                 placeholder="Seleccionar país"

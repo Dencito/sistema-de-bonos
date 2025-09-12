@@ -34,17 +34,7 @@ export default function Login({ status, auth }) {
 
     const submit = async () => {
         const { login, password } = data;
-        console.log('Iniciando proceso de login en frontend', { 
-            login, 
-            remember: data.remember,
-            auth, 
-            'session_cookie': document.cookie.includes('laravel_session'),
-            'xsrf_token': document.cookie.includes('XSRF-TOKEN'),
-            'cookies': document.cookie
-        });
-        
         if (auth?.users === 0) {
-            console.log('No hay usuarios, creando owner');
             return handleCreateOwner({
                 username: login,
                 password,
@@ -53,29 +43,21 @@ export default function Login({ status, auth }) {
         }
 
         try {
-            console.log('Enviando solicitud de login al backend', { 
-                route: '/login',
+            const response = await authService.login({
                 login,
-                remember: data.remember
+                password,
+                remember: data.remember,
             });
-            
-            const response = await authService.login({ login, password, remember: data.remember });
-            console.log('Respuesta del servidor de login:', response);
-            
             if (response.success) {
-                console.log('Login exitoso en frontend', { 
-                    response,
-                    'session_cookie_after': document.cookie.includes('laravel_session'),
-                    'xsrf_token_after': document.cookie.includes('XSRF-TOKEN'),
-                    'cookies_after': document.cookie
-                });
                 router.visit(route('dashboard'));
             } else {
-                console.error('Error de login reportado por el servidor:', response.message);
+                console.error(
+                    'Error de login reportado por el servidor:',
+                    response.message
+                );
                 errorMsg(response.message);
             }
         } catch (error) {
-            console.error('Error crítico en solicitud de login:', error);
             errorMsg(error);
         }
     };

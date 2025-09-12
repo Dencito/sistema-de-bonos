@@ -34,8 +34,6 @@ export default function Schedule({
         return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
 
-    console.log(JSON.stringify(savedSchedules));
-
     useEffect(() => {
         if (initialSchedules && initialSchedules.length > 0) {
             const newBlockedSlots = {};
@@ -159,10 +157,10 @@ export default function Schedule({
             );
             const currentDay = days.findIndex((d) => d.name === day);
             const startHour = selectionStart.hour;
-            
+
             // Permitir seleccionar cualquier slot, incluso si ya está ocupado
             // Siempre permitimos la selección
-            
+
             for (
                 let d = Math.min(startDay, currentDay);
                 d <= Math.max(startDay, currentDay);
@@ -198,36 +196,38 @@ export default function Schedule({
     const generateTimesFromRanges = (ranges) => {
         // Usar un Set para evitar duplicados automáticamente
         const timeSet = new Set();
-        
-        ranges.forEach(range => {
+
+        ranges.forEach((range) => {
             // Ignorar rangos vacíos (00:00 a 00:00)
             if (range.start_time === '00:00' && range.end_time === '00:00') {
                 return;
             }
-            
-            const [startHour, startMin] = range.start_time.split(':').map(Number);
+
+            const [startHour, startMin] = range.start_time
+                .split(':')
+                .map(Number);
             const [endHour, endMin] = range.end_time.split(':').map(Number);
-            
+
             // Convertir a minutos desde medianoche
             const startMinutes = startHour * 60 + startMin;
             let endMinutes = endHour * 60 + endMin;
-            
+
             // Si end_time es 24:00, convertir a minutos del día siguiente
             if (endHour === 24) {
                 endMinutes = 24 * 60;
             }
-            
+
             // Generar intervalos de 1 minuto (minuto a minuto)
             for (let minutes = startMinutes; minutes <= endMinutes; minutes++) {
                 const hour = Math.floor(minutes / 60);
                 const min = minutes % 60;
                 const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-                
+
                 // Usar Set.add() en lugar de comprobar includes y push
                 timeSet.add(timeStr);
             }
         });
-        
+
         // Convertir el Set a Array y ordenar
         return Array.from(timeSet).sort((a, b) => {
             // Convertir a minutos para comparar correctamente
@@ -652,7 +652,8 @@ export default function Schedule({
                             } else if (isBlocked) {
                                 // Todos los slots bloqueados tienen borde negro para indicar que se pueden solapar
                                 slotStyle = `${blockedSlotsColors[slotKey]} border-black border-2 hover:brightness-110 transition-all`;
-                                tooltipText = 'Click para solapar con este turno';
+                                tooltipText =
+                                    'Click para solapar con este turno';
                             } else {
                                 // Slot disponible - Blanco con borde negro
                                 slotStyle =

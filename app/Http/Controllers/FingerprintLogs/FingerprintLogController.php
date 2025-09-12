@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\FingerprintLogs;
 
-use App\Models\FingerprintLog;
-use App\Models\User;
-use App\Models\Totem;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\FingerprintLog;
+use App\Models\Totem;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class FingerprintLogController extends Controller
@@ -14,24 +14,18 @@ class FingerprintLogController extends Controller
     public function index()
     {
         $fingerprintLogs = FingerprintLog::with([
-                'user' => function($query) {
-                    $query->select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id');
-                },
-                'totem', 
-                'totem.branch', 
-                'user.role'
-            ])
+            'user' => function ($query) {
+                $query->select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id');
+            },
+            'totem',
+            'totem.branch',
+            'user.role'
+        ])
             ->orderBy('created_at', 'desc')
             ->get();
-            
-        $users = User::select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id')
-            ->get();
-        $totems = Totem::with('branch')->get();
-        
+
         return Inertia::render('FingerprintLogs/index', [
-            'fingerprintLogs' => $fingerprintLogs,
-            'users' => $users,
-            'totems' => $totems
+            'fingerprintLogs' => $fingerprintLogs
         ]);
     }
 

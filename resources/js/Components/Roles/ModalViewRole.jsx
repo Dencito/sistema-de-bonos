@@ -12,8 +12,6 @@ export default function ModalViewRole({ data }) {
     const handleOpenModal = () => {
         setShowModal(true);
     };
-
-    console.log(data)
     return (
         <>
             <Button
@@ -67,13 +65,17 @@ export default function ModalViewRole({ data }) {
                                             </span>
                                         )}
                                         <span className="text-gray-800">
-                                            {item.first_name} {item.second_name || ''} {item.first_last_name} {item.second_last_name || ''}
+                                            {item.first_name}{' '}
+                                            {item.second_name || ''}{' '}
+                                            {item.first_last_name}{' '}
+                                            {item.second_last_name || ''}
                                         </span>
                                     </div>
                                     <div>
                                         {item.category_bonus ? (
                                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-semibold">
-                                                ${item.category_bonus.base_amount.toLocaleString()}
+                                                $
+                                                {item.category_bonus.base_amount.toLocaleString()}
                                             </span>
                                         ) : (
                                             <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs">
@@ -85,7 +87,9 @@ export default function ModalViewRole({ data }) {
                                 {item.cargo && (
                                     <div className="text-xs text-gray-500 flex items-center">
                                         <span className="mr-1">Cargo:</span>
-                                        <span className="font-medium">{item.cargo}</span>
+                                        <span className="font-medium">
+                                            {item.cargo}
+                                        </span>
                                     </div>
                                 )}
                             </div>

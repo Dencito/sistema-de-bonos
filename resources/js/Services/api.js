@@ -1,10 +1,4 @@
 import axios from 'axios';
-import CryptoJS from 'crypto-js';
-import {
-    VITE_COUNTRIES_API_URL,
-    VITE_COUNTRIES_API_KEY,
-    VITE_PASSWORD_ENCRYPTION_KEY,
-} from '@utils/env';
 
 import countries from '@utils/countries.json';
 
@@ -15,38 +9,13 @@ axios.defaults.withXSRFToken = true;
 
 const handleResponse = async (promise) => {
     try {
-        console.log('Enviando solicitud API', { 
-            url: promise?.url || 'unknown',
-            method: promise?.method || 'unknown',
-            withCredentials: axios.defaults.withCredentials,
-            withXSRFToken: axios.defaults.withXSRFToken,
-            headers: axios.defaults.headers
-        });
-        
         const response = await promise;
-        
-        console.log('Respuesta API recibida', { 
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-            data: response.data,
-            cookies: document.cookie
-        });
-        
         return {
             success: true,
             message: response?.data?.message,
             data: response?.data,
         };
     } catch (error) {
-        console.error('Error en solicitud API', { 
-            error: error.message,
-            response: error.response,
-            status: error.response?.status,
-            data: error.response?.data,
-            cookies: document.cookie
-        });
-        
         const errorMessage =
             error.response?.data?.message || 'Error en la operación';
         return { success: false, message: errorMessage };
@@ -117,19 +86,12 @@ export const roleService = {
 };
 
 export const countriesService = {
-    getAll: () =>
-        countries.countries,
+    getAll: () => countries.countries,
 
     getStates: (country) => {
         const c = countries?.countries.find((c) => c.name === country);
-        return (
-            c?.provinces ||
-            c?.states ||
-            c?.parishes ||
-            c?.districts ||
-            []
-        );
-    }
+        return c?.provinces || c?.states || c?.parishes || c?.districts || [];
+    },
 };
 
 export const authService = {

@@ -35,8 +35,6 @@ export default function ModalEditUser({
     const [form] = Form.useForm();
     const { successMsg, errorMsg } = useMessage();
 
-    console.log(data)
-
     const onUpdate = async (values) => {
         try {
             setLoading(true);
@@ -515,8 +513,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : Promise.reject(
-                                        'Debe ser mayor de 16 años'
-                                    ),
+                                          'Debe ser mayor de 16 años'
+                                      ),
                         },
                     ]}
                 >
@@ -731,19 +729,34 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
 
-
-                <Form.Item initialValue={data?.cargo} name="cargo" label="Cargo">
+                <Form.Item
+                    initialValue={data?.cargo}
+                    name="cargo"
+                    label="Cargo"
+                >
                     <Select placeholder="Seleccione un cargo">
-                        <Select.Option value="PASILLER@">PASILLER@</Select.Option>
+                        <Select.Option value="PASILLER@">
+                            PASILLER@
+                        </Select.Option>
                         <Select.Option value="CAJER@">CAJER@</Select.Option>
                         <Select.Option value="GUARDIA">GUARDIA</Select.Option>
-                        <Select.Option value="ANFITRION">ANFITRION</Select.Option>
-                        <Select.Option value="RECAUDADOR">RECAUDADOR</Select.Option>
-                        <Select.Option value="ASISTENTE">ASISTENTE</Select.Option>
+                        <Select.Option value="ANFITRION">
+                            ANFITRION
+                        </Select.Option>
+                        <Select.Option value="RECAUDADOR">
+                            RECAUDADOR
+                        </Select.Option>
+                        <Select.Option value="ASISTENTE">
+                            ASISTENTE
+                        </Select.Option>
                         <Select.Option value="OTRO">OTRO</Select.Option>
                     </Select>
                 </Form.Item>
-                <Form.Item initialValue={data?.levels} name="levels" label="Niveles">
+                <Form.Item
+                    initialValue={data?.levels}
+                    name="levels"
+                    label="Niveles"
+                >
                     <Select
                         mode="multiple"
                         placeholder="Seleccione los niveles"
@@ -873,8 +886,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : value === undefined
-                                        ? Promise.resolve()
-                                        : Promise.reject(
+                                      ? Promise.resolve()
+                                      : Promise.reject(
                                             'Debe ser mayor de 16 años'
                                         ),
                         },
@@ -965,7 +978,10 @@ export default function ModalEditUser({
                 </Form.Item>
 
                 <Form.Item name="category_bonus_id" label="Categorias de bonos">
-                    <Select disabled={role === 'trabajador'} placeholder="Seleccione una categoria">
+                    <Select
+                        disabled={role === 'trabajador'}
+                        placeholder="Seleccione una categoria"
+                    >
                         {categories?.map((category) => (
                             <Select.Option
                                 key={category.id}

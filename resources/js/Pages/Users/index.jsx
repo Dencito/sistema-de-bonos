@@ -113,7 +113,7 @@ export default function UserPage({
             // Crear libro de Excel
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
 
             // Generar archivo y descargar
             const date = new Date().toISOString().split('T')[0];
@@ -797,7 +797,7 @@ export default function UserPage({
                             return (
                                 <div
                                     key={bonus?.id}
-                                    className={` flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]`}
+                                    className={' flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]'}
                                 >
                                     <div className="flex justify-between items-start mb-2">
                                         <span className="font-bold text-lg">

@@ -47,9 +47,7 @@ export default function ModalCreateUser({
         values.role = userType;
         try {
             setLoading(true);
-            console.log(values);
             const response = await userService.create(values);
-            console.log(response)
             if (response.success) {
                 successMsg(response.message);
                 router.visit(window.location.href, {
@@ -527,12 +525,20 @@ export default function ModalCreateUser({
 
                 <Form.Item name="cargo" label="Cargo">
                     <Select placeholder="Seleccione un cargo">
-                        <Select.Option value="PASILLER@">PASILLER@</Select.Option>
+                        <Select.Option value="PASILLER@">
+                            PASILLER@
+                        </Select.Option>
                         <Select.Option value="CAJER@">CAJER@</Select.Option>
                         <Select.Option value="GUARDIA">GUARDIA</Select.Option>
-                        <Select.Option value="ANFITRION">ANFITRION</Select.Option>
-                        <Select.Option value="RECAUDADOR">RECAUDADOR</Select.Option>
-                        <Select.Option value="ASISTENTE">ASISTENTE</Select.Option>
+                        <Select.Option value="ANFITRION">
+                            ANFITRION
+                        </Select.Option>
+                        <Select.Option value="RECAUDADOR">
+                            RECAUDADOR
+                        </Select.Option>
+                        <Select.Option value="ASISTENTE">
+                            ASISTENTE
+                        </Select.Option>
                         <Select.Option value="OTRO">OTRO</Select.Option>
                     </Select>
                 </Form.Item>
@@ -736,9 +742,11 @@ export default function ModalCreateUser({
                     </Select>
                 </Form.Item>
                 <Form.Item name="category_bonus_id" label="Categorias de bonos">
-                    <Select disabled={role === 'trabajador'} placeholder="Seleccione una categoria">
+                    <Select
+                        disabled={role === 'trabajador'}
+                        placeholder="Seleccione una categoria"
+                    >
                         {categories?.map((category) => (
-
                             <Select.Option
                                 key={category.id}
                                 value={category.id}

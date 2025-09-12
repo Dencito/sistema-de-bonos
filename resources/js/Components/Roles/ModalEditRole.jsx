@@ -293,7 +293,7 @@ export default function ModalEditRole({ data }) {
                     <Select
                         showSearch
                         allowClear
-                        placeholder={country ? "Seleccione una región" : "Seleccione un país primero"}
+                        placeholder={country ? 'Seleccione una región' : 'Seleccione un país primero'}
                         disabled={!country}
                         filterOption={(input, option) =>
                             option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0

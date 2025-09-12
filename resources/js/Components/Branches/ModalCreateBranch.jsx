@@ -198,7 +198,7 @@ export default function ModalCreateBranch({ companies }) {
                                         form?.getFieldsValue()
                                             ?.branchAddressCountry
                                     );
-                                    form.setFieldValue("branchAddressRegion", "");
+                                    form.setFieldValue('branchAddressRegion', '');
                                 }}
                                 showSearch
                                 placeholder="Seleccionar país"

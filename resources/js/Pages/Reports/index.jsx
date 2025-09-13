@@ -23,24 +23,24 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
         setLoading(true);
         try {
             const params = { type: reportType };
-            
+
             if (reportType === 'branch' && branchId) {
                 params.branch_id = branchId;
             }
-            
+
             if (reportType === 'shift' && shiftId) {
                 params.shift_id = shiftId;
             }
-            
+
             if ((reportType === 'date' || reportType === 'top') && startDate && endDate) {
                 params.start_date = format(startDate, 'yyyy-MM-dd');
                 params.end_date = format(endDate, 'yyyy-MM-dd');
             }
-            
+
             if (userIdentifier) {
                 params.user_identifier = userIdentifier;
             }
-            
+
             const response = await axios.get('/reports/players', { params });
             setReportData(response.data);
         } catch (error) {
@@ -56,11 +56,11 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
         setLoading(true);
         try {
             const params = {};
-            
+
             if (userIdentifier) {
                 params.user_identifier = userIdentifier;
             }
-            
+
             const response = await axios.get(`/reports/shift/${id}`, { params });
             setReportData(response.data);
         } catch (error) {
@@ -74,7 +74,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
     // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         if (activeTab === 'players') {
             generatePlayersReport();
         } else if (activeTab === 'shift' && shiftId) {
@@ -85,14 +85,14 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
     // Export to CSV
     const exportToCSV = () => {
         if (!reportData) return;
-        
+
         let csvContent = '';
         let filename = '';
-        
+
         if (activeTab === 'players') {
             // Headers
             csvContent = 'Jugador,Tipo,Sucursal,Fecha/Hora,Tipo Ticket,Valor\n';
-            
+
             // Data rows - only include logs with tickets
             reportData.logs
                 .filter(log => log.ticket)
@@ -107,12 +107,12 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     ];
                     csvContent += row.join(',') + '\n';
                 });
-            
+
             filename = `reporte_tickets_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
         } else if (activeTab === 'shift') {
             // Headers
             csvContent = 'Jugador,Tipo,Fecha/Hora,Ticket,Tipo Ticket,Valor\n';
-            
+
             // Data rows
             reportData.logs.forEach(log => {
                 const row = [
@@ -125,7 +125,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                 ];
                 csvContent += row.join(',') + '\n';
             });
-            
+
             // Add summary
             csvContent += '\nResumen\n';
             csvContent += `Total Marcaciones,${reportData.summary.total_marks}\n`;
@@ -133,16 +133,16 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             csvContent += `Marcaciones Trabajadores,${reportData.summary.worker_marks}\n`;
             csvContent += `Tickets Generados,${reportData.summary.tickets_count}\n`;
             csvContent += `Total Monto,$${Math.floor(reportData.summary.total_amount)}\n`;
-            
+
             // Add ticket types summary
             csvContent += '\nTipo de Ticket,Cantidad,Monto\n';
             Object.entries(reportData.summary.ticket_types).forEach(([type, data]) => {
                 csvContent += `${type},${data.count},$${Math.floor(data.amount)}\n`;
             });
-            
+
             filename = `reporte_turno_${reportData.shift.id}_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
         }
-        
+
         // Create download link
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -208,7 +208,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             <option value="">Seleccionar turno</option>
                             {shifts.map((shift) => (
                                 <option key={shift.id} value={shift.id}>
-                                    Turno #{shift.id} - {shift.branch.name} - {format(new Date(shift.opening_time), 'dd/MM/yyyy')}
+                                    Turno #{shift.id} - {shift.branch.name} - {format(new Date(shift.opening_time), 'dd/MM/yyyy HH:mm:ss')} - {format(new Date(shift.closing_time), 'dd/MM/yyyy HH:mm:ss')}
                                 </option>
                             ))}
                         </select>
@@ -237,7 +237,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                         </div>
                     </>
                 )}
-                
+
                 <div className="w-full md:w-auto">
                     <label className="block text-sm font-medium text-gray-700 mb-1">RUT/Código</label>
                     <input
@@ -260,17 +260,17 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <select
                         value={shiftId}
                         onChange={(e) => setShiftId(e.target.value)}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                        className="w-full pr-5 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     >
                         <option value="">Seleccionar turno</option>
                         {shifts.map((shift) => (
                             <option key={shift.id} value={shift.id}>
-                                Turno #{shift.id} - {shift.branch.name} - {format(new Date(shift.opening_time), 'dd/MM/yyyy')}
+                                Turno #{shift.id} - {shift.branch.name} - {format(new Date(shift.opening_time), 'dd/MM/yyyy HH:mm:ss')} - {format(new Date(shift.closing_time), 'dd/MM/yyyy HH:mm:ss')}
                             </option>
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="w-full md:w-auto">
                     <label className="block text-sm font-medium text-gray-700 mb-1">RUT/Código</label>
                     <input
@@ -333,7 +333,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                 <p className="text-2xl font-bold">${Math.floor(reportData.summary.total_amount)}</p>
                             </div>
                         </div>
-                        
+
                         {reportData.summary.ticket_types && Object.keys(reportData.summary.ticket_types).length > 0 && (
                             <div className="mt-6">
                                 <h4 className="text-md font-semibold mb-3">Desglose por tipo de ticket</h4>
@@ -376,7 +376,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                     {reportData.top_players.map((player, index) => (
                                         <tr key={`${player.user.id}-${index}`}>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {player.user.username}
+                                                {player.user.first_name + ' ' + player.user.second_name + ' ' + player.user.first_last_name + ' ' + player.user.second_last_name}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {player.branch?.name || 'N/A'}
@@ -425,38 +425,38 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                     {reportData.logs
                                         .filter(log => log.ticket) // Only show logs with tickets
                                         .map((log) => (
-                                        <tr 
-                                            key={log.id} 
-                                            className={log.is_player ? 'bg-green-50' : 'bg-purple-50'}
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {log.user?.username ?? (log.user?.first_name + ' ' + log.user?.first_last_name)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {log.is_player ? (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                        Jugador
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                        Trabajador
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {log.totem?.branch?.name || 'N/A'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="font-medium">{log.ticket.type}</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="font-medium">${Math.floor(log.ticket.total_amount)}</span>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                            <tr
+                                                key={log.id}
+                                                className={log.is_player ? 'bg-green-50' : 'bg-purple-50'}
+                                            >
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {log.user?.username ?? (log.user?.first_name + ' ' + log.user?.first_last_name)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {log.is_player ? (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            Jugador
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                            Trabajador
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {log.totem?.branch?.name || 'N/A'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="font-medium">{log.ticket.type}</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="font-medium">${Math.floor(log.ticket.total_amount)}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
                                 </tbody>
                             </table>
                         </div>
@@ -471,7 +471,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
         if (!reportData) return null;
 
         const shift = reportData.shift;
-        
+
         return (
             <div className="bg-white rounded-lg shadow-sm">
                 <div className="p-6 border-b">
@@ -510,7 +510,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <p className="text-sm text-gray-600">Fecha/Hora cierre</p>
                                 <p className="text-lg font-medium">
-                                    {shift?.closing_time 
+                                    {shift?.closing_time
                                         ? format(new Date(shift?.closing_time), 'dd/MM/yyyy HH:mm:ss')
                                         : 'Turno activo'}
                                 </p>
@@ -542,7 +542,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                 <p className="text-2xl font-bold">${Math.floor(reportData.summary.total_amount)}</p>
                             </div>
                         </div>
-                        
+
                         {reportData.summary.ticket_types && Object.keys(reportData.summary.ticket_types).length > 0 && (
                             <div className="mt-6">
                                 <h4 className="text-md font-semibold mb-3">Desglose por tipo de ticket</h4>
@@ -582,10 +582,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {reportData.logs.map((log) => (
-                                    <tr 
-                                        key={log.id} 
+                                    <tr
+                                        key={log.id}
                                         className={
-                                            log.is_player 
+                                            log.is_player
                                                 ? (log.ticket ? 'bg-green-50' : 'bg-yellow-50')
                                                 : 'bg-gray-50'
                                         }
@@ -647,18 +647,17 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             }
         >
             <Head title="Reportes" />
-            
+
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {/* Tabs */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                         <div className="flex border-b">
                             <button
-                                className={`px-4 py-3 font-medium text-sm focus:outline-none ${
-                                    activeTab === 'players'
+                                className={`px-4 py-3 font-medium text-sm focus:outline-none ${activeTab === 'players'
                                         ? 'border-b-2 border-blue-500 text-blue-600'
                                         : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                                    }`}
                                 onClick={() => {
                                     setActiveTab('players');
                                     setReportData(null); // Clear report data when changing tabs
@@ -667,11 +666,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                 Reporte de Jugadores
                             </button>
                             <button
-                                className={`px-4 py-3 font-medium text-sm focus:outline-none ${
-                                    activeTab === 'shift'
+                                className={`px-4 py-3 font-medium text-sm focus:outline-none ${activeTab === 'shift'
                                         ? 'border-b-2 border-blue-500 text-blue-600'
                                         : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                                    }`}
                                 onClick={() => {
                                     setActiveTab('shift');
                                     setReportData(null); // Clear report data when changing tabs
@@ -680,11 +678,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                                 Reporte de Turno
                             </button>
                             <button
-                                className={`px-4 py-3 font-medium text-sm focus:outline-none ${
-                                    activeTab === 'fingerprint'
+                                className={`px-4 py-3 font-medium text-sm focus:outline-none ${activeTab === 'fingerprint'
                                         ? 'border-b-2 border-blue-500 text-blue-600'
                                         : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                                    }`}
                                 onClick={() => {
                                     setActiveTab('fingerprint');
                                     setReportData(null); // Clear report data when changing tabs
@@ -694,23 +691,22 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             </button>
                         </div>
                     </div>
-                    
+
                     {/* Filters */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                         <div className="p-6">
                             <form onSubmit={handleSubmit}>
                                 {activeTab === 'players' && renderPlayersFilters()}
                                 {activeTab === 'shift' && renderShiftFilters()}
-                                
+
                                 <div className="mt-4">
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className={`px-4 py-2 text-white rounded-lg ${
-                                            loading
+                                        className={`px-4 py-2 text-white rounded-lg ${loading
                                                 ? 'bg-gray-400 cursor-not-allowed'
                                                 : 'bg-blue-600 hover:bg-blue-700'
-                                        }`}
+                                            }`}
                                     >
                                         {loading ? 'Generando...' : 'Generar reporte'}
                                     </button>
@@ -718,7 +714,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                             </form>
                         </div>
                     </div>
-                    
+
                     {/* Report Results */}
                     {reportData && (
                         <>

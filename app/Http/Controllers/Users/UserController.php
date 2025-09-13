@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -1056,5 +1057,248 @@ class UserController extends Controller
         }
 
         return $time >= $start && $time <= $end;
+    }
+    
+    /**
+     * Obtiene los registros de huella filtrados por turno
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getFingerprintLogsByShift(Request $request)
+    {
+        $request->validate([
+            'shift_id' => 'nullable|exists:shifts,id',
+            'branch_id' => 'nullable|exists:branches,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'user_id' => 'nullable|exists:users,id',
+        ]);
+        
+        $user = auth()->user();
+        
+        // Verificar permisos - solo roles administrativos pueden ver todos los registros
+        if (!in_array($user->role_id, [1, 2, 3, 4])) { // duenio, super-admin, admin, supervisor
+            return response()->json([
+                'message' => 'No tienes permisos para ver estos registros',
+                'error' => true
+            ], 403);
+        }
+        
+        $query = FingerprintLog::with([
+                'user' => function($q) {
+                    $q->select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'role_id');
+                },
+                'user.role:id,name',
+                'totem',
+                'totem.branch:id,name'
+            ]);
+        
+        // Filtrar por turno específico
+        if ($request->filled('shift_id')) {
+            $shift = ShiftRecord::findOrFail($request->shift_id);
+            $query->whereBetween('created_at', [$shift->opening_time, $shift->closing_time ?? now()]);
+        }
+        
+        // Filtrar por sucursal
+        if ($request->filled('branch_id')) {
+            $query->whereHas('totem', function($q) use ($request) {
+                $q->where('branch_id', $request->branch_id);
+            });
+        }
+        
+        // Filtrar por rango de fechas
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($request->filled('start_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $query->whereDate('created_at', '>=', $startDate);
+        } elseif ($request->filled('end_date')) {
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+        
+        // Filtrar por usuario específico
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        // Obtener los registros ordenados por fecha
+        $fingerprintLogs = $query->orderBy('created_at', 'desc')->get();
+        
+        // Procesar los registros para determinar si son entradas o salidas
+        $processedLogs = $fingerprintLogs->map(function ($log, $index) use ($fingerprintLogs) {
+            $isEntry = true;
+            
+            // Contar registros anteriores del mismo usuario para determinar si es entrada o salida
+            $previousLogs = $fingerprintLogs->where('user_id', $log->user_id)
+                ->where('created_at', '<', $log->created_at)
+                ->count();
+            
+            $isEntry = ($previousLogs % 2 === 0);
+            
+            return [
+                'id' => $log->id,
+                'user' => [
+                    'id' => $log->user->id,
+                    'name' => trim($log->user->first_name . ' ' . ($log->user->second_name ?? '') . ' ' . 
+                           $log->user->first_last_name . ' ' . ($log->user->second_last_name ?? '')),
+                    'role' => $log->user->role->name ?? null
+                ],
+                'branch' => $log->totem->branch->name ?? 'N/A',
+                'totem' => $log->totem->name ?? 'N/A',
+                'timestamp' => $log->created_at->format('Y-m-d H:i:s'),
+                'type' => $isEntry ? 'Entrada' : 'Salida',
+            ];
+        });
+        
+        return response()->json([
+            'error' => false,
+            'data' => $processedLogs
+        ]);
+    }
+    
+    /**
+     * Genera un reporte de trabajadores con sus datos personales y registros de entrada/salida
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWorkersReport(Request $request)
+    {
+        $request->validate([
+            'branch_id' => 'nullable|exists:branches,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'role_id' => 'nullable|exists:roles,id',
+        ]);
+        
+        $user = auth()->user();
+        
+        // Verificar permisos - solo roles administrativos pueden ver todos los registros
+        if (!in_array($user->role_id, [1, 2, 3, 4])) { // duenio, super-admin, admin, supervisor
+            return response()->json([
+                'message' => 'No tienes permisos para ver estos registros',
+                'error' => true
+            ], 403);
+        }
+        
+        // Consulta base para obtener trabajadores
+        $query = User::with(['role:id,name', 'branch:id,name'])
+            ->where('role_id', $request->filled('role_id') ? $request->role_id : 5); // Por defecto, mostrar trabajadores (role_id = 5)
+        
+        // Filtrar por sucursal
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
+        }
+        
+        // Obtener los trabajadores
+        $workers = $query->get();
+        
+        // Preparar fechas para filtrar los registros de huella
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfDay();
+        
+        // Procesar cada trabajador para incluir sus registros de entrada/salida
+        $workersReport = $workers->map(function ($worker) use ($startDate, $endDate) {
+            // Obtener registros de huella del trabajador en el rango de fechas
+            $fingerprintLogs = FingerprintLog::with(['totem.branch:id,name'])
+                ->where('user_id', $worker->id)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->orderBy('created_at', 'asc')
+                ->get();
+            
+            // Procesar los registros para determinar entradas y salidas
+            $attendanceRecords = [];
+            $currentEntry = null;
+            
+            foreach ($fingerprintLogs as $index => $log) {
+                $isEntry = ($index % 2 === 0);
+                
+                if ($isEntry) {
+                    // Es una entrada
+                    $currentEntry = [
+                        'entry_time' => $log->created_at->format('Y-m-d H:i:s'),
+                        'entry_branch' => $log->totem->branch->name ?? 'N/A',
+                        'exit_time' => null,
+                        'exit_branch' => null,
+                        'duration' => null
+                    ];
+                } else {
+                    // Es una salida
+                    if ($currentEntry) {
+                        $currentEntry['exit_time'] = $log->created_at->format('Y-m-d H:i:s');
+                        $currentEntry['exit_branch'] = $log->totem->branch->name ?? 'N/A';
+                        
+                        // Calcular duración
+                        $entryTime = Carbon::parse($currentEntry['entry_time']);
+                        $exitTime = Carbon::parse($currentEntry['exit_time']);
+                        $duration = $entryTime->diffInMinutes($exitTime);
+                        $hours = floor($duration / 60);
+                        $minutes = $duration % 60;
+                        $currentEntry['duration'] = sprintf('%02d:%02d', $hours, $minutes);
+                        
+                        $attendanceRecords[] = $currentEntry;
+                        $currentEntry = null;
+                    }
+                }
+            }
+            
+            // Si hay una entrada sin salida correspondiente
+            if ($currentEntry) {
+                $attendanceRecords[] = $currentEntry;
+            }
+            
+            return [
+                'id' => $worker->id,
+                'first_name' => $worker->first_name,
+                'second_name' => $worker->second_name,
+                'first_last_name' => $worker->first_last_name,
+                'second_last_name' => $worker->second_last_name,
+                'full_name' => trim($worker->first_name . ' ' . ($worker->second_name ?? '') . ' ' . 
+                               $worker->first_last_name . ' ' . ($worker->second_last_name ?? '')),
+                'role' => $worker->role->name ?? 'N/A',
+                'branch' => $worker->branch->name ?? 'N/A',
+                'attendance_records' => $attendanceRecords,
+                'total_entries' => count($attendanceRecords),
+                'total_hours' => $this->calculateTotalHours($attendanceRecords)
+            ];
+        });
+        
+        return response()->json([
+            'error' => false,
+            'data' => $workersReport,
+            'filters' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+                'role_id' => $request->role_id ?? 5,
+                'branch_id' => $request->branch_id ?? null
+            ]
+        ]);
+    }
+    
+    /**
+     * Calcula el total de horas trabajadas a partir de los registros de asistencia
+     * 
+     * @param array $attendanceRecords
+     * @return string
+     */
+    private function calculateTotalHours($attendanceRecords)
+    {
+        $totalMinutes = 0;
+        
+        foreach ($attendanceRecords as $record) {
+            if ($record['duration']) {
+                list($hours, $minutes) = explode(':', $record['duration']);
+                $totalMinutes += ($hours * 60) + $minutes;
+            }
+        }
+        
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
+        
+        return sprintf('%02d:%02d', $hours, $minutes);
     }
 }

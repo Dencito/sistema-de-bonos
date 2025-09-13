@@ -40,6 +40,10 @@ Route::prefix('users')->group(function () {
     Route::post('/enroll', [UserController::class, 'enroll']);
 
     Route::get('/fingerprints/{totemUUID}/totem', [UserController::class, 'getFingerprintsByRole']);
+    
+    Route::get('/fingerprint-logs/by-shift', [UserController::class, 'getFingerprintLogsByShift']);
+    
+    Route::get('/reports/workers', [UserController::class, 'getWorkersReport']);
 });
 
 Route::post('/totems/associate-with-branch', [TotemController::class, 'associateWithBranch']);

@@ -203,7 +203,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             // Data rows
             reportData.logs.forEach(log => {
                 const row = [
-                    log.user.username,
+                    `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
                     log.is_player ? 'Jugador' : 'Trabajador',
                     format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
                     log.ticket ? 'Sí' : 'No',
@@ -235,7 +235,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             // Data rows
             reportData.logs.forEach(log => {
                 const row = [
-                    log.user?.name || 'N/A',
+                    `${log.user?.first_name || ''} ${log.user?.second_name || ''} ${log.user?.first_last_name || ''} ${log.user?.second_last_name || ''}` || 'N/A',
                     log.is_worker ? 'Trabajador' : (log.is_player ? 'Jugador' : 'N/A'),
                     log.totem?.branch?.name || 'N/A',
                     format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')

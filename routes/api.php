@@ -6,6 +6,9 @@ use App\Http\Controllers\Shifts\ShiftRecordController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Users\UserController;
+use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
+use App\Http\Controllers\Reports\ReportsController;
+use App\Http\Controllers\Reports\ReportController;
 use App\Mail\BranchCreatedMail;
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -44,6 +47,12 @@ Route::prefix('users')->group(function () {
     Route::get('/fingerprint-logs/by-shift', [UserController::class, 'getFingerprintLogsByShift']);
     
     Route::get('/reports/workers', [UserController::class, 'getWorkersReport']);
+    
+    Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);
+    
+    Route::get('/reports/players', [ReportController::class, 'playersReport']);
+    
+    Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
 });
 
 Route::post('/totems/associate-with-branch', [TotemController::class, 'associateWithBranch']);
@@ -57,3 +66,8 @@ Route::apiResource('tickets', TicketController::class);
 Route::apiResource('totems', TotemController::class);
 
 Route::apiResource('shifts', ShiftRecordController::class);
+
+// Direct report routes
+Route::get('/reports/players', [ReportController::class, 'playersReport']);
+Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
+Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);

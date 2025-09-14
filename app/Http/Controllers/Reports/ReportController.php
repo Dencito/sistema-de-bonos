@@ -33,7 +33,7 @@ class ReportController extends Controller
             'branches' => $branches,
             'shifts' => $shifts,
             'roles' => $roles,
-            'filters' => $request->only(['type', 'branch_id', 'shift_id', 'start_date', 'end_date']),
+            'filters' => $request->only(['type', 'branch_id', 'shift_id', 'start_date', 'end_date', 'user_identifier', 'role_id']),
         ]);
     }
     
@@ -44,6 +44,7 @@ class ReportController extends Controller
         $shiftId = $request->input('shift_id');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $userIdentifier = $request->input('user_identifier');
         
         // Base query for fingerprint logs - incluye tanto jugadores como trabajadores
         $query = FingerprintLog::with([
@@ -93,7 +94,18 @@ class ReportController extends Controller
                 break;
         }
         
-        // Get the data
+        // Filter by user identifier if provided
+        if ($userIdentifier) {
+            $query->whereHas('user', function($q) use ($userIdentifier) {
+                $q->where('username', 'like', "%{$userIdentifier}%")
+                  ->orWhere('email', 'like', "%{$userIdentifier}%")
+                  ->orWhere('first_name', 'like', "%{$userIdentifier}%")
+                  ->orWhere('first_last_name', 'like', "%{$userIdentifier}%");
+            });
+        }
+        
+        // Get the data with memory optimization
+        ini_set('memory_limit', '512M'); // Increase memory limit for this request
         $logs = $query->orderBy('created_at', 'desc')->get();
         
         // Buscar tickets relacionados para cada log
@@ -191,11 +203,15 @@ class ReportController extends Controller
         return response()->json($data);
     }
     
-    public function shiftReport($id)
+    public function shiftReport(Request $request, $id)
     {
         $shift = ShiftRecord::with(['branch', 'openedBy', 'closedBy'])->findOrFail($id);
+        $userIdentifier = $request->input('user_identifier');
         
         // Get all fingerprint logs for this shift - incluye tanto jugadores como trabajadores
+        // Get the data with memory optimization
+        ini_set('memory_limit', '512M'); // Increase memory limit for this request
+        
         $logs = FingerprintLog::with(['user.categoryBonus', 'totem.branch'])
             ->whereHas('totem', function($q) use ($shift) {
                 $q->where('branch_id', $shift->branch_id);
@@ -204,6 +220,14 @@ class ReportController extends Controller
                 $shift->opening_time, 
                 $shift->closing_time ?? now()
             ])
+            ->when($userIdentifier, function($query) use ($userIdentifier) {
+                return $query->whereHas('user', function($q) use ($userIdentifier) {
+                    $q->where('username', 'like', "%{$userIdentifier}%")
+                      ->orWhere('email', 'like', "%{$userIdentifier}%")
+                      ->orWhere('first_name', 'like', "%{$userIdentifier}%")
+                      ->orWhere('first_last_name', 'like', "%{$userIdentifier}%");
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->get();
         

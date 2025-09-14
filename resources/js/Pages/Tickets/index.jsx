@@ -65,9 +65,9 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
     const [showFilters, setShowFilters] = useState(false);
     
     const ticketTypes = [
-        { value: 'entrada', label: 'Entrada' },
-        { value: 'salida', label: 'Salida' },
-        { value: 'bono', label: 'Bono' },
+        { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
+        { value: 'Bono Cumpleaños', label: 'Bono Cumpleaños' },
+        { value: 'Bono diario', label: 'Bono diario' },
     ];
 
     const handleSearch = () => {

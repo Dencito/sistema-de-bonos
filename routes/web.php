@@ -13,6 +13,7 @@ use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
 use App\Http\Controllers\Shifts\ShiftController;
+use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Reports\ReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -139,6 +140,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/{fingerprintLog}', [FingerprintLogController::class, 'update'])->name('fingerprint-logs.update');
         Route::delete('/{fingerprintLog}', [FingerprintLogController::class, 'destroy'])->name('fingerprint-logs.destroy');
     });
+    
+    // Use ReportsController for the main reports page
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
     Route::prefix('shifts')->group(function() {
         Route::get('/', [ShiftController::class, 'index'])->name('shifts.index');
@@ -150,11 +154,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/end', [ShiftController::class, 'endShift'])->name('shifts.end');
     });
 
-    Route::prefix('reports')->group(function() {
-        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/players', [ReportController::class, 'playersReport'])->name('reports.players');
-        Route::get('/shift/{id}', [ReportController::class, 'shiftReport'])->name('reports.shift');
-    });
+    // API routes for reports are now defined in api.php
 });
 
 Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');

@@ -11,8 +11,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
     const [reportType, setReportType] = useState(filters.type || 'all');
     const [branchId, setBranchId] = useState(filters.branch_id || '');
     const [shiftId, setShiftId] = useState(filters.shift_id || '');
-    const [startDate, setStartDate] = useState(filters.start_date ? new Date(filters.start_date) : new Date());
-    const [endDate, setEndDate] = useState(filters.end_date ? new Date(filters.end_date) : new Date());
+    const [startDate, setStartDate] = useState(filters.start_date ? new Date(filters.start_date) : null);
+    const [endDate, setEndDate] = useState(filters.end_date ? new Date(filters.end_date) : null);
     const [userIdentifier, setUserIdentifier] = useState(filters.user_identifier || ''); // For RUT or code filtering
     const [roleId, setRoleId] = useState(filters.role_id || ''); // For role filtering (5=worker, 6=player)
     const [reportData, setReportData] = useState(null);
@@ -35,7 +35,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                 params.shift_id = shiftId;
             }
 
-            // Always include date range parameters
+            // Include date range parameters if available
             if (startDate && endDate) {
                 params.start_date = format(startDate, 'yyyy-MM-dd');
                 params.end_date = format(endDate, 'yyyy-MM-dd');
@@ -123,7 +123,7 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
         try {
             const params = {};
             
-            // Add date filters if selected
+            // Add date filters if selected and available
             if (!shiftId && startDate && endDate) {
                 params.start_date = format(startDate, 'yyyy-MM-dd');
                 params.end_date = format(endDate, 'yyyy-MM-dd');
@@ -285,7 +285,23 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
                     <select
                         value={shiftId}
-                        onChange={(e) => setShiftId(e.target.value)}
+                        onChange={(e) => {
+                            const selectedShiftId = e.target.value;
+                            setShiftId(selectedShiftId);
+                            
+                            // Auto-populate dates when a shift is selected
+                            if (selectedShiftId) {
+                                const selectedShift = shifts.find(shift => shift.id.toString() === selectedShiftId);
+                                if (selectedShift) {
+                                    setStartDate(new Date(selectedShift.opening_time));
+                                    setEndDate(selectedShift.closing_time ? new Date(selectedShift.closing_time) : new Date());
+                                }
+                            } else {
+                                // Clear dates when no shift is selected
+                                setStartDate(null);
+                                setEndDate(null);
+                            }
+                        }}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     >
                         <option value="">Seleccione turno</option>
@@ -302,10 +318,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
                     <input
                         type="date"
-                        value={format(startDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setStartDate(new Date(e.target.value))}
+                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
-                        disabled={!!shiftId}
+                        disabled={shiftId !== ''}
                     />
                 </div>
 
@@ -313,10 +329,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
                     <input
                         type="date"
-                        value={format(endDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
+                        value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
-                        disabled={!!shiftId}
+                        disabled={shiftId !== ''}
                     />
                 </div>
 
@@ -355,8 +371,9 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
                     <input
                         type="date"
-                        value={format(startDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setStartDate(new Date(e.target.value))}
+                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                        disabled={shiftId !== ''}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -365,8 +382,9 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
                     <input
                         type="date"
-                        value={format(endDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
+                        value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                        disabled={shiftId !== ''}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -404,7 +422,23 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
                     <select
                         value={shiftId}
-                        onChange={(e) => setShiftId(e.target.value)}
+                        onChange={(e) => {
+                            const selectedShiftId = e.target.value;
+                            setShiftId(selectedShiftId);
+                            
+                            // Auto-populate dates when a shift is selected
+                            if (selectedShiftId) {
+                                const selectedShift = shifts.find(shift => shift.id.toString() === selectedShiftId);
+                                if (selectedShift) {
+                                    setStartDate(new Date(selectedShift.opening_time));
+                                    setEndDate(selectedShift.closing_time ? new Date(selectedShift.closing_time) : new Date());
+                                }
+                            } else {
+                                // Clear dates when no shift is selected
+                                setStartDate(null);
+                                setEndDate(null);
+                            }
+                        }}
                         className="w-full pr-5 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     >
                         <option value="">Todos los turnos</option>
@@ -490,8 +524,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
                     <input
                         type="date"
-                        value={format(startDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setStartDate(new Date(e.target.value))}
+                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -499,8 +533,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
                     <input
                         type="date"
-                        value={format(endDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
+                        value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -1307,6 +1341,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                         <>
                             {activeTab === 'players' && renderPlayersReport()}
                             {activeTab === 'shift' && renderShiftReport()}
+                            {activeTab === 'fingerprint' && renderFingerprintReport()}
+                            {activeTab === 'marcaciones' && renderMarcacionesReport()}
                         </>
                     )}
                 </div>

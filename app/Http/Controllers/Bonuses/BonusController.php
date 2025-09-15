@@ -183,6 +183,65 @@ class BonusController extends Controller
             return response()->json(['error' => true, 'message' => 'Error al asignar usuarios', 'details' => $e->getMessage()], 500);
         }
     }
+    
+    /**
+     * Crear bonos para múltiples usuarios a la vez
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createMultiple(Request $request)
+    {
+        // Validar los datos de la solicitud
+        $validated = $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+            'amount' => 'required|numeric|min:0|max:9999999.99',
+            'start_datetime' => 'nullable|date',
+            'end_datetime' => 'nullable|date|after_or_equal:start_datetime',
+        ]);
+        
+        $userIds = $validated['user_ids'];
+        
+        // Comenzar una transacción para asegurar atomicidad
+        DB::beginTransaction();
+        
+        try {
+            $createdBonuses = [];
+            
+            // Crear un bono para cada usuario
+            foreach ($userIds as $userId) {
+                $bonus = Bonus::create([
+                    'amount' => $request->amount,
+                    'start_datetime' => $request->start_datetime,
+                    'end_datetime' => $request->end_datetime,
+                    'user_id' => $userId,
+                    'active' => true
+                ]);
+                
+                $createdBonuses[] = $bonus;
+            }
+            
+            // Confirmar la transacción
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'error' => false,
+                'message' => 'Bonos creados exitosamente para ' . count($userIds) . ' usuarios',
+                'bonuses' => $createdBonuses
+            ]);
+        } catch (\Exception $e) {
+            // Revertir los cambios si ocurre un error
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => true, 
+                'message' => 'Error al crear los bonos', 
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 

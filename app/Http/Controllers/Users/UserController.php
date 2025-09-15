@@ -28,9 +28,20 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $users = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch', 'fingerprintLogs'])
-            ->when($request->username, function ($query, $username) {
-                $query->where('username', 'like', "%{$username}%");
+        
+        // Construir la consulta base
+        $query = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch', 'fingerprintLogs'])
+            ->when($request->search, function ($query, $search) {
+                $query->where(function($q) use ($search) {
+                    // Buscar en múltiples campos
+                    $q->where('username', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
+                      ->orWhere('second_name', 'like', "%{$search}%")
+                      ->orWhere('first_last_name', 'like', "%{$search}%")
+                      ->orWhere('second_last_name', 'like', "%{$search}%")
+                      ->orWhere('rutNumbers', 'like', "%{$search}%")
+                      ->orWhere('code', 'like', "%{$search}%");
+                });
             })
             ->where('role_id', '>', 1)  // Exclude role ID 1 (duenio)
             ->when($request->role, function ($query, $role) {
@@ -41,6 +52,16 @@ class UserController extends Controller
             ->when($request->status, function ($query, $status) {
                 $query->whereHas('status', function ($q) use ($status) {
                     $q->where('name', $status);
+                });
+            })
+            ->when($request->branch_id, function ($query, $branchId) {
+                $query->where(function($q) use ($branchId) {
+                    // Para usuarios con branch_id directo
+                    $q->where('branch_id', $branchId)
+                    // O para usuarios con relación many-to-many con branches
+                    ->orWhereHas('branches', function($subq) use ($branchId) {
+                        $subq->where('branch_id', $branchId);
+                    });
                 });
             })
             ->select(
@@ -76,8 +97,17 @@ class UserController extends Controller
                 'levels',
                 'fingerprints'
             )
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+            
+        // Para exportación a Excel, necesitamos todos los usuarios sin paginación
+        $allUsers = null;
+        if ($request->filled('export') && $request->export === 'true') {
+            $allUsers = $query->get();
+        }
+        
+        // Implementar paginación
+        $perPage = $request->input('per_page', 10); // Por defecto 10 registros por página
+        $users = $query->paginate($perPage);
 
         $roles = Role::where('id', '>', $user->role_id)->get();
         $statuses = Status::where('name', '!=', 'En revisión')->get();
@@ -95,13 +125,14 @@ class UserController extends Controller
 
         return Inertia::render('Users/index', [
             'users' => $users,
+            'allUsers' => $allUsers, // Para exportación a Excel
             'roles' => $roles,
             'statuses' => $statuses,
             'branches' => $branches,
             'companies' => $companies,
             'categories' => $categories,
             'bonuses' => $bonuses,
-            'filters' => $request->only(['username', 'status', 'role']),
+            'filters' => $request->only(['username', 'status', 'role', 'branch_id', 'per_page', 'page']),
         ]);
     }
 
@@ -1300,5 +1331,83 @@ class UserController extends Controller
         $minutes = $totalMinutes % 60;
         
         return sprintf('%02d:%02d', $hours, $minutes);
+    }
+    
+    /**
+     * Filtra usuarios por cantidad de bonos diarios y rango de fechas
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function filterUsersByBonus(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'bonus_count' => 'required|integer|min:1',
+            'bonus_type' => 'required|in:daily,all'
+        ]);
+        
+        $startDate = Carbon::parse($request->start_date)->startOfDay();
+        $endDate = Carbon::parse($request->end_date)->endOfDay();
+        $bonusCount = $request->bonus_count;
+        $bonusType = $request->bonus_type;
+        
+        // Verificar permisos - solo roles administrativos pueden acceder a esta funcionalidad
+        $user = auth()->user();
+        if (!in_array($user->role_id, [1, 2, 3, 4])) { // duenio, super-admin, admin, supervisor
+            return response()->json([
+                'message' => 'No tienes permisos para acceder a esta funcionalidad',
+                'error' => true,
+                'success' => false
+            ], 403);
+        }
+        
+        try {
+            // Consulta base para obtener usuarios con rol de jugador
+            $query = User::with([
+                    'role:id,name', 
+                    'status:id,name', 
+                    'branches',
+                    'tickets' => function($q) use ($startDate, $endDate, $bonusType) {
+                        $q->whereBetween('created_at', [$startDate, $endDate]);
+                        if ($bonusType === 'daily') {
+                            $q->where('type', 'Bono Diario');
+                        }
+                    },
+                    'fingerprint_logs' => function($q) {
+                        $q->orderBy('created_at', 'desc')->limit(1);
+                    }
+                ])
+                ->where('role_id', 6) // Jugadores
+                ->where('status_id', 1); // Activos
+            
+            // Obtener usuarios
+            $users = $query->get();
+            
+            // Filtrar usuarios que tengan la cantidad especificada de bonos o más
+            $filteredUsers = $users->filter(function($user) use ($bonusCount) {
+                return count($user->tickets) >= $bonusCount;
+            });
+            
+            // Agregar contador de bonos diarios para cada usuario
+            $usersWithBonusCount = $filteredUsers->map(function($user) {
+                $user->daily_bonuses_count = count($user->tickets);
+                return $user;
+            });
+            
+            return response()->json([
+                'success' => true,
+                'error' => false,
+                'users' => $usersWithBonusCount->values()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error en filterUsersByBonus: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => true,
+                'message' => 'Error al filtrar usuarios: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -7,6 +7,7 @@ import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
 import ModalEditUser from '@/Components/Users/ModalEditUser';
 import ModalViewUser from '@/Components/Users/ModalViewUser';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
+import ModalCreateCustomBonus from '@/Components/Bonus/ModalCreateCustomBonus';
 // import FilterModal from '@/Components/Users/FilterModal';
 import MobileButton from '@/Components/MobileButton';
 import { CustomTable } from '@components-v2/CustomTable';
@@ -40,6 +41,7 @@ const FingerprintIcon = () => (
 export default function UserPage({
     auth,
     users,
+    allUsers,
     userWorkers,
     roles,
     branches,
@@ -52,12 +54,22 @@ export default function UserPage({
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
     const [selectedBranch, setSelectedBranch] = useState('');
+    const [pagination, setPagination] = useState({
+        current: users?.current_page || 1,
+        pageSize: users?.per_page || 10,
+        total: users?.total || 0,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
+    });
 
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const InitForm = {
-        username: filters.username || '',
+        search: filters.search || '',
         status: filters.status || '',
         role: filters.role || '',
+        branch_id: filters.branch_id || '',
+        per_page: filters.per_page || 10,
+        page: filters.page || 1,
     };
     const { data } = useForm(InitForm);
     const rowSelection = {
@@ -65,10 +77,24 @@ export default function UserPage({
         onChange: setSelectedRowKeys,
     };
     // Función para exportar usuarios a Excel
-    const exportToExcel = () => {
+    const exportToExcel = async () => {
         try {
-            // Preparar los datos para exportar
-            const dataToExport = filteredUsers.map(user => {
+            // Solicitar todos los usuarios para exportación
+            await router.get(route('users.index'), 
+                { 
+                    ...data,
+                    export: true 
+                }, 
+                {
+                    preserveState: true,
+                    replace: true,
+                    only: ['allUsers']
+                }
+            );
+            
+            // Usar allUsers que viene del servidor para la exportación
+            const usersToExport = allUsers || [];
+            const dataToExport = usersToExport.map(user => {
                 // Datos básicos que todos los usuarios tienen
                 const baseData = {
                     'Nombre de usuario': user.username || '',
@@ -127,31 +153,43 @@ export default function UserPage({
         }
     };
 
-    // Filtro frontend
-    const filteredUsers = users?.filter((user) => {
-        const search = searchTerm.toLowerCase();
-        const rut = (user.rutNumbers && user.rutDv) ? `${user.rutNumbers}-${user.rutDv}` : '';
-        const matchesSearch =
-            (user.username && user.username.toLowerCase().includes(search)) ||
-            (user.code && user.code.toString().toLowerCase()?.includes(search)) ||
-            (user.first_name && user.first_name.toLowerCase().includes(search)) ||
-            (user.second_name && user.second_name.toLowerCase().includes(search)) ||
-            (user.first_last_name && user.first_last_name.toLowerCase().includes(search)) ||
-            (user.second_last_name && user.second_last_name.toLowerCase().includes(search)) ||
-            (rut && rut.toLowerCase().includes(search));
-        const matchesStatus =
-            !selectedStatus ||
-            (user.status && (user.status.name === selectedStatus || user.status === selectedStatus));
-
-        // Filtro por sucursal
-        const matchesBranch = !selectedBranch ||
-            // Para trabajadores que tienen branch_id
-            (user.branch?.id === parseInt(selectedBranch)) ||
-            // Para jugadores y otros que tienen múltiples sucursales
-            (user.branches && user.branches.some(branch => branch.id === parseInt(selectedBranch)));
-
-        return matchesSearch && matchesStatus && matchesBranch;
-    });
+    // Función para manejar la búsqueda y filtros del lado del servidor
+    const handleSearch = () => {
+        router.get(route('users.index'), 
+            { 
+                ...data,
+                search: searchTerm,
+                status: selectedStatus,
+                branch_id: selectedBranch,
+                page: 1 // Resetear a la primera página al buscar
+            }, 
+            {
+                preserveState: true,
+                replace: true
+            }
+        );
+    };
+    
+    // Función para manejar el cambio de página
+    const handlePageChange = (page, pageSize) => {
+        router.get(route('users.index'), 
+            { 
+                ...data,
+                search: searchTerm,
+                status: selectedStatus,
+                branch_id: selectedBranch,
+                page: page,
+                per_page: pageSize
+            }, 
+            {
+                preserveState: true,
+                replace: true
+            }
+        );
+    };
+    
+    // Usamos los datos paginados del servidor directamente
+    const filteredUsers = users?.data || [];
 
     const columns = {
         'super-admin': [
@@ -964,6 +1002,13 @@ export default function UserPage({
                                 </select>
                                 <Button
                                     type="primary"
+                                    onClick={handleSearch}
+                                    className="bg-blue-500 text-white"
+                                >
+                                    Buscar
+                                </Button>
+                                <Button
+                                    type="primary"
                                     icon={<DownloadOutlined />}
                                     onClick={exportToExcel}
                                     className="bg-blue-500 text-white"
@@ -986,6 +1031,9 @@ export default function UserPage({
                                         role={auth?.role}
                                     />
                                 )}
+                                {allowedRoles.createBonus.includes(auth?.role) && data?.role === 'jugador' && (
+                                    <ModalCreateCustomBonus />
+                                )}
                             </div>
                         </div>
 
@@ -1002,6 +1050,15 @@ export default function UserPage({
                                     expandedRowRender,
                                     rowExpandable: () => true,
                                 }}
+                                pagination={{
+                                    current: users?.current_page || 1,
+                                    pageSize: users?.per_page || 10,
+                                    total: users?.total || 0,
+                                    showSizeChanger: true,
+                                    pageSizeOptions: ['10', '20', '50', '100'],
+                                    showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} usuarios`,
+                                    onChange: handlePageChange,
+                                }}
                             />
                         ) : (
                             <CustomTable
@@ -1011,6 +1068,15 @@ export default function UserPage({
                                     key: user?.id,
                                 }))}
                                 columns={columns?.[data.role]}
+                                pagination={{
+                                    current: users?.current_page || 1,
+                                    pageSize: users?.per_page || 10,
+                                    total: users?.total || 0,
+                                    showSizeChanger: true,
+                                    pageSizeOptions: ['10', '20', '50', '100'],
+                                    showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} usuarios`,
+                                    onChange: handlePageChange,
+                                }}
                             />
                         )}
                         <div className="flex flex-col xl:flex-row gap-5 justify-between mt-5 mb-20">

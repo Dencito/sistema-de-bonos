@@ -53,6 +53,8 @@ Route::prefix('users')->group(function () {
     Route::get('/reports/players', [ReportController::class, 'playersReport']);
     
     Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
+    
+    Route::get('/filter-by-bonus', [UserController::class, 'filterUsersByBonus']);
 });
 
 Route::post('/totems/associate-with-branch', [TotemController::class, 'associateWithBranch']);

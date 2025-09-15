@@ -26,6 +26,7 @@ export const userService = {
     create: (values) => handleResponse(axios.post('/users', values)),
     update: (id, values) => handleResponse(axios.put(`/users/${id}`, values)),
     delete: (id) => handleResponse(axios.delete(`/users/${id}`)),
+    filterByBonus: (params) => handleResponse(axios.get('/api/users/filter-by-bonus', { params })),
 };
 
 export const companyService = {
@@ -63,6 +64,7 @@ export const categoryBonusService = {
 export const bonusService = {
     create: (values) => handleResponse(axios.post('/bonuses', values)),
     delete: (id) => handleResponse(axios.delete(`/bonuses/${id}`)),
+    createMultiple: (values) => handleResponse(axios.post('/bonuses/create-multiple', values)),
     assignMultipleUsers: (users, bonusId) =>
         handleResponse(
             axios.post('/bonuses/assign-multiple-users', {

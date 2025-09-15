@@ -118,6 +118,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [BonusController::class, 'destroy'])->name('bonuses.destroy');
         Route::post('/assign-multiple-users', [BonusController::class, 'assignMultipleUsers'])->name('bonuses.assignMultipleUsers');
         Route::post('/destroy-multiple-users', [BonusController::class, 'destroyMultipleUsers'])->name('bonuses.destroyMultipleUsers');
+        Route::post('/create-multiple', [BonusController::class, 'createMultiple'])->name('bonuses.createMultiple');
     });
 
     Route::prefix('totems')->group(function() {

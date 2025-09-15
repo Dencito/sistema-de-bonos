@@ -1353,15 +1353,7 @@ class UserController extends Controller
         $bonusCount = $request->bonus_count;
         $bonusType = $request->bonus_type;
         
-        // Verificar permisos - solo roles administrativos pueden acceder a esta funcionalidad
-        $user = auth()->user();
-        if (!in_array($user->role_id, [1, 2, 3, 4])) { // duenio, super-admin, admin, supervisor
-            return response()->json([
-                'message' => 'No tienes permisos para acceder a esta funcionalidad',
-                'error' => true,
-                'success' => false
-            ], 403);
-        }
+
         
         try {
             // Consulta base para obtener usuarios con rol de jugador
@@ -1375,7 +1367,7 @@ class UserController extends Controller
                             $q->where('type', 'Bono Diario');
                         }
                     },
-                    'fingerprint_logs' => function($q) {
+                    'fingerprintLogs' => function($q) {
                         $q->orderBy('created_at', 'desc')->limit(1);
                     }
                 ])

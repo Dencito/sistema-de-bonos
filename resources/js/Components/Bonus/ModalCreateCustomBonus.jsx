@@ -84,8 +84,11 @@ export default function ModalCreateCustomBonus() {
             });
 
             if (response.success) {
-                setUsers(response.data.users || []);
-                message.success(`Se encontraron ${(response.data.users || []).length} usuarios`);
+                const usersData = response.data.users || [];
+                setUsers(usersData);
+                // Seleccionar solo los IDs de los usuarios
+                setSelectedUsers(usersData.map(user => ({ id: user.id })));
+                message.success(`Se encontraron ${usersData.length} usuarios`);
             } else {
                 message.error(response.message || 'Error al buscar usuarios');
                 setUsers([]);
@@ -98,6 +101,7 @@ export default function ModalCreateCustomBonus() {
             setSearching(false);
         }
     };
+
 
     const handleCreateBonuses = async () => {
         if (selectedUsers.length === 0) {
@@ -112,24 +116,41 @@ export default function ModalCreateCustomBonus() {
             const startDateTime = values.start_datetime?.format('YYYY-MM-DD HH:mm:ss');
             const endDateTime = values.end_datetime?.format('YYYY-MM-DD HH:mm:ss');
             
+            // Extraer solo los IDs de los usuarios seleccionados
             const userIds = selectedUsers.map(user => user.id);
             
-            const response = await bonusService.createMultiple({
-                user_ids: userIds,
-                amount: values.amount,
-                start_datetime: startDateTime,
-                end_datetime: endDateTime
+            // Crear un array de promesas para la creación de bonos
+            const createPromises = userIds.map(userId => {
+                const sendData = {
+                    amount: values.amount,
+                    start_datetime: startDateTime,
+                    end_datetime: endDateTime,
+                    user_id: userId,
+                };
+                return bonusService.create(sendData);
             });
-
-            if (response.success) {
-                successMsg(`Bonos creados correctamente para ${userIds.length} usuarios`);
-                router.visit(window.location.href, {
-                    preserveState: true,
-                });
-                handleCloseModal();
-            } else {
-                errorMsg(response.message || 'Error al crear los bonos');
+            
+            // Esperar a que todas las promesas se resuelvan
+            const results = await Promise.allSettled(createPromises);
+            
+            // Contar los bonos creados exitosamente
+            const successCount = results.filter(result => result.status === 'fulfilled' && result.value.success).length;
+            const failCount = userIds.length - successCount;
+            
+            // Mostrar una sola alerta con el resumen
+            if (successCount > 0) {
+                successMsg(`Bonos creados correctamente para ${successCount} usuarios`);
             }
+            
+            if (failCount > 0) {
+                errorMsg(`No se pudieron crear bonos para ${failCount} usuarios`);
+            }
+            
+            // Actualizar la página y cerrar el modal
+            router.visit(window.location.href, {
+                preserveState: true,
+            });
+            handleCloseModal();
         } catch (error) {
             console.error('Error al crear bonos:', error);
             errorMsg('Error al crear los bonos');
@@ -200,7 +221,7 @@ export default function ModalCreateCustomBonus() {
                             </Form.Item>
 
                             <Form.Item
-                                label="Cantidad de Bonos"
+                                label="Min. Cantidad de Bonos"
                                 name="bonus_count"
                                 rules={[
                                     {
@@ -250,7 +271,7 @@ export default function ModalCreateCustomBonus() {
                                 columns={columns}
                                 dataSource={users.map(user => ({ ...user, key: user.id }))}
                                 size="small"
-                                pagination={{ pageSize: 5 }}
+                                pagination={{ pageSize: 10 }}
                                 scroll={{ y: 240 }}
                             />
                         </div>

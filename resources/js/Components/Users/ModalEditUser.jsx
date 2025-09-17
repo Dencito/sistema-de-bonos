@@ -672,8 +672,8 @@ export default function ModalEditUser({
                     />
                 </Form.Item>
                 <Form.Item
-                    name="branch_id"
-                    label="Sucursal"
+                    name="branches"
+                    label="Sucursales"
                     rules={[
                         {
                             required: true,
@@ -681,10 +681,13 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione la sucursal">
+                    <Select
+                        mode="multiple"
+                        placeholder="Seleccione las sucursales"
+                    >
                         {branches?.map((branch) => (
                             <Select.Option key={branch.id} value={branch.id}>
-                                {branch.name}
+                                {branch?.name}
                             </Select.Option>
                         ))}
                     </Select>

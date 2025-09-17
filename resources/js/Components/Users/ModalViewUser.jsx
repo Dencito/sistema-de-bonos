@@ -487,23 +487,17 @@ export default function ModalViewUser({
                 <Form.Item name="childrens" label="Hijos / Cargas">
                     <Input name="childrens" showCount maxLength={2} />
                 </Form.Item>
-                <Form.Item
-                    name="branch_id"
-                    label="Sucursal"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Select placeholder="Seleccione la sucursal">
-                        {branches?.map((branch) => (
-                            <Select.Option key={branch.id} value={branch.id}>
-                                {branch.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
+                <Form.Item name="branches" label="Sucursales" rules={[
+                    {
+                        required: true,
+                        message: getValidationRequiredMessage,
+                    },
+                ]} initialValue={data?.branches}>
+                    {branches?.map((branch) => (
+                        <p key={branch?.id} className='text-sm font-bold' value={Number(branch?.id)}>
+                            - {branch?.name}
+                        </p>
+                    ))}
                 </Form.Item>
                 <Form.Item
                     name="status_id"
@@ -675,23 +669,17 @@ export default function ModalViewUser({
                         maxLength={100}
                     />
                 </Form.Item>
-                <Form.Item
-                    name="branch_id"
-                    label="Sucursal"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Select placeholder="Seleccione la sucursal">
-                        {branches?.map((branch) => (
-                            <Select.Option key={branch.id} value={branch.id}>
-                                {branch.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
+                <Form.Item name="branches" label="Sucursales" rules={[
+                    {
+                        required: true,
+                        message: getValidationRequiredMessage,
+                    },
+                ]} initialValue={data?.branches}>
+                    {branches?.map((branch) => (
+                        <p key={branch?.id} className='text-sm font-bold' value={Number(branch?.id)}>
+                            - {branch?.name}
+                        </p>
+                    ))}
                 </Form.Item>
                 <Form.Item
                     name="status_id"

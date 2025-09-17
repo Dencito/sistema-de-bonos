@@ -617,11 +617,13 @@ class UserController extends Controller
                                 $q->where('branch_id', $branch->id);
                             });
                     })
-                    // Para trabajadores (role_id = 5) buscar en branch_id
+                    // Para trabajadores (role_id = 5) buscar en la relación branches
                     ->orWhere(function ($q) use ($branch) {
                         $q
                             ->where('role_id', 5)
-                            ->where('branch_id', $branch->id);
+                            ->whereHas('branches', function ($q) use ($branch) {
+                                $q->where('branch_id', $branch->id);
+                            });
                     });
             })
             ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);

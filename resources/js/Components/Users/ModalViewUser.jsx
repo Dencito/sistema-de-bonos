@@ -511,8 +511,8 @@ export default function ModalViewUser({
                 >
                     <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id}>
-                                {status.name}
+                            <Select.Option key={status?.id} value={status?.id}>
+                                {status?.name}
                             </Select.Option>
                         ))}
                     </Select>
@@ -693,8 +693,8 @@ export default function ModalViewUser({
                 >
                     <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id}>
-                                {status.name}
+                            <Select.Option key={status?.id} value={status?.id}>
+                                {status?.name}
                             </Select.Option>
                         ))}
                     </Select>
@@ -712,10 +712,10 @@ export default function ModalViewUser({
                     <Select placeholder="Seleccione la categoria">
                         {categories?.map((category) => (
                             <Select.Option
-                                key={category.id}
-                                value={category.id}
+                                key={category?.id}
+                                value={category?.id}
                             >
-                                {category.name}
+                                {category?.name}
                             </Select.Option>
                         ))}
                     </Select>

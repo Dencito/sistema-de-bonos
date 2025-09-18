@@ -505,6 +505,26 @@ export default function ModalCreateUser({
                     />
                 </Form.Item>
                 <Form.Item
+                    name="branch_id"
+                    label="Sucursal principal"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                    ]}
+                >
+                    <Select
+                        placeholder="Seleccione la sucursal principal"
+                    >
+                        {branches?.map((branch) => (
+                            <Select.Option key={branch.id} value={branch.id}>
+                                {branch?.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item
                     name="branches"
                     label="Sucursales"
                     rules={[

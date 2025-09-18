@@ -513,8 +513,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : Promise.reject(
-                                          'Debe ser mayor de 16 años'
-                                      ),
+                                        'Debe ser mayor de 16 años'
+                                    ),
                         },
                     ]}
                 >
@@ -670,6 +670,27 @@ export default function ModalEditUser({
                         showCount
                         maxLength={2}
                     />
+                </Form.Item>
+
+                <Form.Item
+                    name="branch_id"
+                    label="Sucursal principal"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                    ]}
+                >
+                    <Select
+                        placeholder="Seleccione la sucursal principal"
+                    >
+                        {branches?.map((branch) => (
+                            <Select.Option key={branch.id} value={branch.id}>
+                                {branch?.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Form.Item
                     name="branches"
@@ -889,8 +910,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : value === undefined
-                                      ? Promise.resolve()
-                                      : Promise.reject(
+                                        ? Promise.resolve()
+                                        : Promise.reject(
                                             'Debe ser mayor de 16 años'
                                         ),
                         },

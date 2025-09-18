@@ -487,13 +487,23 @@ export default function ModalViewUser({
                 <Form.Item name="childrens" label="Hijos / Cargas">
                     <Input name="childrens" showCount maxLength={2} />
                 </Form.Item>
+                <Form.Item name="branch_id" label="Sucursal principal" rules={[
+                    {
+                        required: true,
+                        message: getValidationRequiredMessage,
+                    },
+                ]} initialValue={data?.branch_id}>
+                        <p className='text-sm font-bold'>
+                            - {data?.branch?.name}
+                        </p>
+                </Form.Item>
                 <Form.Item name="branches" label="Sucursales" rules={[
                     {
                         required: true,
                         message: getValidationRequiredMessage,
                     },
                 ]} initialValue={data?.branches}>
-                    {branches?.map((branch) => (
+                    {data?.branches?.map((branch) => (
                         <p key={branch?.id} className='text-sm font-bold' value={Number(branch?.id)}>
                             - {branch?.name}
                         </p>

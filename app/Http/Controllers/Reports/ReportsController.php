@@ -43,6 +43,9 @@ class ReportsController extends Controller
      */
     public function getFingerprintLogsReport(Request $request)
     {
+        // Log the received parameters for debugging
+        \Log::info('Fingerprint logs report parameters:', $request->all());
+        
         $query = FingerprintLog::with([
             'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id,branch_id,status_id',
             'user.role:id,name',
@@ -52,13 +55,25 @@ class ReportsController extends Controller
         
         // Filter by date range
         if ($request->filled('start_date')) {
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $query->whereDate('created_at', '>=', $startDate);
+            // Use whereDate to compare only the date part, ignoring time
+            $query->whereDate('created_at', '>=', $request->start_date);
+            
+            // Log for debugging
+            \Log::info('Start date filter applied (using whereDate):', [
+                'start_date' => $request->start_date,
+                'timezone' => config('app.timezone')
+            ]);
         }
         
         if ($request->filled('end_date')) {
-            $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $query->whereDate('created_at', '<=', $endDate);
+            // Use whereDate to compare only the date part, ignoring time
+            $query->whereDate('created_at', '<=', $request->end_date);
+            
+            // Log for debugging
+            \Log::info('End date filter applied (using whereDate):', [
+                'end_date' => $request->end_date,
+                'timezone' => config('app.timezone')
+            ]);
         }
         
         // Filter by role (5 = worker, 6 = player)

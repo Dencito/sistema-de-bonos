@@ -46,12 +46,35 @@ class ReportController extends Controller
         $endDate = $request->input('end_date');
         $userIdentifier = $request->input('user_identifier');
         
+        // Log the received parameters for debugging
+        \Log::info('Report parameters:', [
+            'type' => $type,
+            'branch_id' => $branchId,
+            'shift_id' => $shiftId,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'user_identifier' => $userIdentifier
+        ]);
+        
         // Base query for fingerprint logs - incluye tanto jugadores como trabajadores
         $query = FingerprintLog::with([
                 'user.categoryBonus', 
                 'user.role', 
                 'totem.branch'
             ]);
+        
+        // Apply date filters for all report types if provided
+        if ($startDate && $endDate && $type !== 'shift') {
+            // Use whereDate to compare only the date part, ignoring time
+            $query->whereDate('created_at', '>=', $startDate)
+                  ->whereDate('created_at', '<=', $endDate);
+                  
+            \Log::info('Date filter applied (using whereDate):', [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'timezone' => config('app.timezone')
+            ]);
+        }
         
         // Apply filters based on report type
         switch ($type) {
@@ -80,16 +103,30 @@ class ReportController extends Controller
                 
             case 'date':
                 if ($startDate && $endDate) {
+                    // Use whereDate to compare only the date part, ignoring time
                     $query->whereDate('created_at', '>=', $startDate)
                           ->whereDate('created_at', '<=', $endDate);
+                          
+                    \Log::info('Date case - Date filter applied (using whereDate):', [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'timezone' => config('app.timezone')
+                    ]);
                 }
                 break;
                 
             case 'top':
                 // We'll handle this differently below
                 if ($startDate && $endDate) {
+                    // Use whereDate to compare only the date part, ignoring time
                     $query->whereDate('created_at', '>=', $startDate)
                           ->whereDate('created_at', '<=', $endDate);
+                          
+                    \Log::info('Top case - Date filter applied (using whereDate):', [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'timezone' => config('app.timezone')
+                    ]);
                 }
                 break;
         }
@@ -207,6 +244,14 @@ class ReportController extends Controller
     {
         $shift = ShiftRecord::with(['branch', 'openedBy', 'closedBy'])->findOrFail($id);
         $userIdentifier = $request->input('user_identifier');
+        
+        // Log the received parameters for debugging
+        \Log::info('Shift report parameters:', [
+            'shift_id' => $id,
+            'user_identifier' => $userIdentifier,
+            'shift_opening_time' => $shift->opening_time,
+            'shift_closing_time' => $shift->closing_time ?? 'still open'
+        ]);
         
         // Get all fingerprint logs for this shift - incluye tanto jugadores como trabajadores
         // Get the data with memory optimization

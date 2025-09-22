@@ -11,13 +11,56 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
     const [reportType, setReportType] = useState(filters.type || 'all');
     const [branchId, setBranchId] = useState(filters.branch_id || '');
     const [shiftId, setShiftId] = useState(filters.shift_id || '');
-    const [startDate, setStartDate] = useState(filters.start_date ? new Date(filters.start_date) : null);
-    const [endDate, setEndDate] = useState(filters.end_date ? new Date(filters.end_date) : null);
+    const [startDate, setStartDate] = useState(filters.start_date ? new Date(filters.start_date) : new Date());
+    const [endDate, setEndDate] = useState(filters.end_date ? new Date(filters.end_date) : new Date());
     const [userIdentifier, setUserIdentifier] = useState(filters.user_identifier || ''); // For RUT or code filtering
     const [roleId, setRoleId] = useState(filters.role_id || ''); // For role filtering (5=worker, 6=player)
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('players'); // players, shift, fingerprint
+    
+    // Initialize dates properly when component loads
+    useEffect(() => {
+        // Set default date range if none provided (last 7 days)
+        if (!startDate && !endDate) {
+            // Get current date
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth(); // 0-indexed
+            const day = today.getDate();
+            
+            // Create end date (today at end of day)
+            const end = new Date(year, month, day, 23, 59, 59, 999);
+            
+            // Create start date (7 days ago at start of day)
+            const start = new Date(year, month, day - 7, 0, 0, 0, 0);
+            
+            setStartDate(start);
+            setEndDate(end);
+            console.log('Default date range set:', format(start, 'yyyy-MM-dd'), 'to', format(end, 'yyyy-MM-dd'));
+        } else {
+            // Ensure dates are properly initialized with correct time
+            if (startDate) {
+                // Parse the date components to avoid timezone issues
+                const d = new Date(startDate);
+                const year = d.getFullYear();
+                const month = d.getMonth();
+                const day = d.getDate();
+                const fixedStartDate = new Date(year, month, day, 0, 0, 0, 0);
+                setStartDate(fixedStartDate);
+            }
+            
+            if (endDate) {
+                // Parse the date components to avoid timezone issues
+                const d = new Date(endDate);
+                const year = d.getFullYear();
+                const month = d.getMonth();
+                const day = d.getDate();
+                const fixedEndDate = new Date(year, month, day, 23, 59, 59, 999);
+                setEndDate(fixedEndDate);
+            }
+        }
+    }, []);
 
     // Function to generate player reports
     const generatePlayersReport = async () => {
@@ -37,14 +80,19 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
 
             // Include date range parameters if available
             if (startDate && endDate) {
+                // Simplemente usar las fechas tal como están, sin ajustar la hora
+                // El backend se encargará de filtrar por fecha completa
                 params.start_date = format(startDate, 'yyyy-MM-dd');
                 params.end_date = format(endDate, 'yyyy-MM-dd');
+                
+                console.log('Date range:', params.start_date, 'to', params.end_date);
             }
 
             if (userIdentifier) {
                 params.user_identifier = userIdentifier;
             }
 
+            console.log('Sending params to API:', params);
             const response = await axios.get('/api/reports/players', { params });
             setReportData(response.data);
         } catch (error) {
@@ -83,8 +131,12 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             
             // Add date filters if selected
             if (startDate && endDate) {
+                // Simplemente usar las fechas tal como están, sin ajustar la hora
+                // El backend se encargará de filtrar por fecha completa
                 params.start_date = format(startDate, 'yyyy-MM-dd');
                 params.end_date = format(endDate, 'yyyy-MM-dd');
+                
+                console.log('Date range:', params.start_date, 'to', params.end_date);
             }
             
             // Add role filter if selected (5 = worker, 6 = player)
@@ -125,8 +177,12 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             
             // Add date filters if selected and available
             if (!shiftId && startDate && endDate) {
+                // Simplemente usar las fechas tal como están, sin ajustar la hora
+                // El backend se encargará de filtrar por fecha completa
                 params.start_date = format(startDate, 'yyyy-MM-dd');
                 params.end_date = format(endDate, 'yyyy-MM-dd');
+                
+                console.log('Date range:', params.start_date, 'to', params.end_date);
             }
             
             // Add role filter if selected (5 = worker, 6 = player)
@@ -319,9 +375,9 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <input
                         type="date"
                         value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                        onChange={(e) => setStartDate(new Date(e.target.value))}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
-                        disabled={shiftId !== ''}
+                        disabled={!!shiftId}
                     />
                 </div>
 
@@ -330,9 +386,9 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <input
                         type="date"
                         value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                        onChange={(e) => setEndDate(new Date(e.target.value))}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
-                        disabled={shiftId !== ''}
+                        disabled={!!shiftId}
                     />
                 </div>
 
@@ -371,9 +427,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
                     <input
                         type="date"
-                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
-                        disabled={shiftId !== ''}
+                        value={format(startDate, 'yyyy-MM-dd')}
+                        onChange={(e) => setStartDate(new Date(e.target.value))}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -382,9 +437,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
                     <input
                         type="date"
-                        value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
-                        disabled={shiftId !== ''}
+                        value={format(endDate, 'yyyy-MM-dd')}
+                        onChange={(e) => setEndDate(new Date(e.target.value))}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -524,8 +578,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
                     <input
                         type="date"
-                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                        value={format(startDate, 'yyyy-MM-dd')}
+                        onChange={(e) => setStartDate(new Date(e.target.value))}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>
@@ -533,8 +587,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
                     <input
                         type="date"
-                        value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                        value={format(endDate, 'yyyy-MM-dd')}
+                        onChange={(e) => setEndDate(new Date(e.target.value))}
                         className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                     />
                 </div>

@@ -2,9 +2,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const columns = [
     {
@@ -63,6 +64,29 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
     });
 
     const [showFilters, setShowFilters] = useState(false);
+    
+    // Initialize dates properly when component loads
+    useEffect(() => {
+        // Set default date range if none provided (last 7 days)
+        if (!data.start_date && !data.end_date) {
+            // Get current date
+            const today = dayjs();
+            
+            // Create end date (today)
+            const end = today.format('YYYY-MM-DD');
+            
+            // Create start date (7 days ago)
+            const start = today.subtract(7, 'day').format('YYYY-MM-DD');
+            
+            setData({
+                ...data,
+                start_date: start,
+                end_date: end
+            });
+            
+            console.log('Default date range set:', start, 'to', end);
+        }
+    }, []);
     
     const ticketTypes = [
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
@@ -135,7 +159,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                                     <Form.Item label="Fecha Inicio">
                                         <DatePicker 
                                             style={{ width: '100%' }} 
-                                            value={data.start_date ? new Date(data.start_date) : null}
+                                            value={data.start_date ? dayjs(data.start_date) : null}
                                             onChange={(date, dateString) => setData('start_date', dateString)}
                                             placeholder="Seleccione fecha inicio"
                                         />
@@ -143,7 +167,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                                     <Form.Item label="Fecha Fin">
                                         <DatePicker 
                                             style={{ width: '100%' }} 
-                                            value={data.end_date ? new Date(data.end_date) : null}
+                                            value={data.end_date ? dayjs(data.end_date) : null}
                                             onChange={(date, dateString) => setData('end_date', dateString)}
                                             placeholder="Seleccione fecha fin"
                                         />

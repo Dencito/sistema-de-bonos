@@ -6,13 +6,16 @@ import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useForm } from '@inertiajs/react';
 import { ChevronDown, Download, Filter, Printer } from 'lucide-react';
+import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
+import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 export default function Reports({ auth, branches, shifts, roles, filters }) {
     const [reportType, setReportType] = useState(filters.type || 'all');
     const [branchId, setBranchId] = useState(filters.branch_id || '');
     const [shiftId, setShiftId] = useState(filters.shift_id || '');
-    const [startDate, setStartDate] = useState(filters.start_date ? new Date(filters.start_date) : new Date());
-    const [endDate, setEndDate] = useState(filters.end_date ? new Date(filters.end_date) : new Date());
+    const [startDate, setStartDate] = useState(filters.start_date ? dayjs(filters.start_date) : dayjs());
+    const [endDate, setEndDate] = useState(filters.end_date ? dayjs(filters.end_date) : dayjs());
     const [userIdentifier, setUserIdentifier] = useState(filters.user_identifier || ''); // For RUT or code filtering
     const [roleId, setRoleId] = useState(filters.role_id || ''); // For role filtering (5=worker, 6=player)
     const [reportData, setReportData] = useState(null);
@@ -24,41 +27,17 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
         // Set default date range if none provided (last 7 days)
         if (!startDate && !endDate) {
             // Get current date
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth(); // 0-indexed
-            const day = today.getDate();
+            const today = dayjs();
             
-            // Create end date (today at end of day)
-            const end = new Date(year, month, day, 23, 59, 59, 999);
+            // Create end date (today)
+            const end = today;
             
-            // Create start date (7 days ago at start of day)
-            const start = new Date(year, month, day - 7, 0, 0, 0, 0);
+            // Create start date (7 days ago)
+            const start = today.subtract(7, 'day');
             
             setStartDate(start);
             setEndDate(end);
-            console.log('Default date range set:', format(start, 'yyyy-MM-dd'), 'to', format(end, 'yyyy-MM-dd'));
-        } else {
-            // Ensure dates are properly initialized with correct time
-            if (startDate) {
-                // Parse the date components to avoid timezone issues
-                const d = new Date(startDate);
-                const year = d.getFullYear();
-                const month = d.getMonth();
-                const day = d.getDate();
-                const fixedStartDate = new Date(year, month, day, 0, 0, 0, 0);
-                setStartDate(fixedStartDate);
-            }
-            
-            if (endDate) {
-                // Parse the date components to avoid timezone issues
-                const d = new Date(endDate);
-                const year = d.getFullYear();
-                const month = d.getMonth();
-                const day = d.getDate();
-                const fixedEndDate = new Date(year, month, day, 23, 59, 59, 999);
-                setEndDate(fixedEndDate);
-            }
+            console.log('Default date range set:', start.format('YYYY-MM-DD'), 'to', end.format('YYYY-MM-DD'));
         }
     }, []);
 
@@ -80,10 +59,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
 
             // Include date range parameters if available
             if (startDate && endDate) {
-                // Simplemente usar las fechas tal como están, sin ajustar la hora
-                // El backend se encargará de filtrar por fecha completa
-                params.start_date = format(startDate, 'yyyy-MM-dd');
-                params.end_date = format(endDate, 'yyyy-MM-dd');
+                params.start_date = startDate.format('YYYY-MM-DD');
+                params.end_date = endDate.format('YYYY-MM-DD');
                 
                 console.log('Date range:', params.start_date, 'to', params.end_date);
             }
@@ -131,10 +108,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             
             // Add date filters if selected
             if (startDate && endDate) {
-                // Simplemente usar las fechas tal como están, sin ajustar la hora
-                // El backend se encargará de filtrar por fecha completa
-                params.start_date = format(startDate, 'yyyy-MM-dd');
-                params.end_date = format(endDate, 'yyyy-MM-dd');
+                params.start_date = startDate.format('YYYY-MM-DD');
+                params.end_date = endDate.format('YYYY-MM-DD');
                 
                 console.log('Date range:', params.start_date, 'to', params.end_date);
             }
@@ -177,10 +152,8 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             
             // Add date filters if selected and available
             if (!shiftId && startDate && endDate) {
-                // Simplemente usar las fechas tal como están, sin ajustar la hora
-                // El backend se encargará de filtrar por fecha completa
-                params.start_date = format(startDate, 'yyyy-MM-dd');
-                params.end_date = format(endDate, 'yyyy-MM-dd');
+                params.start_date = startDate.format('YYYY-MM-DD');
+                params.end_date = endDate.format('YYYY-MM-DD');
                 
                 console.log('Date range:', params.start_date, 'to', params.end_date);
             }
@@ -372,23 +345,25 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
 
                 <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
-                    <input
-                        type="date"
-                        value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setStartDate(new Date(e.target.value))}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                    <DatePicker
+                        style={{ width: '100%' }}
+                        value={startDate}
+                        onChange={(date) => setStartDate(date)}
+                        placeholder="Seleccione fecha inicio"
                         disabled={!!shiftId}
+                        className="w-full"
                     />
                 </div>
 
                 <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
-                    <input
-                        type="date"
-                        value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                    <DatePicker
+                        style={{ width: '100%' }}
+                        value={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        placeholder="Seleccione fecha fin"
                         disabled={!!shiftId}
+                        className="w-full"
                     />
                 </div>
 
@@ -425,21 +400,23 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
-                    <input
-                        type="date"
-                        value={format(startDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setStartDate(new Date(e.target.value))}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                    <DatePicker
+                        style={{ width: '100%' }}
+                        value={startDate}
+                        onChange={(date) => setStartDate(date)}
+                        placeholder="Seleccione fecha inicio"
+                        className="w-full"
                     />
                 </div>
                 
                 <div className="w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
-                    <input
-                        type="date"
-                        value={format(endDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                    <DatePicker
+                        style={{ width: '100%' }}
+                        value={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        placeholder="Seleccione fecha fin"
+                        className="w-full"
                     />
                 </div>
                 
@@ -576,20 +553,22 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                 {/* Date range filter for all report types */}
                 <div className="w-full md:w-auto">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
-                    <input
-                        type="date"
-                        value={format(startDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setStartDate(new Date(e.target.value))}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                    <DatePicker
+                        style={{ width: '100%' }}
+                        value={startDate}
+                        onChange={(date) => setStartDate(date)}
+                        placeholder="Seleccione fecha inicio"
+                        className="w-full"
                     />
                 </div>
                 <div className="w-full md:w-auto">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
-                    <input
-                        type="date"
-                        value={format(endDate, 'yyyy-MM-dd')}
-                        onChange={(e) => setEndDate(new Date(e.target.value))}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                    <DatePicker
+                        style={{ width: '100%' }}
+                        value={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        placeholder="Seleccione fecha fin"
+                        className="w-full"
                     />
                 </div>
 

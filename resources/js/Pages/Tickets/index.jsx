@@ -175,6 +175,8 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             
             // Agregar resumen
             csvContent += '\nResumen\n';
+            csvContent += `Fecha Inicial,${data.start_date}\n`;
+            csvContent += `Fecha Final,${data.end_date}\n`;
             csvContent += `Total Tickets,${response.data.summary.total_tickets}\n`;
             csvContent += `Monto Total,$${Math.floor(response.data.summary.total_amount)}\n`;
             

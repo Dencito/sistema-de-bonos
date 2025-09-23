@@ -132,4 +132,88 @@ class TicketController extends Controller
         $ticket->delete();
         return response()->noContent();
     }
+    
+    /**
+     * Export tickets data for Excel export
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function export(Request $request)
+    {
+        // Log the received parameters for debugging
+        \Log::info('Tickets export parameters:', $request->all());
+        
+        $query = Ticket::with([
+            'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id',
+            'user.role:id,name',
+            'totem:id,name,branch_id',
+            'totem.branch:id,name'
+        ]);
+        
+        // Filtro por fecha de inicio
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        
+        // Filtro por fecha de fin
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+        
+        // Filtro por usuario
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        // Filtro por tipo de ticket
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        // Filtro por totem/sucursal
+        if ($request->filled('branch_id')) {
+            $query->whereHas('totem', function($q) use ($request) {
+                $q->where('branch_id', $request->branch_id);
+            });
+        }
+        
+        // Obtener todos los tickets sin paginación
+        $tickets = $query->orderBy('created_at', 'desc')->get();
+        
+        // Calcular estadísticas para el resumen
+        $totalAmount = $tickets->sum('total_amount');
+        
+        // Agrupar por tipo de ticket
+        $ticketTypes = $tickets->groupBy('type')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'amount' => $group->sum('total_amount')
+            ];
+        });
+        
+        // Agrupar por sucursal
+        $byBranch = $tickets->groupBy(function($ticket) {
+            return $ticket->totem && $ticket->totem->branch ? $ticket->totem->branch->name : 'Sin sucursal';
+        })->map(function ($group) {
+            return [
+                'total' => $group->count(),
+                'amount' => $group->sum('total_amount')
+            ];
+        });
+        
+        // Preparar resumen
+        $summary = [
+            'total_tickets' => $tickets->count(),
+            'total_amount' => $totalAmount,
+            'ticket_types' => $ticketTypes,
+            'by_branch' => $byBranch
+        ];
+        
+        return response()->json([
+            'tickets' => $tickets,
+            'summary' => $summary,
+            'filters' => $request->only(['start_date', 'end_date', 'user_id', 'type', 'branch_id'])
+        ]);
+    }
 }

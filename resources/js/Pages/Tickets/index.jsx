@@ -4,8 +4,10 @@ import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 import { useState, useEffect } from 'react';
 import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import axios from 'axios';
+import { format } from 'date-fns';
 
 const columns = [
     {
@@ -64,6 +66,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
     });
 
     const [showFilters, setShowFilters] = useState(false);
+    const [exporting, setExporting] = useState(false);
     
     // Initialize dates properly when component loads
     useEffect(() => {
@@ -124,6 +127,88 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         });
     };
 
+    // Función para exportar a Excel
+    const exportToExcel = async () => {
+        setExporting(true);
+        try {
+            // Preparar los parámetros de filtrado
+            const params = {};
+            
+            if (data.start_date) {
+                params.start_date = data.start_date;
+            }
+            
+            if (data.end_date) {
+                params.end_date = data.end_date;
+            }
+            
+            if (data.user_id) {
+                params.user_id = data.user_id;
+            }
+            
+            if (data.type) {
+                params.type = data.type;
+            }
+            
+            if (data.branch_id) {
+                params.branch_id = data.branch_id;
+            }
+            
+            // Llamar al endpoint de exportación
+            const response = await axios.get(route('tickets.export'), { params });
+            
+            // Crear el contenido CSV
+            let csvContent = 'ID,Usuario,Sucursal,Tipo,Monto Total,Fecha de Creación\n';
+            
+            // Agregar filas de datos
+            response.data.tickets.forEach(ticket => {
+                const row = [
+                    `Ticket #${ticket.id}`,
+                    `${ticket.user?.first_name || ''} ${ticket.user?.first_last_name || ''}`,
+                    ticket.totem?.branch?.name || 'N/A',
+                    ticket.type,
+                    `$${Math.floor(ticket.total_amount)}`,
+                    format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm:ss')
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+            
+            // Agregar resumen
+            csvContent += '\nResumen\n';
+            csvContent += `Total Tickets,${response.data.summary.total_tickets}\n`;
+            csvContent += `Monto Total,$${Math.floor(response.data.summary.total_amount)}\n`;
+            
+            // Agregar resumen por tipo de ticket
+            csvContent += '\nTipo de Ticket,Cantidad,Monto\n';
+            Object.entries(response.data.summary.ticket_types).forEach(([type, data]) => {
+                csvContent += `${type},${data.count},$${Math.floor(data.amount)}\n`;
+            });
+            
+            // Agregar resumen por sucursal
+            csvContent += '\nSucursal,Cantidad,Monto\n';
+            Object.entries(response.data.summary.by_branch).forEach(([branch, data]) => {
+                csvContent += `${branch},${data.total},$${Math.floor(data.amount)}\n`;
+            });
+            
+            // Crear y descargar el archivo
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `tickets_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+        } catch (error) {
+            console.error('Error al exportar tickets:', error);
+            alert('Error al exportar los tickets. Por favor intente nuevamente.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -142,14 +227,27 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
                 <div className="w-full">
-                    <div className="mb-4">
-                        <Button 
-                            type="primary" 
-                            icon={<FilterOutlined />} 
-                            onClick={() => setShowFilters(!showFilters)}
-                        >
-                            {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-                        </Button>
+                    <div className="mb-4 flex justify-between">
+                        <div>
+                            <Button 
+                                type="primary" 
+                                icon={<FilterOutlined />} 
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="mr-2"
+                            >
+                                {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+                            </Button>
+                        </div>
+                        <div>
+                            <Button 
+                                type="primary" 
+                                icon={<DownloadOutlined />} 
+                                onClick={exportToExcel}
+                                loading={exporting}
+                            >
+                                Exportar a Excel
+                            </Button>
+                        </div>
                     </div>
 
                     {showFilters && (

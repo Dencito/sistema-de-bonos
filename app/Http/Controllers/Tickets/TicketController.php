@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Branch;
 use App\Models\Totem;
+use App\Models\ShiftRecord;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
@@ -17,6 +18,8 @@ class TicketController extends Controller
     {
         // Log the received parameters for debugging
         \Log::info('Tickets index parameters:', $request->all());
+
+        $user = auth()->user();
         
         $query = Ticket::with([
             'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id',
@@ -63,6 +66,39 @@ class TicketController extends Controller
             $query->whereHas('totem', function($q) use ($request) {
                 $q->where('branch_id', $request->branch_id);
             });
+        }
+
+        // Si el usuario tiene role_id 5 (jugador), filtrar por tickets generados durante su turno actual
+        if ($user->role_id == 5) {
+            // Buscar el último turno abierto del usuario
+            $lastShift = ShiftRecord::where('opened_by_user_id', $user->id)
+                ->orderBy('opening_time', 'desc')
+                ->first();
+                
+            if ($lastShift) {
+                $startTime = Carbon::parse($lastShift->opening_time);
+                $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
+                
+                // Filtrar tickets generados durante el turno
+                $query->where('created_at', '>=', $startTime)
+                      ->where('created_at', '<=', $endTime);
+                      
+                // Log para depuración
+                \Log::info('Tickets - Filtro por turno del usuario aplicado:', [
+                    'user_id' => $user->id,
+                    'shift_id' => $lastShift->id,
+                    'opening_time' => $startTime->toDateTimeString(),
+                    'closing_time' => $endTime->toDateTimeString()
+                ]);
+            } else {
+                // Si no tiene turno, mostrar solo sus tickets
+                $query->where('user_id', $user->id);
+                
+                // Log para depuración
+                \Log::info('Tickets - Usuario sin turno, mostrando solo sus tickets:', [
+                    'user_id' => $user->id
+                ]);
+            }
         }
         
         // Implementar paginación para evitar problemas de memoria
@@ -176,6 +212,40 @@ class TicketController extends Controller
             $query->whereHas('totem', function($q) use ($request) {
                 $q->where('branch_id', $request->branch_id);
             });
+        }
+        
+        // Si el usuario tiene role_id 5 (jugador), filtrar por tickets generados durante su turno actual
+        $user = auth()->user();
+        if ($user->role_id == 5) {
+            // Buscar el último turno abierto del usuario
+            $lastShift = ShiftRecord::where('opened_by_user_id', $user->id)
+                ->orderBy('opening_time', 'desc')
+                ->first();
+                
+            if ($lastShift) {
+                $startTime = Carbon::parse($lastShift->opening_time);
+                $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
+                
+                // Filtrar tickets generados durante el turno
+                $query->where('created_at', '>=', $startTime)
+                      ->where('created_at', '<=', $endTime);
+                      
+                // Log para depuración
+                \Log::info('Tickets Export - Filtro por turno del usuario aplicado:', [
+                    'user_id' => $user->id,
+                    'shift_id' => $lastShift->id,
+                    'opening_time' => $startTime->toDateTimeString(),
+                    'closing_time' => $endTime->toDateTimeString()
+                ]);
+            } else {
+                // Si no tiene turno, mostrar solo sus tickets
+                $query->where('user_id', $user->id);
+                
+                // Log para depuración
+                \Log::info('Tickets Export - Usuario sin turno, mostrando solo sus tickets:', [
+                    'user_id' => $user->id
+                ]);
+            }
         }
         
         // Obtener todos los tickets sin paginación

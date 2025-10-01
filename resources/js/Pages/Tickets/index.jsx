@@ -67,30 +67,30 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
 
     const [showFilters, setShowFilters] = useState(false);
     const [exporting, setExporting] = useState(false);
-    
+
     // Initialize dates properly when component loads
     useEffect(() => {
         // Set default date range if none provided (last 7 days)
         if (!data.start_date && !data.end_date) {
             // Get current date
             const today = dayjs();
-            
+
             // Create end date (today)
             const end = today.format('YYYY-MM-DD');
-            
+
             // Create start date (7 days ago)
             const start = today.subtract(7, 'day').format('YYYY-MM-DD');
-            
+
             setData({
                 ...data,
                 start_date: start,
                 end_date: end
             });
-            
+
             console.log('Default date range set:', start, 'to', end);
         }
     }, []);
-    
+
     const ticketTypes = [
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
         { value: 'Bono Cumpleaños', label: 'Bono Cumpleaños' },
@@ -133,33 +133,33 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         try {
             // Preparar los parámetros de filtrado
             const params = {};
-            
+
             if (data.start_date) {
                 params.start_date = data.start_date;
             }
-            
+
             if (data.end_date) {
                 params.end_date = data.end_date;
             }
-            
+
             if (data.user_id) {
                 params.user_id = data.user_id;
             }
-            
+
             if (data.type) {
                 params.type = data.type;
             }
-            
+
             if (data.branch_id) {
                 params.branch_id = data.branch_id;
             }
-            
+
             // Llamar al endpoint de exportación
             const response = await axios.get(route('tickets.export'), { params });
-            
+
             // Crear el contenido CSV
             let csvContent = 'ID,Usuario,Sucursal,Tipo,Monto Total,Fecha de Creación\n';
-            
+
             // Agregar filas de datos
             response.data.tickets.forEach(ticket => {
                 const row = [
@@ -172,26 +172,26 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                 ];
                 csvContent += row.join(',') + '\n';
             });
-            
+
             // Agregar resumen
             csvContent += '\nResumen\n';
             csvContent += `Fecha Inicial,${data.start_date}\n`;
             csvContent += `Fecha Final,${data.end_date}\n`;
             csvContent += `Total Tickets,${response.data.summary.total_tickets}\n`;
             csvContent += `Monto Total,$${Math.floor(response.data.summary.total_amount)}\n`;
-            
+
             // Agregar resumen por tipo de ticket
             csvContent += '\nTipo de Ticket,Cantidad,Monto\n';
             Object.entries(response.data.summary.ticket_types).forEach(([type, data]) => {
                 csvContent += `${type},${data.count},$${Math.floor(data.amount)}\n`;
             });
-            
+
             // Agregar resumen por sucursal
             csvContent += '\nSucursal,Cantidad,Monto\n';
             Object.entries(response.data.summary.by_branch).forEach(([branch, data]) => {
                 csvContent += `${branch},${data.total},$${Math.floor(data.amount)}\n`;
             });
-            
+
             // Crear y descargar el archivo
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -202,7 +202,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
         } catch (error) {
             console.error('Error al exportar tickets:', error);
             alert('Error al exportar los tickets. Por favor intente nuevamente.');
@@ -229,11 +229,11 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
                 <div className="w-full">
-                    <div className="mb-4 flex justify-between">
+                    {auth.role !== 'trabajador' && <div className="mb-4 flex justify-between">
                         <div>
-                            <Button 
-                                type="primary" 
-                                icon={<FilterOutlined />} 
+                            <Button
+                                type="primary"
+                                icon={<FilterOutlined />}
                                 onClick={() => setShowFilters(!showFilters)}
                                 className="mr-2"
                             >
@@ -241,32 +241,32 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                             </Button>
                         </div>
                         <div>
-                            <Button 
-                                type="primary" 
-                                icon={<DownloadOutlined />} 
+                            <Button
+                                type="primary"
+                                icon={<DownloadOutlined />}
                                 onClick={exportToExcel}
                                 loading={exporting}
                             >
                                 Exportar a Excel
                             </Button>
                         </div>
-                    </div>
+                    </div>}
 
                     {showFilters && (
                         <Card className="mb-4">
                             <Form layout="vertical">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <Form.Item label="Fecha Inicio">
-                                        <DatePicker 
-                                            style={{ width: '100%' }} 
+                                        <DatePicker
+                                            style={{ width: '100%' }}
                                             value={data.start_date ? dayjs(data.start_date) : null}
                                             onChange={(date, dateString) => setData('start_date', dateString)}
                                             placeholder="Seleccione fecha inicio"
                                         />
                                     </Form.Item>
                                     <Form.Item label="Fecha Fin">
-                                        <DatePicker 
-                                            style={{ width: '100%' }} 
+                                        <DatePicker
+                                            style={{ width: '100%' }}
                                             value={data.end_date ? dayjs(data.end_date) : null}
                                             onChange={(date, dateString) => setData('end_date', dateString)}
                                             placeholder="Seleccione fecha fin"

@@ -20,6 +20,7 @@ import { DownloadOutlined } from '@ant-design/icons';
 import { Button, message } from 'antd';
 import * as XLSX from 'xlsx';
 import { bonusService } from '@/Services/api';
+import axios from 'axios';
 
 const FingerprintIcon = () => (
     <svg
@@ -79,21 +80,18 @@ export default function UserPage({
     // Función para exportar usuarios a Excel
     const exportToExcel = async () => {
         try {
-            // Solicitar todos los usuarios para exportación
-            await router.get(route('users.index'), 
-                { 
-                    ...data,
-                    export: true 
-                }, 
-                {
-                    preserveState: true,
-                    replace: true,
-                    only: ['allUsers']
-                }
-            );
+            // Preparar parámetros de filtro (solo los que tienen valor)
+            const params = {};
+            if (searchTerm) params.search = searchTerm;
+            if (data.role) params.role = data.role;
+            if (selectedStatus) params.status = selectedStatus;
+            if (selectedBranch) params.branch_id = selectedBranch;
             
-            // Usar allUsers que viene del servidor para la exportación
-            const usersToExport = allUsers || [];
+            // Llamar al endpoint de exportación
+            const response = await axios.get(route('users.export'), { params });
+            
+            // Usar los usuarios del endpoint de exportación
+            const usersToExport = response.data.users || [];
             const dataToExport = usersToExport.map(user => {
                 // Datos básicos que todos los usuarios tienen
                 const baseData = {

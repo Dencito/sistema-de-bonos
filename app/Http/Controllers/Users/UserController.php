@@ -30,7 +30,17 @@ class UserController extends Controller
         $user = auth()->user();
         
         // Construir la consulta base
-        $query = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch', 'fingerprintLogs'])
+        $query = User::with([
+            'status', 
+            'role', 
+            'bonuses', 
+            'categoryBonus', 
+            'branches', 
+            'branch',
+            'fingerprintLogs' => function($q) {
+                $q->orderBy('created_at', 'desc')->limit(1);
+            }
+        ])
             ->when($request->search, function ($query, $search) {
                 $query->where(function($q) use ($search) {
                     // Buscar en múltiples campos
@@ -98,12 +108,6 @@ class UserController extends Controller
                 'fingerprints'
             )
             ->orderBy('created_at', 'desc');
-            
-        // Para exportación a Excel, necesitamos todos los usuarios sin paginación
-        $allUsers = null;
-        if ($request->filled('export') && $request->export === 'true') {
-            $allUsers = $query->get();
-        }
         
         // Implementar paginación
         $perPage = $request->input('per_page', 10); // Por defecto 10 registros por página
@@ -125,7 +129,6 @@ class UserController extends Controller
 
         return Inertia::render('Users/index', [
             'users' => $users,
-            'allUsers' => $allUsers, // Para exportación a Excel
             'roles' => $roles,
             'statuses' => $statuses,
             'branches' => $branches,
@@ -1336,11 +1339,96 @@ class UserController extends Controller
     }
     
     /**
-     * Filtra usuarios por cantidad de bonos diarios y rango de fechas
+     * Export users data for Excel export
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+    public function export(Request $request)
+    {
+        // Log the received parameters for debugging
+        \Log::info('Users export parameters:', $request->all());
+        
+        $query = User::with(['status', 'role', 'bonuses', 'categoryBonus', 'branches', 'branch'])
+            ->when($request->search, function ($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('username', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
+                      ->orWhere('second_name', 'like', "%{$search}%")
+                      ->orWhere('first_last_name', 'like', "%{$search}%")
+                      ->orWhere('second_last_name', 'like', "%{$search}%")
+                      ->orWhere('rutNumbers', 'like', "%{$search}%")
+                      ->orWhere('code', 'like', "%{$search}%");
+                });
+            })
+            ->where('role_id', '>', 1)  // Exclude role ID 1 (duenio)
+            ->when($request->role, function ($query, $role) {
+                $query->whereHas('role', function ($q) use ($role) {
+                    $q->where('name', $role);
+                });
+            })
+            ->when($request->status, function ($query, $status) {
+                $query->whereHas('status', function ($q) use ($status) {
+                    $q->where('name', $status);
+                });
+            })
+            ->when($request->branch_id, function ($query, $branchId) {
+                $query->where(function($q) use ($branchId) {
+                    $q->where('branch_id', $branchId)
+                    ->orWhereHas('branches', function($subq) use ($branchId) {
+                        $subq->where('branch_id', $branchId);
+                    });
+                });
+            });
+        
+        // Obtener todos los usuarios sin paginación
+        $users = $query->orderBy('created_at', 'desc')->get();
+        
+        // Calcular estadísticas para el resumen
+        $totalUsers = $users->count();
+        
+        // Agrupar por rol
+        $byRole = $users->groupBy(function($user) {
+            return $user->role ? $user->role->name : 'Sin rol';
+        })->map(function ($group) {
+            return [
+                'total' => $group->count()
+            ];
+        });
+        
+        // Agrupar por estado
+        $byStatus = $users->groupBy(function($user) {
+            return $user->status ? $user->status->name : 'Sin estado';
+        })->map(function ($group) {
+            return [
+                'total' => $group->count()
+            ];
+        });
+        
+        // Agrupar por sucursal
+        $byBranch = $users->groupBy(function($user) {
+            return $user->branch ? $user->branch->name : 'Sin sucursal';
+        })->map(function ($group) {
+            return [
+                'total' => $group->count()
+            ];
+        });
+        
+        // Preparar resumen
+        $summary = [
+            'total_users' => $totalUsers,
+            'by_role' => $byRole,
+            'by_status' => $byStatus,
+            'by_branch' => $byBranch
+        ];
+        
+        return response()->json([
+            'users' => $users,
+            'summary' => $summary,
+            'filters' => $request->only(['search', 'role', 'status', 'branch_id'])
+        ]);
+    }
+
     public function filterUsersByBonus(Request $request)
     {
         $request->validate([

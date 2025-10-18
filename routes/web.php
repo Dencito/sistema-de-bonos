@@ -95,6 +95,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('users')->group(function() {
         Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/export', [UserController::class, 'export'])->name('users.export');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
         Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');

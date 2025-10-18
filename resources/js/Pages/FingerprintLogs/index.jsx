@@ -260,11 +260,11 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
                                                     // Buscar el turno seleccionado
                                                     const selectedShift = shifts.find(s => s.id === value);
                                                     if (selectedShift) {
-                                                        // Establecer las fechas del turno
-                                                        const startDate = dayjs(selectedShift.opening_time).format('YYYY-MM-DD');
+                                                        // Establecer las fechas del turno CON HORA
+                                                        const startDate = dayjs(selectedShift.opening_time).format('YYYY-MM-DD HH:mm:ss');
                                                         const endDate = selectedShift.closing_time 
-                                                            ? dayjs(selectedShift.closing_time).format('YYYY-MM-DD')
-                                                            : dayjs().format('YYYY-MM-DD');
+                                                            ? dayjs(selectedShift.closing_time).format('YYYY-MM-DD HH:mm:ss')
+                                                            : dayjs().format('YYYY-MM-DD HH:mm:ss');
                                                         
                                                         setData({
                                                             ...data,

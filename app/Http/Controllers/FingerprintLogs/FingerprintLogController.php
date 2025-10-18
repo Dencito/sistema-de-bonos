@@ -16,6 +16,9 @@ class FingerprintLogController extends Controller
 {
     public function index(Request $request)
     {
+        // Log the received parameters for debugging
+        \Log::info('FingerprintLogs index parameters:', $request->all());
+
         $query = FingerprintLog::with([
                 'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id,branch_id,status_id,role_id',
                 'totem:id,name,branch_id', 
@@ -26,13 +29,13 @@ class FingerprintLogController extends Controller
         // Filtro por fecha de inicio
         if ($request->filled('start_date')) {
             $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $query->whereDate('created_at', '>=', $startDate);
+            $query->where('created_at', '>=', $startDate);
         }
         
         // Filtro por fecha de fin
         if ($request->filled('end_date')) {
             $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $query->whereDate('created_at', '<=', $endDate);
+            $query->where('created_at', '<=', $endDate);
         }
         
         // Filtro por usuario
@@ -54,27 +57,8 @@ class FingerprintLogController extends Controller
             });
         }
         
-        // Filtro por turno
-        if ($request->filled('shift_id')) {
-            $shift = ShiftRecord::find($request->shift_id);
-            if ($shift) {
-                // Filtrar registros que ocurrieron durante el turno seleccionado
-                $query->where('created_at', '>=', $shift->opening_time)
-                      ->when($shift->closing_time, function($q) use ($shift) {
-                          return $q->where('created_at', '<=', $shift->closing_time);
-                      }, function($q) {
-                          // Si el turno sigue abierto, filtrar hasta ahora
-                          return $q->where('created_at', '<=', now());
-                      });
-                      
-                // Si el turno tiene una sucursal asociada, filtrar por esa sucursal también
-                if ($shift->branch_id) {
-                    $query->whereHas('totem', function($q) use ($shift) {
-                        $q->where('branch_id', $shift->branch_id);
-                    });
-                }
-            }
-        }
+        // El filtro por turno ahora se maneja en el frontend
+        // estableciendo directamente start_date y end_date
         
         // Implementar paginación para evitar problemas de memoria
         $perPage = $request->input('per_page', 25); // Por defecto 25 registros por página
@@ -114,6 +98,7 @@ class FingerprintLogController extends Controller
                 return [
                     'id' => $shift->id,
                     'branch' => $shift->branch->name ?? 'N/A',
+                    'branch_id' => $shift->branch_id,
                     'opened_by' => $shift->openedBy->first_name . ' ' . $shift->openedBy->first_last_name,
                     'opening_time' => $shift->opening_time,
                     'closing_time' => $shift->closing_time,
@@ -128,7 +113,7 @@ class FingerprintLogController extends Controller
             'totems' => $totems,
             'branches' => $branches,
             'shifts' => $shifts,
-            'filters' => $request->only(['start_date', 'end_date', 'user_id', 'role_id', 'branch_id', 'shift_id', 'per_page'])
+            'filters' => $request->only(['start_date', 'end_date', 'user_id', 'role_id', 'branch_id', 'per_page'])
         ]);
     }
 
@@ -201,24 +186,8 @@ class FingerprintLogController extends Controller
             });
         }
         
-        // Filter by shift
-        if ($request->filled('shift_id')) {
-            $shift = ShiftRecord::find($request->shift_id);
-            if ($shift) {
-                $query->where('created_at', '>=', $shift->opening_time)
-                      ->when($shift->closing_time, function($q) use ($shift) {
-                          return $q->where('created_at', '<=', $shift->closing_time);
-                      }, function($q) {
-                          return $q->where('created_at', '<=', now());
-                      });
-                      
-                if ($shift->branch_id) {
-                    $query->whereHas('totem', function($q) use ($shift) {
-                        $q->where('branch_id', $shift->branch_id);
-                    });
-                }
-            }
-        }
+        // El filtro por turno ahora se maneja en el frontend
+        // estableciendo directamente start_date y end_date
         
         // Get logs ordered by date
         $logs = $query->orderBy('created_at', 'desc')->get();
@@ -279,7 +248,85 @@ class FingerprintLogController extends Controller
         return response()->json([
             'logs' => $transformedLogs,
             'summary' => $summary,
-            'filters' => $request->only(['start_date', 'end_date', 'role_id', 'branch_id', 'shift_id'])
+            'filters' => $request->only(['start_date', 'end_date', 'role_id', 'branch_id'])
         ]);
     }
+
+    public function export(Request $request)
+{
+    $query = FingerprintLog::with([
+        'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id,branch_id,status_id,role_id',
+        'totem:id,name,branch_id', 
+        'totem.branch:id,name', 
+        'user.role:id,name'
+    ]);
+    
+    // Filtro por fecha de inicio
+    if ($request->filled('start_date')) {
+        $startDate = Carbon::parse($request->start_date)->startOfDay();
+        $query->where('created_at', '>=', $startDate);
+    }
+    
+    // Filtro por fecha de fin
+    if ($request->filled('end_date')) {
+        $endDate = Carbon::parse($request->end_date)->endOfDay();
+        $query->where('created_at', '<=', $endDate);
+    }
+    
+    // Filtro por usuario
+    if ($request->filled('user_id')) {
+        $query->where('user_id', $request->user_id);
+    }
+    
+    // Filtro por rol de usuario
+    if ($request->filled('role_id')) {
+        $query->whereHas('user', function($q) use ($request) {
+            $q->where('role_id', $request->role_id);
+        });
+    }
+    
+    // Filtro por sucursal
+    if ($request->filled('branch_id')) {
+        $query->whereHas('totem', function($q) use ($request) {
+            $q->where('branch_id', $request->branch_id);
+        });
+    }
+    
+    // El filtro por turno ahora se maneja en el frontend
+    // estableciendo directamente start_date y end_date
+    
+    // Get all logs for export
+    $fingerprintLogs = $query->orderBy('created_at', 'desc')->get();
+    
+    // Prepare summary data
+    $summary = [
+        'total_logs' => $fingerprintLogs->count(),
+        'by_branch' => [],
+        'by_role' => []
+    ];
+    
+    // Group logs by branch
+    $logsByBranch = $fingerprintLogs->groupBy(function($log) {
+        return $log->totem && $log->totem->branch ? $log->totem->branch->name : 'Sin sucursal';
+    });
+    
+    foreach ($logsByBranch as $branchName => $branchLogs) {
+        $summary['by_branch'][$branchName] = $branchLogs->count();
+    }
+    
+    // Group logs by role
+    $logsByRole = $fingerprintLogs->groupBy(function($log) {
+        return $log->user && $log->user->role ? $log->user->role->name : 'Sin rol';
+    });
+    
+    foreach ($logsByRole as $roleName => $roleLogs) {
+        $summary['by_role'][$roleName] = $roleLogs->count();
+    }
+    
+    return response()->json([
+        'fingerprintLogs' => $fingerprintLogs,
+        'summary' => $summary,
+        'filters' => $request->only(['start_date', 'end_date', 'user_id', 'role_id', 'branch_id'])
+    ]);
+}
 }

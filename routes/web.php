@@ -141,13 +141,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [FingerprintLogController::class, 'store'])->name('fingerprint-logs.store');
         Route::put('/{fingerprintLog}', [FingerprintLogController::class, 'update'])->name('fingerprint-logs.update');
         Route::delete('/{fingerprintLog}', [FingerprintLogController::class, 'destroy'])->name('fingerprint-logs.destroy');
+        Route::get('/export', [FingerprintLogController::class, 'export'])->name('fingerprint-logs.export');
     });
     
     // Use ReportsController for the main reports page
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
     Route::prefix('shifts')->group(function() {
-        Route::get('/', [ShiftController::class, 'index'])->name('shifts.index');
+        Route::get('/', [ShiftController::class, 'index'])->name('shifts.indepx');
         Route::post('/', [ShiftController::class, 'store'])->name('shifts.store');
         Route::put('/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
         Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('shifts.destroy');

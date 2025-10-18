@@ -4,7 +4,10 @@ import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 import { useState, useEffect } from 'react';
 import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import axios from 'axios';
+import { format } from 'date-fns';
 
 const columns = [
     {
@@ -47,30 +50,58 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
         user_id: filters?.user_id || '',
         role_id: filters?.role_id || '',
         branch_id: filters?.branch_id || '',
-        shift_id: filters?.shift_id || '',
         per_page: filters?.per_page || 25,
     });
 
     const [showFilters, setShowFilters] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    // Initialize dates properly when component loads
+    useEffect(() => {
+        // Set default date range if none provided (last 7 days)
+        if (!data.start_date && !data.end_date) {
+            // Get current date
+            const today = dayjs();
+
+            // Create end date (today)
+            const end = today.format('YYYY-MM-DD');
+
+            // Create start date (7 days ago)
+            const start = today.subtract(7, 'day').format('YYYY-MM-DD');
+
+            setData({
+                ...data,
+                start_date: start,
+                end_date: end
+            });
+        }
+    }, []);
 
     const handleSearch = () => {
-        get(route('fingerprint-logs.index'), {
+        // Filtrar parámetros vacíos antes de enviar
+        const params = Object.fromEntries(
+            Object.entries(data).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+        );
+        
+        get(route('fingerprint-logs.index', params), {
             preserveState: true,
             replace: true,
         });
     };
 
     const handleClearFilters = () => {
-        setData({
+        const clearedData = {
             start_date: '',
             end_date: '',
             user_id: '',
             role_id: '',
             branch_id: '',
-            shift_id: '',
             per_page: 25,
-        });
-        get(route('fingerprint-logs.index'), {
+        };
+        setData(clearedData);
+        
+        // Solo enviar per_page
+        get(route('fingerprint-logs.index', { per_page: 25 }), {
             preserveState: true,
             replace: true,
         });
@@ -78,10 +109,98 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
 
     const handlePageChange = (page, pageSize) => {
         setData('per_page', pageSize);
-        get(route('fingerprint-logs.index', { page }), {
+        
+        // Filtrar parámetros vacíos antes de enviar
+        const params = Object.fromEntries(
+            Object.entries({ ...data, per_page: pageSize, page }).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+        );
+        
+        get(route('fingerprint-logs.index', params), {
             preserveState: true,
             replace: true,
         });
+    };
+
+    // Función para exportar a Excel
+    const exportToExcel = async () => {
+        setExporting(true);
+        try {
+            // Preparar los parámetros de filtrado
+            const params = {};
+
+            if (data.start_date) {
+                params.start_date = data.start_date;
+            }
+
+            if (data.end_date) {
+                params.end_date = data.end_date;
+            }
+
+            if (data.user_id) {
+                params.user_id = data.user_id;
+            }
+
+            if (data.role_id) {
+                params.role_id = data.role_id;
+            }
+
+            if (data.branch_id) {
+                params.branch_id = data.branch_id;
+            }
+
+            // Llamar al endpoint de exportación
+            const response = await axios.get(route('fingerprint-logs.export'), { params });
+
+            // Crear el contenido CSV
+            let csvContent = 'Usuario,Rol,Tótem,Sucursal,Fecha y Hora\n';
+
+            // Agregar filas de datos
+            response.data.fingerprintLogs.forEach(log => {
+                const row = [
+                    `${log.user?.first_name || ''} ${log.user?.first_last_name || ''}`,
+                    log.user?.role?.name || 'N/A',
+                    log.totem?.name || 'N/A',
+                    log.totem?.branch?.name || 'N/A',
+                    format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            // Agregar resumen
+            csvContent += '\nResumen\n';
+            csvContent += `Fecha Inicial,${data.start_date}\n`;
+            csvContent += `Fecha Final,${data.end_date}\n`;
+            csvContent += `Total Registros,${response.data.summary.total_logs}\n`;
+
+            // Agregar resumen por sucursal
+            csvContent += '\nSucursal,Cantidad\n';
+            Object.entries(response.data.summary.by_branch).forEach(([branch, count]) => {
+                csvContent += `${branch},${count}\n`;
+            });
+
+            // Agregar resumen por rol
+            csvContent += '\nRol,Cantidad\n';
+            Object.entries(response.data.summary.by_role).forEach(([role, count]) => {
+                csvContent += `${role},${count}\n`;
+            });
+
+            // Crear y descargar el archivo
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `registros_huella_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error('Error al exportar registros:', error);
+            alert('Error al exportar los registros. Por favor intente nuevamente.');
+        } finally {
+            setExporting(false);
+        }
     };
 
     return (
@@ -102,14 +221,27 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
                 <div className="w-full">
-                    <div className="mb-4">
-                        <Button 
-                            type="primary" 
-                            icon={<FilterOutlined />} 
-                            onClick={() => setShowFilters(!showFilters)}
-                        >
-                            {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-                        </Button>
+                    <div className="mb-4 flex justify-between">
+                        <div>
+                            <Button 
+                                type="primary" 
+                                icon={<FilterOutlined />} 
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="mr-2"
+                            >
+                                {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+                            </Button>
+                        </div>
+                        <div>
+                            <Button
+                                type="primary"
+                                icon={<DownloadOutlined />}
+                                onClick={exportToExcel}
+                                loading={exporting}
+                            >
+                                Exportar a Excel
+                            </Button>
+                        </div>
                     </div>
 
                     {showFilters && (
@@ -122,21 +254,31 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
                                             style={{ width: '100%' }}
                                             placeholder="Seleccione turno"
                                             optionFilterProp="children"
-                                            value={data.shift_id || undefined}
+                                            value={undefined}
                                             onChange={(value) => {
-                                                // Al seleccionar un turno, limpiar las fechas
-                                                setData({
-                                                    ...data,
-                                                    shift_id: value,
-                                                    start_date: '',
-                                                    end_date: ''
-                                                });
+                                                if (value) {
+                                                    // Buscar el turno seleccionado
+                                                    const selectedShift = shifts.find(s => s.id === value);
+                                                    if (selectedShift) {
+                                                        // Establecer las fechas del turno
+                                                        const startDate = dayjs(selectedShift.opening_time).format('YYYY-MM-DD');
+                                                        const endDate = selectedShift.closing_time 
+                                                            ? dayjs(selectedShift.closing_time).format('YYYY-MM-DD')
+                                                            : dayjs().format('YYYY-MM-DD');
+                                                        
+                                                        setData({
+                                                            ...data,
+                                                            start_date: startDate,
+                                                            end_date: endDate,
+                                                            branch_id: selectedShift.branch_id || data.branch_id
+                                                        });
+                                                    }
+                                                }
                                             }}
                                             filterOption={(input, option) =>
                                                 option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                             }
                                             allowClear
-                                            onClear={() => setData('shift_id', '')}
                                         >
                                             {shifts?.map((shift) => (
                                                 <Select.Option key={shift.id} value={shift.id}>
@@ -145,40 +287,28 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
                                             ))}
                                         </Select>
                                         <div className="text-xs text-gray-500 mt-1">
-                                            Al seleccionar un turno, se ignorarán los filtros de fecha
+                                            Al seleccionar un turno, se establecerán automáticamente las fechas
                                         </div>
                                     </Form.Item>
                                     
                                     <Form.Item label="Fecha Inicio">
                                         <DatePicker 
                                             style={{ width: '100%' }} 
-                                            value={data.start_date ? new Date(data.start_date) : null}
+                                            value={data.start_date ? dayjs(data.start_date) : null}
                                             onChange={(date, dateString) => {
-                                                // Al seleccionar una fecha, limpiar el turno
-                                                setData({
-                                                    ...data,
-                                                    start_date: dateString,
-                                                    shift_id: ''
-                                                });
+                                                setData('start_date', dateString);
                                             }}
                                             placeholder="Seleccione fecha inicio"
-                                            disabled={!!data.shift_id}
                                         />
                                     </Form.Item>
                                     <Form.Item label="Fecha Fin">
                                         <DatePicker 
                                             style={{ width: '100%' }} 
-                                            value={data.end_date ? new Date(data.end_date) : null}
+                                            value={data.end_date ? dayjs(data.end_date) : null}
                                             onChange={(date, dateString) => {
-                                                // Al seleccionar una fecha, limpiar el turno
-                                                setData({
-                                                    ...data,
-                                                    end_date: dateString,
-                                                    shift_id: ''
-                                                });
+                                                setData('end_date', dateString);
                                             }}
                                             placeholder="Seleccione fecha fin"
-                                            disabled={!!data.shift_id}
                                         />
                                     </Form.Item>
                                     <Form.Item label="Usuario">
@@ -188,7 +318,7 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
                                             placeholder="Seleccione usuario"
                                             optionFilterProp="children"
                                             value={data.user_id || undefined}
-                                            onChange={(value) => setData('user_id', value)}
+                                            onChange={(value) => setData('user_id', value || '')}
                                             filterOption={(input, option) =>
                                                 option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                             }
@@ -206,7 +336,7 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
                                             style={{ width: '100%' }}
                                             placeholder="Seleccione sucursal"
                                             value={data.branch_id || undefined}
-                                            onChange={(value) => setData('branch_id', value)}
+                                            onChange={(value) => setData('branch_id', value || '')}
                                             allowClear
                                         >
                                             {branches?.map((branch) => (

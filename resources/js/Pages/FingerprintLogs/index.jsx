@@ -8,6 +8,7 @@ import { SearchOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/ic
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 
 const columns = [
     {
@@ -151,49 +152,45 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
             // Llamar al endpoint de exportación
             const response = await axios.get(route('fingerprint-logs.export'), { params });
 
-            // Crear el contenido CSV
-            let csvContent = 'Usuario,Rol,Tótem,Sucursal,Fecha y Hora\n';
+            // Preparar datos para Excel
+            const logsData = response.data.fingerprintLogs.map(log => ({
+                'Usuario': `${log.user?.first_name || ''} ${log.user?.first_last_name || ''}`,
+                'Rol': log.user?.role?.name || 'N/A',
+                'Tótem': log.totem?.name || 'N/A',
+                'Sucursal': log.totem?.branch?.name || 'N/A',
+                'Fecha y Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')
+            }));
 
-            // Agregar filas de datos
-            response.data.fingerprintLogs.forEach(log => {
-                const row = [
-                    `${log.user?.first_name || ''} ${log.user?.first_last_name || ''}`,
-                    log.user?.role?.name || 'N/A',
-                    log.totem?.name || 'N/A',
-                    log.totem?.branch?.name || 'N/A',
-                    format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')
-                ];
-                csvContent += row.join(',') + '\n';
-            });
+            // Crear hoja de registros
+            const ws1 = XLSX.utils.json_to_sheet(logsData);
 
-            // Agregar resumen
-            csvContent += '\nResumen\n';
-            csvContent += `Fecha Inicial,${data.start_date}\n`;
-            csvContent += `Fecha Final,${data.end_date}\n`;
-            csvContent += `Total Registros,${response.data.summary.total_logs}\n`;
+            // Crear hoja de resumen
+            const summaryData = [
+                { 'Campo': 'Fecha Inicial', 'Valor': data.start_date },
+                { 'Campo': 'Fecha Final', 'Valor': data.end_date },
+                { 'Campo': 'Total Registros', 'Valor': response.data.summary.total_logs },
+                {},
+                { 'Campo': 'Resumen por Sucursal', 'Valor': '' },
+                ...Object.entries(response.data.summary.by_branch).map(([branch, count]) => ({
+                    'Campo': branch,
+                    'Valor': count
+                })),
+                {},
+                { 'Campo': 'Resumen por Rol', 'Valor': '' },
+                ...Object.entries(response.data.summary.by_role).map(([role, count]) => ({
+                    'Campo': role,
+                    'Valor': count
+                }))
+            ];
+            const ws2 = XLSX.utils.json_to_sheet(summaryData);
 
-            // Agregar resumen por sucursal
-            csvContent += '\nSucursal,Cantidad\n';
-            Object.entries(response.data.summary.by_branch).forEach(([branch, count]) => {
-                csvContent += `${branch},${count}\n`;
-            });
+            // Crear libro de Excel
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, ws1, 'Registros');
+            XLSX.utils.book_append_sheet(workbook, ws2, 'Resumen');
 
-            // Agregar resumen por rol
-            csvContent += '\nRol,Cantidad\n';
-            Object.entries(response.data.summary.by_role).forEach(([role, count]) => {
-                csvContent += `${role},${count}\n`;
-            });
-
-            // Crear y descargar el archivo
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', `registros_huella_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Descargar archivo
+            XLSX.writeFile(workbook, `registros_huella_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
 
         } catch (error) {
             console.error('Error al exportar registros:', error);

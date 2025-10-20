@@ -113,6 +113,7 @@ export default function UserPage({
                         ...baseData,
                         'Código/RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : user.code || '',
                         'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
+                        'Categoria de bonos': user.categoryBonus?.name || '',
                         'Última marca': user.fingerprint_logs?.[0]?.created_at ? new Date(user.fingerprint_logs[0].created_at).toLocaleDateString('es-CL') : '',
                         'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
                     };

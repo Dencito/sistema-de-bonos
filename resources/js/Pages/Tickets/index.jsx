@@ -8,6 +8,7 @@ import { SearchOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/ic
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 
 const columns = [
     {
@@ -157,51 +158,49 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             // Llamar al endpoint de exportación
             const response = await axios.get(route('tickets.export'), { params });
 
-            // Crear el contenido CSV
-            let csvContent = 'ID,Usuario,Sucursal,Tipo,Monto Total,Fecha de Creación\n';
+            // Preparar datos para Excel
+            const ticketsData = response.data.tickets.map(ticket => ({
+                'ID': `Ticket #${ticket.id}`,
+                'Usuario': `${ticket.user?.first_name || ''} ${ticket.user?.first_last_name || ''}`,
+                'Sucursal': ticket.totem?.branch?.name || 'N/A',
+                'Tipo': ticket.type,
+                'Monto Total': Math.floor(ticket.total_amount),
+                'Fecha de Creación': format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm:ss')
+            }));
 
-            // Agregar filas de datos
-            response.data.tickets.forEach(ticket => {
-                const row = [
-                    `Ticket #${ticket.id}`,
-                    `${ticket.user?.first_name || ''} ${ticket.user?.first_last_name || ''}`,
-                    ticket.totem?.branch?.name || 'N/A',
-                    ticket.type,
-                    `$${Math.floor(ticket.total_amount)}`,
-                    format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm:ss')
-                ];
-                csvContent += row.join(',') + '\n';
-            });
+            // Crear hoja de tickets
+            const ws1 = XLSX.utils.json_to_sheet(ticketsData);
 
-            // Agregar resumen
-            csvContent += '\nResumen\n';
-            csvContent += `Fecha Inicial,${data.start_date}\n`;
-            csvContent += `Fecha Final,${data.end_date}\n`;
-            csvContent += `Total Tickets,${response.data.summary.total_tickets}\n`;
-            csvContent += `Monto Total,$${Math.floor(response.data.summary.total_amount)}\n`;
+            // Crear hoja de resumen
+            const summaryData = [
+                { 'Campo': 'Fecha Inicial', 'Valor': data.start_date },
+                { 'Campo': 'Fecha Final', 'Valor': data.end_date },
+                { 'Campo': 'Total Tickets', 'Valor': response.data.summary.total_tickets },
+                { 'Campo': 'Monto Total', 'Valor': `$${Math.floor(response.data.summary.total_amount)}` },
+                {},
+                { 'Campo': 'Resumen por Tipo de Ticket', 'Valor': '' },
+                ...Object.entries(response.data.summary.ticket_types).map(([type, data]) => ({
+                    'Campo': type,
+                    'Valor': `${data.count} tickets`,
+                    'Monto': `$${Math.floor(data.amount)}`
+                })),
+                {},
+                { 'Campo': 'Resumen por Sucursal', 'Valor': '' },
+                ...Object.entries(response.data.summary.by_branch).map(([branch, data]) => ({
+                    'Campo': branch,
+                    'Valor': `${data.total} tickets`,
+                    'Monto': `$${Math.floor(data.amount)}`
+                }))
+            ];
+            const ws2 = XLSX.utils.json_to_sheet(summaryData);
 
-            // Agregar resumen por tipo de ticket
-            csvContent += '\nTipo de Ticket,Cantidad,Monto\n';
-            Object.entries(response.data.summary.ticket_types).forEach(([type, data]) => {
-                csvContent += `${type},${data.count},$${Math.floor(data.amount)}\n`;
-            });
+            // Crear libro de Excel
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, ws1, 'Tickets');
+            XLSX.utils.book_append_sheet(workbook, ws2, 'Resumen');
 
-            // Agregar resumen por sucursal
-            csvContent += '\nSucursal,Cantidad,Monto\n';
-            Object.entries(response.data.summary.by_branch).forEach(([branch, data]) => {
-                csvContent += `${branch},${data.total},$${Math.floor(data.amount)}\n`;
-            });
-
-            // Crear y descargar el archivo
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', `tickets_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Descargar archivo
+            XLSX.writeFile(workbook, `tickets_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
 
         } catch (error) {
             console.error('Error al exportar tickets:', error);

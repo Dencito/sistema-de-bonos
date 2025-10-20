@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useForm } from '@inertiajs/react';
 import { ChevronDown, Download, Filter, Printer } from 'lucide-react';
@@ -198,107 +199,101 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
         }
     };
 
-    // Export to CSV
-    const exportToCSV = () => {
+    // Export to Excel
+    const exportToExcel = () => {
         if (!reportData) return;
 
-        let csvContent = '';
         let filename = '';
+        const workbook = XLSX.utils.book_new();
 
         if (activeTab === 'players') {
-            // Headers
-            csvContent = 'Jugador,Tipo,Sucursal,Fecha/Hora,Tipo Ticket,Valor\n';
-
-            // Data rows - only include logs with tickets
-            reportData.logs
+            // Preparar datos para Excel
+            const playersData = reportData.logs
                 .filter(log => log.ticket)
-                .forEach(log => {
-                    const row = [
-                        `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
-                        log.is_player ? 'Jugador' : 'Trabajador',
-                        log.totem?.branch?.name || 'N/A',
-                        format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
-                        log.ticket.type,
-                        Math.floor(log.ticket.total_amount)
-                    ];
-                    csvContent += row.join(',') + '\n';
-                });
+                .map(log => ({
+                    'Jugador': `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
+                    'Tipo': log.is_player ? 'Jugador' : 'Trabajador',
+                    'Sucursal': log.totem?.branch?.name || 'N/A',
+                    'Fecha/Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
+                    'Tipo Ticket': log.ticket.type,
+                    'Valor': Math.floor(log.ticket.total_amount)
+                }));
 
-            filename = `reporte_tickets_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+            const ws = XLSX.utils.json_to_sheet(playersData);
+            XLSX.utils.book_append_sheet(workbook, ws, 'Tickets');
+            filename = `reporte_tickets_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`;
         } else if (activeTab === 'shift') {
-            // Headers
-            csvContent = 'Jugador,Tipo,Fecha/Hora,Ticket,Tipo Ticket,Valor\n';
+            // Preparar datos de marcaciones
+            const shiftData = reportData.logs.map(log => ({
+                'Jugador': `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
+                'Tipo': log.is_player ? 'Jugador' : 'Trabajador',
+                'Fecha/Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
+                'Ticket': log.ticket ? 'Sí' : 'No',
+                'Tipo Ticket': log.ticket ? log.ticket.type : 'N/A',
+                'Valor': log.ticket ? Math.floor(log.ticket.total_amount) : 0
+            }));
 
-            // Data rows
-            reportData.logs.forEach(log => {
-                const row = [
-                    `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
-                    log.is_player ? 'Jugador' : 'Trabajador',
-                    format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
-                    log.ticket ? 'Sí' : 'No',
-                    log.ticket ? log.ticket.type : 'N/A',
-                    log.ticket ? Math.floor(log.ticket.total_amount) : '0'
-                ];
-                csvContent += row.join(',') + '\n';
-            });
+            // Crear hoja de marcaciones
+            const ws1 = XLSX.utils.json_to_sheet(shiftData);
 
-            // Add summary
-            csvContent += '\nResumen\n';
-            csvContent += `Total Marcaciones,${reportData.summary.total_marks}\n`;
-            csvContent += `Marcaciones Jugadores,${reportData.summary.player_marks}\n`;
-            csvContent += `Marcaciones Trabajadores,${reportData.summary.worker_marks}\n`;
-            csvContent += `Tickets Generados,${reportData.summary.tickets_count}\n`;
-            csvContent += `Total Monto,$${Math.floor(reportData.summary.total_amount)}\n`;
+            // Crear hoja de resumen
+            const summaryData = [
+                { 'Campo': 'Total Marcaciones', 'Valor': reportData.summary.total_marks },
+                { 'Campo': 'Marcaciones Jugadores', 'Valor': reportData.summary.player_marks },
+                { 'Campo': 'Marcaciones Trabajadores', 'Valor': reportData.summary.worker_marks },
+                { 'Campo': 'Tickets Generados', 'Valor': reportData.summary.tickets_count },
+                { 'Campo': 'Total Monto', 'Valor': `$${Math.floor(reportData.summary.total_amount)}` },
+                {},
+                { 'Campo': 'Resumen por Tipo de Ticket', 'Valor': '' },
+                ...Object.entries(reportData.summary.ticket_types).map(([type, data]) => ({
+                    'Campo': type,
+                    'Cantidad': data.count,
+                    'Monto': `$${Math.floor(data.amount)}`
+                }))
+            ];
+            const ws2 = XLSX.utils.json_to_sheet(summaryData);
 
-            // Add ticket types summary
-            csvContent += '\nTipo de Ticket,Cantidad,Monto\n';
-            Object.entries(reportData.summary.ticket_types).forEach(([type, data]) => {
-                csvContent += `${type},${data.count},$${Math.floor(data.amount)}\n`;
-            });
-
-            filename = `reporte_turno_${reportData.shift.id}_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+            XLSX.utils.book_append_sheet(workbook, ws1, 'Marcaciones');
+            XLSX.utils.book_append_sheet(workbook, ws2, 'Resumen');
+            filename = `reporte_turno_${reportData.shift.id}_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`;
         } else if (activeTab === 'fingerprint' || activeTab === 'marcaciones') {
-            // Headers
-            csvContent = 'Usuario,Tipo,Sucursal,Fecha/Hora\n';
+            // Preparar datos de huellas/marcaciones
+            const logsData = reportData.logs.map(log => ({
+                'Usuario': `${log.user?.first_name || ''} ${log.user?.second_name || ''} ${log.user?.first_last_name || ''} ${log.user?.second_last_name || ''}` || 'N/A',
+                'Tipo': log.is_worker ? 'Trabajador' : (log.is_player ? 'Jugador' : 'N/A'),
+                'Sucursal': log.totem?.branch?.name || 'N/A',
+                'Fecha/Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')
+            }));
 
-            // Data rows
-            reportData.logs.forEach(log => {
-                const row = [
-                    `${log.user?.first_name || ''} ${log.user?.second_name || ''} ${log.user?.first_last_name || ''} ${log.user?.second_last_name || ''}` || 'N/A',
-                    log.is_worker ? 'Trabajador' : (log.is_player ? 'Jugador' : 'N/A'),
-                    log.totem?.branch?.name || 'N/A',
-                    format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')
-                ];
-                csvContent += row.join(',') + '\n';
-            });
+            // Crear hoja de registros
+            const ws1 = XLSX.utils.json_to_sheet(logsData);
 
-            // Add summary
-            csvContent += '\nResumen\n';
-            csvContent += `Total Registros,${reportData.summary.total_logs}\n`;
-            csvContent += `Registros Jugadores,${reportData.summary.player_logs}\n`;
-            csvContent += `Registros Trabajadores,${reportData.summary.worker_logs}\n`;
+            // Crear hoja de resumen
+            const summaryData = [
+                { 'Campo': 'Total Registros', 'Valor': reportData.summary.total_logs },
+                { 'Campo': 'Registros Jugadores', 'Valor': reportData.summary.player_logs },
+                { 'Campo': 'Registros Trabajadores', 'Valor': reportData.summary.worker_logs },
+                {},
+                { 'Campo': 'Resumen por Sucursal', 'Valor': '' },
+                { 'Sucursal': 'Sucursal', 'Total': 'Total', 'Trabajadores': 'Trabajadores', 'Jugadores': 'Jugadores' },
+                ...Object.entries(reportData.summary.by_branch).map(([branchName, data]) => ({
+                    'Sucursal': branchName,
+                    'Total': data.total,
+                    'Trabajadores': data.workers,
+                    'Jugadores': data.players
+                }))
+            ];
+            const ws2 = XLSX.utils.json_to_sheet(summaryData);
 
-            // Add branch summary
-            csvContent += '\nResumen por Sucursal\n';
-            csvContent += 'Sucursal,Total,Trabajadores,Jugadores\n';
-            Object.entries(reportData.summary.by_branch).forEach(([branchName, data]) => {
-                csvContent += `${branchName},${data.total},${data.workers},${data.players}\n`;
-            });
+            XLSX.utils.book_append_sheet(workbook, ws1, 'Registros');
+            XLSX.utils.book_append_sheet(workbook, ws2, 'Resumen');
 
             const reportType = activeTab === 'fingerprint' ? 'huellas' : 'marcaciones';
-            filename = `reporte_${reportType}_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+            filename = `reporte_${reportType}_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`;
         }
 
-        // Create download link
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Descargar archivo
+        XLSX.writeFile(workbook, filename);
     };
 
     // Print report
@@ -629,10 +624,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <h3 className="text-xl font-semibold">Reporte de Tickets Generados</h3>
                     <div className="mt-2 flex gap-2">
                         <button
-                            onClick={exportToCSV}
+                            onClick={exportToExcel}
                             className="inline-flex items-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
                         >
-                            <Download size={16} className="mr-1" /> Exportar CSV
+                            <Download size={16} className="mr-1" /> Exportar Excel
                         </button>
                         <button
                             onClick={printReport}
@@ -811,11 +806,11 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                         <h2 className="text-xl font-semibold">Reporte por Marcaciones</h2>
                         <div className="flex space-x-2">
                             <button
-                                onClick={exportToCSV}
+                                onClick={exportToExcel}
                                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                                 <Download className="h-4 w-4 mr-1" />
-                                Exportar CSV
+                                Exportar Excel
                             </button>
                             <button
                                 onClick={printReport}
@@ -964,11 +959,11 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                         <h2 className="text-xl font-semibold">Reporte de Registros de Huella</h2>
                         <div className="flex space-x-2">
                             <button
-                                onClick={exportToCSV}
+                                onClick={exportToExcel}
                                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                                 <Download className="h-4 w-4 mr-1" />
-                                Exportar CSV
+                                Exportar Excel
                             </button>
                             <button
                                 onClick={printReport}
@@ -1118,10 +1113,10 @@ export default function Reports({ auth, branches, shifts, roles, filters }) {
                     <h3 className="text-xl font-semibold">Reporte de Turno #{shift?.id}</h3>
                     <div className="mt-2 flex gap-2">
                         <button
-                            onClick={exportToCSV}
+                            onClick={exportToExcel}
                             className="inline-flex items-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
                         >
-                            <Download size={16} className="mr-1" /> Exportar CSV
+                            <Download size={16} className="mr-1" /> Exportar Excel
                         </button>
                         <button
                             onClick={printReport}

@@ -89,13 +89,8 @@ export default function UserPage({
             
             // Llamar al endpoint de exportación
             const response = await axios.get(route('users.export'), { params });
-            
             // Usar los usuarios del endpoint de exportación
             const usersToExport = response.data.users || [];
-
-            console.log(usersToExport);
-
-            console.log(usersToExport[0].user?.categoryBonus)
             const dataToExport = usersToExport.map(user => {
                 // Datos básicos que todos los usuarios tienen
                 const baseData = {
@@ -117,7 +112,7 @@ export default function UserPage({
                         ...baseData,
                         'Código/RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : user.code || '',
                         'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
-                        'Categoria de bonos': user.categoryBonus?.name || '',
+                        'Categoria de bonos': user.category_bonus?.name || '',
                         'Última marca': user.fingerprint_logs?.[0]?.created_at ? new Date(user.fingerprint_logs[0].created_at).toLocaleDateString('es-CL') : '',
                         'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
                     };

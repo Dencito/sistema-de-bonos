@@ -95,7 +95,7 @@ export default function UserPage({
 
             console.log(usersToExport);
 
-            console.log(usersToExport.[0].user?.categoryBonus)
+            console.log(usersToExport[0].user?.categoryBonus)
             const dataToExport = usersToExport.map(user => {
                 // Datos básicos que todos los usuarios tienen
                 const baseData = {

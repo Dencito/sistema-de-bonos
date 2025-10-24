@@ -92,6 +92,10 @@ export default function UserPage({
             
             // Usar los usuarios del endpoint de exportación
             const usersToExport = response.data.users || [];
+
+            console.log(usersToExport);
+
+            console.log(usersToExport.[0].user?.categoryBonus)
             const dataToExport = usersToExport.map(user => {
                 // Datos básicos que todos los usuarios tienen
                 const baseData = {

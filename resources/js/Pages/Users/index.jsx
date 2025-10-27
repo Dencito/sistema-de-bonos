@@ -114,7 +114,7 @@ export default function UserPage({
                         'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
                         'Categoria de bonos': user.category_bonus?.name || '',
                         'Monto Categoria': user.category_bonus?.base_amount || '',
-                        'Última marca': user.fingerprint_logs?.[0]?.created_at ? new Date(user.fingerprint_logs[0].created_at).toLocaleDateString('es-CL') : '',
+                        'Última marca': user.fingerprint_logs?.[0]?.created_at ? format(new Date(user.fingerprint_logs[0].created_at), 'dd/MM/yyyy HH:mm') : '',
                         'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
                     };
                 } else if (user.role?.name === 'trabajador') {
@@ -123,6 +123,8 @@ export default function UserPage({
                         ...baseData,
                         'RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : '',
                         'Sucursal': user.branch?.name || '',
+                        'Última marca': user.fingerprint_logs?.[0]?.created_at ? format(new Date(user.fingerprint_logs[0].created_at), 'dd/MM/yyyy HH:mm') : '',
+                        'Tipo última marca': user.fingerprint_logs?.[0]?.type || '',
                         'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
                     };
                 } else {
@@ -529,6 +531,32 @@ export default function UserPage({
                 ),
             },
             {
+                title: 'Última marca',
+                key: 'lastFingerprint',
+                render: (_, user) => (
+                    <p className="rounded-lg p-1">
+                        {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
+                    </p>
+                ),
+            },
+            {
+                title: 'Tipo',
+                key: 'fingerprintType',
+                render: (_, user) => {
+                    const type = user?.fingerprint_logs?.[0]?.type;
+                    if (!type) return <span className="text-gray-400">-</span>;
+                    return (
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            type === 'Entrada' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                        }`}>
+                            {type}
+                        </span>
+                    );
+                },
+            },
+            {
                 title: 'Acciones',
                 key: 'actions',
                 render: (_, user) => (
@@ -597,15 +625,6 @@ export default function UserPage({
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
                         {user?.first_last_name} {user?.second_last_name}
-                    </p>
-                ),
-            },
-            {
-                title: 'Última marca',
-                key: 'fingerprintLogs',
-                render: (_, user) => (
-                    <p className="rounded-lg p-1">
-                        {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy')}
                     </p>
                 ),
             },
@@ -679,6 +698,15 @@ export default function UserPage({
                 render: (_, user) => (
                     <p className="font-bold rounded-lg p-1">
                         {user?.fingerprints?.length || 0}
+                    </p>
+                ),
+            },
+            {
+                title: 'Última marca',
+                key: 'lastFingerprint',
+                render: (_, user) => (
+                    <p className="rounded-lg p-1">
+                        {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
                     </p>
                 ),
             },

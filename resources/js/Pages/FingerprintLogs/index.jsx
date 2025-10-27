@@ -24,6 +24,20 @@ const columns = [
         render: (_, record) => record.user?.role?.name || 'N/A',
     },
     {
+        title: 'Tipo',
+        key: 'type',
+        dataIndex: 'type',
+        render: (type) => (
+            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                type === 'Entrada' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+            }`}>
+                {type || 'N/A'}
+            </span>
+        ),
+    },
+    {
         title: 'Tótem',
         key: 'totem',
         render: (_, record) => record.totem?.name || 'N/A',
@@ -156,6 +170,7 @@ export default function FingerprintLogPage({ auth, fingerprintLogs, users, branc
             const logsData = response.data.fingerprintLogs.map(log => ({
                 'Usuario': `${log.user?.first_name || ''} ${log.user?.first_last_name || ''}`,
                 'Rol': log.user?.role?.name || 'N/A',
+                'Tipo': log.type || 'N/A',
                 'Tótem': log.totem?.name || 'N/A',
                 'Sucursal': log.totem?.branch?.name || 'N/A',
                 'Fecha y Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')

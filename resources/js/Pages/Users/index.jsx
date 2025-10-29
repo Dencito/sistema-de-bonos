@@ -706,6 +706,7 @@ export default function UserPage({
                 key: 'lastFingerprint',
                 render: (_, user) => (
                     <p className="rounded-lg p-1">
+                        {console.log(user)}
                         {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
                     </p>
                 ),

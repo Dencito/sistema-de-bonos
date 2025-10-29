@@ -493,9 +493,9 @@ export default function ModalViewUser({
                         message: getValidationRequiredMessage,
                     },
                 ]} initialValue={data?.branch_id}>
-                        <p className='text-sm font-bold'>
-                            - {data?.branch?.name}
-                        </p>
+                    <p className='text-sm font-bold'>
+                        - {data?.branch?.name}
+                    </p>
                 </Form.Item>
                 <Form.Item name="branches" label="Sucursales" rules={[
                     {
@@ -685,11 +685,15 @@ export default function ModalViewUser({
                         message: getValidationRequiredMessage,
                     },
                 ]} initialValue={data?.branches}>
-                    {branches?.map((branch) => (
-                        <p key={branch?.id} className='text-sm font-bold' value={Number(branch?.id)}>
-                            - {branch?.name}
-                        </p>
-                    ))}
+                    {data?.branches?.map((branch) => {
+                        console.log(data?.branches);
+                            return (
+                                <p key={branch?.id} className='text-sm font-bold'>
+                                    - {branch?.name}
+                                </p>
+                            );
+                        }
+                    )}
                 </Form.Item>
                 <Form.Item
                     name="status_id"
@@ -701,13 +705,9 @@ export default function ModalViewUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado" optionLabelProp="label">
-                        {statuses?.map((status) => (
-                            <Select.Option key={status?.id} value={status?.id} label={status?.name}>
-                                {status?.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
+                    <p key={data?.status?.id} className='text-sm font-bold'>
+                                    - {data?.status?.name}
+                                </p>
                 </Form.Item>
                 <Form.Item
                     name="category_bonus_id"
@@ -719,17 +719,9 @@ export default function ModalViewUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione la categoria" optionLabelProp="label">
-                        {categories?.map((category) => (
-                            <Select.Option
-                                key={category?.id}
-                                value={category?.id}
-                                label={category?.name}
-                            >
-                                {category?.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
+                    <p key={data?.category_bonus?.id} className='text-sm font-bold'>
+                                    - {data?.category_bonus?.name}
+                                </p>
                 </Form.Item>
             </>
         ),

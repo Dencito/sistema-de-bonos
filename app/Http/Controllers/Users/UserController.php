@@ -37,8 +37,8 @@ class UserController extends Controller
             'categoryBonus', 
             'branches', 
             'branch',
-            'fingerprintLogs' => function($q) {
-                $q->orderBy('created_at', 'desc')->limit(1);
+            'fingerprintLogs' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(1);
             }
         ])
             ->when($request->search, function ($query, $search) {
@@ -886,10 +886,20 @@ class UserController extends Controller
             ], 409);
         }
 
-        $this->markFingerprint(new Request([
+        Log::info('Llamando a markFingerprint para jugador', [
+            'user_id' => $user->id,
+            'totem_uuid' => $totem->code,
+            'tickets_count' => count($tickets),
+        ]);
+
+        $fingerprintResult = $this->markFingerprint(new Request([
             'user_id' => $user->id,
             'totem_uuid' => $totem->code,
         ]), true);
+
+        Log::info('Resultado de markFingerprint', [
+            'result' => $fingerprintResult ? $fingerprintResult->toArray() : null,
+        ]);
 
         return response()->json([
             'data' => [
@@ -921,7 +931,12 @@ class UserController extends Controller
             ], 404);
         }
 
-        $branch = $user->branch;
+        // Para jugadores, usar el branch del totem ya que no tienen branch_id directo
+        if ($isMarkPlayer) {
+            $branch = $totem ? $totem->branch : null;
+        } else {
+            $branch = $user->branch;
+        }
 
         if (!$branch) {
             return response()->json([
@@ -971,8 +986,17 @@ class UserController extends Controller
             'totem_id' => $totem->id,
         ]);
 
+        Log::info('FingerprintLog creado', [
+            'fingerprint_log_id' => $fingerprintLog->id,
+            'user_id' => $user->id,
+            'totem_id' => $totem->id,
+            'isMarkPlayer' => $isMarkPlayer,
+            'created_at' => $fingerprintLog->created_at,
+        ]);
+
         if ($isMarkPlayer) {
-            return;
+            Log::info('Es jugador, retornando sin incrementar ticket');
+            return $fingerprintLog;
         }
 
         $branch->ticketNumber = $branch->ticketNumber + 1;

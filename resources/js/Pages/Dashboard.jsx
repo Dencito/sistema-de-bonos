@@ -113,6 +113,12 @@ export default function Dashboard({ auth }) {
                         <h2 className="text-2xl font-bold">
                             Rol: {roleDisplayNames[auth.role]}
                         </h2>
+
+                        {shiftStatus.hasOpenShift && (
+                            <h2 className="text-2xl font-bold"> 
+                                Numero de Tickets: #{shiftStatus.shift?.branch?.ticketNumber}
+                            </h2>
+                        )}
                     </div>
 
                     {/* Shift Management Section - Only visible for workers */}
@@ -163,7 +169,7 @@ export default function Dashboard({ auth }) {
                         </div>
                     )}
 
-                    <PdfGenerator user={auth?.user} />
+                   {/*  <PdfGenerator user={auth?.user} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:px-6 lg:px-8">
                         <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                             <div className="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">
@@ -192,7 +198,7 @@ export default function Dashboard({ auth }) {
                             </div>
                         </div>
                     </div>
-                    <div className="sm:px-6 lg:px-8"></div>
+                    <div className="sm:px-6 lg:px-8"></div> */}
                 </div>
             </div>
         </AuthenticatedLayout>

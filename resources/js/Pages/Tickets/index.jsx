@@ -143,7 +143,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
         { value: 'Bono Cumpleaños', label: 'Bono Cumpleaños' },
         { value: 'Bono diario', label: 'Bono diario' },
-   ];
+    ];
 
 
    console.log(ticketTypes);
@@ -287,14 +287,11 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className="text-4xl font-bold">
                     Tickets 
-                    {!loadingTotals && (
-                        <>
-                            {(auth.role === 1 || auth.role === '1' || auth.role === 5 || auth.role === '5') && (
-                                <> | Total: ${totals.total_amount.toFixed(2)} | Cantidad tickets: {totals.ticket_number}</>
-                            )}
-                        </>
+                    {loadingTotals ? (
+                        <span className="text-sm"> (Cargando...)</span>
+                    ) : (
+                        <span> | Total: ${Number(totals.total_amount || 0).toFixed(2)} | Cantidad tickets: {totals.ticket_number || 0}</span>
                     )}
-                    {loadingTotals && <span className="text-sm"> (Cargando...)</span>}
                 </h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">

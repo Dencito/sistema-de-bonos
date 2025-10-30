@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
 import { SearchOutlined, FilterOutlined, DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -98,33 +98,46 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         }
     }, []);
 
-    // Cargar totales desde el servidor
-    const fetchTotals = async () => {
-        setLoadingTotals(true);
-        try {
-            const params = {};
-            
-            if (data.start_date) params.start_date = data.start_date;
-            if (data.end_date) params.end_date = data.end_date;
-            if (data.user_id) params.user_id = data.user_id;
-            if (data.type) params.type = data.type;
-            if (data.branch_id) params.branch_id = data.branch_id;
-            
-            const response = await axios.get(route('tickets.totals'), { params });
-            setTotals(response.data);
-        } catch (error) {
-            console.error('Error al cargar totales:', error);
-        } finally {
-            setLoadingTotals(false);
-        }
-    };
-
-    // Cargar totales cuando cambian los filtros o al montar el componente
-    useEffect(() => {
-        fetchTotals();
+    // Crear una clave estable de los filtros para evitar llamadas múltiples
+    const filtersKey = useMemo(() => {
+        return JSON.stringify({
+            start_date: data.start_date,
+            end_date: data.end_date,
+            user_id: data.user_id,
+            type: data.type,
+            branch_id: data.branch_id
+        });
     }, [data.start_date, data.end_date, data.user_id, data.type, data.branch_id]);
 
-    console.log(loadingTotals, totals.total_count)
+    // Cargar totales desde el servidor
+    useEffect(() => {
+        const fetchTotals = async () => {
+            // Solo cargar si hay fechas establecidas
+            if (!data.start_date && !data.end_date) {
+                return;
+            }
+            
+            setLoadingTotals(true);
+            try {
+                const params = {};
+                
+                if (data.start_date) params.start_date = data.start_date;
+                if (data.end_date) params.end_date = data.end_date;
+                if (data.user_id) params.user_id = data.user_id;
+                if (data.type) params.type = data.type;
+                if (data.branch_id) params.branch_id = data.branch_id;
+                
+                const response = await axios.get(route('tickets.totals'), { params });
+                setTotals(response.data);
+            } catch (error) {
+                console.error('Error al cargar totales:', error);
+            } finally {
+                setLoadingTotals(false);
+            }
+        };
+        
+        fetchTotals();
+    }, [filtersKey]);
 
     const ticketTypes = [
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
@@ -260,12 +273,9 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className="text-4xl font-bold">
                     Tickets 
-                    {!loadingTotals && totals.total_count > 0 && (
+                    {!loadingTotals && (
                         <>
-                            {auth.role === 1 && (
-                                <> | Total: ${totals.total_amount.toFixed(2)} | Cantidad tickets: {totals.ticket_number}</>
-                            )}
-                            {auth.role === 5 && (
+                            {(auth.role === 1 || auth.role === '1' || auth.role === 5 || auth.role === '5') && (
                                 <> | Total: ${totals.total_amount.toFixed(2)} | Cantidad tickets: {totals.ticket_number}</>
                             )}
                         </>

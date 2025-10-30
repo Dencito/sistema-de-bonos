@@ -68,11 +68,12 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
 
     const [showFilters, setShowFilters] = useState(false);
     const [exporting, setExporting] = useState(false);
-    
-    // Calcular el total de monto de tickets
-    const totalTickets = tickets.data?.reduce((acc, ticket) => {
-        return acc + (parseFloat(ticket.total_amount) || 0);
-    }, 0) || 0;
+    const [totals, setTotals] = useState({
+        total_amount: 0,
+        total_count: 0,
+        ticket_number: 0
+    });
+    const [loadingTotals, setLoadingTotals] = useState(false);
 
     // Initialize dates properly when component loads
     useEffect(() => {
@@ -96,6 +97,32 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             console.log('Default date range set:', start, 'to', end);
         }
     }, []);
+
+    // Cargar totales desde el servidor
+    const fetchTotals = async () => {
+        setLoadingTotals(true);
+        try {
+            const params = {};
+            
+            if (data.start_date) params.start_date = data.start_date;
+            if (data.end_date) params.end_date = data.end_date;
+            if (data.user_id) params.user_id = data.user_id;
+            if (data.type) params.type = data.type;
+            if (data.branch_id) params.branch_id = data.branch_id;
+            
+            const response = await axios.get(route('tickets.totals'), { params });
+            setTotals(response.data);
+        } catch (error) {
+            console.error('Error al cargar totales:', error);
+        } finally {
+            setLoadingTotals(false);
+        }
+    };
+
+    // Cargar totales cuando cambian los filtros o al montar el componente
+    useEffect(() => {
+        fetchTotals();
+    }, [data.start_date, data.end_date, data.user_id, data.type, data.branch_id]);
 
     const ticketTypes = [
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
@@ -215,8 +242,6 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         }
     };
 
-    console.log(tickets?.data?.[0]);
-
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -231,7 +256,20 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             <Head title="Tickets" />
             <header className="flex items-center justify-between bg-white p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
-                <h1 className="text-4xl font-bold">Tickets {tickets?.data?.[0] ?  `| Total: $${totalTickets.toFixed(2)} | Cantidad tickets: ${tickets?.data?.[0]?.totem?.branch?.ticketNumber || 0}` : ''}</h1>
+                <h1 className="text-4xl font-bold">
+                    Tickets 
+                    {!loadingTotals && totals.total_count > 0 && (
+                        <>
+                            {auth.role === 1 && (
+                                <> | Total: ${totals.total_amount.toFixed(2)} | Cantidad tickets: {totals.ticket_number}</>
+                            )}
+                            {auth.role === 5 && (
+                                <> | Total: ${totals.total_amount.toFixed(2)} | Cantidad tickets: {totals.ticket_number}</>
+                            )}
+                        </>
+                    )}
+                    {loadingTotals && <span className="text-sm"> (Cargando...)</span>}
+                </h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
                 <div className="w-full">
@@ -366,11 +404,6 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                                 onChange: handlePageChange,
                                 showSizeChanger: false,
                             }}
-                            footer={() => (
-                                <div className="text-right font-bold px-4 py-2">
-                                    Total de Tickets: {totalTickets}
-                                </div>
-                            )}
                         />
                     </div>
                 </div>

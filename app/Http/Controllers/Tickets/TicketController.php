@@ -170,6 +170,88 @@ class TicketController extends Controller
     }
     
     /**
+     * Get totals for tickets based on filters and user role
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTotals(Request $request)
+    {
+        $user = auth()->user();
+        
+        $query = Ticket::with([
+            'totem:id,name,branch_id',
+            'totem.branch:id,name,ticketNumber'
+        ]);
+        
+        // Filtro por fecha de inicio
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        
+        // Filtro por fecha de fin
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+        
+        // Filtro por usuario
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        // Filtro por tipo de ticket
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        // Filtro por totem/sucursal
+        if ($request->filled('branch_id')) {
+            $query->whereHas('totem', function($q) use ($request) {
+                $q->where('branch_id', $request->branch_id);
+            });
+        }
+
+        // Si el usuario tiene role_id 5 (trabajador), filtrar por tickets generados durante su turno actual
+        if ($user->role_id == 5) {
+            // Buscar el último turno abierto del usuario
+            $lastShift = ShiftRecord::where('opened_by_user_id', $user->id)
+                ->orderBy('opening_time', 'desc')
+                ->first();
+                
+            if ($lastShift) {
+                $startTime = Carbon::parse($lastShift->opening_time);
+                $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
+                
+                // Filtrar tickets generados durante el turno
+                $query->where('created_at', '>=', $startTime)
+                      ->where('created_at', '<=', $endTime);
+            } else {
+                // Si no tiene turno, mostrar solo sus tickets
+                $query->where('user_id', $user->id);
+            }
+        }
+        
+        // Obtener todos los tickets sin paginación
+        $tickets = $query->get();
+        
+        // Calcular totales
+        $totalAmount = $tickets->sum('total_amount');
+        $totalCount = $tickets->count();
+        
+        // Obtener ticketNumber de la primera sucursal (si existe)
+        $ticketNumber = 0;
+        if ($tickets->isNotEmpty() && $tickets->first()->totem && $tickets->first()->totem->branch) {
+            $ticketNumber = $tickets->first()->totem->branch->ticketNumber ?? 0;
+        }
+        
+        return response()->json([
+            'total_amount' => $totalAmount,
+            'total_count' => $totalCount,
+            'ticket_number' => $ticketNumber
+        ]);
+    }
+    
+    /**
      * Export tickets data for Excel export
      * 
      * @param Request $request

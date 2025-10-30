@@ -215,6 +215,8 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         }
     };
 
+    console.log(tickets?.data?.[0]);
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -229,7 +231,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             <Head title="Tickets" />
             <header className="flex items-center justify-between bg-white p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
-                <h1 className="text-4xl font-bold">Tickets {tickets?.data?.[0] ?  `| Total: $${totalTickets.toFixed(2)} | Cantidad tickets: ${branches.find(branch => branch.id === tickets?.data?.[0]?.totem?.branch_id)?.ticketNumber || 0}` : ''}</h1>
+                <h1 className="text-4xl font-bold">Tickets {tickets?.data?.[0] ?  `| Total: $${totalTickets.toFixed(2)} | Cantidad tickets: ${branches.find(branch => branch.id === tickets?.data?.[0]?.branch_id)?.ticketNumber || 0}` : ''}</h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
                 <div className="w-full">

@@ -24,7 +24,7 @@ class TicketController extends Controller
         $query = Ticket::with([
             'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id',
             'totem:id,name,branch_id',
-            'totem.branch:id,name'
+            'totem.branch:id,name,ticketNumber'
         ]);
         
         // Filtro por fecha de inicio

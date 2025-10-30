@@ -68,6 +68,13 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
 
     const [showFilters, setShowFilters] = useState(false);
     const [exporting, setExporting] = useState(false);
+    
+    // Calcular el total de tickets (sumando valores únicos por sucursal)
+    const totalTickets = tickets.data?.reduce((acc, ticket) => {
+        return acc + ticket.ticket_amount;
+    }, 0);
+
+    console.log(totalTickets);
 
     // Initialize dates properly when component loads
     useEffect(() => {
@@ -224,7 +231,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
             <Head title="Tickets" />
             <header className="flex items-center justify-between bg-white p-4 shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
-                <h1 className="text-4xl font-bold">Tickets</h1>
+                <h1 className="text-4xl font-bold">Tickets {tickets?.data?.[0] ?  `| Total: ${totalTickets} Cantidad tickets: ${branches.find(branch => branch.id === tickets?.data?.[0]?.branch_id)?.ticketNumber}` : ''}</h1>
             </header>
             <div className="flex-1 overflow-auto p-4 z-10">
                 <div className="w-full">
@@ -359,6 +366,11 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                                 onChange: handlePageChange,
                                 showSizeChanger: false,
                             }}
+                            footer={() => (
+                                <div className="text-right font-bold px-4 py-2">
+                                    Total de Tickets: {totalTickets}
+                                </div>
+                            )}
                         />
                     </div>
                 </div>

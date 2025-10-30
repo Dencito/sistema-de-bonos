@@ -143,8 +143,22 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
         { value: 'Bono Cumpleaños', label: 'Bono Cumpleaños' },
         { value: 'Bono diario', label: 'Bono diario' },
-    ];
+   ];
 
+
+   console.log(ticketTypes);
+   console.log(auth.role)
+   console.log(tickets)
+   console.log(totals)
+   console.log(users)
+   console.log(branches)
+   console.log(totems)
+   console.log(filters)
+   console.log(processing)
+   console.log(showFilters)
+   console.log(exporting)
+   console.log(totals)
+   console.log(loadingTotals)
     const handleSearch = () => {
         get(route('tickets.index'), {
             preserveState: true,

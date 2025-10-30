@@ -290,7 +290,7 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
                     {loadingTotals ? (
                         <span className="text-sm"> (Cargando...)</span>
                     ) : (
-                        <span> | Total: ${Number(totals.total_amount || 0).toFixed(2)} | Cantidad tickets: {totals.ticket_number || 0}</span>
+                        <span> | Total: ${Number(totals.total_amount || 0).toFixed(2)} | Cantidad tickets: {auth.role === 'trabajador' ? totals?.ticket_number || 0 : totals?.total_count || 0}</span>
                     )}
                 </h1>
             </header>

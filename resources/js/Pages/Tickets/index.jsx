@@ -124,6 +124,8 @@ export default function TicketPage({ auth, tickets, users, branches, totems, fil
         fetchTotals();
     }, [data.start_date, data.end_date, data.user_id, data.type, data.branch_id]);
 
+    console.log(loadingTotals, totals.total_count)
+
     const ticketTypes = [
         { value: 'Bono Extraordinario', label: 'Bono Extraordinario' },
         { value: 'Bono Cumpleaños', label: 'Bono Cumpleaños' },

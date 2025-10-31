@@ -238,10 +238,21 @@ class TicketController extends Controller
         $totalAmount = $tickets->sum('total_amount');
         $totalCount = $tickets->count();
         
-        // Obtener ticketNumber de la primera sucursal (si existe)
+        // Obtener ticketNumber de la sucursal del usuario
         $ticketNumber = 0;
-        if ($tickets->isNotEmpty() && $tickets->first()->totem && $tickets->first()->totem->branch) {
-            $ticketNumber = $tickets->first()->totem->branch->ticketNumber ?? 0;
+        
+        // Si el usuario es trabajador (role_id 5), obtener el ticketNumber de su sucursal
+        if ($user->role_id == 5) {
+            // Obtener la sucursal del trabajador a través de sus branches
+            $userBranch = $user->branches()->first();
+            if ($userBranch) {
+                $ticketNumber = $userBranch->ticketNumber ?? 0;
+            }
+        } else {
+            // Para otros roles, obtener de la primera sucursal de los tickets (si existe)
+            if ($tickets->isNotEmpty() && $tickets->first()->totem && $tickets->first()->totem->branch) {
+                $ticketNumber = $tickets->first()->totem->branch->ticketNumber ?? 0;
+            }
         }
         
         return response()->json([

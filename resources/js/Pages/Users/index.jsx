@@ -86,23 +86,32 @@ export default function UserPage({
             if (data.role) params.role = data.role;
             if (selectedStatus) params.status = selectedStatus;
             if (selectedBranch) params.branch_id = selectedBranch;
-            
+
             // Llamar al endpoint de exportación
             const response = await axios.get(route('users.export'), { params });
             // Usar los usuarios del endpoint de exportación
             const usersToExport = response.data.users || [];
-            const dataToExport = usersToExport.map(user => {
+            const dataToExport = usersToExport.map((user) => {
                 // Datos básicos que todos los usuarios tienen
                 const baseData = {
                     'Nombre de usuario': user.username || '',
-                    'Nombres': `${user.first_name || ''} ${user.second_name || ''}`.trim(),
-                    'Apellidos': `${user.first_last_name || ''} ${user.second_last_name || ''}`.trim(),
-                    'Correo': user.email || '',
-                    'Teléfono': `${user.prefix || ''} ${user.phone || ''}`.trim(),
-                    'Estado': user.status?.name || '',
-                    'Rol': roleDisplayNames[user.role?.name] || user.role?.name || '',
-                    'Fecha de creación': user.created_at ? new Date(user.created_at).toLocaleDateString('es-CL') : '',
-                    'Fecha de ingreso': user.entry_date ? new Date(user.entry_date).toLocaleDateString('es-CL') : '',
+                    Nombres:
+                        `${user.first_name || ''} ${user.second_name || ''}`.trim(),
+                    Apellidos:
+                        `${user.first_last_name || ''} ${user.second_last_name || ''}`.trim(),
+                    Correo: user.email || '',
+                    Teléfono: `${user.prefix || ''} ${user.phone || ''}`.trim(),
+                    Estado: user.status?.name || '',
+                    Rol:
+                        roleDisplayNames[user.role?.name] ||
+                        user.role?.name ||
+                        '',
+                    'Fecha de creación': user.created_at
+                        ? new Date(user.created_at).toLocaleDateString('es-CL')
+                        : '',
+                    'Fecha de ingreso': user.entry_date
+                        ? new Date(user.entry_date).toLocaleDateString('es-CL')
+                        : '',
                 };
 
                 // Datos específicos según el rol
@@ -110,29 +119,49 @@ export default function UserPage({
                     // Para jugadores, mostrar código o RUT y sucursales
                     return {
                         ...baseData,
-                        'Código/RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : user.code || '',
-                        'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
+                        'Código/RUT':
+                            user.rutNumbers && user.rutDv
+                                ? `${user.rutNumbers}-${user.rutDv}`
+                                : user.code || '',
+                        Sucursales:
+                            user.branches?.map((b) => b.name).join(', ') || '',
                         'Categoria de bonos': user.category_bonus?.name || '',
-                        'Monto Categoria': user.category_bonus?.base_amount || '',
-                        'Última marca': user.fingerprint_logs?.[0]?.created_at ? format(new Date(user.fingerprint_logs[0].created_at), 'dd/MM/yyyy HH:mm') : '',
+                        'Monto Categoria':
+                            user.category_bonus?.base_amount || '',
+                        'Última marca': user.fingerprint_logs?.[0]?.created_at
+                            ? format(
+                                  new Date(user.fingerprint_logs[0].created_at),
+                                  'dd/MM/yyyy HH:mm'
+                              )
+                            : '',
                         'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
                     };
                 } else if (user.role?.name === 'trabajador') {
                     // Para trabajadores
                     return {
                         ...baseData,
-                        'RUT': user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : '',
-                        'Sucursal': user.branch?.name || '',
-                        'Última marca': user.fingerprint_logs?.[0]?.created_at ? format(new Date(user.fingerprint_logs[0].created_at), 'dd/MM/yyyy HH:mm') : '',
-                        'Tipo última marca': user.fingerprint_logs?.[0]?.type || '',
+                        RUT:
+                            user.rutNumbers && user.rutDv
+                                ? `${user.rutNumbers}-${user.rutDv}`
+                                : '',
+                        Sucursal: user.branch?.name || '',
+                        'Última marca': user.fingerprint_logs?.[0]?.created_at
+                            ? format(
+                                  new Date(user.fingerprint_logs[0].created_at),
+                                  'dd/MM/yyyy HH:mm'
+                              )
+                            : '',
+                        'Tipo última marca':
+                            user.fingerprint_logs?.[0]?.type || '',
                         'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
                     };
                 } else {
                     // Para otros roles (admin, supervisor, etc)
                     return {
                         ...baseData,
-                        'Sucursal': user.branch?.name || '',
-                        'Sucursales': user.branches?.map(b => b.name).join(', ') || '',
+                        Sucursal: user.branch?.name || '',
+                        Sucursales:
+                            user.branches?.map((b) => b.name).join(', ') || '',
                     };
                 }
             });
@@ -156,39 +185,41 @@ export default function UserPage({
 
     // Función para manejar la búsqueda y filtros del lado del servidor
     const handleSearch = () => {
-        router.get(route('users.index'), 
-            { 
+        router.get(
+            route('users.index'),
+            {
                 ...data,
                 search: searchTerm,
                 status: selectedStatus,
                 branch_id: selectedBranch,
-                page: 1 // Resetear a la primera página al buscar
-            }, 
+                page: 1, // Resetear a la primera página al buscar
+            },
             {
                 preserveState: true,
-                replace: true
+                replace: true,
             }
         );
     };
-    
+
     // Función para manejar el cambio de página
     const handlePageChange = (page, pageSize) => {
-        router.get(route('users.index'), 
-            { 
+        router.get(
+            route('users.index'),
+            {
                 ...data,
                 search: searchTerm,
                 status: selectedStatus,
                 branch_id: selectedBranch,
                 page: page,
-                per_page: pageSize
-            }, 
+                per_page: pageSize,
+            },
             {
                 preserveState: true,
-                replace: true
+                replace: true,
             }
         );
     };
-    
+
     // Usamos los datos paginados del servidor directamente
     const filteredUsers = users?.data || [];
 
@@ -214,7 +245,7 @@ export default function UserPage({
                 title: 'Rol',
                 key: 'role',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
@@ -270,7 +301,7 @@ export default function UserPage({
                 title: 'Sucursal',
                 key: 'branch',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {user?.branch?.name}
                     </p>
                 ),
@@ -280,16 +311,17 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === 'Activo'
-                            ? 'bg-green-300'
-                            : branch?.status?.name === 'Inactivo'
-                                ? 'bg-red-200'
-                                : branch?.status?.name === 'En revisión'
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                        ? 'bg-red-400'
-                                        : ''
-                            } 
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -298,7 +330,7 @@ export default function UserPage({
                 title: 'Rol',
                 key: 'role',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
@@ -364,7 +396,7 @@ export default function UserPage({
                 title: 'Numero de teléfono',
                 key: 'phone',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.prefix} {user?.phone}
                     </p>
                 ),
@@ -377,7 +409,7 @@ export default function UserPage({
                         <span className="cursor-pointer hover:text-blue-500">
                             Ver Sucursales
                         </span>
-                        <div className="absolute z-10 hidden group-hover:block bg-white border border-gray-200 rounded-md shadow-lg p-2">
+                        <div className="hidden absolute z-10 p-2 bg-white rounded-md border border-gray-200 shadow-lg group-hover:block">
                             {user?.branches?.map((branch) => (
                                 <p
                                     key={branch?.id}
@@ -395,16 +427,17 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === 'Activo'
-                            ? 'bg-green-300'
-                            : branch?.status?.name === 'Inactivo'
-                                ? 'bg-red-200'
-                                : branch?.status?.name === 'En revisión'
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                        ? 'bg-red-400'
-                                        : ''
-                            } 
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -413,7 +446,7 @@ export default function UserPage({
                 title: 'Rol',
                 key: 'role',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {roleDisplayNames[user?.role?.name] || user?.role?.name}
                     </p>
                 ),
@@ -479,7 +512,7 @@ export default function UserPage({
                 title: 'Rut',
                 key: 'rut',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.rutNumbers}-{user?.rutDv}
                     </p>
                 ),
@@ -488,7 +521,7 @@ export default function UserPage({
                 title: 'Numero de teléfono',
                 key: 'phone',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.prefix} {user?.phone}
                     </p>
                 ),
@@ -497,7 +530,7 @@ export default function UserPage({
                 title: 'Sucursal',
                 key: 'branche',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {user?.branch?.name}
                     </p>
                 ),
@@ -507,16 +540,17 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === 'Activo'
-                            ? 'bg-green-300'
-                            : branch?.status?.name === 'Inactivo'
-                                ? 'bg-red-200'
-                                : branch?.status?.name === 'En revisión'
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                        ? 'bg-red-400'
-                                        : ''
-                            } 
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -525,7 +559,7 @@ export default function UserPage({
                 title: 'Cant. Huellas',
                 key: 'quantityFingerprint',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {user?.fingerprints?.length || 0}
                     </p>
                 ),
@@ -534,8 +568,11 @@ export default function UserPage({
                 title: 'Última marca',
                 key: 'lastFingerprint',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
-                        {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
+                    <p className="p-1 rounded-lg">
+                        {formatDateTime(
+                            user?.fingerprint_logs?.[0]?.created_at,
+                            'dd/MM/yyyy HH:mm'
+                        )}
                     </p>
                 ),
             },
@@ -546,11 +583,13 @@ export default function UserPage({
                     const type = user?.fingerprint_logs?.[0]?.type;
                     if (!type) return <span className="text-gray-400">-</span>;
                     return (
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            type === 'Entrada' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                type === 'Entrada'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                            }`}
+                        >
                             {type}
                         </span>
                     );
@@ -591,22 +630,22 @@ export default function UserPage({
             },
             ...(data.role === 'trabajador'
                 ? [
-                    {
-                        title: 'Huella Digital',
-                        key: 'has_fingerprint',
-                        render: (_, user) => (
-                            <span
-                                style={{
-                                    color: user.has_fingerprint
-                                        ? '#52c41a'
-                                        : '#ff4d4f',
-                                }}
-                            >
-                                <FingerprintIcon />
-                            </span>
-                        ),
-                    },
-                ]
+                      {
+                          title: 'Huella Digital',
+                          key: 'has_fingerprint',
+                          render: (_, user) => (
+                              <span
+                                  style={{
+                                      color: user.has_fingerprint
+                                          ? '#52c41a'
+                                          : '#ff4d4f',
+                                  }}
+                              >
+                                  <FingerprintIcon />
+                              </span>
+                          ),
+                      },
+                  ]
                 : []),
         ],
         jugador: [
@@ -614,7 +653,7 @@ export default function UserPage({
                 title: 'Nombres',
                 key: 'names',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.first_name} {user?.second_name}
                     </p>
                 ),
@@ -623,7 +662,7 @@ export default function UserPage({
                 title: 'Apellidos',
                 key: 'last_names',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.first_last_name} {user?.second_last_name}
                     </p>
                 ),
@@ -632,7 +671,7 @@ export default function UserPage({
                 title: 'Rut/Código',
                 key: 'rut',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.rutNumbers && user?.rutDv ? (
                             <>
                                 {user.rutNumbers}-{user.rutDv}
@@ -647,7 +686,7 @@ export default function UserPage({
                 title: 'Numero de teléfono',
                 key: 'phone',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
+                    <p className="p-1 rounded-lg">
                         {user?.prefix} {user?.phone}
                     </p>
                 ),
@@ -660,7 +699,7 @@ export default function UserPage({
                         <span className="cursor-pointer hover:text-blue-500">
                             Ver Sucursales
                         </span>
-                        <div className="absolute z-10 hidden group-hover:block bg-white border border-gray-200 rounded-md shadow-lg p-2">
+                        <div className="hidden absolute z-10 p-2 bg-white rounded-md border border-gray-200 shadow-lg group-hover:block">
                             {user?.branches?.map((branch) => (
                                 <p
                                     key={branch?.id}
@@ -678,16 +717,17 @@ export default function UserPage({
                 key: 'status',
                 render: (_, branch) => (
                     <div
-                        className={`${branch?.status?.name === 'Activo'
-                            ? 'bg-green-300'
-                            : branch?.status?.name === 'Inactivo'
-                                ? 'bg-red-200'
-                                : branch?.status?.name === 'En revisión'
+                        className={`${
+                            branch?.status?.name === 'Activo'
+                                ? 'bg-green-300'
+                                : branch?.status?.name === 'Inactivo'
+                                  ? 'bg-red-200'
+                                  : branch?.status?.name === 'En revisión'
                                     ? 'bg-orange-300'
                                     : branch?.status?.name === 'Borrado'
-                                        ? 'bg-red-400'
-                                        : ''
-                            } 
+                                      ? 'bg-red-400'
+                                      : ''
+                        } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
                     ></div>
                 ),
@@ -696,7 +736,7 @@ export default function UserPage({
                 title: 'Cant. Huellas',
                 key: 'quantityFingerprint',
                 render: (_, user) => (
-                    <p className="font-bold rounded-lg p-1">
+                    <p className="p-1 font-bold rounded-lg">
                         {user?.fingerprints?.length || 0}
                     </p>
                 ),
@@ -705,9 +745,11 @@ export default function UserPage({
                 title: 'Última marca',
                 key: 'lastFingerprint',
                 render: (_, user) => (
-                    <p className="rounded-lg p-1">
-                        {console.log(user)}
-                        {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
+                    <p className="p-1 rounded-lg">
+                        {formatDateTime(
+                            user?.fingerprint_logs?.[0]?.created_at,
+                            'dd/MM/yyyy HH:mm'
+                        )}
                     </p>
                 ),
             },
@@ -743,28 +785,30 @@ export default function UserPage({
                             role={auth?.role}
                         />
                         <ModalDeleteUser data={user} />
-                        {allowedRoles.createBonus.includes(auth?.role) && <ModalCreateBonus data={user} />}
+                        {allowedRoles.createBonus.includes(auth?.role) && (
+                            <ModalCreateBonus data={user} />
+                        )}
                     </div>
                 ),
             },
             ...(data.role === 'jugador'
                 ? [
-                    {
-                        title: 'Huella Digital',
-                        key: 'has_fingerprint',
-                        render: (_, user) => (
-                            <span
-                                style={{
-                                    color: user.has_fingerprint
-                                        ? '#52c41a'
-                                        : '#ff4d4f',
-                                }}
-                            >
-                                <FingerprintIcon />
-                            </span>
-                        ),
-                    },
-                ]
+                      {
+                          title: 'Huella Digital',
+                          key: 'has_fingerprint',
+                          render: (_, user) => (
+                              <span
+                                  style={{
+                                      color: user.has_fingerprint
+                                          ? '#52c41a'
+                                          : '#ff4d4f',
+                                  }}
+                              >
+                                  <FingerprintIcon />
+                              </span>
+                          ),
+                      },
+                  ]
                 : []),
         ],
     };
@@ -788,7 +832,6 @@ export default function UserPage({
 
     const expandedRowRender = (user) => {
         const getBonusStatus = (bonus) => {
-
             const now = new Date();
             const startDate = bonus.start_datetime
                 ? new Date(bonus.start_datetime)
@@ -809,26 +852,26 @@ export default function UserPage({
             if (startDate && !endDate) {
                 return now < startDate
                     ? {
-                        text: 'Pendiente de activación',
-                        class: 'bg-yellow-100 text-yellow-800',
-                    }
+                          text: 'Pendiente de activación',
+                          class: 'bg-yellow-100 text-yellow-800',
+                      }
                     : {
-                        text: 'Activo sin vencimiento',
-                        class: 'bg-blue-100 text-blue-800',
-                    };
+                          text: 'Activo sin vencimiento',
+                          class: 'bg-blue-100 text-blue-800',
+                      };
             }
 
             // Solo tiene fecha de fin
             if (!startDate && endDate) {
                 return now > endDate
                     ? {
-                        text: 'Vencido',
-                        class: 'bg-red-100 text-red-800',
-                    }
+                          text: 'Vencido',
+                          class: 'bg-red-100 text-red-800',
+                      }
                     : {
-                        text: 'Activo',
-                        class: 'bg-green-100 text-green-800',
-                    };
+                          text: 'Activo',
+                          class: 'bg-green-100 text-green-800',
+                      };
             }
 
             // Tiene ambas fechas
@@ -852,24 +895,32 @@ export default function UserPage({
 
         return (
             <div className="py-2">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-lg">Bonos asignados</h3>
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-semibold">Bonos asignados</h3>
                 </div>
-                <div className="flex flex-wrap gap-3 overflow-x-auto pb-2">
+                <div className="flex overflow-x-auto flex-wrap gap-3 pb-2">
                     {user?.bonuses
-                        ?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        ?.sort(
+                            (a, b) =>
+                                new Date(b.created_at) - new Date(a.created_at)
+                        )
                         ?.map((bonus) => {
                             const status = getBonusStatus(bonus);
                             return (
                                 <div
                                     key={bonus?.id}
-                                    className={' flex-none mr-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm min-w-[250px]'}
+                                    className={
+                                        'flex-none p-3 mr-3 bg-white rounded-lg border border-gray-200 shadow-sm  min-w-[250px]'
+                                    }
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className="font-bold text-lg">
-                                            ${bonus.amount.toLocaleString('es-CL')}
+                                        <span className="text-lg font-bold">
+                                            $
+                                            {bonus.amount.toLocaleString(
+                                                'es-CL'
+                                            )}
                                         </span>
-                                        <div className="flex flex-col items-center gap-2">
+                                        <div className="flex flex-col gap-2 items-center">
                                             <div
                                                 className={`px-2 py-1 rounded-full font-bold text-xs ${status.class}`}
                                             >
@@ -878,7 +929,9 @@ export default function UserPage({
                                             <div
                                                 className={`px-2 py-1 rounded-full font-bold text-xs ${bonus.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
                                             >
-                                                {bonus.active ? 'NO RECIBIDO' : 'RECIBIDO'}
+                                                {bonus.active
+                                                    ? 'NO RECIBIDO'
+                                                    : 'RECIBIDO'}
                                             </div>
                                         </div>
                                     </div>
@@ -905,13 +958,16 @@ export default function UserPage({
                                                 <span>
                                                     {new Date(
                                                         bonus.start_datetime
-                                                    ).toLocaleDateString('es-CL', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })}
+                                                    ).toLocaleDateString(
+                                                        'es-CL',
+                                                        {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                        }
+                                                    )}
                                                 </span>
                                             </div>
                                         ) : (
@@ -932,13 +988,16 @@ export default function UserPage({
                                                 <span>
                                                     {new Date(
                                                         bonus.end_datetime
-                                                    ).toLocaleDateString('es-CL', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })}
+                                                    ).toLocaleDateString(
+                                                        'es-CL',
+                                                        {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                        }
+                                                    )}
                                                 </span>
                                             </div>
                                         ) : (
@@ -954,9 +1013,7 @@ export default function UserPage({
                                         <div className="flex items-center text-gray-600">
                                             <button
                                                 onClick={() =>
-                                                    handleDeleteBonus(
-                                                        bonus.id
-                                                    )
+                                                    handleDeleteBonus(bonus.id)
                                                 }
                                                 className="text-red-600 hover:text-red-800"
                                             >
@@ -969,7 +1026,7 @@ export default function UserPage({
                         })}
                 </div>
                 {(!user?.bonuses || user?.bonuses.length === 0) && (
-                    <p className="text-gray-500 text-center py-4">
+                    <p className="py-4 text-center text-gray-500">
                         No hay bonos asignados
                     </p>
                 )}
@@ -983,55 +1040,73 @@ export default function UserPage({
             role={auth.role}
             auth={auth}
             header={
-                <h2 className="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 className="text-xl font-semibold leading-tight text-gray-800">
                     Panel
                 </h2>
             }
         >
             <Head title={`Usuarios ${data.role || 'todos'}`} />
-            <header className="flex items-center justify-betwee p-4 shadow-sm">
+            <header className="flex items-center p-4 shadow-sm justify-betwee">
                 <MobileButton role={auth.role} roles={auth.roles} />
                 <h1 className="text-4xl font-bold">
                     {roleDisplayNames[data?.role] || 'Todos los usuarios'}
                 </h1>
             </header>
-            <div className="flex-1 overflow-auto p-4 z-10">
+            <div className="overflow-auto z-10 flex-1 p-4">
                 {/* <DataTable columns={columns2[data?.role]} data={users} /> */}
                 <div className="w-full">
                     <div className="bg-white shadow-sm sm:rounded-lg">
-                        <div className="text-gray-900 my-3 flex items-center justify-between">
-                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <div className="flex justify-between items-center my-3 text-gray-900">
+                            <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
                                 <input
                                     type="text"
                                     placeholder="Buscar por usuario, nombre, apellido o rut"
-                                    className="border rounded px-2 py-1 w-full sm:w-64"
+                                    className="px-2 py-1 w-full rounded border sm:w-64"
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)
+                                    }
                                 />
                                 <select
-                                    className="border rounded px-2 py-1 w-full sm:w-40"
+                                    className="px-2 py-1 w-full rounded border sm:w-40"
                                     value={selectedStatus}
-                                    onChange={e => setSelectedStatus(e.target.value)}
+                                    onChange={(e) =>
+                                        setSelectedStatus(e.target.value)
+                                    }
                                 >
                                     <option value="">Todos los estados</option>
-                                    {statuses.map(status => (
-                                        <option key={status.id} value={status.name}>{status.name}</option>
+                                    {statuses.map((status) => (
+                                        <option
+                                            key={status.id}
+                                            value={status.name}
+                                        >
+                                            {status.name}
+                                        </option>
                                     ))}
                                 </select>
                                 <select
-                                    className="border rounded px-2 py-1 w-full sm:w-40"
+                                    className="px-2 py-1 w-full rounded border sm:w-40"
                                     value={selectedBranch}
-                                    onChange={e => setSelectedBranch(e.target.value)}
+                                    onChange={(e) =>
+                                        setSelectedBranch(e.target.value)
+                                    }
                                 >
-                                    <option value="">Todas las sucursales</option>
-                                    {branches.map(branch => (
-                                        <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                    <option value="">
+                                        Todas las sucursales
+                                    </option>
+                                    {branches.map((branch) => (
+                                        <option
+                                            key={branch.id}
+                                            value={branch.id}
+                                        >
+                                            {branch.name}
+                                        </option>
                                     ))}
                                 </select>
                                 <Button
                                     type="primary"
                                     onClick={handleSearch}
-                                    className="bg-blue-500 text-white"
+                                    className="text-white bg-blue-500"
                                 >
                                     Buscar
                                 </Button>
@@ -1039,7 +1114,7 @@ export default function UserPage({
                                     type="primary"
                                     icon={<DownloadOutlined />}
                                     onClick={exportToExcel}
-                                    className="bg-blue-500 text-white"
+                                    className="text-white bg-blue-500"
                                 >
                                     Exportar
                                 </Button>
@@ -1059,14 +1134,17 @@ export default function UserPage({
                                         role={auth?.role}
                                     />
                                 )}
-                                {allowedRoles.createBonus.includes(auth?.role) && data?.role === 'jugador' && (
-                                    <ModalCreateCustomBonus />
-                                )}
+                                {allowedRoles.createBonus.includes(
+                                    auth?.role
+                                ) &&
+                                    data?.role === 'jugador' && (
+                                        <ModalCreateCustomBonus />
+                                    )}
                             </div>
                         </div>
 
                         {data.role &&
-                            data.role === roleDisplayNames.jugador.toLowerCase() ? (
+                        data.role === roleDisplayNames.jugador.toLowerCase() ? (
                             <CustomTable
                                 rowSelection={rowSelection}
                                 dataSource={filteredUsers?.map((user) => ({
@@ -1084,7 +1162,8 @@ export default function UserPage({
                                     total: users?.total || 0,
                                     showSizeChanger: true,
                                     pageSizeOptions: ['10', '20', '50', '100'],
-                                    showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} usuarios`,
+                                    showTotal: (total, range) =>
+                                        `${range[0]}-${range[1]} de ${total} usuarios`,
                                     onChange: handlePageChange,
                                 }}
                             />
@@ -1102,12 +1181,13 @@ export default function UserPage({
                                     total: users?.total || 0,
                                     showSizeChanger: true,
                                     pageSizeOptions: ['10', '20', '50', '100'],
-                                    showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} usuarios`,
+                                    showTotal: (total, range) =>
+                                        `${range[0]}-${range[1]} de ${total} usuarios`,
                                     onChange: handlePageChange,
                                 }}
                             />
                         )}
-                        <div className="flex flex-col xl:flex-row gap-5 justify-between mt-5 mb-20">
+                        <div className="flex flex-col gap-5 justify-between mt-5 mb-20 xl:flex-row">
                             <SelectAssignCategories
                                 setSelectedRowKeys={setSelectedRowKeys}
                                 categories={categories}
@@ -1115,12 +1195,12 @@ export default function UserPage({
                             />
                             {data?.role ===
                                 roleDisplayNames.trabajador.toLowerCase() && (
-                                    <SelectAssignBonuses
-                                        setSelectedRowKeys={setSelectedRowKeys}
-                                        bonuses={bonuses}
-                                        selectedRowKeys={selectedRowKeys}
-                                    />
-                                )}
+                                <SelectAssignBonuses
+                                    setSelectedRowKeys={setSelectedRowKeys}
+                                    bonuses={bonuses}
+                                    selectedRowKeys={selectedRowKeys}
+                                />
+                            )}
                         </div>
                     </div>
 

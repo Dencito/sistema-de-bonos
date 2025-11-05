@@ -87,6 +87,18 @@ export const roleService = {
     delete: (id) => handleResponse(axios.delete(`/roles/${id}`)),
 };
 
+export const productService = {
+    create: (values) => handleResponse(axios.post('/products', values)),
+    update: (id, values) => handleResponse(axios.put(`/products/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/products/${id}`)),
+};
+
+export const orderService = {
+    create: (values) => handleResponse(axios.post('/orders', values)),
+    update: (id, values) => handleResponse(axios.put(`/orders/${id}`, values)),
+    delete: (id) => handleResponse(axios.delete(`/orders/${id}`)),
+};
+
 export const countriesService = {
     getAll: () => countries.countries,
 

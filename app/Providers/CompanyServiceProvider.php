@@ -54,9 +54,9 @@ class CompanyServiceProvider extends ServiceProvider
                     throw new \Exception('No se pudo extraer el subdominio del host');
                 }
             }
-            
+
             Log::info('APP_PRIMARY_SUBDOMAIN: ' . env('APP_PRIMARY_SUBDOMAIN'));
-            if ($subdomain === "tickets") {
+            if ($subdomain === 'tickets') {
                 Config::set('company.prefix', null);
                 return;
             }

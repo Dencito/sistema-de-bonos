@@ -362,7 +362,7 @@ export default function ModalViewUser({
                     />
                 </Form.Item>
 
-                <div className="flex gap-3 relative">
+                <div className="flex relative gap-3">
                     <Form.Item
                         className="w-10/12"
                         name="rutNumbers"
@@ -487,24 +487,36 @@ export default function ModalViewUser({
                 <Form.Item name="childrens" label="Hijos / Cargas">
                     <Input name="childrens" showCount maxLength={2} />
                 </Form.Item>
-                <Form.Item name="branch_id" label="Sucursal principal" rules={[
-                    {
-                        required: true,
-                        message: getValidationRequiredMessage,
-                    },
-                ]} initialValue={data?.branch_id}>
-                    <p className='text-sm font-bold'>
-                        - {data?.branch?.name}
-                    </p>
+                <Form.Item
+                    name="branch_id"
+                    label="Sucursal principal"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                    ]}
+                    initialValue={data?.branch_id}
+                >
+                    <p className="text-sm font-bold">- {data?.branch?.name}</p>
                 </Form.Item>
-                <Form.Item name="branches" label="Sucursales" rules={[
-                    {
-                        required: true,
-                        message: getValidationRequiredMessage,
-                    },
-                ]} initialValue={data?.branches}>
+                <Form.Item
+                    name="branches"
+                    label="Sucursales"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                    ]}
+                    initialValue={data?.branches}
+                >
                     {data?.branches?.map((branch) => (
-                        <p key={branch?.id} className='text-sm font-bold' value={Number(branch?.id)}>
+                        <p
+                            key={branch?.id}
+                            className="text-sm font-bold"
+                            value={Number(branch?.id)}
+                        >
                             - {branch?.name}
                         </p>
                     ))}
@@ -601,7 +613,7 @@ export default function ModalViewUser({
                     />
                 </Form.Item>
 
-                <div className="flex gap-3 relative">
+                <div className="flex relative gap-3">
                     <Form.Item
                         className="w-10/12"
                         name="rutNumbers"
@@ -679,21 +691,24 @@ export default function ModalViewUser({
                         maxLength={100}
                     />
                 </Form.Item>
-                <Form.Item name="branches" label="Sucursales" rules={[
-                    {
-                        required: true,
-                        message: getValidationRequiredMessage,
-                    },
-                ]} initialValue={data?.branches}>
+                <Form.Item
+                    name="branches"
+                    label="Sucursales"
+                    rules={[
+                        {
+                            required: true,
+                            message: getValidationRequiredMessage,
+                        },
+                    ]}
+                    initialValue={data?.branches}
+                >
                     {data?.branches?.map((branch) => {
-                        console.log(data?.branches);
-                            return (
-                                <p key={branch?.id} className='text-sm font-bold'>
-                                    - {branch?.name}
-                                </p>
-                            );
-                        }
-                    )}
+                        return (
+                            <p key={branch?.id} className="text-sm font-bold">
+                                - {branch?.name}
+                            </p>
+                        );
+                    })}
                 </Form.Item>
                 <Form.Item
                     name="status_id"
@@ -705,9 +720,9 @@ export default function ModalViewUser({
                         },
                     ]}
                 >
-                    <p key={data?.status?.id} className='text-sm font-bold'>
-                                    - {data?.status?.name}
-                                </p>
+                    <p key={data?.status?.id} className="text-sm font-bold">
+                        - {data?.status?.name}
+                    </p>
                 </Form.Item>
                 <Form.Item
                     name="category_bonus_id"
@@ -719,9 +734,12 @@ export default function ModalViewUser({
                         },
                     ]}
                 >
-                    <p key={data?.category_bonus?.id} className='text-sm font-bold'>
-                                    - {data?.category_bonus?.name}
-                                </p>
+                    <p
+                        key={data?.category_bonus?.id}
+                        className="text-sm font-bold"
+                    >
+                        - {data?.category_bonus?.name}
+                    </p>
                 </Form.Item>
             </>
         ),

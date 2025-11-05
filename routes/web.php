@@ -1,43 +1,44 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Companies\CompanyController;
+use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Branches\BranchController;
+use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
+use App\Http\Controllers\Companies\CompanyController;
+use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
+use App\Http\Controllers\Orders\OrdersController;
+use App\Http\Controllers\Products\ProductsController;
+use App\Http\Controllers\Reports\ReportController;
+use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Roles\RoleController;
+use App\Http\Controllers\Shifts\ShiftController;
 use App\Http\Controllers\States\StateController;
 use App\Http\Controllers\Statuses\StatusController;
-use App\Http\Controllers\Users\UserController;
-use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
-use App\Http\Controllers\Bonuses\BonusController;
-use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Tickets\TicketController;
-use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
-use App\Http\Controllers\Shifts\ShiftController;
-use App\Http\Controllers\Reports\ReportsController;
-use App\Http\Controllers\Reports\ReportController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Carbon\Carbon;
-use App\Models\Company;
-use App\Models\CategoryBonus;
+use App\Http\Controllers\Totems\TotemController;
+use App\Http\Controllers\Users\UserController;
+use App\Http\Controllers\ProfileController;
 use App\Mail\RequestMoreBranchesMail;
+use App\Models\CategoryBonus;
+use App\Models\Company;
+use Carbon\Carbon;
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-    Route::get('/', function () {
-        return Inertia::render('Dashboard');
+Route::get('/', function () {
+    return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     Route::get('/total-amounts', function (Request $request) {
         $user = auth()->user();
-        $bonuses = $user->bonuses; 
+        $bonuses = $user->bonuses;
         $categoryBonus = CategoryBonus::with('bonuses')->find($user->category_bonus_id);
         $data = [
             'bonuses' => $bonuses,
@@ -47,41 +48,41 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('TotalAmounts/Index', $data);
     })->name('totalAmounts.index');
 
-    Route::prefix('companies')->group(function() {
+    Route::prefix('companies')->group(function () {
         Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::post('/', [CompanyController::class, 'create'])->name('companies.create');
         Route::put('/{id}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('/{id}', [CompanyController::class, 'destroy'])->name('companies.destroy');
-        
+
         Route::post('/select', function (Request $request) {
             $request->validate(['company' => 'required']);
             $request->session()->put('selected_company', $request->input('company'));
             return response()->json(['message' => 'Company selected successfully']);
         });
-        
+
         Route::get('/selected', function (Request $request) {
             $company = $request->session()->get('selected_company');
             return response()->json(['company' => $company]);
         });
-        
+
         Route::post('/clear', function () {
             session()->forget('selected_company');
             return response()->json(['message' => 'Company selection cleared.']);
         })->name('clear-company');
     });
 
-    Route::prefix('branches')->group(function() {
+    Route::prefix('branches')->group(function () {
         Route::get('/', [BranchController::class, 'index'])->name('branches.index');
         Route::post('/', [BranchController::class, 'create'])->name('branches.create');
         Route::put('/{id}', [BranchController::class, 'update'])->name('branches.update');
         Route::delete('/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
-        
+
         Route::put('/shift-day', [BranchController::class, 'updateShiftDay'])->name('branches.updateShiftDay');
         Route::put('/schedule', [BranchController::class, 'updateSchedule'])->name('branches.updateSchedule');
         Route::post('/schedule/{shift_id}', [BranchController::class, 'addSchedule'])->name('branches.addSchedule');
         Route::delete('/schedule/{id}', [BranchController::class, 'deleteSchedule'])->name('branches.deleteSchedule');
-        
-        Route::post('/request_more_branches', function(Request $request) {
+
+        Route::post('/request_more_branches', function (Request $request) {
             $company = Company::first();
             try {
                 Mail::to(env('MAIL_TO_SEND'))
@@ -93,7 +94,7 @@ Route::middleware('auth')->group(function () {
         })->name('branches.request_more_branches');
     });
 
-    Route::prefix('users')->group(function() {
+    Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('users.index');
         Route::get('/export', [UserController::class, 'export'])->name('users.export');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
@@ -102,18 +103,18 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-    
+
     Route::get('/statuses', [StatusController::class, 'index'])->name('statuses.index');
-    
-    Route::prefix('categories-bonus')->group(function() {
+
+    Route::prefix('categories-bonus')->group(function () {
         Route::get('/', [CategoryBonusController::class, 'index'])->name('categoriesBonus.index');
         Route::post('/', [CategoryBonusController::class, 'create'])->name('categoriesBonus.create');
         Route::put('/{id}', [CategoryBonusController::class, 'update'])->name('categoriesBonus.update');
         Route::delete('/{id}', [CategoryBonusController::class, 'destroy'])->name('categoriesBonus.destroy');
         Route::post('/assign-multiple-users', [CategoryBonusController::class, 'assignMultipleUsers'])->name('assignMultipleUsers');
     });
-    
-    Route::prefix('bonuses')->group(function() {
+
+    Route::prefix('bonuses')->group(function () {
         Route::post('/', [BonusController::class, 'create'])->name('bonus.create');
         Route::put('/{id}', [BonusController::class, 'update'])->name('bonuses.update');
         Route::delete('/{id}', [BonusController::class, 'destroy'])->name('bonuses.destroy');
@@ -122,14 +123,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/create-multiple', [BonusController::class, 'createMultiple'])->name('bonuses.createMultiple');
     });
 
-    Route::prefix('totems')->group(function() {
+    Route::prefix('totems')->group(function () {
         Route::get('/', [TotemController::class, 'index'])->name('totems.index');
         Route::post('/', [TotemController::class, 'store'])->name('totems.store');
         Route::put('/{totem}', [TotemController::class, 'update'])->name('totems.update');
         Route::delete('/{totem}', [TotemController::class, 'destroy'])->name('totems.destroy');
     });
 
-    Route::prefix('tickets')->group(function() {
+    Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
         Route::get('/totals', [TicketController::class, 'getTotals'])->name('tickets.totals');
         Route::get('/export', [TicketController::class, 'export'])->name('tickets.export');
@@ -138,18 +139,18 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
     });
 
-    Route::prefix('fingerprint-logs')->group(function() {
+    Route::prefix('fingerprint-logs')->group(function () {
         Route::get('/', [FingerprintLogController::class, 'index'])->name('fingerprint-logs.index');
         Route::post('/', [FingerprintLogController::class, 'store'])->name('fingerprint-logs.store');
         Route::put('/{fingerprintLog}', [FingerprintLogController::class, 'update'])->name('fingerprint-logs.update');
         Route::delete('/{fingerprintLog}', [FingerprintLogController::class, 'destroy'])->name('fingerprint-logs.destroy');
         Route::get('/export', [FingerprintLogController::class, 'export'])->name('fingerprint-logs.export');
     });
-    
+
     // Use ReportsController for the main reports page
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
-    Route::prefix('shifts')->group(function() {
+    Route::prefix('shifts')->group(function () {
         Route::get('/', [ShiftController::class, 'index'])->name('shifts.indepx');
         Route::post('/', [ShiftController::class, 'store'])->name('shifts.store');
         Route::put('/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
@@ -159,9 +160,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/end', [ShiftController::class, 'endShift'])->name('shifts.end');
     });
 
-    // API routes for reports are now defined in api.php
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductsController::class, 'index'])->name('products.index');
+        Route::post('/', [ProductsController::class, 'store'])->name('products.store');
+        Route::put('/{product}', [ProductsController::class, 'update'])->name('products.update');
+        Route::delete('/{product}', [ProductsController::class, 'destroy'])->name('products.destroy');
+    });
+
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [OrdersController::class, 'index'])->name('orders.index');
+        Route::post('/', [OrdersController::class, 'store'])->name('orders.store');
+        Route::delete('/{order}', [OrdersController::class, 'destroy'])->name('orders.destroy');
+    });
 });
 
 Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

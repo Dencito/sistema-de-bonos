@@ -11,6 +11,8 @@ import {
     ChevronDown,
     ChevronRight,
     Fingerprint,
+    ShoppingCart,
+    Package,
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
@@ -113,7 +115,7 @@ export function AppSidebar({ role, roles, user }) {
             label: 'Obtener monto totales',
             link: '/total-amounts',
             autorized: false,
-        },  
+        },
         {
             key: '8',
             icon: SquareStack,
@@ -140,6 +142,20 @@ export function AppSidebar({ role, roles, user }) {
             icon: Clock,
             label: 'Registro de Turnos',
             link: '/shifts',
+            autorized: allowedRoles.shifts.includes(role),
+        },
+        {
+            key: '13',
+            icon: Package,
+            label: 'Productos',
+            link: '/products',
+            autorized: allowedRoles.shifts.includes(role),
+        },
+        {
+            key: '14',
+            icon: ShoppingCart,
+            label: 'Órdenes',
+            link: '/orders',
             autorized: allowedRoles.shifts.includes(role),
         },
     ];
@@ -259,7 +275,7 @@ export function AppSidebar({ role, roles, user }) {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
-                                    className="border-red-300 border hover:bg-red-400 hover:text-white"
+                                    className="border border-red-300 hover:bg-red-400 hover:text-white"
                                 >
                                     <Link
                                         as="button"

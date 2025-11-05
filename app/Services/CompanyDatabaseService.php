@@ -24,6 +24,8 @@ class CompanyDatabaseService
             $totemsTable = $request->slug . '_totems';
             $shiftsTable = $request->slug . '_shifts';
             $fingerprintLogsTable = $request->slug . '_fingerprint_logs';
+            $productsTable = $request->slug . '_products';
+            $ordersTable = $request->slug . '_orders';
 
             // 1. Crear tabla de estados (no tiene dependencias)
             if (!Schema::hasTable($statusesTable)) {
@@ -166,7 +168,7 @@ class CompanyDatabaseService
                     $table->string('branchAddressDeptOrHouse')->nullable();
                     $table->json('available_schedules')->nullable();
                     $table->json('bonus_schedules')->nullable();
-                    $table->decimal('birthday_amount', 10, 2)->default(0.00);
+                    $table->decimal('birthday_amount', 10, 2)->default(0.0);
                     $table->integer('ticketNumber')->default(0);
                     $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
                     $table->foreignId('company_id')->constrained($companiesTable)->onDelete('cascade');
@@ -280,7 +282,7 @@ class CompanyDatabaseService
                 });
             }
 
-            // 9. Creat tabla de totems 
+            // 9. Creat tabla de totems
             if (!Schema::hasTable($totemsTable)) {
                 Schema::create($totemsTable, function ($table) use ($branchesTable) {
                     $table->id();
@@ -288,7 +290,7 @@ class CompanyDatabaseService
                     $table->string('code')->unique();
                     $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
                     $table->boolean('active')->default(true);
-                    $table->timestamp('created_at')->useCurrent();  
+                    $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
             }
@@ -296,13 +298,13 @@ class CompanyDatabaseService
             // 10. Crear tabla de tickets (depende de usuarios y tomos)
             if (!Schema::hasTable($ticketsTable)) {
                 Schema::create($ticketsTable, function ($table) use ($usersTable, $totemsTable) {
-                        $table->id();
-                        $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                        $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
-                        $table->decimal('total_amount', 10, 2)->default(0);
-                        $table->string('type');
-                        $table->timestamp('created_at')->useCurrent();  
-                        $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                    $table->id();
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
+                    $table->decimal('total_amount', 10, 2)->default(0);
+                    $table->string('type');
+                    $table->timestamp('created_at')->useCurrent();
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
             }
 
@@ -316,7 +318,7 @@ class CompanyDatabaseService
                     $table->timestamp('opening_time')->useCurrent()->nullable();
                     $table->timestamp('closing_time')->nullable()->nullable();
                     $table->enum('status', ['open', 'closed'])->default('open');
-                    $table->timestamp('created_at')->useCurrent();  
+                    $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
             }
@@ -327,6 +329,34 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
                     $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
+                    $table->timestamp('created_at')->useCurrent();
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                });
+            }
+
+            // 13. Crear tabla de productos
+            if (!Schema::hasTable($productsTable)) {
+                Schema::create($productsTable, function ($table) use ($productsTable) {
+                    $table->id();
+                    $table->string('name');
+                    $table->string('code')->unique();
+                    $table->decimal('price', 8, 2);
+                    $table->integer('quantity')->default(0);
+                    $table->timestamp('created_at')->useCurrent();
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                });
+            }
+
+            // 14. Crear tabla de ordenes
+            if (!Schema::hasTable($ordersTable)) {
+                Schema::create($ordersTable, function ($table) use ($ordersTable) {
+                    $table->id();
+                    $table->decimal('total', 10, 2);
+                    $table->json('products');
+                    $table->integer('quantity')->default(1);
+                    $table->enum('payment_method', ['efectivo', 'tarjeta', 'transferencia'])->nullable();
+                    $table->decimal('paid_amount', 10, 2)->nullable();
+                    $table->decimal('change', 10, 2)->nullable();
                     $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
@@ -368,6 +398,8 @@ class CompanyDatabaseService
             "{$companyPrefix}_user_branches",
             "{$companyPrefix}_statuses",
             "{$companyPrefix}_companies",
+            "{$companyPrefix}_products",
+            "{$companyPrefix}_orders",
         ];
     }
 

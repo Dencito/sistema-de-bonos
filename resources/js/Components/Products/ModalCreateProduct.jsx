@@ -140,21 +140,16 @@ export default function ModalCreateProduct() {
                     <Input showCount maxLength={255} />
                 </Form.Item>
                 <Form.Item
-                    name="stock"
+                    name="quantity"
                     label="Stock"
                     rules={[
                         {
                             required: true,
                             message: getValidationRequiredMessage,
-                        },
-                        {
-                            type: 'number',
-                            min: 0,
-                            message: 'La cantidad debe ser mayor o igual a 0.',
-                        },
+                        }
                     ]}
                 >
-                    <Input type="number" min="0" />
+                    <Input type="number" />
                 </Form.Item>
                 <Form.Item
                     name="price"

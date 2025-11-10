@@ -29,6 +29,10 @@ export default function ModalEditUser({
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    console.log(data)
+    console.log(statuses)
+    console.log(categories)
+
     const [errorRuts, setErrorRuts] = useState({
         user: false,
     });
@@ -142,13 +146,15 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {statuses?.map((status) => (
-                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
-                                {status.name}
-                            </Radio.Button>
-                        ))}
-                    </Radio.Group>
+                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Radio.Group buttonStyle="solid">
+                            {statuses?.map((status) => (
+                                <Radio.Button key={status.id} value={status.id}>
+                                    {status.name}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    </div>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -225,13 +231,15 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {statuses?.map((status) => (
-                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
-                                {status.name}
-                            </Radio.Button>
-                        ))}
-                    </Radio.Group>
+                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Radio.Group buttonStyle="solid">
+                            {statuses?.map((status) => (
+                                <Radio.Button key={status.id} value={status.id}>
+                                    {status.name}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    </div>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -344,13 +352,15 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {statuses?.map((status) => (
-                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
-                                {status.name}
-                            </Radio.Button>
-                        ))}
-                    </Radio.Group>
+                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Radio.Group buttonStyle="solid">
+                            {statuses?.map((status) => (
+                                <Radio.Button key={status.id} value={status.id}>
+                                    {status.name}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    </div>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -723,13 +733,15 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {statuses?.map((status) => (
-                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
-                                {status.name}
-                            </Radio.Button>
-                        ))}
-                    </Radio.Group>
+                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Radio.Group buttonStyle="solid">
+                            {statuses?.map((status) => (
+                                <Radio.Button key={status.id} value={status.id}>
+                                    {status.name}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    </div>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -992,23 +1004,27 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {statuses?.map((status) => (
-                            <Radio.Button key={status?.id} value={status?.id} style={{ width: 'fit-content', margin: '2px 0' }}>
-                                {status?.name}
-                            </Radio.Button>
-                        ))}
-                    </Radio.Group>
+                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Radio.Group buttonStyle="solid">
+                            {statuses?.map((status) => (
+                                <Radio.Button key={status?.id} value={status?.id}>
+                                    {status?.name}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    </div>
                 </Form.Item>
 
                 <Form.Item name="category_bonus_id" label="Categorias de bonos">
-                    <Radio.Group buttonStyle="solid" disabled={role === 'trabajador'} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {categories?.map((category) => (
-                            <Radio.Button key={category?.id} value={category?.id} style={{ width: 'fit-content', margin: '2px 0' }}>
-                                {category?.name}
-                            </Radio.Button>
-                        ))}
-                    </Radio.Group>
+                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Radio.Group buttonStyle="solid" disabled={role === 'trabajador'}>
+                            {categories?.map((category) => (
+                                <Radio.Button key={category?.id} value={category?.id}>
+                                    {category?.name}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    </div>
                 </Form.Item>
             </>
         ),

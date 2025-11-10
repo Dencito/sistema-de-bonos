@@ -142,9 +142,9 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado" optionLabelProp="label">
+                    <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id} label={status.name}>
+                            <Select.Option key={status.id} value={status.id}>
                                 {status.name}
                             </Select.Option>
                         ))}
@@ -161,9 +161,9 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el rol" optionLabelProp="label">
+                    <Select placeholder="Seleccione el rol">
                         {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.id} label={roleDisplayNames[role?.name] || role?.name}>
+                            <Select.Option key={role?.id} value={role?.id}>
                                 {roleDisplayNames[role?.name] || role?.name}
                             </Select.Option>
                         ))}
@@ -225,9 +225,9 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado" optionLabelProp="label">
+                    <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id} label={status.name}>
+                            <Select.Option key={status.id} value={status.id}>
                                 {status.name}
                             </Select.Option>
                         ))}
@@ -244,9 +244,9 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el rol" optionLabelProp="label">
+                    <Select placeholder="Seleccione el rol">
                         {roles?.map((role) => (
-                            <Select.Option key={role?.id} value={role?.name} label={roleDisplayNames[role?.name] || role?.name}>
+                            <Select.Option key={role?.id} value={role?.id}>
                                 {roleDisplayNames[role?.name] || role?.name}
                             </Select.Option>
                         ))}
@@ -344,9 +344,9 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado" optionLabelProp="label">
+                    <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id} label={status.name}>
+                            <Select.Option key={status.id} value={status.id}>
                                 {status.name}
                             </Select.Option>
                         ))}
@@ -716,7 +716,6 @@ export default function ModalEditUser({
                 <Form.Item
                     name="status_id"
                     label="Estado"
-                    fieldNames={{ label: 'name', value: 'id' }}
                     rules={[
                         {
                             required: true,
@@ -724,9 +723,9 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado" optionLabelProp="label">
+                    <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id} label={status.name}>
+                            <Select.Option key={status.id} value={status.id}>
                                 {status.name}
                             </Select.Option>
                         ))}
@@ -735,7 +734,6 @@ export default function ModalEditUser({
                 <Form.Item
                     name="role_id"
                     label="Rol"
-                    fieldNames={{ label: 'name', value: 'id' }}
                     initialValue={data?.role?.id}
                     rules={[
                         {
@@ -744,11 +742,11 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el rol" optionLabelProp="label">
+                    <Select placeholder="Seleccione el rol">
                         {roles
                             ?.filter((role) => role?.name !== roleNames.jugador)
                             .map((role) => (
-                                <Select.Option key={role?.id} value={role?.id} label={roleDisplayNames[role?.name] || role?.name}>
+                                <Select.Option key={role?.id} value={role?.id}>
                                     {roleDisplayNames[role?.name] || role?.name}
                                 </Select.Option>
                             ))}
@@ -987,7 +985,6 @@ export default function ModalEditUser({
                 <Form.Item
                     name="status_id"
                     label="Estado"
-                    fieldNames={{ label: 'name', value: 'id' }}
                     rules={[
                         {
                             required: true,
@@ -995,16 +992,16 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado" optionLabelProp="label">
+                    <Select placeholder="Seleccione el estado">
                         {statuses?.map((status) => (
-                            <Select.Option key={status?.id} value={status?.id} label={status?.name}>
+                            <Select.Option key={status?.id} value={status?.id}>
                                 {status?.name}
                             </Select.Option>
                         ))}
                     </Select>
                 </Form.Item>
 
-                <Form.Item fieldNames={{ label: 'name', value: 'id' }} name="category_bonus_id" label="Categorias de bonos" optionLabelProp="label">
+                <Form.Item name="category_bonus_id" label="Categorias de bonos">
                     <Select
                         disabled={role === 'trabajador'}
                         placeholder="Seleccione una categoria"
@@ -1013,7 +1010,6 @@ export default function ModalEditUser({
                             <Select.Option
                                 key={category?.id}
                                 value={category?.id}
-                                label={category?.name}
                             >
                                 {category?.name}
                             </Select.Option>

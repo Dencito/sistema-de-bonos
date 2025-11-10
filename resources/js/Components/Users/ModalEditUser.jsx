@@ -149,7 +149,7 @@ export default function ModalEditUser({
                     <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         <Radio.Group buttonStyle="solid">
                             {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={status.id}>
+                                <Radio.Button key={status.id} value={String(status.id)}>
                                     {status.name}
                                 </Radio.Button>
                             ))}
@@ -234,7 +234,7 @@ export default function ModalEditUser({
                     <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         <Radio.Group buttonStyle="solid">
                             {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={status.id}>
+                                <Radio.Button key={status.id} value={String(status.id)}>
                                     {status.name}
                                 </Radio.Button>
                             ))}
@@ -355,7 +355,7 @@ export default function ModalEditUser({
                     <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         <Radio.Group buttonStyle="solid">
                             {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={status.id}>
+                                <Radio.Button key={status.id} value={String(status.id)}>
                                     {status.name}
                                 </Radio.Button>
                             ))}
@@ -736,7 +736,7 @@ export default function ModalEditUser({
                     <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         <Radio.Group buttonStyle="solid">
                             {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={status.id}>
+                                <Radio.Button key={status.id} value={String(status.id)}>
                                     {status.name}
                                 </Radio.Button>
                             ))}
@@ -1007,7 +1007,7 @@ export default function ModalEditUser({
                     <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         <Radio.Group buttonStyle="solid">
                             {statuses?.map((status) => (
-                                <Radio.Button key={status?.id} value={status?.id}>
+                                <Radio.Button key={status?.id} value={String(status?.id)}>
                                     {status?.name}
                                 </Radio.Button>
                             ))}
@@ -1019,7 +1019,7 @@ export default function ModalEditUser({
                     <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         <Radio.Group buttonStyle="solid" disabled={role === 'trabajador'}>
                             {categories?.map((category) => (
-                                <Radio.Button key={category?.id} value={category?.id}>
+                                <Radio.Button key={category?.id} value={String(category?.id)}>
                                     {category?.name}
                                 </Radio.Button>
                             ))}

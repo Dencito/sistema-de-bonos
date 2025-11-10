@@ -716,6 +716,7 @@ export default function ModalEditUser({
                 <Form.Item
                     name="status_id"
                     label="Estado"
+                    fieldNames={{ label: 'name', value: 'id' }}
                     rules={[
                         {
                             required: true,
@@ -734,6 +735,7 @@ export default function ModalEditUser({
                 <Form.Item
                     name="role_id"
                     label="Rol"
+                    fieldNames={{ label: 'name', value: 'id' }}
                     initialValue={data?.role?.id}
                     rules={[
                         {
@@ -985,6 +987,7 @@ export default function ModalEditUser({
                 <Form.Item
                     name="status_id"
                     label="Estado"
+                    fieldNames={{ label: 'name', value: 'id' }}
                     rules={[
                         {
                             required: true,
@@ -1001,7 +1004,7 @@ export default function ModalEditUser({
                     </Select>
                 </Form.Item>
 
-                <Form.Item name="category_bonus_id" label="Categorias de bonos" optionLabelProp="label">
+                <Form.Item fieldNames={{ label: 'name', value: 'id' }} name="category_bonus_id" label="Categorias de bonos" optionLabelProp="label">
                     <Select
                         disabled={role === 'trabajador'}
                         placeholder="Seleccione una categoria"

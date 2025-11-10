@@ -28,10 +28,8 @@ export default function ModalEditUser({
 }) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    console.log(data)
-    console.log(statuses)
-    console.log(categories)
+    const [selectedStatus, setSelectedStatus] = useState(data?.status_id ? String(data?.status_id) : null);
+    const [selectedCategory, setSelectedCategory] = useState(data?.category_bonus_id ? String(data?.category_bonus_id) : null);
 
     const [errorRuts, setErrorRuts] = useState({
         user: false,
@@ -48,6 +46,8 @@ export default function ModalEditUser({
                     values?.role_id === undefined
                         ? data?.role_id
                         : values?.role_id,
+                status_id: selectedStatus || values?.status_id || data?.status_id,
+                category_bonus_id: selectedCategory || values?.category_bonus_id || data?.category_bonus_id,
             });
             if (response.success) {
                 successMsg(response.message);
@@ -72,6 +72,10 @@ export default function ModalEditUser({
     };
 
     const handleOpenModal = () => {
+        setSelectedStatus(data?.status_id ? String(data?.status_id) : null);
+        setSelectedCategory(data?.category_bonus_id ? String(data?.category_bonus_id) : null);
+        console.log('Opening modal with status_id:', data?.status_id, typeof data?.status_id);
+        console.log('Opening modal with category_bonus_id:', data?.category_bonus_id, typeof data?.category_bonus_id);
         setShowModal(true);
     };
 
@@ -100,6 +104,53 @@ export default function ModalEditUser({
         const currentDate = new Date();
         const age = differenceInYears(currentDate, selectedDate);
         return age >= 16;
+    };
+
+    const renderStatusRadioGroup = () => {
+        console.log('Rendering status radio group with value:', selectedStatus);
+        return (
+        <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <Radio.Group 
+                buttonStyle="solid"
+                value={selectedStatus}
+                onChange={(e) => {
+                    console.log('Status changed to:', e.target.value);
+                    setSelectedStatus(e.target.value);
+                    form.setFieldsValue({ status_id: e.target.value });
+                }}
+            >
+                {statuses?.map((status) => (
+                    <Radio.Button key={status.id} value={String(status.id)}>
+                        {status.name}
+                    </Radio.Button>
+                ))}
+            </Radio.Group>
+        </div>
+        );
+    };
+
+    const renderCategoryRadioGroup = () => {
+        console.log('Rendering category radio group with value:', selectedCategory);
+        return (
+        <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <Radio.Group 
+                buttonStyle="solid" 
+                disabled={role === 'trabajador'}
+                value={selectedCategory}
+                onChange={(e) => {
+                    console.log('Category changed to:', e.target.value);
+                    setSelectedCategory(e.target.value);
+                    form.setFieldsValue({ category_bonus_id: e.target.value });
+                }}
+            >
+                {categories?.map((category) => (
+                    <Radio.Button key={category?.id} value={String(category?.id)}>
+                        {category?.name}
+                    </Radio.Button>
+                ))}
+            </Radio.Group>
+        </div>
+        );
     };
 
     const prefixSelector = (
@@ -146,15 +197,7 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        <Radio.Group buttonStyle="solid">
-                            {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={String(status.id)}>
-                                    {status.name}
-                                </Radio.Button>
-                            ))}
-                        </Radio.Group>
-                    </div>
+                    {renderStatusRadioGroup()}
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -231,15 +274,7 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        <Radio.Group buttonStyle="solid">
-                            {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={String(status.id)}>
-                                    {status.name}
-                                </Radio.Button>
-                            ))}
-                        </Radio.Group>
-                    </div>
+                    {renderStatusRadioGroup()}
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -352,15 +387,7 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        <Radio.Group buttonStyle="solid">
-                            {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={String(status.id)}>
-                                    {status.name}
-                                </Radio.Button>
-                            ))}
-                        </Radio.Group>
-                    </div>
+                    {renderStatusRadioGroup()}
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -733,15 +760,7 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        <Radio.Group buttonStyle="solid">
-                            {statuses?.map((status) => (
-                                <Radio.Button key={status.id} value={String(status.id)}>
-                                    {status.name}
-                                </Radio.Button>
-                            ))}
-                        </Radio.Group>
-                    </div>
+                    {renderStatusRadioGroup()}
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -1004,27 +1023,11 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        <Radio.Group buttonStyle="solid">
-                            {statuses?.map((status) => (
-                                <Radio.Button key={status?.id} value={String(status?.id)}>
-                                    {status?.name}
-                                </Radio.Button>
-                            ))}
-                        </Radio.Group>
-                    </div>
+                    {renderStatusRadioGroup()}
                 </Form.Item>
 
                 <Form.Item name="category_bonus_id" label="Categorias de bonos">
-                    <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        <Radio.Group buttonStyle="solid" disabled={role === 'trabajador'}>
-                            {categories?.map((category) => (
-                                <Radio.Button key={category?.id} value={String(category?.id)}>
-                                    {category?.name}
-                                </Radio.Button>
-                            ))}
-                        </Radio.Group>
-                    </div>
+                    {renderCategoryRadioGroup()}
                 </Form.Item>
             </>
         ),

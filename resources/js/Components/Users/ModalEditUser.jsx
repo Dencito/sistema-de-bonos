@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, Select, Switch } from 'antd';
+import { Form, Input, Select, Switch, Radio } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import {
     getValidationEmailMessage,
@@ -142,13 +142,13 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado">
+                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id}>
+                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
                                 {status.name}
-                            </Select.Option>
+                            </Radio.Button>
                         ))}
-                    </Select>
+                    </Radio.Group>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -225,13 +225,13 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado">
+                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id}>
+                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
                                 {status.name}
-                            </Select.Option>
+                            </Radio.Button>
                         ))}
-                    </Select>
+                    </Radio.Group>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -344,13 +344,13 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado">
+                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id}>
+                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
                                 {status.name}
-                            </Select.Option>
+                            </Radio.Button>
                         ))}
-                    </Select>
+                    </Radio.Group>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -723,13 +723,13 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado">
+                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {statuses?.map((status) => (
-                            <Select.Option key={status.id} value={status.id}>
+                            <Radio.Button key={status.id} value={status.id} style={{ width: 'fit-content', margin: '2px 0' }}>
                                 {status.name}
-                            </Select.Option>
+                            </Radio.Button>
                         ))}
-                    </Select>
+                    </Radio.Group>
                 </Form.Item>
                 <Form.Item
                     name="role_id"
@@ -992,29 +992,23 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione el estado">
+                    <Radio.Group buttonStyle="solid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {statuses?.map((status) => (
-                            <Select.Option key={status?.id} value={status?.id}>
+                            <Radio.Button key={status?.id} value={status?.id} style={{ width: 'fit-content', margin: '2px 0' }}>
                                 {status?.name}
-                            </Select.Option>
+                            </Radio.Button>
                         ))}
-                    </Select>
+                    </Radio.Group>
                 </Form.Item>
 
                 <Form.Item name="category_bonus_id" label="Categorias de bonos">
-                    <Select
-                        disabled={role === 'trabajador'}
-                        placeholder="Seleccione una categoria"
-                    >
+                    <Radio.Group buttonStyle="solid" disabled={role === 'trabajador'} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {categories?.map((category) => (
-                            <Select.Option
-                                key={category?.id}
-                                value={category?.id}
-                            >
+                            <Radio.Button key={category?.id} value={category?.id} style={{ width: 'fit-content', margin: '2px 0' }}>
                                 {category?.name}
-                            </Select.Option>
+                            </Radio.Button>
                         ))}
-                    </Select>
+                    </Radio.Group>
                 </Form.Item>
             </>
         ),

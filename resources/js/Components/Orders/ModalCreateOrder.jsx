@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Form, Input, Modal, Select, Spin, InputNumber } from 'antd';
+import { Button, Form, Modal, Select, InputNumber } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
@@ -255,6 +255,7 @@ export default function ModalCreateOrder({ products }) {
                             style={{ width: '100%' }}
                             min={0}
                             precision={2}
+                            disabled
                         />
                     </Form.Item>
 

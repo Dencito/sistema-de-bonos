@@ -42,7 +42,6 @@ const FingerprintIcon = () => (
 export default function UserPage({
     auth,
     users,
-    allUsers,
     userWorkers,
     roles,
     branches,

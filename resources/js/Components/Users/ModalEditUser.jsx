@@ -28,8 +28,12 @@ export default function ModalEditUser({
 }) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState(data?.status_id ? String(data?.status_id) : null);
-    const [selectedCategory, setSelectedCategory] = useState(data?.category_bonus_id ? String(data?.category_bonus_id) : null);
+    const [selectedStatus, setSelectedStatus] = useState(
+        data?.status_id ? String(data?.status_id) : null
+    );
+    const [selectedCategory, setSelectedCategory] = useState(
+        data?.category_bonus_id ? String(data?.category_bonus_id) : null
+    );
 
     const [errorRuts, setErrorRuts] = useState({
         user: false,
@@ -46,8 +50,12 @@ export default function ModalEditUser({
                     values?.role_id === undefined
                         ? data?.role_id
                         : values?.role_id,
-                status_id: selectedStatus || values?.status_id || data?.status_id,
-                category_bonus_id: selectedCategory || values?.category_bonus_id || data?.category_bonus_id,
+                status_id:
+                    selectedStatus || values?.status_id || data?.status_id,
+                category_bonus_id:
+                    selectedCategory ||
+                    values?.category_bonus_id ||
+                    data?.category_bonus_id,
             });
             if (response.success) {
                 successMsg(response.message);
@@ -73,9 +81,9 @@ export default function ModalEditUser({
 
     const handleOpenModal = () => {
         setSelectedStatus(data?.status_id ? String(data?.status_id) : null);
-        setSelectedCategory(data?.category_bonus_id ? String(data?.category_bonus_id) : null);
-        console.log('Opening modal with status_id:', data?.status_id, typeof data?.status_id);
-        console.log('Opening modal with category_bonus_id:', data?.category_bonus_id, typeof data?.category_bonus_id);
+        setSelectedCategory(
+            data?.category_bonus_id ? String(data?.category_bonus_id) : null
+        );
         setShowModal(true);
     };
 
@@ -107,49 +115,56 @@ export default function ModalEditUser({
     };
 
     const renderStatusRadioGroup = () => {
-        console.log('Rendering status radio group with value:', selectedStatus);
         return (
-        <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <Radio.Group 
-                buttonStyle="solid"
-                value={selectedStatus}
-                onChange={(e) => {
-                    console.log('Status changed to:', e.target.value);
-                    setSelectedStatus(e.target.value);
-                    form.setFieldsValue({ status_id: e.target.value });
-                }}
+            <div
+                className="radio-button-container"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
             >
-                {statuses?.map((status) => (
-                    <Radio.Button key={status.id} value={String(status.id)}>
-                        {status.name}
-                    </Radio.Button>
-                ))}
-            </Radio.Group>
-        </div>
+                <Radio.Group
+                    buttonStyle="solid"
+                    value={selectedStatus}
+                    onChange={(e) => {
+                        setSelectedStatus(e.target.value);
+                        form.setFieldsValue({ status_id: e.target.value });
+                    }}
+                >
+                    {statuses?.map((status) => (
+                        <Radio.Button key={status.id} value={String(status.id)}>
+                            {status.name}
+                        </Radio.Button>
+                    ))}
+                </Radio.Group>
+            </div>
         );
     };
 
     const renderCategoryRadioGroup = () => {
-        console.log('Rendering category radio group with value:', selectedCategory);
         return (
-        <div className="radio-button-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <Radio.Group 
-                buttonStyle="solid" 
-                disabled={role === 'trabajador'}
-                value={selectedCategory}
-                onChange={(e) => {
-                    console.log('Category changed to:', e.target.value);
-                    setSelectedCategory(e.target.value);
-                    form.setFieldsValue({ category_bonus_id: e.target.value });
-                }}
+            <div
+                className="radio-button-container"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
             >
-                {categories?.map((category) => (
-                    <Radio.Button key={category?.id} value={String(category?.id)}>
-                        {category?.name}
-                    </Radio.Button>
-                ))}
-            </Radio.Group>
-        </div>
+                <Radio.Group
+                    buttonStyle="solid"
+                    disabled={role === 'trabajador'}
+                    value={selectedCategory}
+                    onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        form.setFieldsValue({
+                            category_bonus_id: e.target.value,
+                        });
+                    }}
+                >
+                    {categories?.map((category) => (
+                        <Radio.Button
+                            key={category?.id}
+                            value={String(category?.id)}
+                        >
+                            {category?.name}
+                        </Radio.Button>
+                    ))}
+                </Radio.Group>
+            </div>
         );
     };
 
@@ -256,9 +271,16 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select placeholder="Seleccione la sucursal" optionLabelProp="label">
+                    <Select
+                        placeholder="Seleccione la sucursal"
+                        optionLabelProp="label"
+                    >
                         {branches?.map((branch) => (
-                            <Select.Option key={branch.id} value={branch.id} label={branch.name}>
+                            <Select.Option
+                                key={branch.id}
+                                value={branch.id}
+                                label={branch.name}
+                            >
                                 {branch.name}
                             </Select.Option>
                         ))}
@@ -550,8 +572,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : Promise.reject(
-                                        'Debe ser mayor de 16 años'
-                                    ),
+                                          'Debe ser mayor de 16 años'
+                                      ),
                         },
                     ]}
                 >
@@ -719,9 +741,7 @@ export default function ModalEditUser({
                         },
                     ]}
                 >
-                    <Select
-                        placeholder="Seleccione la sucursal principal"
-                    >
+                    <Select placeholder="Seleccione la sucursal principal">
                         {branches?.map((branch) => (
                             <Select.Option key={branch.id} value={branch.id}>
                                 {branch?.name}
@@ -941,8 +961,8 @@ export default function ModalEditUser({
                                 validateAge(value)
                                     ? Promise.resolve()
                                     : value === undefined
-                                        ? Promise.resolve()
-                                        : Promise.reject(
+                                      ? Promise.resolve()
+                                      : Promise.reject(
                                             'Debe ser mayor de 16 años'
                                         ),
                         },

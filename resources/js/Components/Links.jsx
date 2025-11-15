@@ -74,7 +74,8 @@ export const Links = ({ role, roles }) => {
                     icon: <ChartBarStacked />,
                     label: 'Reportes',
                     link: '/reports',
-                    autorized: allowedRoles.branches.includes(role) && !isTickets,
+                    autorized:
+                        allowedRoles.branches.includes(role) && !isTickets,
                 },
                 {
                     key: '4',
@@ -103,6 +104,13 @@ export const Links = ({ role, roles }) => {
                     label: 'Obtener monto totales',
                     link: '/total-amounts',
                     autorized: false,
+                },
+                {
+                    key: '8',
+                    icon: <SquareStack />,
+                    label: 'Ventas',
+                    link: '/sales',
+                    autorized: true,
                 },
             ].map((item) => (
                 <div key={item.key}>
@@ -158,7 +166,7 @@ export const Links = ({ role, roles }) => {
                                     item?.children.map((subItem) => (
                                         <Link
                                             key={subItem?.name}
-                                            className="transition-all duration-300 hover:bg-cyan-300 flex gap-2 rounded-lg py-1 ps-12 text-base items-center space-x-2"
+                                            className="flex gap-2 items-center py-1 space-x-2 text-base rounded-lg transition-all duration-300 hover:bg-cyan-300 ps-12"
                                             href={`${item.link}?role=${subItem?.name}`}
                                         >
                                             <span className="text-sm font-normal">
@@ -173,7 +181,7 @@ export const Links = ({ role, roles }) => {
                 </div>
             ))}
             <Link
-                className="border-red-300 border hover:bg-red-400 hover:text-white transition-all w-full py-3 ps-3 rounded-lg duration-300 flex gap-2 text-base font-light items-center space-x-2"
+                className="flex gap-2 items-center py-3 space-x-2 w-full text-base font-light rounded-lg border border-red-300 transition-all duration-300 hover:bg-red-400 hover:text-white ps-3"
                 as="button"
                 href={route('logout')}
                 method="post"

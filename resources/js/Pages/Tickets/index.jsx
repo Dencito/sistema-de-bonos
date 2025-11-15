@@ -3,7 +3,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 import { useState, useEffect, useMemo } from 'react';
-import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
+import { Button, DatePicker, Form, Select, Card } from 'antd';
 import {
     SearchOutlined,
     FilterOutlined,

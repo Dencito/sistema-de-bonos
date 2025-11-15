@@ -12,7 +12,6 @@ export default function ModalViewUser({
     data,
     statuses,
     roles,
-    categories,
     branches,
     userType,
 }) {

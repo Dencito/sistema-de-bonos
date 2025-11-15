@@ -1,5 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Form, Input, DatePicker, Modal, Select, Table, Button, Spin, message } from 'antd';
+import { useState } from 'react';
+import {
+    Form,
+    Input,
+    DatePicker,
+    Modal,
+    Select,
+    Table,
+    Button,
+    message,
+} from 'antd';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
@@ -28,7 +37,8 @@ export default function ModalCreateCustomBonus() {
             key: 'name',
             render: (_, user) => (
                 <span>
-                    {user?.first_name} {user?.second_name} {user?.first_last_name} {user?.second_last_name}
+                    {user?.first_name} {user?.second_name}{' '}
+                    {user?.first_last_name} {user?.second_last_name}
                 </span>
             ),
         },
@@ -37,7 +47,9 @@ export default function ModalCreateCustomBonus() {
             key: 'rut',
             render: (_, user) => (
                 <span>
-                    {user?.rutNumbers && user?.rutDv ? `${user.rutNumbers}-${user.rutDv}` : user?.code}
+                    {user?.rutNumbers && user?.rutDv
+                        ? `${user.rutNumbers}-${user.rutDv}`
+                        : user?.code}
                 </span>
             ),
         },
@@ -51,14 +63,17 @@ export default function ModalCreateCustomBonus() {
             key: 'last_fingerprint',
             render: (_, user) => (
                 <span>
-                    {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
+                    {formatDateTime(
+                        user?.fingerprint_logs?.[0]?.created_at,
+                        'dd/MM/yyyy HH:mm'
+                    )}
                 </span>
             ),
-        }
+        },
     ];
 
     const rowSelection = {
-        selectedRowKeys: selectedUsers.map(user => user.id),
+        selectedRowKeys: selectedUsers.map((user) => user.id),
         onChange: (selectedRowKeys, selectedRows) => {
             setSelectedUsers(selectedRows);
         },
@@ -67,8 +82,12 @@ export default function ModalCreateCustomBonus() {
     const handleSearch = async () => {
         try {
             setSearching(true);
-            const values = await form.validateFields(['date_range', 'bonus_count', 'bonus_type']);
-            
+            const values = await form.validateFields([
+                'date_range',
+                'bonus_count',
+                'bonus_type',
+            ]);
+
             const dateRange = values.date_range;
             const startDate = dateRange?.[0]?.format('YYYY-MM-DD');
             const endDate = dateRange?.[1]?.format('YYYY-MM-DD');
@@ -80,14 +99,14 @@ export default function ModalCreateCustomBonus() {
                 start_date: startDate,
                 end_date: endDate,
                 bonus_count: bonusCount,
-                bonus_type: bonusType
+                bonus_type: bonusType,
             });
 
             if (response.success) {
                 const usersData = response.data.users || [];
                 setUsers(usersData);
                 // Seleccionar solo los IDs de los usuarios
-                setSelectedUsers(usersData.map(user => ({ id: user.id })));
+                setSelectedUsers(usersData.map((user) => ({ id: user.id })));
                 message.success(`Se encontraron ${usersData.length} usuarios`);
             } else {
                 message.error(response.message || 'Error al buscar usuarios');
@@ -95,13 +114,15 @@ export default function ModalCreateCustomBonus() {
             }
         } catch (error) {
             console.error('Error al buscar usuarios:', error);
-            message.error('Error al buscar usuarios: ' + (error.message || 'Error desconocido'));
+            message.error(
+                'Error al buscar usuarios: ' +
+                    (error.message || 'Error desconocido')
+            );
             setUsers([]);
         } finally {
             setSearching(false);
         }
     };
-
 
     const handleCreateBonuses = async () => {
         if (selectedUsers.length === 0) {
@@ -111,16 +132,24 @@ export default function ModalCreateCustomBonus() {
 
         try {
             setLoading(true);
-            const values = await form.validateFields(['amount', 'start_datetime', 'end_datetime']);
-            
-            const startDateTime = values.start_datetime?.format('YYYY-MM-DD HH:mm:ss');
-            const endDateTime = values.end_datetime?.format('YYYY-MM-DD HH:mm:ss');
-            
+            const values = await form.validateFields([
+                'amount',
+                'start_datetime',
+                'end_datetime',
+            ]);
+
+            const startDateTime = values.start_datetime?.format(
+                'YYYY-MM-DD HH:mm:ss'
+            );
+            const endDateTime = values.end_datetime?.format(
+                'YYYY-MM-DD HH:mm:ss'
+            );
+
             // Extraer solo los IDs de los usuarios seleccionados
-            const userIds = selectedUsers.map(user => user.id);
-            
+            const userIds = selectedUsers.map((user) => user.id);
+
             // Crear un array de promesas para la creación de bonos
-            const createPromises = userIds.map(userId => {
+            const createPromises = userIds.map((userId) => {
                 const sendData = {
                     amount: values.amount,
                     start_datetime: startDateTime,
@@ -129,23 +158,30 @@ export default function ModalCreateCustomBonus() {
                 };
                 return bonusService.create(sendData);
             });
-            
+
             // Esperar a que todas las promesas se resuelvan
             const results = await Promise.allSettled(createPromises);
-            
+
             // Contar los bonos creados exitosamente
-            const successCount = results.filter(result => result.status === 'fulfilled' && result.value.success).length;
+            const successCount = results.filter(
+                (result) =>
+                    result.status === 'fulfilled' && result.value.success
+            ).length;
             const failCount = userIds.length - successCount;
-            
+
             // Mostrar una sola alerta con el resumen
             if (successCount > 0) {
-                successMsg(`Bonos creados correctamente para ${successCount} usuarios`);
+                successMsg(
+                    `Bonos creados correctamente para ${successCount} usuarios`
+                );
             }
-            
+
             if (failCount > 0) {
-                errorMsg(`No se pudieron crear bonos para ${failCount} usuarios`);
+                errorMsg(
+                    `No se pudieron crear bonos para ${failCount} usuarios`
+                );
             }
-            
+
             // Actualizar la página y cerrar el modal
             router.visit(window.location.href, {
                 preserveState: true,
@@ -198,7 +234,9 @@ export default function ModalCreateCustomBonus() {
             >
                 <Form form={form} layout="vertical">
                     <div className="border-b pb-4 mb-4">
-                        <h3 className="text-lg font-semibold mb-3">Filtrar Usuarios</h3>
+                        <h3 className="text-lg font-semibold mb-3">
+                            Filtrar Usuarios
+                        </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Form.Item
                                 label="Tipo de Bono"
@@ -206,7 +244,10 @@ export default function ModalCreateCustomBonus() {
                                 rules={[
                                     {
                                         required: true,
-                                        message: getValidationRequiredMessage('El tipo de bono'),
+                                        message:
+                                            getValidationRequiredMessage(
+                                                'El tipo de bono'
+                                            ),
                                     },
                                 ]}
                                 initialValue="daily"
@@ -226,7 +267,9 @@ export default function ModalCreateCustomBonus() {
                                 rules={[
                                     {
                                         required: true,
-                                        message: getValidationRequiredMessage('La cantidad de bonos'),
+                                        message: getValidationRequiredMessage(
+                                            'La cantidad de bonos'
+                                        ),
                                     },
                                 ]}
                             >
@@ -243,7 +286,10 @@ export default function ModalCreateCustomBonus() {
                                 rules={[
                                     {
                                         required: true,
-                                        message: getValidationRequiredMessage('El rango de fechas'),
+                                        message:
+                                            getValidationRequiredMessage(
+                                                'El rango de fechas'
+                                            ),
                                     },
                                 ]}
                             >
@@ -265,11 +311,16 @@ export default function ModalCreateCustomBonus() {
 
                     {users.length > 0 && (
                         <div className="mb-4">
-                            <h3 className="text-lg font-semibold mb-3">Usuarios Encontrados ({users.length})</h3>
+                            <h3 className="text-lg font-semibold mb-3">
+                                Usuarios Encontrados ({users.length})
+                            </h3>
                             <Table
                                 rowSelection={rowSelection}
                                 columns={columns}
-                                dataSource={users.map(user => ({ ...user, key: user.id }))}
+                                dataSource={users.map((user) => ({
+                                    ...user,
+                                    key: user.id,
+                                }))}
                                 size="small"
                                 pagination={{ pageSize: 10 }}
                                 scroll={{ y: 240 }}
@@ -279,7 +330,9 @@ export default function ModalCreateCustomBonus() {
 
                     {selectedUsers.length > 0 && (
                         <div className="border-t pt-4">
-                            <h3 className="text-lg font-semibold mb-3">Configuración del Bono</h3>
+                            <h3 className="text-lg font-semibold mb-3">
+                                Configuración del Bono
+                            </h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <Form.Item
                                     label="Monto"
@@ -287,7 +340,10 @@ export default function ModalCreateCustomBonus() {
                                     rules={[
                                         {
                                             required: true,
-                                            message: getValidationRequiredMessage('El monto'),
+                                            message:
+                                                getValidationRequiredMessage(
+                                                    'El monto'
+                                                ),
                                         },
                                         {
                                             validator: (_, value) => {
@@ -320,7 +376,10 @@ export default function ModalCreateCustomBonus() {
                                     />
                                 </Form.Item>
 
-                                <Form.Item label="Fecha de inicio" name="start_datetime">
+                                <Form.Item
+                                    label="Fecha de inicio"
+                                    name="start_datetime"
+                                >
                                     <DatePicker
                                         showTime
                                         format="DD-MM-YYYY HH:mm:ss"
@@ -329,7 +388,10 @@ export default function ModalCreateCustomBonus() {
                                     />
                                 </Form.Item>
 
-                                <Form.Item label="Fecha de fin" name="end_datetime">
+                                <Form.Item
+                                    label="Fecha de fin"
+                                    name="end_datetime"
+                                >
                                     <DatePicker
                                         showTime
                                         format="DD-MM-YYYY HH:mm:ss"

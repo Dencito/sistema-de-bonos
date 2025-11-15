@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { useForm } from '@inertiajs/react';
-import { ChevronDown, Download, Filter, Printer } from 'lucide-react';
-import { Button, DatePicker, Form, Select, Space, Card } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { Download, Printer } from 'lucide-react';
+import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
 
-export default function Reports({ auth, branches, shifts, roles, filters }) {
+export default function Reports({ auth, branches, shifts, filters }) {
     const [reportType, setReportType] = useState(filters.type || 'all');
     const [branchId, setBranchId] = useState(filters.branch_id || '');
     const [shiftId, setShiftId] = useState(filters.shift_id || '');

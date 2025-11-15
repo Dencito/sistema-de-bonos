@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import MobileButton from '@components/MobileButton';
-import PdfGenerator from '@components/PdfGenerator';
 import AuthenticatedLayout from '@layouts/AuthenticatedLayout';
 import { roleDisplayNames, allowedRoles } from '@utils/constants';
 import { companyService } from '@services/api';
@@ -14,7 +13,7 @@ export default function Dashboard({ auth }) {
     const [shiftStatus, setShiftStatus] = useState({
         hasOpenShift: false,
         shift: null,
-        loading: true
+        loading: true,
     });
 
     const getSelectedCompany = async () => {
@@ -33,18 +32,18 @@ export default function Dashboard({ auth }) {
 
     const getShiftStatus = async () => {
         try {
-            setShiftStatus(prev => ({ ...prev, loading: true }));
+            setShiftStatus((prev) => ({ ...prev, loading: true }));
             const response = await shiftService.getShiftStatus();
             if (response.status === 'success') {
                 setShiftStatus({
                     hasOpenShift: response.data.hasOpenShift,
                     shift: response.data.shift,
-                    loading: false
+                    loading: false,
                 });
             }
         } catch (error) {
             console.error('Error al obtener el estado del turno:', error);
-            setShiftStatus(prev => ({ ...prev, loading: false }));
+            setShiftStatus((prev) => ({ ...prev, loading: false }));
         }
     };
 
@@ -57,7 +56,9 @@ export default function Dashboard({ auth }) {
             }
         } catch (error) {
             console.error('Error al iniciar el turno:', error);
-            toast.error(error.response?.data?.message || 'Error al iniciar el turno');
+            toast.error(
+                error.response?.data?.message || 'Error al iniciar el turno'
+            );
         }
     };
 
@@ -70,13 +71,15 @@ export default function Dashboard({ auth }) {
             }
         } catch (error) {
             console.error('Error al finalizar el turno:', error);
-            toast.error(error.response?.data?.message || 'Error al finalizar el turno');
+            toast.error(
+                error.response?.data?.message || 'Error al finalizar el turno'
+            );
         }
     };
 
     useEffect(() => {
         getSelectedCompany();
-        
+
         // Solo obtener el estado del turno si el usuario es un trabajador
         if (allowedRoles.shiftControl.includes(auth.role)) {
             getShiftStatus();
@@ -115,8 +118,9 @@ export default function Dashboard({ auth }) {
                         </h2>
 
                         {shiftStatus.hasOpenShift && (
-                            <h2 className="text-2xl font-bold"> 
-                                Numero de Tickets: #{shiftStatus.shift?.branch?.ticketNumber}
+                            <h2 className="text-2xl font-bold">
+                                Numero de Tickets: #
+                                {shiftStatus.shift?.branch?.ticketNumber}
                             </h2>
                         )}
                     </div>
@@ -131,17 +135,25 @@ export default function Dashboard({ auth }) {
                                 <div className="flex space-x-2">
                                     <Button
                                         onClick={handleStartShift}
-                                        disabled={shiftStatus.loading || shiftStatus.hasOpenShift}
+                                        disabled={
+                                            shiftStatus.loading ||
+                                            shiftStatus.hasOpenShift
+                                        }
                                         className="bg-green-600 hover:bg-green-700 text-white"
                                     >
-                                        <LogIn className="mr-2 h-4 w-4" /> Iniciar Turno
+                                        <LogIn className="mr-2 h-4 w-4" />{' '}
+                                        Iniciar Turno
                                     </Button>
                                     <Button
                                         onClick={handleEndShift}
-                                        disabled={shiftStatus.loading || !shiftStatus.hasOpenShift}
+                                        disabled={
+                                            shiftStatus.loading ||
+                                            !shiftStatus.hasOpenShift
+                                        }
                                         className="bg-red-600 hover:bg-red-700 text-white"
                                     >
-                                        <LogOut className="mr-2 h-4 w-4" /> Finalizar Turno
+                                        <LogOut className="mr-2 h-4 w-4" />{' '}
+                                        Finalizar Turno
                                     </Button>
                                 </div>
                             </div>
@@ -150,26 +162,44 @@ export default function Dashboard({ auth }) {
                                 <p>Cargando estado del turno...</p>
                             ) : shiftStatus.hasOpenShift ? (
                                 <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                                    <p className="text-green-800 font-medium">Turno activo en la sucursal: {shiftStatus.shift?.branch?.name || 'N/A'}</p>
-                                    <p className="text-sm text-green-700">
-                                        Iniciado por: {shiftStatus.shift?.openedBy?.first_name} {shiftStatus.shift?.openedBy?.first_last_name}
+                                    <p className="text-green-800 font-medium">
+                                        Turno activo en la sucursal:{' '}
+                                        {shiftStatus.shift?.branch?.name ||
+                                            'N/A'}
                                     </p>
                                     <p className="text-sm text-green-700">
-                                        Hora de inicio: {formatDateTime(shiftStatus.shift?.opening_time)}
+                                        Iniciado por:{' '}
+                                        {
+                                            shiftStatus.shift?.openedBy
+                                                ?.first_name
+                                        }{' '}
+                                        {
+                                            shiftStatus.shift?.openedBy
+                                                ?.first_last_name
+                                        }
+                                    </p>
+                                    <p className="text-sm text-green-700">
+                                        Hora de inicio:{' '}
+                                        {formatDateTime(
+                                            shiftStatus.shift?.opening_time
+                                        )}
                                     </p>
                                 </div>
                             ) : (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                                    <p className="text-yellow-800">No hay un turno activo en este momento.</p>
+                                    <p className="text-yellow-800">
+                                        No hay un turno activo en este momento.
+                                    </p>
                                     <p className="text-sm text-yellow-700">
-                                        Inicie un nuevo turno para comenzar a registrar actividad.
+                                        Inicie un nuevo turno para comenzar a
+                                        registrar actividad.
                                     </p>
                                 </div>
                             )}
                         </div>
                     )}
 
-                   {/*  <PdfGenerator user={auth?.user} />
+                    {/*  <PdfGenerator user={auth?.user} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:px-6 lg:px-8">
                         <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                             <div className="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">

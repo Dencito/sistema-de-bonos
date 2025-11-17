@@ -26,6 +26,9 @@ class CompanyDatabaseService
             $fingerprintLogsTable = $request->slug . '_fingerprint_logs';
             $productsTable = $request->slug . '_products';
             $ordersTable = $request->slug . '_orders';
+            $cashShiftsTable = $request->slug . '_cash_shifts';
+            $cashTransactionsTable = $request->slug . '_cash_transactions';
+            $pasillerasTable = $request->slug . '_pasilleras';
 
             // 1. Crear tabla de estados (no tiene dependencias)
             if (!Schema::hasTable($statusesTable)) {
@@ -362,6 +365,55 @@ class CompanyDatabaseService
                 });
             }
 
+            // 15. Crear tabla de turnos de caja (depende de usuarios y sucursales)
+            if (!Schema::hasTable($cashShiftsTable)) {
+                Schema::create($cashShiftsTable, function ($table) use ($usersTable, $branchesTable) {
+                    $table->id();
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->decimal('previous_balance', 15, 2)->default(0);
+                    $table->decimal('initial_balance', 15, 2);
+                    $table->decimal('total_initial_balance', 15, 2);
+                    $table->decimal('current_balance', 15, 2);
+                    $table->decimal('total_transfers', 15, 2)->default(0);
+                    $table->decimal('total_giros', 15, 2)->default(0);
+                    $table->decimal('total_payments', 15, 2)->default(0);
+                    $table->boolean('is_active')->default(true);
+                    $table->timestamp('started_at');
+                    $table->timestamp('ended_at')->nullable();
+                    $table->timestamps();
+                });
+            }
+
+            // 16. Crear tabla de pasilleras (depende de cash_shifts)
+            if (!Schema::hasTable($pasillerasTable)) {
+                Schema::create($pasillerasTable, function ($table) use ($cashShiftsTable) {
+                    $table->id();
+                    $table->foreignId('cash_shift_id')->constrained($cashShiftsTable)->onDelete('cascade');
+                    $table->string('name');
+                    $table->decimal('initial_balance', 15, 2);
+                    $table->decimal('total_payments', 15, 2)->default(0);
+                    $table->decimal('current_balance', 15, 2);
+                    $table->boolean('is_active')->default(true);
+                    $table->timestamps();
+                });
+            }
+
+            // 17. Crear tabla de transacciones de caja (depende de cash_shifts y pasilleras)
+            if (!Schema::hasTable($cashTransactionsTable)) {
+                Schema::create($cashTransactionsTable, function ($table) use ($cashShiftsTable, $pasillerasTable) {
+                    $table->id();
+                    $table->foreignId('cash_shift_id')->constrained($cashShiftsTable)->onDelete('cascade');
+                    $table->foreignId('pasillera_id')->nullable()->constrained($pasillerasTable)->onDelete('set null');
+                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment']);
+                    $table->decimal('amount', 15, 2);
+                    $table->string('client')->nullable();
+                    $table->string('machine')->nullable();
+                    $table->text('description')->nullable();
+                    $table->timestamps();
+                });
+            }
+
             return true;
         } catch (\Exception $e) {
             \Log::error('Error en createCompanyTables: ' . $e->getMessage());
@@ -400,6 +452,9 @@ class CompanyDatabaseService
             "{$companyPrefix}_companies",
             "{$companyPrefix}_products",
             "{$companyPrefix}_orders",
+            "{$companyPrefix}_cash_shifts",
+            "{$companyPrefix}_cash_transactions",
+            "{$companyPrefix}_pasilleras",
         ];
     }
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Branches\BranchController;
+use App\Http\Controllers\CashManagement\CashManagementController;
 use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Companies\CompanyController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
@@ -171,6 +172,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [OrdersController::class, 'index'])->name('orders.index');
         Route::post('/', [OrdersController::class, 'store'])->name('orders.store');
         Route::delete('/{order}', [OrdersController::class, 'destroy'])->name('orders.destroy');
+    });
+
+    Route::prefix('cash-management')->group(function () {
+        Route::get('/', [CashManagementController::class, 'index'])->name('cash-management.index');
+        Route::get('/shift-status', [CashManagementController::class, 'getShiftStatus'])->name('cash-management.shift-status');
+        Route::post('/shift/start', [CashManagementController::class, 'startShift'])->name('cash-management.shift.start');
+        Route::post('/shift/end', [CashManagementController::class, 'endShift'])->name('cash-management.shift.end');
+        Route::post('/transaction', [CashManagementController::class, 'addTransaction'])->name('cash-management.transaction');
+        Route::get('/transactions', [CashManagementController::class, 'getTransactions'])->name('cash-management.transactions');
+        Route::post('/pasillera', [CashManagementController::class, 'addPasillera'])->name('cash-management.pasillera');
+        Route::post('/pasillera/{pasilleraId}/payment', [CashManagementController::class, 'addPasilleraPayment'])->name('cash-management.pasillera.payment');
+        Route::put('/pasillera/{pasilleraId}/reset', [CashManagementController::class, 'resetPasillera'])->name('cash-management.pasillera.reset');
+        Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
     });
 });
 

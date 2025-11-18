@@ -15,6 +15,7 @@ import {
     Statistic,
     message,
     Popconfirm,
+    Select,
 } from 'antd';
 import {
     DeleteOutlined,
@@ -25,7 +26,7 @@ import axios from 'axios';
 
 const { Title, Text } = Typography;
 
-export default function SystemBank({ auth, activeShift, previousBalance }) {
+export default function SystemBank({ auth, activeShift, previousBalance, availableUsers = [] }) {
     const [shift, setShift] = useState(activeShift);
     const [prevBalance, setPrevBalance] = useState(previousBalance || 0);
     const [initialBalance, setInitialBalance] = useState('');
@@ -33,7 +34,7 @@ export default function SystemBank({ auth, activeShift, previousBalance }) {
     const [client, setClient] = useState('');
     const [machine, setMachine] = useState('');
     const [pasilleras, setPasilleras] = useState(activeShift?.pasilleras || []);
-    const [pasilleraName, setPasilleraName] = useState('');
+    const [pasilleraUserId, setPasilleraUserId] = useState(null);
     const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
     const [transactions, setTransactions] = useState(activeShift?.transactions || []);
     const [loading, setLoading] = useState(false);
@@ -132,7 +133,7 @@ export default function SystemBank({ auth, activeShift, previousBalance }) {
     };
 
     const handleAddPasillera = async () => {
-        if (!pasilleraName || !pasilleraInitialBalance || pasilleraInitialBalance <= 0) {
+        if (!pasilleraUserId || !pasilleraInitialBalance || pasilleraInitialBalance <= 0) {
             message.error('Complete todos los campos correctamente');
             return;
         }
@@ -140,13 +141,13 @@ export default function SystemBank({ auth, activeShift, previousBalance }) {
         setLoading(true);
         try {
             const response = await axios.post('/cash-management/pasillera', {
-                name: pasilleraName,
+                user_id: pasilleraUserId,
                 initial_balance: pasilleraInitialBalance,
             });
 
             if (response.data.success) {
                 message.success('Pasillera agregada correctamente');
-                setPasilleraName('');
+                setPasilleraUserId(null);
                 setPasilleraInitialBalance('');
                 fetchShiftStatus();
             }
@@ -430,13 +431,24 @@ export default function SystemBank({ auth, activeShift, previousBalance }) {
                     <Space direction="vertical" style={{ width: '100%' }} size="middle">
                         <Row gutter={16}>
                             <Col xs={24} sm={10}>
-                                <Text strong>Nombre de la Pasillera</Text>
-                                <Input
-                                    style={{ marginTop: 8 }}
-                                    value={pasilleraName}
-                                    onChange={(e) => setPasilleraName(e.target.value)}
-                                    placeholder="Nombre o identificador"
-                                />
+                                <Text strong>Seleccionar Pasillera</Text>
+                                <Select
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={pasilleraUserId}
+                                    onChange={setPasilleraUserId}
+                                    placeholder="Seleccione un usuario"
+                                    showSearch
+                                    optionFilterProp="children"
+                                    filterOption={(input, option) =>
+                                        option.children.toLowerCase().includes(input.toLowerCase())
+                                    }
+                                >
+                                    {availableUsers.map(user => (
+                                        <Select.Option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
                             </Col>
                             <Col xs={24} sm={10}>
                                 <Text strong>Saldo Inicial</Text>
@@ -454,7 +466,7 @@ export default function SystemBank({ auth, activeShift, previousBalance }) {
                                     type="primary"
                                     icon={<PlusOutlined />}
                                     onClick={handleAddPasillera}
-                                    disabled={!pasilleraInitialBalance || !pasilleraName}
+                                    disabled={!pasilleraInitialBalance || !pasilleraUserId}
                                     loading={loading}
                                     block
                                 >
@@ -468,7 +480,7 @@ export default function SystemBank({ auth, activeShift, previousBalance }) {
                                 <Col xs={24} md={12} key={pasillera.id}>
                                     <Card
                                         size="small"
-                                        title={`Pasillera: ${pasillera.name}`}
+                                        title={`Pasillera: ${pasillera.user?.first_name} ${pasillera.user?.first_last_name}`}
                                         extra={
                                             <Popconfirm
                                                 title="¿Eliminar esta pasillera?"

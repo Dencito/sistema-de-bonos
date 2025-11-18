@@ -12,7 +12,7 @@ class Pasillera extends Model
 
     protected $fillable = [
         'cash_shift_id',
-        'name',
+        'user_id',
         'initial_balance',
         'total_payments',
         'current_balance',
@@ -29,6 +29,11 @@ class Pasillera extends Model
     public function cashShift()
     {
         return $this->belongsTo(CashShift::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function transactions()

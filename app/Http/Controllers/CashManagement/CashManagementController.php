@@ -19,10 +19,21 @@ class CashManagementController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return Inertia::render('SystemBank/Index', [
+                'activeShift' => null,
+                'previousBalance' => 0,
+                'availableUsers' => [],
+                'error' => 'No tienes una sucursal asignada'
+            ]);
+        }
+
+        $branchId = $branch->id;
 
         // Get active shift if exists
-        $activeShift = CashShift::with(['transactions', 'pasilleras.transactions'])
+        $activeShift = CashShift::with(['transactions', 'pasilleras.transactions', 'pasilleras.user'])
             ->where('user_id', $user->id)
             ->where('branch_id', $branchId)
             ->where('is_active', true)
@@ -35,9 +46,25 @@ class CashManagementController extends Controller
             ->orderBy('ended_at', 'desc')
             ->first();
 
+        // Get available users for pasilleras (role_id 5 or 6 - trabajadores)
+        $availableUsers = \App\Models\User::whereIn('role_id', [5, 6])
+            ->where('status_id', 1) // Active users only
+            ->whereHas('branches', function($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->select('id', 'first_name', 'first_last_name', 'second_name', 'second_last_name')
+            ->get()
+            ->map(function($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => trim($u->first_name . ' ' . ($u->second_name ?? '') . ' ' . $u->first_last_name . ' ' . ($u->second_last_name ?? ''))
+                ];
+            });
+
         return Inertia::render('SystemBank/Index', [
             'activeShift' => $activeShift,
             'previousBalance' => $previousShift ? $previousShift->current_balance : 0,
+            'availableUsers' => $availableUsers,
         ]);
     }
 
@@ -47,9 +74,18 @@ class CashManagementController extends Controller
     public function getShiftStatus()
     {
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
 
-        $activeShift = CashShift::with(['transactions', 'pasilleras.transactions'])
+        $branchId = $branch->id;
+
+        $activeShift = CashShift::with(['transactions', 'pasilleras.transactions', 'pasilleras.user'])
             ->where('user_id', $user->id)
             ->where('branch_id', $branchId)
             ->where('is_active', true)
@@ -80,7 +116,16 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         // Check if there's an active shift
         $activeShift = CashShift::where('user_id', $user->id)
@@ -128,7 +173,16 @@ class CashManagementController extends Controller
     public function endShift()
     {
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)
@@ -171,7 +225,16 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)
@@ -241,12 +304,21 @@ class CashManagementController extends Controller
     public function addPasillera(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
+            'user_id' => 'required|exists:users,id',
             'initial_balance' => 'required|numeric|min:0',
         ]);
 
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)
@@ -262,10 +334,13 @@ class CashManagementController extends Controller
 
         $pasillera = Pasillera::create([
             'cash_shift_id' => $activeShift->id,
-            'name' => $request->name,
+            'user_id' => $request->user_id,
             'initial_balance' => $request->initial_balance,
             'current_balance' => $request->initial_balance,
         ]);
+
+        // Load user relationship
+        $pasillera->load('user');
 
         return response()->json([
             'success' => true,
@@ -285,7 +360,16 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)
@@ -299,7 +383,7 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        $pasillera = Pasillera::where('id', $pasilleraId)
+        $pasillera = Pasillera::with('user')->where('id', $pasilleraId)
             ->where('cash_shift_id', $activeShift->id)
             ->first();
 
@@ -324,7 +408,7 @@ class CashManagementController extends Controller
                 'type' => 'pasillera_payment',
                 'amount' => $request->amount,
                 'machine' => $request->machine,
-                'description' => 'Pago Pasillera ' . $pasillera->name . ' - Máquina: ' . $request->machine,
+                'description' => 'Pago Pasillera ' . $pasillera->user->first_name . ' ' . $pasillera->user->first_last_name . ' - Máquina: ' . $request->machine,
             ]);
 
             // Update shift totals
@@ -361,7 +445,16 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)
@@ -405,7 +498,16 @@ class CashManagementController extends Controller
     public function deletePasillera($pasilleraId)
     {
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)
@@ -444,7 +546,16 @@ class CashManagementController extends Controller
     public function getTransactions()
     {
         $user = Auth::user();
-        $branchId = session('selected_company');
+        $branch = $user->branches()->first();
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
 
         $activeShift = CashShift::where('user_id', $user->id)
             ->where('branch_id', $branchId)

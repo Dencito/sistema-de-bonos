@@ -1,0 +1,33 @@
+{
+  "appId": "com.tuempresa.pasillera",
+  "appName": "Pasillera Mobile",
+  "webDir": "public",
+  "server": {
+    "url": "https://tu-dominio.com",
+    "cleartext": true,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#667eea"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#667eea"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#667eea",
+      "showSpinner": true,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#ffffff"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    }
+  }
+}

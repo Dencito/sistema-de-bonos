@@ -19,7 +19,7 @@ class CashManagementController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return Inertia::render('SystemBank/Index', [
@@ -49,9 +49,7 @@ class CashManagementController extends Controller
         // Get available users for pasilleras (role_id 5 or 6 - trabajadores)
         $availableUsers = \App\Models\User::whereIn('role_id', [5, 6])
             ->where('status_id', 1) // Active users only
-            ->whereHas('branches', function($query) use ($branchId) {
-                $query->where('branch_id', $branchId);
-            })
+            ->where('branch_id', $branchId)
             ->select('id', 'first_name', 'first_last_name', 'second_name', 'second_last_name')
             ->get()
             ->map(function($u) {
@@ -74,7 +72,7 @@ class CashManagementController extends Controller
     public function getShiftStatus()
     {
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -116,7 +114,7 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -173,7 +171,7 @@ class CashManagementController extends Controller
     public function endShift()
     {
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -225,7 +223,7 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -309,7 +307,7 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -360,7 +358,7 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -445,7 +443,7 @@ class CashManagementController extends Controller
         ]);
 
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -498,7 +496,7 @@ class CashManagementController extends Controller
     public function deletePasillera($pasilleraId)
     {
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([
@@ -546,7 +544,7 @@ class CashManagementController extends Controller
     public function getTransactions()
     {
         $user = Auth::user();
-        $branch = $user->branches()->first();
+        $branch = $user->branch;
         
         if (!$branch) {
             return response()->json([

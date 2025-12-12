@@ -26,6 +26,11 @@ class Pasillera extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $attributes = [
+        'is_active' => true,
+        'total_payments' => 0,
+    ];
+
     public function cashShift()
     {
         return $this->belongsTo(CashShift::class);

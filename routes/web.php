@@ -6,6 +6,7 @@ use App\Http\Controllers\CashManagement\CashManagementController;
 use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Companies\CompanyController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
+use App\Http\Controllers\Mobile\MobilePasilleraController;
 use App\Http\Controllers\Orders\OrdersController;
 use App\Http\Controllers\Products\ProductsController;
 use App\Http\Controllers\Reports\ReportController;
@@ -185,6 +186,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/pasillera/{pasilleraId}/payment', [CashManagementController::class, 'addPasilleraPayment'])->name('cash-management.pasillera.payment');
         Route::put('/pasillera/{pasilleraId}/reset', [CashManagementController::class, 'resetPasillera'])->name('cash-management.pasillera.reset');
         Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
+    });
+
+    // Mobile Pasillera Routes
+    Route::prefix('pasillera')->group(function () {
+        Route::get('/', [MobilePasilleraController::class, 'index'])->name('mobile.pasillera.index');
+        Route::get('/api/my-active', [MobilePasilleraController::class, 'getMyActivePasillera'])->name('mobile.pasillera.my-active');
+        Route::post('/api/expense', [MobilePasilleraController::class, 'registerExpense'])->name('mobile.pasillera.expense');
+        Route::get('/api/history', [MobilePasilleraController::class, 'getExpenseHistory'])->name('mobile.pasillera.history');
+        Route::get('/api/machines', [MobilePasilleraController::class, 'getMachines'])->name('mobile.pasillera.machines');
+        Route::get('/api/balance', [MobilePasilleraController::class, 'getBalance'])->name('mobile.pasillera.balance');
     });
 });
 

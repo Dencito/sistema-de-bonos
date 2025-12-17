@@ -302,7 +302,7 @@ class CashManagementController extends Controller
     public function addPasillera(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => "required",
             'initial_balance' => 'required|numeric|min:0',
         ]);
 

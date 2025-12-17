@@ -8,6 +8,8 @@ use App\Traits\CompanyScope;
 
 class Pasillera extends Model
 {
+
+    protected $table = 'pasilleras';
     use HasFactory, CompanyScope;
 
     protected $fillable = [

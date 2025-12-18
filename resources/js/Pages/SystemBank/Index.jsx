@@ -32,7 +32,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     const [initialBalance, setInitialBalance] = useState('');
     const [amount, setAmount] = useState('');
     const [client, setClient] = useState('');
-    const [machine, setMachine] = useState('');
     const [pasilleras, setPasilleras] = useState(activeShift?.pasilleras || []);
     const [pasilleraUserId, setPasilleraUserId] = useState(null);
     const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
@@ -115,14 +114,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 type,
                 amount,
                 client,
-                machine,
             });
 
             if (response.data.success) {
                 message.success('Transacción registrada correctamente');
                 setAmount('');
                 setClient('');
-                setMachine('');
                 fetchShiftStatus();
             }
         } catch (error) {
@@ -168,7 +165,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         try {
             const response = await axios.post(`/cash-management/pasillera/${pasilleraId}/payment`, {
                 amount: monto,
-                machine: maquina,
             });
 
             if (response.data.success) {
@@ -390,16 +386,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                 disabled={!shift?.is_active}
                             />
                         </div>
-                        <div>
-                            <Text strong>Máquina</Text>
-                            <Input
-                                style={{ marginTop: 8 }}
-                                value={machine}
-                                onChange={(e) => setMachine(e.target.value)}
-                                placeholder="Número de máquina"
-                                disabled={!shift?.is_active}
-                            />
-                        </div>
                         <Space style={{ width: '100%' }} wrap>
                             <Button
                                 onClick={() => handleTransaction('transfer')}
@@ -530,7 +516,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                                 disabled={!shift?.is_active}
                                             />
                                             <Space style={{ width: '100%' }}>
-                                                <Button
+                                                {/* <Button
                                                     type="primary"
                                                     onClick={() => {
                                                         const montoInput = document.getElementById(`monto-${pasillera.id}`);
@@ -550,7 +536,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                                     block
                                                 >
                                                     Registrar Pago
-                                                </Button>
+                                                </Button> */}
                                                 <Button
                                                     icon={<ReloadOutlined />}
                                                     onClick={() => handleResetPasillera(pasillera.id)}

@@ -46,8 +46,8 @@ class CashManagementController extends Controller
             ->orderBy('ended_at', 'desc')
             ->first();
 
-        // Get available users for pasilleras (role_id 5 or 6 - trabajadores)
-        $availableUsers = \App\Models\User::whereIn('role_id', [5, 6])
+        // Get available users for pasilleras (only users with cargo 'PASILLER@')
+        $availableUsers = \App\Models\User::where('cargo', 'PASILLER@')
             ->where('status_id', 1) // Active users only
             ->where('branch_id', $branchId)
             ->select('id', 'first_name', 'first_last_name', 'second_name', 'second_last_name')

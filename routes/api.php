@@ -9,6 +9,8 @@ use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Reports\ReportController;
+use App\Http\Controllers\Mobile\MobileAuthController;
+use App\Http\Controllers\Mobile\MobilePasilleraController;
 use App\Mail\BranchCreatedMail;
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -73,3 +75,26 @@ Route::apiResource('shifts', ShiftRecordController::class);
 Route::get('/reports/players', [ReportController::class, 'playersReport']);
 Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
 Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);
+
+// Mobile API Routes
+// Public routes (no authentication required)
+Route::prefix('mobile')->group(function () {
+    Route::post('/login', [MobileAuthController::class, 'login']);
+});
+
+// Protected mobile routes (require authentication)
+Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
+    // Auth routes
+    Route::post('/logout', [MobileAuthController::class, 'logout']);
+    Route::get('/me', [MobileAuthController::class, 'me']);
+    Route::post('/refresh', [MobileAuthController::class, 'refresh']);
+    
+    // Pasillera routes
+    Route::prefix('pasillera')->group(function () {
+        Route::get('/my-active', [MobilePasilleraController::class, 'getMyActivePasillera']);
+        Route::post('/expense', [MobilePasilleraController::class, 'registerExpense']);
+        Route::get('/history', [MobilePasilleraController::class, 'getExpenseHistory']);
+        Route::get('/machines', [MobilePasilleraController::class, 'getMachines']);
+        Route::get('/balance', [MobilePasilleraController::class, 'getBalance']);
+    });
+});

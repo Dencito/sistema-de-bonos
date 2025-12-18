@@ -1,0 +1,16 @@
+{
+  "appId": "com.casino.pasillera",
+  "appName": "Pasillera",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1e293b",
+      "showSpinner": true,
+      "spinnerColor": "#ffffff"
+    }
+  }
+}

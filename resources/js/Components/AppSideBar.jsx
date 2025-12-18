@@ -164,7 +164,7 @@ export function AppSidebar({ role, roles, user }) {
             icon: Wallet,
             label: 'Sistema de Caja',
             link: '/cash-management',
-            autorized: allowedRoles.shifts.includes(role),
+            autorized: allowedRoles.systemBank.includes(role),
         },
     ];
 

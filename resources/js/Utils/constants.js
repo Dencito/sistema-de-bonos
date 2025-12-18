@@ -20,6 +20,7 @@ export const allowedRoles = {
     shiftControl: ['trabajador'],
     shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
     createBonus: ['duenio', 'super-admin', 'admin', 'supervisor'],
+    systemBank: [/* 'duenio', 'super-admin', 'admin', */ 'supervisor', 'trabajador'],
 };
 
 export const roleNames = {

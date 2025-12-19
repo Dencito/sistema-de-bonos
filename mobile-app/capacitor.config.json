@@ -1,9 +1,12 @@
 {
   "appId": "com.casino.pasillera",
-  "appName": "Pasillera",
+  "appName": "Pasillera App",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
+  },
+  "env": {
+    "API_URL": "https://wbieqp-ip-186-137-166-101.tunnelmole.net/api/mobile"
   },
   "plugins": {
     "SplashScreen": {

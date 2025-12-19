@@ -22,6 +22,7 @@ class CompanyServiceProvider extends ServiceProvider
 
         $parts = explode('.', $host);
         if (count($parts) >= 3) {
+            //return "888spa";
             return $parts[0];
         }
 

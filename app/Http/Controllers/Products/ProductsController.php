@@ -13,7 +13,7 @@ class ProductsController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
@@ -28,7 +28,7 @@ class ProductsController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
@@ -55,7 +55,7 @@ class ProductsController extends Controller
     public function update(Request $request, Product $product)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
@@ -82,7 +82,7 @@ class ProductsController extends Controller
     public function destroy(Product $product)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 

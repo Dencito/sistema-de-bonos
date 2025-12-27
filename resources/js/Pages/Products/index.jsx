@@ -16,6 +16,12 @@ const LazyModalEditProduct = lazy(
 
 const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
+const getStockColor = (quantity) => {
+    if (quantity < 10) return 'bg-red-500';
+    if (quantity >= 10 && quantity <= 30) return 'bg-amber-500';
+    return 'bg-green-500';
+};
+
 const columns = [
     {
         title: 'Nombre',
@@ -28,14 +34,18 @@ const columns = [
         render: (_, product) => product.code,
     },
     {
-        title: 'Stock',
-        key: 'quantity',
-        render: (_, product) => product.quantity,
-    },
-    {
         title: 'Precio $',
         key: 'price',
         render: (_, product) => product.price,
+    },
+    {
+        title: 'Stock',
+        key: 'quantity',
+        render: (_, product) => (
+            <span className={`${getStockColor(product.quantity)} text-white px-2 py-1 rounded`}>
+                {product.quantity}
+            </span>
+        ),
     },
     {
         title: 'Acciones',

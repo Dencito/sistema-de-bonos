@@ -154,7 +154,7 @@ export function AppSidebar({ role, roles, user }) {
         {
             key: '14',
             icon: ShoppingCart,
-            label: 'Órdenes',
+            label: 'Ventas Cigarros',
             link: '/orders',
             autorized: allowedRoles.shifts.includes(role),
         },

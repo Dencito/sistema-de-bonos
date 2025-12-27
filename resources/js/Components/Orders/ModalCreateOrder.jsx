@@ -105,10 +105,10 @@ export default function ModalCreateOrder({ products }) {
                 icon={<PlusOutlined />}
                 type="primary"
             >
-                Crear Orden
+                Crear Venta
             </Button>
             <Modal
-                title="Crear Orden"
+                title="Crear Venta"
                 open={showModal}
                 onCancel={handleCloseModal}
                 footer={null}
@@ -267,7 +267,7 @@ export default function ModalCreateOrder({ products }) {
                                 htmlType="submit"
                                 loading={loading}
                             >
-                                Crear Orden
+                                Crear Venta
                             </Button>
                         </div>
                     </Form.Item>

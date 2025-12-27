@@ -68,14 +68,14 @@ export default function OrderPage({ auth, orders, products }) {
             auth={auth}
             header={
                 <h2 className="z-10 text-xl font-semibold leading-tight text-gray-800">
-                    Órdenes
+                    Ventas Cigarros
                 </h2>
             }
         >
             <Head title="Ordenes" />
             <header className="flex justify-between items-center p-4 bg-white shadow-sm">
                 <MobileButton role={auth.role} roles={auth.roles} />
-                <h1 className="text-4xl font-bold">Órdenes</h1>
+                <h1 className="text-4xl font-bold">Ventas Cigarros</h1>
             </header>
             <div className="overflow-auto z-10 flex-1 p-4">
                 <div className="w-full">

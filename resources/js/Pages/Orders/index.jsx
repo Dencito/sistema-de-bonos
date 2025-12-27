@@ -4,10 +4,10 @@ import { Head } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 
-const LazyModalCreateProduct = lazy(
+const LazyModalCreateOrder = lazy(
     () => import('@/Components/Orders/ModalCreateOrder')
 );
-const LazyModalDeleteProduct = lazy(
+const LazyModalDeleteOrder = lazy(
     () => import('@/Components/Orders/ModalDeleteOrder')
 );
 
@@ -53,7 +53,7 @@ const columns = [
         render: (_, order) => (
             <Suspense fallback={<LoadingFallback />}>
                 <div className="flex flex-wrap gap-3">
-                    <LazyModalDeleteProduct data={order} />
+                    <LazyModalDeleteOrder data={order} />
                 </div>
             </Suspense>
         ),
@@ -82,7 +82,7 @@ export default function OrderPage({ auth, orders, products }) {
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="flex justify-end items-center my-3 text-gray-900">
                             <Suspense fallback={<LoadingFallback />}>
-                                <LazyModalCreateProduct products={products} />
+                                <LazyModalCreateOrder products={products} />
                             </Suspense>
                         </div>
                         <CustomTable

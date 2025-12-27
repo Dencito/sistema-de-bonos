@@ -17,6 +17,8 @@ import {
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
 
+/* global route */
+
 import {
     Sidebar,
     SidebarContent,
@@ -25,6 +27,8 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubItem,
 } from '@/Components/ui/sidebar';
 
 export function AppSidebar({ role, roles, user }) {
@@ -233,7 +237,7 @@ export function AppSidebar({ role, roles, user }) {
                                                         )}
                                                     </SidebarMenuButton>
 
-                                                    <div
+                                                    <SidebarMenuSub
                                                         className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${
                                                             isOpen
                                                                 ? 'max-h-40 opacity-100'
@@ -243,7 +247,7 @@ export function AppSidebar({ role, roles, user }) {
                                                         {item.children &&
                                                             item.children.map(
                                                                 (subItem) => (
-                                                                    <SidebarMenuItem
+                                                                    <SidebarMenuSubItem
                                                                         key={
                                                                             subItem.name
                                                                         }
@@ -262,10 +266,10 @@ export function AppSidebar({ role, roles, user }) {
                                                                                 </span>
                                                                             </Link>
                                                                         </SidebarMenuButton>
-                                                                    </SidebarMenuItem>
+                                                                    </SidebarMenuSubItem>
                                                                 )
                                                             )}
-                                                    </div>
+                                                    </SidebarMenuSub>
                                                 </div>
                                             )}
                                         </SidebarMenuItem>

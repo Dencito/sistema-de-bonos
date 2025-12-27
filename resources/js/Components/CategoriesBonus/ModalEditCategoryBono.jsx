@@ -7,137 +7,128 @@ import { useMessage } from '@contexts/MessageShow';
 import { categoryBonusService } from '@services/api';
 
 export default function ModalEditCategoryBono({ data }) {
-    const [showModal, setShowModal] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const { successMsg, errorMsg } = useMessage();
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { successMsg, errorMsg } = useMessage();
 
-    const [form] = Form.useForm();
+  const [form] = Form.useForm();
 
-    const onUpdate = async (values) => {
-        try {
-            setLoading(true);
-            const response = await categoryBonusService.update(data.id, values);
-            if (response.success) {
-                successMsg(response.message);
-                router.visit('/categories-bonus', {
-                    preserveState: true,
-                });
-                handleCloseModal();
-            } else {
-                errorMsg(response.message);
-            }
-        } catch {
-            errorMsg('Error al actualizar la categoría');
-        } finally {
-            setLoading(false);
+  const onUpdate = async (values) => {
+    try {
+      setLoading(true);
+      const response = await categoryBonusService.update(data.id, values);
+      if (response.success) {
+        successMsg(response.message);
+        router.visit('/categories-bonus', {
+          preserveState: true,
+        });
+        handleCloseModal();
+      } else {
+        errorMsg(response.message);
+      }
+    } catch {
+      errorMsg('Error al actualizar la categoría');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setLoading(false);
+    setShowModal(false);
+  };
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const onlyNumberInput = (e) => {
+    const cleanedValue = e.target.value.replace(/\D/g, '');
+    form.setFieldsValue({ [e.target.name]: cleanedValue });
+  };
+
+  return (
+    <>
+      <Button onClick={handleOpenModal} icon={<EditOutlined />} />
+      <Modal
+        style={{ top: 20 }}
+        title={<p className="text-bold text-3xl">Editar categoria {data.name}</p>}
+        open={showModal}
+        onCancel={() =>
+          !loading &&
+          Modal.confirm({
+            title: '¿Estás seguro de que quieres salir?',
+            content: 'Se borrarán todos los datos no guardados.',
+            okText: 'Sí',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk() {
+              handleCloseModal();
+            },
+          })
         }
-    };
-
-    const handleCloseModal = () => {
-        setLoading(false);
-        setShowModal(false);
-    };
-
-    const handleOpenModal = () => {
-        setShowModal(true);
-    };
-
-    const onlyNumberInput = (e) => {
-        const cleanedValue = e.target.value.replace(/\D/g, '');
-        form.setFieldsValue({ [e.target.name]: cleanedValue });
-    };
-
-    return (
-        <>
-            <Button onClick={handleOpenModal} icon={<EditOutlined />} />
-            <Modal
-                style={{ top: 20 }}
-                title={
-                    <p className="text-bold text-3xl">
-                        Editar categoria {data.name}
-                    </p>
-                }
-                open={showModal}
-                onCancel={() =>
-                    !loading &&
-                    Modal.confirm({
-                        title: '¿Estás seguro de que quieres salir?',
-                        content: 'Se borrarán todos los datos no guardados.',
-                        okText: 'Sí',
-                        okType: 'danger',
-                        cancelText: 'No',
-                        onOk() {
-                            handleCloseModal();
-                        },
-                    })
-                }
-                okText="Editar"
-                cancelText="Cancelar"
-                okButtonProps={{
-                    autoFocus: true,
-                    htmlType: 'submit',
-                    loading: loading, // Estado de carga del botón
-                    disabled: loading, // Deshabilitar cuando está cargando
-                }}
-                cancelButtonProps={{
-                    disabled: loading, // Deshabilitar cuando está cargando
-                }}
-                destroyOnClose={() =>
-                    Modal.confirm({
-                        title: '¿Estás seguro de que quieres salir?',
-                        content: 'Se borrarán todos los datos no guardados.',
-                        okText: 'Sí',
-                        okType: 'danger',
-                        cancelText: 'No',
-                        onOk() {
-                            handleCloseModal();
-                        },
-                    })
-                }
-                modalRender={(dom) => (
-                    <Form
-                        layout="vertical"
-                        form={form}
-                        name="form_in_modal"
-                        initialValues={data}
-                        disabled={loading}
-                        clearOnDestroy
-                        onFinish={(values) => onUpdate(values)}
-                    >
-                        {dom}
-                    </Form>
-                )}
-            >
-                <Form.Item
-                    name="name"
-                    label="Nombre de la categoria"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={30} />
-                </Form.Item>
-                <Form.Item
-                    name="base_amount"
-                    label="Monto base"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input
-                        name="base_amount"
-                        onChange={onlyNumberInput}
-                        showCount
-                        maxLength={10}
-                    />
-                </Form.Item>
-            </Modal>
-        </>
-    );
+        okText="Editar"
+        cancelText="Cancelar"
+        okButtonProps={{
+          autoFocus: true,
+          htmlType: 'submit',
+          loading: loading, // Estado de carga del botón
+          disabled: loading, // Deshabilitar cuando está cargando
+        }}
+        cancelButtonProps={{
+          disabled: loading, // Deshabilitar cuando está cargando
+        }}
+        destroyOnClose={() =>
+          Modal.confirm({
+            title: '¿Estás seguro de que quieres salir?',
+            content: 'Se borrarán todos los datos no guardados.',
+            okText: 'Sí',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk() {
+              handleCloseModal();
+            },
+          })
+        }
+        modalRender={(dom) => (
+          <Form
+            layout="vertical"
+            form={form}
+            name="form_in_modal"
+            initialValues={data}
+            disabled={loading}
+            clearOnDestroy
+            onFinish={(values) => onUpdate(values)}
+          >
+            {dom}
+          </Form>
+        )}
+      >
+        <Form.Item
+          name="name"
+          label="Nombre de la categoria"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={30} />
+        </Form.Item>
+        <Form.Item
+          name="base_amount"
+          label="Monto base"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input name="base_amount" onChange={onlyNumberInput} showCount maxLength={10} />
+        </Form.Item>
+      </Modal>
+    </>
+  );
 }

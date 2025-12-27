@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button, Divider, Form, Input, Modal, Select } from 'antd';
 import { validate } from 'rut.js';
 import {
-    getValidationEmailMessage,
-    getValidationRequiredMessage,
+  getValidationEmailMessage,
+  getValidationRequiredMessage,
 } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
@@ -11,725 +11,671 @@ import { EditOutlined } from '@ant-design/icons';
 import { countriesService, companyService } from '@services/api';
 
 export default function ModalEditCompany({ data }) {
-    const [showModal, setShowModal] = useState(false);
-    const [country, setCountry] = useState('');
-    const [countries, setCountries] = useState();
-    const [regions, setRegions] = useState();
-    const [errorRuts, setErrorRuts] = useState({
-        company: false,
-        legalRepresentative: false,
-        contact: false,
+  const [showModal, setShowModal] = useState(false);
+  const [country, setCountry] = useState('');
+  const [countries, setCountries] = useState();
+  const [regions, setRegions] = useState();
+  const [errorRuts, setErrorRuts] = useState({
+    company: false,
+    legalRepresentative: false,
+    contact: false,
+  });
+
+  const [form] = Form.useForm();
+  const { successMsg, errorMsg } = useMessage();
+
+  useEffect(() => {
+    const getCountries = async () => {
+      if (showModal) {
+        const data = await countriesService.getAll();
+        setCountries(data);
+      }
+    };
+    const getRegion = async () => {
+      if (country && showModal) {
+        const data = await countriesService.getStates(country);
+        setRegions(data);
+      }
+    };
+    getCountries();
+    getRegion();
+  }, [showModal, country]);
+
+  const checkErrors = (errors) => {
+    for (const key in errors) {
+      if (errors[key] === true) {
+        return true;
+      }
+    }
+  };
+
+  const onEdit = async (values) => {
+    try {
+      if (checkErrors(errorRuts)) {
+        return errorMsg('Uno de los ruts es invalido');
+      }
+      const response = await companyService.update(data?.id, values);
+      if (response.success) {
+        successMsg(response.message);
+        router.visit('/companies', {
+          preserveState: true,
+        });
+        handleCloseModal();
+      } else {
+        errorMsg(response.message);
+      }
+    } catch {
+      errorMsg('Error al actualizar la empresa');
+    }
+  };
+
+  const onlyNumberInput = (e) => {
+    form.setFieldsValue({
+      [e.target.name]: e.target.value.replace(/\D/g, ''),
     });
+  };
 
-    const [form] = Form.useForm();
-    const { successMsg, errorMsg } = useMessage();
+  const validateRutNumbers = (e) => {
+    onlyNumberInput(e);
+    const { rutNumbers, rutDv } = form.getFieldsValue(['rutNumbers', 'rutDv']);
+    if (rutNumbers?.length > 0 && rutDv?.length > 0) {
+      const fullRut = `${rutNumbers}-${rutDv}`;
+      if (!validate(fullRut)) {
+        return setErrorRuts({ ...errorRuts, company: true });
+      }
+      return setErrorRuts({ ...errorRuts, company: false });
+    }
+  };
 
-    useEffect(() => {
-        const getCountries = async () => {
-            if (showModal) {
-                const data = await countriesService.getAll();
-                setCountries(data);
-            }
-        };
-        const getRegion = async () => {
-            if (country && showModal) {
-                const data = await countriesService.getStates(country);
-                setRegions(data);
-            }
-        };
-        getCountries();
-        getRegion();
-    }, [showModal, country]);
-
-    const checkErrors = (errors) => {
-        for (const key in errors) {
-            if (errors[key] === true) {
-                return true;
-            }
-        }
-    };
-
-    const onEdit = async (values) => {
-        try {
-            if (checkErrors(errorRuts)) {
-                return errorMsg('Uno de los ruts es invalido');
-            }
-            const response = await companyService.update(data?.id, values);
-            if (response.success) {
-                successMsg(response.message);
-                router.visit('/companies', {
-                    preserveState: true,
-                });
-                handleCloseModal();
-            } else {
-                errorMsg(response.message);
-            }
-        } catch {
-            errorMsg('Error al actualizar la empresa');
-        }
-    };
-
-    const onlyNumberInput = (e) => {
-        form.setFieldsValue({
-            [e.target.name]: e.target.value.replace(/\D/g, ''),
+  const validateRutNumbersLegalRepresentative = (e) => {
+    onlyNumberInput(e);
+    const { rutNumbersLegalRepresentative, rutDvLegalRepresentative } = form.getFieldsValue([
+      'rutNumbersLegalRepresentative',
+      'rutDvLegalRepresentative',
+    ]);
+    if (rutNumbersLegalRepresentative?.length > 0 && rutDvLegalRepresentative?.length > 0) {
+      const fullRut = `${rutNumbersLegalRepresentative}-${rutDvLegalRepresentative}`;
+      if (!validate(fullRut)) {
+        return setErrorRuts({
+          ...errorRuts,
+          legalRepresentative: true,
         });
-    };
+      }
+      return setErrorRuts({ ...errorRuts, legalRepresentative: false });
+    }
+  };
 
-    const validateRutNumbers = (e) => {
-        onlyNumberInput(e);
-        const { rutNumbers, rutDv } = form.getFieldsValue([
-            'rutNumbers',
-            'rutDv',
-        ]);
-        if (rutNumbers?.length > 0 && rutDv?.length > 0) {
-            const fullRut = `${rutNumbers}-${rutDv}`;
-            if (!validate(fullRut)) {
-                return setErrorRuts({ ...errorRuts, company: true });
-            }
-            return setErrorRuts({ ...errorRuts, company: false });
+  const validateRutNumbersContact = (e) => {
+    onlyNumberInput(e);
+    const { rutNumbersContact, rutDvContact } = form.getFieldsValue([
+      'rutNumbersContact',
+      'rutDvContact',
+    ]);
+    if (rutNumbersContact?.length > 0 && rutDvContact?.length > 0) {
+      const fullRut = `${rutNumbersContact}-${rutDvContact}`;
+      if (!validate(fullRut)) {
+        return setErrorRuts({ ...errorRuts, contact: true });
+      }
+      return setErrorRuts({ ...errorRuts, contact: false });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setCountry('');
+    setErrorRuts({
+      company: false,
+      legalRepresentative: false,
+      contact: false,
+    });
+    setShowModal(false);
+  };
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const prefixSelector = (
+    <Form.Item
+      name="prefix"
+      rules={[{ required: true, message: getValidationRequiredMessage }]}
+      noStyle
+    >
+      <Select
+        showSearch
+        style={{
+          width: 100,
+        }}
+      >
+        {countries?.map((country) => (
+          <Select.Option key={country?.prefix} value={country?.prefix}>
+            {country?.prefix}
+          </Select.Option>
+        ))}
+      </Select>
+    </Form.Item>
+  );
+
+  const prefixSelectorContact = (
+    <Form.Item
+      name="prefixContact"
+      rules={[{ required: true, message: getValidationRequiredMessage }]}
+      noStyle
+    >
+      <Select
+        showSearch
+        style={{
+          width: 100,
+        }}
+      >
+        {countries?.map((country) => (
+          <Select.Option key={country?.prefix} value={country?.prefix}>
+            {country?.prefix}
+          </Select.Option>
+        ))}
+      </Select>
+    </Form.Item>
+  );
+
+  return (
+    <>
+      <Button onClick={handleOpenModal} icon={<EditOutlined />} />
+      <Modal
+        style={{ top: 20 }}
+        title={<p className="text-bold text-3xl">Editar {data?.name}</p>}
+        open={showModal}
+        onCancel={() =>
+          Modal.confirm({
+            title: '¿Estás seguro de que quieres salir?',
+            content: 'Se borrarán todos los datos no guardados.',
+            okText: 'Sí',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk() {
+              handleCloseModal();
+            },
+          })
         }
-    };
-
-    const validateRutNumbersLegalRepresentative = (e) => {
-        onlyNumberInput(e);
-        const { rutNumbersLegalRepresentative, rutDvLegalRepresentative } =
-            form.getFieldsValue([
-                'rutNumbersLegalRepresentative',
-                'rutDvLegalRepresentative',
-            ]);
-        if (
-            rutNumbersLegalRepresentative?.length > 0 &&
-            rutDvLegalRepresentative?.length > 0
-        ) {
-            const fullRut = `${rutNumbersLegalRepresentative}-${rutDvLegalRepresentative}`;
-            if (!validate(fullRut)) {
-                return setErrorRuts({
-                    ...errorRuts,
-                    legalRepresentative: true,
-                });
-            }
-            return setErrorRuts({ ...errorRuts, legalRepresentative: false });
+        okText="Actualizar"
+        cancelText="Cancelar"
+        okButtonProps={{
+          autoFocus: true,
+          htmlType: 'submit',
+        }}
+        destroyOnClose={() =>
+          Modal.confirm({
+            title: '¿Estás seguro de que quieres salir?',
+            content: 'Se borrarán todos los datos no guardados.',
+            okText: 'Sí',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk() {
+              handleCloseModal();
+            },
+          })
         }
-    };
-
-    const validateRutNumbersContact = (e) => {
-        onlyNumberInput(e);
-        const { rutNumbersContact, rutDvContact } = form.getFieldsValue([
-            'rutNumbersContact',
-            'rutDvContact',
-        ]);
-        if (rutNumbersContact?.length > 0 && rutDvContact?.length > 0) {
-            const fullRut = `${rutNumbersContact}-${rutDvContact}`;
-            if (!validate(fullRut)) {
-                return setErrorRuts({ ...errorRuts, contact: true });
-            }
-            return setErrorRuts({ ...errorRuts, contact: false });
-        }
-    };
-
-    const handleCloseModal = () => {
-        setCountry('');
-        setErrorRuts({
-            company: false,
-            legalRepresentative: false,
-            contact: false,
-        });
-        setShowModal(false);
-    };
-
-    const handleOpenModal = () => {
-        setShowModal(true);
-    };
-
-    const prefixSelector = (
+        modalRender={(dom) => (
+          <Form
+            layout="vertical"
+            form={form}
+            name="form_in_modal"
+            initialValues={data}
+            clearOnDestroy
+            onFinish={(values) => onEdit(values)}
+            onFinishFailed={() => errorMsg('Verifica todos los campos')}
+          >
+            {dom}
+          </Form>
+        )}
+      >
         <Form.Item
-            name="prefix"
-            rules={[{ required: true, message: getValidationRequiredMessage }]}
-            noStyle
+          name="creationDate"
+          label="Fecha de creacion"
+          initialValue={new Date().toJSON().slice(0, 10)}
         >
-            <Select
-                showSearch
-                style={{
-                    width: 100,
-                }}
-            >
-                {countries?.map((country) => (
-                    <Select.Option
-                        key={country?.prefix}
-                        value={country?.prefix}
-                    >
-                        {country?.prefix}
-                    </Select.Option>
-                ))}
-            </Select>
+          <Input disabled />
         </Form.Item>
-    );
-
-    const prefixSelectorContact = (
         <Form.Item
-            name="prefixContact"
-            rules={[{ required: true, message: getValidationRequiredMessage }]}
-            noStyle
+          name="name"
+          label="Nombre de la empresa"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
         >
-            <Select
-                showSearch
-                style={{
-                    width: 100,
-                }}
-            >
-                {countries?.map((country) => (
-                    <Select.Option
-                        key={country?.prefix}
-                        value={country?.prefix}
-                    >
-                        {country?.prefix}
-                    </Select.Option>
-                ))}
-            </Select>
+          <Input showCount maxLength={50} />
         </Form.Item>
-    );
+        <Form.Item
+          name="max_branches"
+          label="Cantidad maxima de sucursales"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input name="max_branches" onChange={onlyNumberInput} showCount maxLength={2} />
+        </Form.Item>
+        <div className="flex gap-3 relative">
+          <Form.Item
+            className="w-10/12"
+            name="rutNumbers"
+            label="Números del RUT"
+            rules={[
+              {
+                required: true,
+                message: 'Este campo es obligatorio',
+              },
+            ]}
+          >
+            <Input
+              name="rutNumbers"
+              style={{
+                borderColor: errorRuts.company && '#ff4d4f',
+              }}
+              onChange={validateRutNumbers}
+              showCount
+              maxLength={10}
+            />
+          </Form.Item>
+          <span className="my-auto font-bold">-</span>
+          <Form.Item
+            name="rutDv"
+            label="Cod. Verificación"
+            rules={[
+              {
+                required: true,
+                message: 'El campo debe ser un código de verificación de un RUT',
+              },
+            ]}
+          >
+            <Input
+              style={{
+                borderColor: errorRuts.company && '#ff4d4f',
+              }}
+              onChange={validateRutNumbers}
+              showCount
+              maxLength={1}
+            />
+          </Form.Item>
+        </div>
+        {errorRuts.company && (
+          <span
+            style={{
+              position: 'relative',
+              top: form.getFieldValue('rutNumbers') === '' ? '0px' : '-15px',
+              color: '#ff4d4f',
+            }}
+          >
+            El RUT es invalido.
+          </span>
+        )}
 
-    return (
-        <>
-            <Button onClick={handleOpenModal} icon={<EditOutlined />} />
-            <Modal
-                style={{ top: 20 }}
-                title={
-                    <p className="text-bold text-3xl">Editar {data?.name}</p>
-                }
-                open={showModal}
-                onCancel={() =>
-                    Modal.confirm({
-                        title: '¿Estás seguro de que quieres salir?',
-                        content: 'Se borrarán todos los datos no guardados.',
-                        okText: 'Sí',
-                        okType: 'danger',
-                        cancelText: 'No',
-                        onOk() {
-                            handleCloseModal();
-                        },
-                    })
-                }
-                okText="Actualizar"
-                cancelText="Cancelar"
-                okButtonProps={{
-                    autoFocus: true,
-                    htmlType: 'submit',
-                }}
-                destroyOnClose={() =>
-                    Modal.confirm({
-                        title: '¿Estás seguro de que quieres salir?',
-                        content: 'Se borrarán todos los datos no guardados.',
-                        okText: 'Sí',
-                        okType: 'danger',
-                        cancelText: 'No',
-                        onOk() {
-                            handleCloseModal();
-                        },
-                    })
-                }
-                modalRender={(dom) => (
-                    <Form
-                        layout="vertical"
-                        form={form}
-                        name="form_in_modal"
-                        initialValues={data}
-                        clearOnDestroy
-                        onFinish={(values) => onEdit(values)}
-                        onFinishFailed={() =>
-                            errorMsg('Verifica todos los campos')
-                        }
-                    >
-                        {dom}
-                    </Form>
-                )}
+        <Form.Item
+          name="business"
+          label="Giro"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={50} />
+        </Form.Item>
+        <Form.Item
+          name="phone"
+          label="Número de teléfono"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input
+            name="phone"
+            onChange={onlyNumberInput}
+            showCount
+            maxLength={10}
+            addonBefore={prefixSelector}
+            style={{
+              width: '100%',
+            }}
+          />
+        </Form.Item>
+        <Form.Item
+          className="mb-10"
+          name="email"
+          label="Correo electrónico"
+          rules={[
+            {
+              type: 'email',
+              message: getValidationEmailMessage,
+            },
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input type="email" showCount maxLength={60} />
+        </Form.Item>
+
+        <Divider className="font-bold text-3xl">Representante legal</Divider>
+        <Form.Item
+          name="legalRepresentativeNames"
+          label="Nombres"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={50} />
+        </Form.Item>
+        <Form.Item
+          name="legalRepresentativeLastNames"
+          label="Apellidos"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={50} />
+        </Form.Item>
+        <div className="flex gap-3">
+          <Form.Item
+            className="w-10/12"
+            name="rutNumbersLegalRepresentative"
+            label="Números del RUT"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Input
+              name="rutNumbersLegalRepresentative"
+              style={{
+                borderColor: errorRuts.legalRepresentative && '#ff4d4f',
+              }}
+              onChange={validateRutNumbersLegalRepresentative}
+              showCount
+              maxLength={10}
+            />
+          </Form.Item>
+          <span className="my-auto font-bold">-</span>
+          <Form.Item
+            name="rutDvLegalRepresentative"
+            label="Cod. Verificación"
+            rules={[
+              {
+                required: true,
+                message: 'El campo debe ser un código de verificación de un RUT',
+              },
+            ]}
+          >
+            <Input
+              style={{
+                borderColor: errorRuts.legalRepresentative && '#ff4d4f',
+              }}
+              onChange={validateRutNumbersLegalRepresentative}
+              showCount
+              maxLength={1}
+            />
+          </Form.Item>
+        </div>
+        {errorRuts.legalRepresentative && (
+          <span
+            style={{
+              position: 'relative',
+              top: form.getFieldValue('rutNumbersLegalRepresentative') === '' ? '0px' : '-15px',
+              color: '#ff4d4f',
+            }}
+          >
+            El RUT es invalido.
+          </span>
+        )}
+
+        <Divider className="font-bold text-3xl">Contacto</Divider>
+
+        <Form.Item
+          name="contactNames"
+          label="Nombres"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={50} />
+        </Form.Item>
+        <Form.Item
+          name="contactLastNames"
+          label="Apellidos"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={50} />
+        </Form.Item>
+        <div className="flex gap-3">
+          <Form.Item
+            className="w-10/12"
+            name="rutNumbersContact"
+            label="Números del RUT"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Input
+              name="rutNumbersContact"
+              style={{
+                borderColor: errorRuts.contact && '#ff4d4f',
+              }}
+              onChange={validateRutNumbersContact}
+              showCount
+              maxLength={10}
+            />
+          </Form.Item>
+          <span className="my-auto font-bold">-</span>
+          <Form.Item
+            name="rutDvContact"
+            label="Cod. Verificación"
+            rules={[
+              {
+                required: true,
+                message: 'El campo debe ser un código de verificación de un RUT',
+              },
+            ]}
+          >
+            <Input
+              style={{
+                borderColor: errorRuts.contact && '#ff4d4f',
+              }}
+              onChange={validateRutNumbersContact}
+              showCount
+              maxLength={1}
+            />
+          </Form.Item>
+        </div>
+        {errorRuts.contact && (
+          <span
+            style={{
+              position: 'relative',
+              top: form.getFieldValue('rutNumbersContact') === '' ? '0px' : '-15px',
+              color: '#ff4d4f',
+            }}
+          >
+            El RUT es invalido.
+          </span>
+        )}
+        <Form.Item
+          name="contactPhone"
+          label="Número de teléfono"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input
+            name="contactPhone"
+            onChange={onlyNumberInput}
+            showCount
+            maxLength={10}
+            addonBefore={prefixSelectorContact}
+            style={{
+              width: '100%',
+            }}
+          />
+        </Form.Item>
+        <Form.Item
+          className="mb-10"
+          name="contactEmail"
+          label="Correo electrónico"
+          rules={[
+            {
+              type: 'email',
+              message: getValidationEmailMessage,
+            },
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input type="email" showCount maxLength={60} />
+        </Form.Item>
+
+        <Divider className="font-bold text-3xl">Dirección</Divider>
+
+        <div className="flex gap-5">
+          <Form.Item
+            className="w-6/12"
+            name="companyAddressCountry"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Select
+              onChange={() => {
+                setCountry(form?.getFieldsValue()?.companyAddressCountry);
+                form.setFieldValue('companyAddressRegion', '');
+              }}
+              showSearch
+              placeholder="Seleccionar pais"
             >
-                <Form.Item
-                    name="creationDate"
-                    label="Fecha de creacion"
-                    initialValue={new Date().toJSON().slice(0, 10)}
-                >
-                    <Input disabled />
-                </Form.Item>
-                <Form.Item
-                    name="name"
-                    label="Nombre de la empresa"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={50} />
-                </Form.Item>
-                <Form.Item
-                    name="max_branches"
-                    label="Cantidad maxima de sucursales"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input
-                        name="max_branches"
-                        onChange={onlyNumberInput}
-                        showCount
-                        maxLength={2}
-                    />
-                </Form.Item>
-                <div className="flex gap-3 relative">
-                    <Form.Item
-                        className="w-10/12"
-                        name="rutNumbers"
-                        label="Números del RUT"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Este campo es obligatorio',
-                            },
-                        ]}
-                    >
-                        <Input
-                            name="rutNumbers"
-                            style={{
-                                borderColor: errorRuts.company && '#ff4d4f',
-                            }}
-                            onChange={validateRutNumbers}
-                            showCount
-                            maxLength={10}
-                        />
-                    </Form.Item>
-                    <span className="my-auto font-bold">-</span>
-                    <Form.Item
-                        name="rutDv"
-                        label="Cod. Verificación"
-                        rules={[
-                            {
-                                required: true,
-                                message:
-                                    'El campo debe ser un código de verificación de un RUT',
-                            },
-                        ]}
-                    >
-                        <Input
-                            style={{
-                                borderColor: errorRuts.company && '#ff4d4f',
-                            }}
-                            onChange={validateRutNumbers}
-                            showCount
-                            maxLength={1}
-                        />
-                    </Form.Item>
-                </div>
-                {errorRuts.company && (
-                    <span
-                        style={{
-                            position: 'relative',
-                            top:
-                                form.getFieldValue('rutNumbers') === ''
-                                    ? '0px'
-                                    : '-15px',
-                            color: '#ff4d4f',
-                        }}
-                    >
-                        El RUT es invalido.
-                    </span>
-                )}
+              {countries?.map((country) => (
+                <Select.Option key={country?.name} value={country?.name}>
+                  {country?.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-                <Form.Item
-                    name="business"
-                    label="Giro"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={50} />
-                </Form.Item>
-                <Form.Item
-                    name="phone"
-                    label="Número de teléfono"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input
-                        name="phone"
-                        onChange={onlyNumberInput}
-                        showCount
-                        maxLength={10}
-                        addonBefore={prefixSelector}
-                        style={{
-                            width: '100%',
-                        }}
-                    />
-                </Form.Item>
-                <Form.Item
-                    className="mb-10"
-                    name="email"
-                    label="Correo electrónico"
-                    rules={[
-                        {
-                            type: 'email',
-                            message: getValidationEmailMessage,
-                        },
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input type="email" showCount maxLength={60} />
-                </Form.Item>
+          <Form.Item
+            className="w-6/12"
+            name="companyAddressRegion"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Select showSearch placeholder="Seleccionar region">
+              {(() => {
+                const selectedCountry = countries?.find(
+                  (country) => country?.name === form?.getFieldsValue()?.companyAddressCountry,
+                );
+                const regions =
+                  selectedCountry?.provinces ||
+                  selectedCountry?.states ||
+                  selectedCountry?.parishes ||
+                  selectedCountry?.districts ||
+                  [];
+                return regions.map((region) => (
+                  <Select.Option key={region} value={region}>
+                    {region}
+                  </Select.Option>
+                ));
+              })()}
+            </Select>
+          </Form.Item>
+        </div>
 
-                <Divider className="font-bold text-3xl">
-                    Representante legal
-                </Divider>
-                <Form.Item
-                    name="legalRepresentativeNames"
-                    label="Nombres"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={50} />
-                </Form.Item>
-                <Form.Item
-                    name="legalRepresentativeLastNames"
-                    label="Apellidos"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={50} />
-                </Form.Item>
-                <div className="flex gap-3">
-                    <Form.Item
-                        className="w-10/12"
-                        name="rutNumbersLegalRepresentative"
-                        label="Números del RUT"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Input
-                            name="rutNumbersLegalRepresentative"
-                            style={{
-                                borderColor:
-                                    errorRuts.legalRepresentative && '#ff4d4f',
-                            }}
-                            onChange={validateRutNumbersLegalRepresentative}
-                            showCount
-                            maxLength={10}
-                        />
-                    </Form.Item>
-                    <span className="my-auto font-bold">-</span>
-                    <Form.Item
-                        name="rutDvLegalRepresentative"
-                        label="Cod. Verificación"
-                        rules={[
-                            {
-                                required: true,
-                                message:
-                                    'El campo debe ser un código de verificación de un RUT',
-                            },
-                        ]}
-                    >
-                        <Input
-                            style={{
-                                borderColor:
-                                    errorRuts.legalRepresentative && '#ff4d4f',
-                            }}
-                            onChange={validateRutNumbersLegalRepresentative}
-                            showCount
-                            maxLength={1}
-                        />
-                    </Form.Item>
-                </div>
-                {errorRuts.legalRepresentative && (
-                    <span
-                        style={{
-                            position: 'relative',
-                            top:
-                                form.getFieldValue(
-                                    'rutNumbersLegalRepresentative'
-                                ) === ''
-                                    ? '0px'
-                                    : '-15px',
-                            color: '#ff4d4f',
-                        }}
-                    >
-                        El RUT es invalido.
-                    </span>
-                )}
-
-                <Divider className="font-bold text-3xl">Contacto</Divider>
-
-                <Form.Item
-                    name="contactNames"
-                    label="Nombres"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={50} />
-                </Form.Item>
-                <Form.Item
-                    name="contactLastNames"
-                    label="Apellidos"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={50} />
-                </Form.Item>
-                <div className="flex gap-3">
-                    <Form.Item
-                        className="w-10/12"
-                        name="rutNumbersContact"
-                        label="Números del RUT"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Input
-                            name="rutNumbersContact"
-                            style={{
-                                borderColor: errorRuts.contact && '#ff4d4f',
-                            }}
-                            onChange={validateRutNumbersContact}
-                            showCount
-                            maxLength={10}
-                        />
-                    </Form.Item>
-                    <span className="my-auto font-bold">-</span>
-                    <Form.Item
-                        name="rutDvContact"
-                        label="Cod. Verificación"
-                        rules={[
-                            {
-                                required: true,
-                                message:
-                                    'El campo debe ser un código de verificación de un RUT',
-                            },
-                        ]}
-                    >
-                        <Input
-                            style={{
-                                borderColor: errorRuts.contact && '#ff4d4f',
-                            }}
-                            onChange={validateRutNumbersContact}
-                            showCount
-                            maxLength={1}
-                        />
-                    </Form.Item>
-                </div>
-                {errorRuts.contact && (
-                    <span
-                        style={{
-                            position: 'relative',
-                            top:
-                                form.getFieldValue('rutNumbersContact') === ''
-                                    ? '0px'
-                                    : '-15px',
-                            color: '#ff4d4f',
-                        }}
-                    >
-                        El RUT es invalido.
-                    </span>
-                )}
-                <Form.Item
-                    name="contactPhone"
-                    label="Número de teléfono"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input
-                        name="contactPhone"
-                        onChange={onlyNumberInput}
-                        showCount
-                        maxLength={10}
-                        addonBefore={prefixSelectorContact}
-                        style={{
-                            width: '100%',
-                        }}
-                    />
-                </Form.Item>
-                <Form.Item
-                    className="mb-10"
-                    name="contactEmail"
-                    label="Correo electrónico"
-                    rules={[
-                        {
-                            type: 'email',
-                            message: getValidationEmailMessage,
-                        },
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input type="email" showCount maxLength={60} />
-                </Form.Item>
-
-                <Divider className="font-bold text-3xl">Dirección</Divider>
-
-                <div className="flex gap-5">
-                    <Form.Item
-                        className="w-6/12"
-                        name="companyAddressCountry"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Select
-                            onChange={() => {
-                                setCountry(
-                                    form?.getFieldsValue()
-                                        ?.companyAddressCountry
-                                );
-                                form.setFieldValue('companyAddressRegion', '');
-                            }}
-                            showSearch
-                            placeholder="Seleccionar pais"
-                        >
-                            {countries?.map((country) => (
-                                <Select.Option
-                                    key={country?.name}
-                                    value={country?.name}
-                                >
-                                    {country?.name}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        className="w-6/12"
-                        name="companyAddressRegion"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Select showSearch placeholder="Seleccionar region">
-                            {(() => {
-                                const selectedCountry = countries?.find(
-                                    (country) =>
-                                        country?.name ===
-                                        form?.getFieldsValue()
-                                            ?.companyAddressCountry
-                                );
-                                const regions =
-                                    selectedCountry?.provinces ||
-                                    selectedCountry?.states ||
-                                    selectedCountry?.parishes ||
-                                    selectedCountry?.districts ||
-                                    [];
-                                return regions.map((region) => (
-                                    <Select.Option key={region} value={region}>
-                                        {region}
-                                    </Select.Option>
-                                ));
-                            })()}
-                        </Select>
-                    </Form.Item>
-                </div>
-
-                <Form.Item
-                    name="companyAddressProvince"
-                    label="Provincia"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={30} />
-                </Form.Item>
-                <Form.Item
-                    name="companyAddressCommune"
-                    label="Comuna"
-                    rules={[
-                        {
-                            required: true,
-                            message: getValidationRequiredMessage,
-                        },
-                    ]}
-                >
-                    <Input showCount maxLength={30} />
-                </Form.Item>
-                <div className="flex gap-3">
-                    <Form.Item
-                        className="w-9/12"
-                        name="companyAddressStreet"
-                        label="Calle"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Input showCount maxLength={30} />
-                    </Form.Item>
-                    <Form.Item
-                        className="w-3/12"
-                        name="companyAddressNumber"
-                        label="Número"
-                        rules={[
-                            {
-                                required: true,
-                                message: getValidationRequiredMessage,
-                            },
-                        ]}
-                    >
-                        <Input
-                            name="companyAddressNumber"
-                            onChange={onlyNumberInput}
-                            showCount
-                            maxLength={6}
-                        />
-                    </Form.Item>
-                </div>
-            </Modal>
-        </>
-    );
+        <Form.Item
+          name="companyAddressProvince"
+          label="Provincia"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={30} />
+        </Form.Item>
+        <Form.Item
+          name="companyAddressCommune"
+          label="Comuna"
+          rules={[
+            {
+              required: true,
+              message: getValidationRequiredMessage,
+            },
+          ]}
+        >
+          <Input showCount maxLength={30} />
+        </Form.Item>
+        <div className="flex gap-3">
+          <Form.Item
+            className="w-9/12"
+            name="companyAddressStreet"
+            label="Calle"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Input showCount maxLength={30} />
+          </Form.Item>
+          <Form.Item
+            className="w-3/12"
+            name="companyAddressNumber"
+            label="Número"
+            rules={[
+              {
+                required: true,
+                message: getValidationRequiredMessage,
+              },
+            ]}
+          >
+            <Input name="companyAddressNumber" onChange={onlyNumberInput} showCount maxLength={6} />
+          </Form.Item>
+        </div>
+      </Modal>
+    </>
+  );
 }

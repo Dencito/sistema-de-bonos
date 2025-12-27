@@ -5,11 +5,11 @@
  */
 
 export const formatDate = (date) => {
-    const d = new Date(date);
-    const day = String(d.getDate());
-    const month = String(d.getMonth() + 1);
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
+  const d = new Date(date);
+  const day = String(d.getDate());
+  const month = String(d.getMonth() + 1);
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
 };
 
 /**
@@ -18,27 +18,27 @@ export const formatDate = (date) => {
  * @returns {string} The formatted date string with time.
  */
 export const formatDateTime = (date) => {
-    // Return a placeholder if date is undefined or null
-    if (!date) {
-        return 'N/A';
-    }
+  // Return a placeholder if date is undefined or null
+  if (!date) {
+    return 'N/A';
+  }
 
-    const d = new Date(date);
+  const d = new Date(date);
 
-    // Check if date is valid
-    if (isNaN(d.getTime())) {
-        return 'Invalid Date';
-    }
+  // Check if date is valid
+  if (isNaN(d.getTime())) {
+    return 'Invalid Date';
+  }
 
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
 
-    // Format the date using the constructed values instead of relying on toString()
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  // Format the date using the constructed values instead of relying on toString()
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 /**
@@ -46,7 +46,7 @@ export const formatDateTime = (date) => {
  * @returns {string} The current formatted date and time string.
  */
 export const getCurrentDateTime = () => {
-    return formatDateTime(new Date());
+  return formatDateTime(new Date());
 };
 
 /**
@@ -54,7 +54,7 @@ export const getCurrentDateTime = () => {
  * @returns {string} The current formatted date string.
  */
 export const getCurrentDate = () => {
-    return formatDate(new Date());
+  return formatDate(new Date());
 };
 
 /**
@@ -62,9 +62,9 @@ export const getCurrentDate = () => {
  * @returns {string} The current formatted time string.
  */
 export const getCurrentTime = () => {
-    const d = new Date();
-    const hours = String(d.getHours());
-    const minutes = String(d.getMinutes());
-    const seconds = String(d.getSeconds());
-    return `${hours}:${minutes}:${seconds}`;
+  const d = new Date();
+  const hours = String(d.getHours());
+  const minutes = String(d.getMinutes());
+  const seconds = String(d.getSeconds());
+  return `${hours}:${minutes}:${seconds}`;
 };

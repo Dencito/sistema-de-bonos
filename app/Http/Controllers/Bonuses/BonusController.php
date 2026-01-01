@@ -293,4 +293,94 @@ class BonusController extends Controller
         // Asocia el bono al usuario en la tabla de `user_bonuses`
         $user->bonuses()->attach($bonus->id);
     }
+
+    /**
+     * Crear bonos dobles para todos los jugadores de una sucursal
+     * El monto será el doble del monto base de la categoría de bono de cada usuario
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createDoubleBonuses(Request $request)
+    {
+        // Validar los datos de la solicitud
+        $validated = $request->validate([
+            'branch_id' => 'required',
+            'start_datetime' => 'required|date',
+            'end_datetime' => 'required|date|after_or_equal:start_datetime',
+        ]);
+        
+        $branchId = $validated['branch_id'];
+        
+        // Buscar todos los jugadores (role_id = 6) que tengan asignada esta sucursal
+        $players = User::where('role_id', 6)
+            ->whereHas('branches', function($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->with('categoryBonus')
+            ->get();
+        
+        if ($players->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontraron jugadores en la sucursal seleccionada',
+            ], 404);
+        }
+        
+        // Comenzar una transacción para asegurar atomicidad
+        DB::beginTransaction();
+        
+        try {
+            $createdBonuses = [];
+            $playersWithoutCategory = [];
+            
+            // Crear un bono doble para cada jugador
+            foreach ($players as $player) {
+                // Verificar que el jugador tenga una categoría de bono
+                if (!$player->categoryBonus || !$player->categoryBonus->base_amount) {
+                    $playersWithoutCategory[] = $player->username;
+                    continue;
+                }
+                
+                // Calcular el monto doble basado en la categoría del jugador
+                $doubleAmount = $player->categoryBonus->base_amount * 2;
+                
+                // Crear el bono
+                $bonus = Bonus::create([
+                    'amount' => $doubleAmount,
+                    'start_datetime' => $request->start_datetime,
+                    'end_datetime' => $request->end_datetime,
+                    'user_id' => $player->id,
+                    'active' => true
+                ]);
+                
+                $createdBonuses[] = $bonus;
+            }
+            
+            // Confirmar la transacción
+            DB::commit();
+            
+            $message = 'Bonos dobles creados exitosamente para ' . count($createdBonuses) . ' jugadores';
+            
+            if (!empty($playersWithoutCategory)) {
+                $message .= '. ' . count($playersWithoutCategory) . ' jugadores no tienen categoría de bono asignada';
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'count' => count($createdBonuses),
+                'bonuses' => $createdBonuses,
+                'players_without_category' => $playersWithoutCategory
+            ]);
+        } catch (\Exception $e) {
+            // Revertir los cambios si ocurre un error
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear los bonos dobles', 
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -8,6 +8,7 @@ import ModalEditUser from '@/Components/Users/ModalEditUser';
 import ModalViewUser from '@/Components/Users/ModalViewUser';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
 import ModalCreateCustomBonus from '@/Components/Bonus/ModalCreateCustomBonus';
+import ModalCreateDoubleBonuses from '@/Components/Bonus/ModalCreateDoubleBonuses';
 // import FilterModal from '@/Components/Users/FilterModal';
 import MobileButton from '@/Components/MobileButton';
 import { CustomTable } from '@components-v2/CustomTable';
@@ -1137,7 +1138,11 @@ export default function UserPage({
                                     auth?.role
                                 ) &&
                                     data?.role === 'jugador' && (
-                                        <ModalCreateCustomBonus />
+                                        <>
+                                            <ModalCreateBonus />
+                                            <ModalCreateCustomBonus />
+                                            <ModalCreateDoubleBonuses branches={branches} />
+                                        </>
                                     )}
                             </div>
                         </div>

@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/assign-multiple-users', [BonusController::class, 'assignMultipleUsers'])->name('bonuses.assignMultipleUsers');
         Route::post('/destroy-multiple-users', [BonusController::class, 'destroyMultipleUsers'])->name('bonuses.destroyMultipleUsers');
         Route::post('/create-multiple', [BonusController::class, 'createMultiple'])->name('bonuses.createMultiple');
+        Route::post('/create-double-bonuses', [BonusController::class, 'createDoubleBonuses'])->name('bonuses.createDoubleBonuses');
     });
 
     Route::prefix('totems')->group(function () {

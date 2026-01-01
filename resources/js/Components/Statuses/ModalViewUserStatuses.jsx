@@ -4,62 +4,58 @@ import { Eye } from 'lucide-react';
 import { CustomButton } from '@components-v2/CustomButton';
 
 export default function ModalViewUserStatuses({ data, status }) {
-    const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-    };
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
-    const columns = [
-        {
-            title: 'Nombre de usuario',
-            dataIndex: 'username',
-            key: 'id',
-        },
-        {
-            title: 'Empresa',
-            key: 'company',
-            render: (_, user) => <p>{user?.company?.name}</p>,
-        },
-        {
-            title: 'Sucursal',
-            key: 'branch',
-            render: (_, user) => <p>{user?.branch?.name}</p>,
-        },
-    ];
+  const columns = [
+    {
+      title: 'Nombre de usuario',
+      dataIndex: 'username',
+      key: 'id',
+    },
+    {
+      title: 'Empresa',
+      key: 'company',
+      render: (_, user) => <p>{user?.company?.name}</p>,
+    },
+    {
+      title: 'Sucursal',
+      key: 'branch',
+      render: (_, user) => <p>{user?.branch?.name}</p>,
+    },
+  ];
 
-    return (
-        <>
-            <CustomButton
-                onClick={() => setShowModal(true)}
-                className="hover:border-green-300"
-                icon={<Eye className="w-5 h-5" />}
-            >
-                Ver usuarios
-            </CustomButton>
-            <Modal
-                style={{ top: 20 }}
-                title={
-                    <p className="text-bold text-3xl">
-                        Usuarios con estado {status}
-                    </p>
-                }
-                open={showModal}
-                cancelText="Cerrar"
-                onCancel={() => handleCloseModal()}
-                destroyOnClose={true}
-                okButtonProps={{
-                    style: {
-                        display: 'none',
-                    },
-                }}
-            >
-                <Table
-                    dataSource={data.map((user) => ({ ...user, key: user.id }))}
-                    columns={columns}
-                    scroll={{ x: true }}
-                />
-            </Modal>
-        </>
-    );
+  return (
+    <>
+      <CustomButton
+        onClick={() => setShowModal(true)}
+        className="hover:border-green-300"
+        icon={<Eye className="w-5 h-5" />}
+      >
+        Ver usuarios
+      </CustomButton>
+      <Modal
+        style={{ top: 20 }}
+        title={<p className="text-bold text-3xl">Usuarios con estado {status}</p>}
+        open={showModal}
+        cancelText="Cerrar"
+        onCancel={() => handleCloseModal()}
+        destroyOnClose={true}
+        okButtonProps={{
+          style: {
+            display: 'none',
+          },
+        }}
+      >
+        <Table
+          dataSource={data.map((user) => ({ ...user, key: user.id }))}
+          columns={columns}
+          scroll={{ x: true }}
+        />
+      </Modal>
+    </>
+  );
 }

@@ -4,18 +4,9 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/Components/ui/button';
 import { Calendar } from '@/Components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/Components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 
-export function DatePicker({
-  selected,
-  onChange,
-  placeholder = 'Seleccionar fecha',
-  className,
-}) {
+export function DatePicker({ selected, onChange, placeholder = 'Seleccionar fecha', className }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -24,7 +15,7 @@ export function DatePicker({
           className={cn(
             'w-[280px] justify-start text-left font-normal',
             !selected && 'text-muted-foreground',
-            className
+            className,
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -32,12 +23,7 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <Calendar
-          mode="single"
-          selected={selected}
-          onSelect={onChange}
-          initialFocus
-        />
+        <Calendar mode="single" selected={selected} onSelect={onChange} initialFocus />
       </PopoverContent>
     </Popover>
   );

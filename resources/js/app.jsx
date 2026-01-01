@@ -11,26 +11,23 @@ import { VITE_APP_NAME } from '@utils/env';
 import { ThemeProvider } from './Contexts/DarkModeProvider';
 
 createInertiaApp({
-    title: (title) => `${title} - ${VITE_APP_NAME}`,
-    resolve: (name) =>
-        resolvePageComponent(
-            `./Pages/${name}.jsx`,
-            import.meta.glob('./Pages/**/*.jsx')
-        ),
-    setup({ el, App, props }) {
-        const root = createRoot(el);
+  title: (title) => `${title} - ${VITE_APP_NAME}`,
+  resolve: (name) =>
+    resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
+  setup({ el, App, props }) {
+    const root = createRoot(el);
 
-        root.render(
-            <ConfigProvider locale={esES}>
-                <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-                    <MessageProvider>
-                        <App {...props} />
-                    </MessageProvider>
-                </ThemeProvider>
-            </ConfigProvider>
-        );
-    },
-    progress: {
-        color: '#4B5563',
-    },
+    root.render(
+      <ConfigProvider locale={esES}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <MessageProvider>
+            <App {...props} />
+          </MessageProvider>
+        </ThemeProvider>
+      </ConfigProvider>,
+    );
+  },
+  progress: {
+    color: '#4B5563',
+  },
 });

@@ -17,6 +17,15 @@ class OrdersController extends Controller
         $orders = Order::with('user')->get();
         $products = Product::all();
 
+        $productsMap = $products->pluck('name', 'id')->toArray();
+
+        $orders = $orders->map(function ($order) use ($productsMap) {
+            $order->products = collect($order->products)->map(function ($productId) use ($productsMap) {
+                return $productsMap[$productId] ?? 'N/A';
+            })->toArray();
+            return $order;
+        });
+
         $data = [
             'orders' => $orders,
             'products' => $products
@@ -42,23 +51,18 @@ class OrdersController extends Controller
             ]);
 
             DB::transaction(function () use ($request) {
-                // Get the product
-                $productId = $request->products[0];  // Since now single product
+                $productId = $request->products[0];
                 $product = Product::findOrFail($productId);
 
-                // Check stock
                 if ($request->quantity > $product->quantity) {
                     throw new \Exception('Stock insuficiente. Disponible: ' . $product->quantity);
                 }
 
-                // Calculate total
                 $total = $product->price * $request->quantity;
 
-                // Deduct stock
                 $product->quantity -= $request->quantity;
                 $product->save();
 
-                // Create order
                 Order::create(array_merge($request->only(['products', 'quantity', 'payment_method', 'paid_amount', 'change']), [
                     'total' => $total,
                 ]));

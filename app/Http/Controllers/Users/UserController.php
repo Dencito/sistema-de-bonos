@@ -981,6 +981,34 @@ class UserController extends Controller
             ->count();
         $isEntry = ($totalLogs % 2 === 0);  // Si el total actual es par, el próximo será impar (entrada)
 
+        // Validación para cajeros y pasilleras: no pueden registrar salida si tienen turno activo
+        if (!$isEntry && in_array($user->cargo, ['CAJER@', 'PASILLER@'])) {
+            if ($user->cargo === 'CAJER@') {
+                // Verificar si tiene un turno de caja activo
+                $activeCashShift = \App\Models\CashShift::where('user_id', $user->id)
+                    ->where('branch_id', $branch->id)
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($activeCashShift) {
+                    return response()->json([
+                        'message' => 'No puedes registrar tu salida hasta que cierres tu caja. Por favor, finaliza tu turno primero.'
+                    ], 400);
+                }
+            } elseif ($user->cargo === 'PASILLER@') {
+                // Verificar si tiene una pasillera activa
+                $activePasillera = \App\Models\Pasillera::where('user_id', $user->id)
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($activePasillera) {
+                    return response()->json([
+                        'message' => 'No puedes registrar tu salida hasta que finalices tu turno como pasillera y devuelvas el saldo correspondiente.'
+                    ], 400);
+                }
+            }
+        }
+
         $fingerprintLog = FingerprintLog::create([
             'user_id' => $user->id,
             'totem_id' => $totem->id,

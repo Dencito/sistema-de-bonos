@@ -11,6 +11,7 @@ import {
   History,
   Plus,
   AlertCircle,
+  CheckCircle,
 } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
@@ -21,6 +22,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
 
   useEffect(() => {
     loadPasillera();
@@ -63,6 +66,41 @@ export default function Dashboard() {
     }
     await logout();
     navigate('/login');
+  };
+
+  const handleFinalizeShift = async () => {
+    setFinalizing(true);
+    try {
+      await Haptics.impact({ style: ImpactStyle.Medium });
+    } catch (e) {
+      // Haptics not available
+    }
+
+    try {
+      const response = await pasilleraService.finalizeShift();
+      
+      if (response.success) {
+        try {
+          await Haptics.notification({ type: 'success' });
+        } catch (e) {
+          // Haptics not available
+        }
+        
+        // Show success message
+        alert(response.message);
+        
+        // Reload data
+        await loadPasillera();
+        setShowFinalizeConfirm(false);
+      } else {
+        alert(response.message || 'Error al finalizar el turno');
+      }
+    } catch (err) {
+      console.error('Error finalizing shift:', err);
+      alert(err.response?.data?.message || 'Error al finalizar el turno');
+    } finally {
+      setFinalizing(false);
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -182,6 +220,14 @@ export default function Dashboard() {
             <History className="w-5 h-5 mr-2" />
             Ver Historial
           </button>
+
+          <button
+            onClick={() => setShowFinalizeConfirm(true)}
+            className="w-full bg-green-600 text-white py-4 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition flex items-center justify-center shadow-lg"
+          >
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Finalizar Turno
+          </button>
         </div>
       )}
 
@@ -211,6 +257,58 @@ export default function Dashboard() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Finalize Shift Confirmation Modal */}
+      {showFinalizeConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Finalizar Turno</h3>
+              <p className="text-gray-600 mb-4">
+                ¿Estás seguro que deseas finalizar tu turno?
+              </p>
+              {pasillera && (
+                <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-gray-600 mb-1">Saldo a devolver:</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {formatCurrency(pasillera.current_balance)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Este saldo será devuelto al banco y tu turno será cerrado.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowFinalizeConfirm(false)}
+                disabled={finalizing}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-300 active:bg-gray-400 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleFinalizeShift}
+                disabled={finalizing}
+                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition disabled:opacity-50 flex items-center justify-center"
+              >
+                {finalizing ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                    Finalizando...
+                  </>
+                ) : (
+                  'Confirmar'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -13,6 +13,7 @@ import {
   Fingerprint,
   ShoppingCart,
   Package,
+  Banknote,
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
@@ -161,6 +162,13 @@ export function AppSidebar({ role, roles, user }) {
       label: 'Ventas Cigarros',
       link: '/orders',
       autorized: allowedRoles.shifts.includes(role),
+    },
+    {
+      key: '15',
+      icon: Banknote,
+      label: 'Sistema de Caja',
+      link: '/cash-management',
+      autorized: allowedRoles.systemBank.includes(role),
     },
   ];
 

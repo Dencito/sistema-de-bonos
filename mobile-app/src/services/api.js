@@ -114,6 +114,11 @@ export const pasilleraService = {
     const response = await api.get('/pasillera/machines');
     return response.data;
   },
+
+  finalizeShift: async () => {
+    const response = await api.post('/pasillera/finalize-shift');
+    return response.data;
+  },
 };
 
 export default api;

@@ -96,5 +96,6 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
         Route::get('/history', [MobilePasilleraController::class, 'getExpenseHistory']);
         Route::get('/machines', [MobilePasilleraController::class, 'getMachines']);
         Route::get('/balance', [MobilePasilleraController::class, 'getBalance']);
+        Route::post('/finalize-shift', [MobilePasilleraController::class, 'finalizeShift']);
     });
 });

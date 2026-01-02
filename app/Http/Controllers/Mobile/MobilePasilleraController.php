@@ -219,4 +219,69 @@ class MobilePasilleraController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Finalize shift and return remaining balance to bank
+     */
+    public function finalizeShift(Request $request)
+    {
+        $user = Auth::user();
+
+        // Get active pasillera
+        $pasillera = Pasillera::with('cashShift')
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$pasillera) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una pasillera activa'
+            ], 400);
+        }
+
+        $remainingBalance = $pasillera->current_balance;
+
+        DB::beginTransaction();
+        try {
+            // Create return transaction (devolución de saldo al banco)
+            if ($remainingBalance > 0) {
+                $transaction = CashTransaction::create([
+                    'cash_shift_id' => $pasillera->cash_shift_id,
+                    'pasillera_id' => $pasillera->id,
+                    'type' => 'pasillera_return',
+                    'amount' => $remainingBalance,
+                    'description' => 'Devolución de saldo al finalizar turno - Pasillera: ' . $user->first_name . ' ' . $user->first_last_name,
+                ]);
+
+                // Update cash shift: add returned balance to current balance
+                $cashShift = CashShift::find($pasillera->cash_shift_id);
+                if ($cashShift) {
+                    $cashShift->current_balance += $remainingBalance;
+                    $cashShift->save();
+                }
+            }
+
+            // Deactivate pasillera
+            $pasillera->is_active = false;
+            $pasillera->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Turno finalizado correctamente. Saldo devuelto: $' . number_format($remainingBalance, 0, ',', '.'),
+                'data' => [
+                    'returned_balance' => $remainingBalance,
+                    'transaction' => $transaction ?? null
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al finalizar el turno: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

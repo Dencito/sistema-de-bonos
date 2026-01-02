@@ -253,6 +253,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     giro: 'Giro',
                     payment: 'Pago por Caja',
                     pasillera_payment: 'Pago Pasillera',
+                    pasillera_return: 'Reintegro Pasillera',
                 };
                 return types[type] || type;
             },
@@ -545,6 +546,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                                 </Button>
                                             </Space>
                                         </Space>
+                                        {
+                                            console.log(pasillera.transactions)
+                                        }
 
                                         {pasillera.transactions && pasillera.transactions.length > 0 && (
                                             <div style={{ marginTop: 16 }}>
@@ -552,7 +556,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                                 <div style={{ maxHeight: 150, overflowY: 'auto', marginTop: 8 }}>
                                                     {pasillera.transactions.map((registro, index) => (
                                                         <div key={index} style={{ fontSize: 12, marginBottom: 4 }}>
-                                                            {formatCurrency(registro.amount)} - Máquina: {registro.machine} -{' '}
+                                                            {registro.type === 'pasillera_payment' ? '' : 'Reintegro '}
+                                                            {formatCurrency(registro.amount)} {registro.type === 'pasillera_payment' ? `- Máquina: ${registro.machine} -${' '}` : ''}
                                                             {new Date(registro.created_at).toLocaleString('es-AR')}
                                                         </div>
                                                     ))}

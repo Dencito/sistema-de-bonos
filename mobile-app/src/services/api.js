@@ -1,10 +1,21 @@
 import axios from 'axios';
 import { Preferences } from '@capacitor/preferences';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/mobile';
+// Function to get dynamic API URL based on company configuration
+const getApiUrl = async () => {
+  try {
+    const { value: companyName } = await Preferences.get({ key: 'company_name' });
+    if (companyName) {
+      return `https://${companyName}.rentamania.cl/api/mobile`;
+    }
+  } catch (error) {
+    console.error('Error getting company name:', error);
+  }
+  // Fallback to env variable or localhost
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000/api/mobile';
+};
 
 const api = axios.create({
-  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -13,6 +24,9 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    // Set dynamic baseURL for each request
+    config.baseURL = await getApiUrl();
+    
     const { value: token } = await Preferences.get({ key: 'auth_token' });
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

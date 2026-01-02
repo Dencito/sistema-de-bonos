@@ -405,7 +405,7 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('cash_shift_id')->constrained($cashShiftsTable)->onDelete('cascade');
                     $table->foreignId('pasillera_id')->nullable()->constrained($pasillerasTable)->onDelete('set null');
-                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment']);
+                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_payment']);
                     $table->decimal('amount', 15, 2);
                     $table->string('client')->nullable();
                     $table->string('machine')->nullable();

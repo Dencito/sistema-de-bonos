@@ -1,20 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, Settings } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Preferences } from '@capacitor/preferences';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    checkCompanyConfig();
+  }, []);
+
+  const checkCompanyConfig = async () => {
+    try {
+      const { value } = await Preferences.get({ key: 'company_name' });
+      if (value) {
+        setCompanyName(value);
+      }
+    } catch (error) {
+      console.error('Error loading company config:', error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validate company configuration
+    if (!companyName) {
+      setError('Por favor configure la empresa primero. Presione el ícono de configuración.');
+      try {
+        await Haptics.notification({ type: 'ERROR' });
+      } catch (e) {
+        // Haptics not available
+      }
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -41,6 +70,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 safe-top safe-bottom">
+      {/* Settings Button - Only visible when logged out */}
+      <button
+        onClick={() => navigate('/settings')}
+        className="absolute top-6 right-6 p-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-full shadow-lg transition"
+      >
+        <Settings className="w-6 h-6 text-white" />
+      </button>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-full mb-4">
@@ -112,9 +149,17 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-center text-slate-400 text-sm mt-6">
-          v1.0.0 - Sistema de Casino
-        </p>
+        <div className="text-center mt-6 space-y-2">
+          {companyName && (
+            <div className="bg-slate-800 rounded-lg px-4 py-2 inline-block">
+              <p className="text-xs text-slate-400">Empresa configurada:</p>
+              <p className="text-sm font-semibold text-white">{companyName}</p>
+            </div>
+          )}
+          <p className="text-slate-400 text-sm">
+            v1.0.0 - Sistema de Casino
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RegisterExpense from './pages/RegisterExpense';
 import History from './pages/History';
+import Settings from './pages/Settings';
 import { useEffect } from 'react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapApp } from '@capacitor/app';
@@ -52,6 +53,7 @@ function AppContent() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/settings" element={<Settings />} />
         <Route
           path="/dashboard"
           element={

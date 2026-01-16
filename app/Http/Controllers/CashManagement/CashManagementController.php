@@ -162,15 +162,20 @@ class CashManagementController extends Controller
             ($request->opening_coins ?? 0)
         );
         
-        $totalInitialBalance = $previousBalance + $request->initial_balance;
-
+        // El saldo esperado es: saldo anterior + saldo inicial agregado
+        $expectedBalance = $previousBalance + $request->initial_balance;
+        
+        // Calcular diferencia de apertura (lo que hay vs lo que debería haber)
+        $openingDifference = $openingTotalCounted - $expectedBalance;
+        
+        // El turno comienza con el monto CONTADO, no con el esperado
         $shift = CashShift::create([
             'user_id' => $user->id,
             'branch_id' => $branchId,
             'previous_balance' => $previousBalance,
             'initial_balance' => $request->initial_balance,
-            'total_initial_balance' => $totalInitialBalance,
-            'current_balance' => $totalInitialBalance,
+            'total_initial_balance' => $expectedBalance,
+            'current_balance' => $openingTotalCounted, // Comienza con lo contado
             'started_at' => now(),
             'opening_20000' => $request->opening_20000 ?? 0,
             'opening_10000' => $request->opening_10000 ?? 0,
@@ -179,12 +184,23 @@ class CashManagementController extends Controller
             'opening_1000' => $request->opening_1000 ?? 0,
             'opening_coins' => $request->opening_coins ?? 0,
             'opening_total_counted' => $openingTotalCounted,
+            'difference' => $openingDifference, // Guardar diferencia de apertura
         ]);
+
+        $message = 'Turno iniciado correctamente';
+        if ($openingDifference != 0) {
+            $diffAmount = number_format(abs($openingDifference), 0, ',', '.');
+            $message .= $openingDifference > 0 
+                ? " - SOBRANTE de $$diffAmount en apertura" 
+                : " - FALTANTE de $$diffAmount en apertura";
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Turno iniciado correctamente',
-            'data' => $shift
+            'message' => $message,
+            'data' => $shift,
+            'opening_difference' => $openingDifference,
+            'has_difference' => $openingDifference != 0
         ]);
     }
 

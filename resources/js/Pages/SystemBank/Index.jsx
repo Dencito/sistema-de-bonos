@@ -120,7 +120,19 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             });
 
             if (response.data.success) {
-                message.success('Turno iniciado correctamente');
+                const { has_difference, opening_difference } = response.data;
+                
+                if (has_difference) {
+                    const diffAmount = new Intl.NumberFormat('es-CL').format(Math.abs(opening_difference));
+                    const diffType = opening_difference > 0 ? 'SOBRANTE' : 'FALTANTE';
+                    message.warning(
+                        `Turno iniciado con ${diffType} de $${diffAmount} en apertura`,
+                        5
+                    );
+                } else {
+                    message.success('Turno iniciado correctamente - Conteo exacto');
+                }
+                
                 setShift(response.data.data);
                 setInitialBalance('');
                 setOpening20000(0);
@@ -672,8 +684,48 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     confirmLoading={loading}
                 >
                     <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Statistic
+                                    title="Saldo Esperado"
+                                    value={prevBalance + (Number(initialBalance) || 0)}
+                                    precision={0}
+                                    prefix="$"
+                                    valueStyle={{ color: '#3f8600' }}
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Statistic
+                                    title="Total Contado"
+                                    value={calculateOpeningTotal()}
+                                    precision={0}
+                                    prefix="$"
+                                    valueStyle={{ color: '#1890ff' }}
+                                />
+                            </Col>
+                        </Row>
+
                         <div>
-                            <Title level={5}>Total Caja: ${new Intl.NumberFormat('es-CL').format(calculateOpeningTotal())}</Title>
+                            <Statistic
+                                title="Diferencia"
+                                value={calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0))}
+                                precision={0}
+                                prefix="$"
+                                valueStyle={{ 
+                                    color: calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0 
+                                        ? '#3f8600' 
+                                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0 
+                                            ? '#1890ff' 
+                                            : '#cf1322' 
+                                }}
+                                suffix={
+                                    calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0 
+                                        ? '(Exacto)' 
+                                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0 
+                                            ? '(Sobrante)' 
+                                            : '(Faltante)'
+                                }
+                            />
                         </div>
                         
                         <Row gutter={[16, 16]}>

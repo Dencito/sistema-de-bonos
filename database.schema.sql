@@ -331,30 +331,49 @@ CREATE TABLE `888spa_totems` (
     CONSTRAINT `888spa_totems_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 5 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+
 DROP TABLE IF EXISTS `888spa_cash_shifts`;
 
 CREATE TABLE `888spa_cash_shifts` (
-    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `user_id` bigint unsigned NOT NULL,
-    `branch_id` bigint unsigned NOT NULL,
-    `previous_balance` decimal(15, 2) NOT NULL DEFAULT '0.00',
-    `initial_balance` decimal(15, 2) NOT NULL,
-    `total_initial_balance` decimal(15, 2) NOT NULL,
-    `current_balance` decimal(15, 2) NOT NULL,
-    `total_transfers` decimal(15, 2) NOT NULL DEFAULT '0.00',
-    `total_giros` decimal(15, 2) NOT NULL DEFAULT '0.00',
-    `total_payments` decimal(15, 2) NOT NULL DEFAULT '0.00',
-    `is_active` tinyint(1) NOT NULL DEFAULT '1',
-    `started_at` timestamp NOT NULL,
-    `ended_at` timestamp NULL DEFAULT NULL,
-    `created_at` timestamp NULL DEFAULT NULL,
-    `updated_at` timestamp NULL DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `888spa_cash_shifts_user_id_foreign` (`user_id`),
-    KEY `888spa_cash_shifts_branch_id_foreign` (`branch_id`),
-    CONSTRAINT `888spa_cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `branch_id` BIGINT UNSIGNED NOT NULL,
+    `previous_balance` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `initial_balance` DECIMAL(15,2) NOT NULL,
+    `total_initial_balance` DECIMAL(15,2) NOT NULL,
+    `current_balance` DECIMAL(15,2) NOT NULL,
+    `total_transfers` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `total_giros` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `total_payments` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `started_at` TIMESTAMP NOT NULL,
+    `ended_at` TIMESTAMP NULL,
+    `opening_20000` INT NOT NULL DEFAULT 0,
+    `opening_10000` INT NOT NULL DEFAULT 0,
+    `opening_5000` INT NOT NULL DEFAULT 0,
+    `opening_2000` INT NOT NULL DEFAULT 0,
+    `opening_1000` INT NOT NULL DEFAULT 0,
+    `opening_coins` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `opening_total_counted` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `closing_20000` INT NOT NULL DEFAULT 0,
+    `closing_10000` INT NOT NULL DEFAULT 0,
+    `closing_5000` INT NOT NULL DEFAULT 0,
+    `closing_2000` INT NOT NULL DEFAULT 0,
+    `closing_1000` INT NOT NULL DEFAULT 0,
+    `closing_coins` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `closing_total_counted` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `difference` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `closing_notes` TEXT NULL,
+    `admin_initial_value` DECIMAL(15,2) NULL,
+    `admin_user_id` BIGINT UNSIGNED NULL,
+    `admin_value_set_at` TIMESTAMP NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    CONSTRAINT `cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `cash_shifts_admin_user_id_foreign` FOREIGN KEY (`admin_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 DROP TABLE IF EXISTS `888spa_pasilleras`;
 

@@ -37,6 +37,27 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
     const [transactions, setTransactions] = useState(activeShift?.transactions || []);
     const [loading, setLoading] = useState(false);
+    
+    // Estados para conteo de apertura
+    const [opening20000, setOpening20000] = useState(0);
+    const [opening10000, setOpening10000] = useState(0);
+    const [opening5000, setOpening5000] = useState(0);
+    const [opening2000, setOpening2000] = useState(0);
+    const [opening1000, setOpening1000] = useState(0);
+    const [openingCoins, setOpeningCoins] = useState(0);
+    
+    // Estados para conteo de cierre
+    const [closing20000, setClosing20000] = useState(0);
+    const [closing10000, setClosing10000] = useState(0);
+    const [closing5000, setClosing5000] = useState(0);
+    const [closing2000, setClosing2000] = useState(0);
+    const [closing1000, setClosing1000] = useState(0);
+    const [closingCoins, setClosingCoins] = useState(0);
+    const [closingNotes, setClosingNotes] = useState('');
+    
+    // Modal states
+    const [openingModalVisible, setOpeningModalVisible] = useState(false);
+    const [closingModalVisible, setClosingModalVisible] = useState(false);
 
     useEffect(() => {
         if (activeShift) {
@@ -58,6 +79,28 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         }
     };
 
+    const calculateOpeningTotal = () => {
+        return (
+            opening20000 * 20000 +
+            opening10000 * 10000 +
+            opening5000 * 5000 +
+            opening2000 * 2000 +
+            opening1000 * 1000 +
+            parseFloat(openingCoins || 0)
+        );
+    };
+
+    const calculateClosingTotal = () => {
+        return (
+            closing20000 * 20000 +
+            closing10000 * 10000 +
+            closing5000 * 5000 +
+            closing2000 * 2000 +
+            closing1000 * 1000 +
+            parseFloat(closingCoins || 0)
+        );
+    };
+
     const handleStartShift = async () => {
         if (!initialBalance || initialBalance <= 0) {
             message.error('Ingrese un saldo inicial válido');
@@ -68,12 +111,25 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         try {
             const response = await axios.post('/cash-management/shift/start', {
                 initial_balance: initialBalance,
+                opening_20000: opening20000,
+                opening_10000: opening10000,
+                opening_5000: opening5000,
+                opening_2000: opening2000,
+                opening_1000: opening1000,
+                opening_coins: openingCoins,
             });
 
             if (response.data.success) {
                 message.success('Turno iniciado correctamente');
                 setShift(response.data.data);
                 setInitialBalance('');
+                setOpening20000(0);
+                setOpening10000(0);
+                setOpening5000(0);
+                setOpening2000(0);
+                setOpening1000(0);
+                setOpeningCoins(0);
+                setOpeningModalVisible(false);
                 fetchShiftStatus();
             }
         } catch (error) {
@@ -86,13 +142,36 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     const handleEndShift = async () => {
         setLoading(true);
         try {
-            const response = await axios.post('/cash-management/shift/end');
+            const response = await axios.post('/cash-management/shift/end', {
+                closing_20000: closing20000,
+                closing_10000: closing10000,
+                closing_5000: closing5000,
+                closing_2000: closing2000,
+                closing_1000: closing1000,
+                closing_coins: closingCoins,
+                closing_notes: closingNotes,
+            });
 
             if (response.data.success) {
-                message.success('Turno cerrado correctamente');
+                const { difference, closing_total_counted } = response.data.data;
+                
+                let msg = 'Turno cerrado correctamente.';
+                if (difference !== 0) {
+                    msg += ` Diferencia: $${new Intl.NumberFormat('es-CL').format(Math.abs(difference))} ${difference > 0 ? '(Sobrante)' : '(Faltante)'}`;
+                }
+                
+                message.success(msg);
                 setShift(null);
                 setPasilleras([]);
                 setTransactions([]);
+                setClosing20000(0);
+                setClosing10000(0);
+                setClosing5000(0);
+                setClosing2000(0);
+                setClosing1000(0);
+                setClosingCoins(0);
+                setClosingNotes('');
+                setClosingModalVisible(false);
                 fetchShiftStatus();
             }
         } catch (error) {
@@ -310,24 +389,23 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                 {!shift?.is_active ? (
                                     <Button
                                         type="primary"
-                                        onClick={handleStartShift}
+                                        onClick={() => setOpeningModalVisible(true)}
                                         disabled={!initialBalance}
                                         loading={loading}
                                         block
                                     >
-                                        Iniciar Turno
+                                        Abrir Caja
                                     </Button>
                                 ) : (
-                                    <Popconfirm
-                                        title="¿Está seguro de cerrar el turno?"
-                                        onConfirm={handleEndShift}
-                                        okText="Sí"
-                                        cancelText="No"
+                                    <Button 
+                                        type="primary" 
+                                        danger 
+                                        loading={loading} 
+                                        block
+                                        onClick={() => setClosingModalVisible(true)}
                                     >
-                                        <Button type="primary" danger loading={loading} block>
-                                            Cerrar Turno
-                                        </Button>
-                                    </Popconfirm>
+                                        Cerrar Caja
+                                    </Button>
                                 )}
                             </Space>
                         </Col>
@@ -581,6 +659,287 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                         scroll={{ x: 800 }}
                     />
                 </Card>
+
+                {/* Modal de Apertura de Caja */}
+                <Modal
+                    title="Conteo de Apertura de Caja"
+                    open={openingModalVisible}
+                    onOk={handleStartShift}
+                    onCancel={() => setOpeningModalVisible(false)}
+                    okText="Abrir Caja"
+                    cancelText="Cancelar"
+                    width={600}
+                    confirmLoading={loading}
+                >
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <div>
+                            <Title level={5}>Total Caja: ${new Intl.NumberFormat('es-CL').format(calculateOpeningTotal())}</Title>
+                        </div>
+                        
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $20.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={opening20000}
+                                    onChange={setOpening20000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening20000 * 20000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $10.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={opening10000}
+                                    onChange={setOpening10000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening10000 * 10000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $5.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={opening5000}
+                                    onChange={setOpening5000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening5000 * 5000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $2.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={opening2000}
+                                    onChange={setOpening2000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening2000 * 2000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $1.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={opening1000}
+                                    onChange={setOpening1000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening1000 * 1000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Monedas</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={openingCoins}
+                                    onChange={setOpeningCoins}
+                                    min={0}
+                                    placeholder="Monto en monedas"
+                                    precision={0}
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(openingCoins)}</Text>
+                            </Col>
+                        </Row>
+                    </Space>
+                </Modal>
+
+                {/* Modal de Cierre de Caja */}
+                <Modal
+                    title="Conteo de Cierre de Caja"
+                    open={closingModalVisible}
+                    onOk={handleEndShift}
+                    onCancel={() => setClosingModalVisible(false)}
+                    okText="Cerrar Caja"
+                    cancelText="Cancelar"
+                    width={700}
+                    confirmLoading={loading}
+                >
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Statistic
+                                    title="Saldo Esperado en Caja"
+                                    value={shift?.current_balance || 0}
+                                    precision={0}
+                                    prefix="$"
+                                    valueStyle={{ color: '#3f8600' }}
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Statistic
+                                    title="Total Contado"
+                                    value={calculateClosingTotal()}
+                                    precision={0}
+                                    prefix="$"
+                                    valueStyle={{ color: '#1890ff' }}
+                                />
+                            </Col>
+                        </Row>
+
+                        <div>
+                            <Statistic
+                                title="Diferencia"
+                                value={calculateClosingTotal() - (shift?.current_balance || 0)}
+                                precision={0}
+                                prefix="$"
+                                valueStyle={{ 
+                                    color: calculateClosingTotal() - (shift?.current_balance || 0) === 0 
+                                        ? '#3f8600' 
+                                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0 
+                                            ? '#1890ff' 
+                                            : '#cf1322' 
+                                }}
+                                suffix={
+                                    calculateClosingTotal() - (shift?.current_balance || 0) === 0 
+                                        ? '(Exacto)' 
+                                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0 
+                                            ? '(Sobrante)' 
+                                            : '(Faltante)'
+                                }
+                            />
+                        </div>
+                        
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $20.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={closing20000}
+                                    onChange={setClosing20000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing20000 * 20000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $10.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={closing10000}
+                                    onChange={setClosing10000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing10000 * 10000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $5.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={closing5000}
+                                    onChange={setClosing5000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing5000 * 5000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $2.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={closing2000}
+                                    onChange={setClosing2000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing2000 * 2000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Billetes de $1.000</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={closing1000}
+                                    onChange={setClosing1000}
+                                    min={0}
+                                    placeholder="Cantidad"
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing1000 * 1000)}</Text>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Monedas</Text>
+                                <InputNumber
+                                    style={{ width: '100%', marginTop: 8 }}
+                                    value={closingCoins}
+                                    onChange={setClosingCoins}
+                                    min={0}
+                                    placeholder="Monto en monedas"
+                                    precision={0}
+                                />
+                            </Col>
+                            <Col span={12}>
+                                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closingCoins)}</Text>
+                            </Col>
+                        </Row>
+
+                        <div>
+                            <Text strong>Notas de Cierre</Text>
+                            <Input.TextArea
+                                style={{ marginTop: 8 }}
+                                value={closingNotes}
+                                onChange={(e) => setClosingNotes(e.target.value)}
+                                placeholder="Observaciones sobre el cierre (opcional)"
+                                rows={3}
+                            />
+                        </div>
+                    </Space>
+                </Modal>
             </div>
         </AuthenticatedLayout>
     );

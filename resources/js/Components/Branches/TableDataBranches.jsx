@@ -4,6 +4,7 @@ import { Table } from 'antd';
 import ModalViewBranch from './ModalViewBranch';
 import ModalEditBranch from './ModalEditBranch';
 import ModalDeleteBranch from './ModalDeleteBranch';
+import ModalSetInitialCash from './ModalSetInitialCash';
 import { formatDate } from '@utils/date';
 import FilterModal from './FilterModal';
 import ModalRequestMoreBranches from './ModalRequestMoreBranches';
@@ -64,6 +65,10 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
           key="actions"
           render={(_, branch) => (
             <div className="flex flex-wrap gap-3">
+              <ModalSetInitialCash
+                key={`cash_${branch.id}`}
+                branch={branch}
+              />
               <ModalViewBranch
                 key={`view_${branch.id}`}
                 data={branch}

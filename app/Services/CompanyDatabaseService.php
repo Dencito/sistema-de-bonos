@@ -381,6 +381,34 @@ class CompanyDatabaseService
                     $table->boolean('is_active')->default(true);
                     $table->timestamp('started_at');
                     $table->timestamp('ended_at')->nullable();
+                    
+                    // Conteo de apertura
+                    $table->integer('opening_20000')->default(0);
+                    $table->integer('opening_10000')->default(0);
+                    $table->integer('opening_5000')->default(0);
+                    $table->integer('opening_2000')->default(0);
+                    $table->integer('opening_1000')->default(0);
+                    $table->decimal('opening_coins', 15, 2)->default(0);
+                    $table->decimal('opening_total_counted', 15, 2)->default(0);
+                    
+                    // Conteo de cierre
+                    $table->integer('closing_20000')->default(0);
+                    $table->integer('closing_10000')->default(0);
+                    $table->integer('closing_5000')->default(0);
+                    $table->integer('closing_2000')->default(0);
+                    $table->integer('closing_1000')->default(0);
+                    $table->decimal('closing_coins', 15, 2)->default(0);
+                    $table->decimal('closing_total_counted', 15, 2)->default(0);
+                    
+                    // Diferencia y notas
+                    $table->decimal('difference', 15, 2)->default(0);
+                    $table->text('closing_notes')->nullable();
+                    
+                    // Valor inicial establecido por admin
+                    $table->decimal('admin_initial_value', 15, 2)->nullable();
+                    $table->foreignId('admin_user_id')->nullable()->constrained($usersTable)->onDelete('set null');
+                    $table->timestamp('admin_value_set_at')->nullable();
+                    
                     $table->timestamps();
                 });
             }
@@ -405,7 +433,7 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('cash_shift_id')->constrained($cashShiftsTable)->onDelete('cascade');
                     $table->foreignId('pasillera_id')->nullable()->constrained($pasillerasTable)->onDelete('set null');
-                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_payment']);
+                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_return']);
                     $table->decimal('amount', 15, 2);
                     $table->string('client')->nullable();
                     $table->string('machine')->nullable();

@@ -39,9 +39,8 @@ class CashManagementController extends Controller
             ->where('is_active', true)
             ->first();
 
-        // Get previous shift balance
-        $previousShift = CashShift::where('user_id', $user->id)
-            ->where('branch_id', $branchId)
+        // Get previous shift balance (from any user in the branch)
+        $previousShift = CashShift::where('branch_id', $branchId)
             ->where('is_active', false)
             ->orderBy('ended_at', 'desc')
             ->first();
@@ -89,8 +88,8 @@ class CashManagementController extends Controller
             ->where('is_active', true)
             ->first();
 
-        $previousShift = CashShift::where('user_id', $user->id)
-            ->where('branch_id', $branchId)
+        // Get previous shift balance (from any user in the branch)
+        $previousShift = CashShift::where('branch_id', $branchId)
             ->where('is_active', false)
             ->orderBy('ended_at', 'desc')
             ->first();
@@ -111,6 +110,12 @@ class CashManagementController extends Controller
     {
         $request->validate([
             'initial_balance' => 'required|numeric|min:0',
+            'opening_20000' => 'nullable|integer|min:0',
+            'opening_10000' => 'nullable|integer|min:0',
+            'opening_5000' => 'nullable|integer|min:0',
+            'opening_2000' => 'nullable|integer|min:0',
+            'opening_1000' => 'nullable|integer|min:0',
+            'opening_coins' => 'nullable|numeric|min:0',
         ]);
 
         $user = Auth::user();
@@ -146,6 +151,17 @@ class CashManagementController extends Controller
             ->first();
 
         $previousBalance = $previousShift ? $previousShift->current_balance : 0;
+        
+        // Calcular total contado de apertura
+        $openingTotalCounted = (
+            ($request->opening_20000 ?? 0) * 20000 +
+            ($request->opening_10000 ?? 0) * 10000 +
+            ($request->opening_5000 ?? 0) * 5000 +
+            ($request->opening_2000 ?? 0) * 2000 +
+            ($request->opening_1000 ?? 0) * 1000 +
+            ($request->opening_coins ?? 0)
+        );
+        
         $totalInitialBalance = $previousBalance + $request->initial_balance;
 
         $shift = CashShift::create([
@@ -156,6 +172,13 @@ class CashManagementController extends Controller
             'total_initial_balance' => $totalInitialBalance,
             'current_balance' => $totalInitialBalance,
             'started_at' => now(),
+            'opening_20000' => $request->opening_20000 ?? 0,
+            'opening_10000' => $request->opening_10000 ?? 0,
+            'opening_5000' => $request->opening_5000 ?? 0,
+            'opening_2000' => $request->opening_2000 ?? 0,
+            'opening_1000' => $request->opening_1000 ?? 0,
+            'opening_coins' => $request->opening_coins ?? 0,
+            'opening_total_counted' => $openingTotalCounted,
         ]);
 
         return response()->json([
@@ -168,8 +191,18 @@ class CashManagementController extends Controller
     /**
      * End current cash shift
      */
-    public function endShift()
+    public function endShift(Request $request)
     {
+        $request->validate([
+            'closing_20000' => 'nullable|integer|min:0',
+            'closing_10000' => 'nullable|integer|min:0',
+            'closing_5000' => 'nullable|integer|min:0',
+            'closing_2000' => 'nullable|integer|min:0',
+            'closing_1000' => 'nullable|integer|min:0',
+            'closing_coins' => 'nullable|numeric|min:0',
+            'closing_notes' => 'nullable|string',
+        ]);
+
         $user = Auth::user();
         $branch = $user->branch;
         
@@ -194,9 +227,31 @@ class CashManagementController extends Controller
             ], 400);
         }
 
+        // Calcular total contado de cierre
+        $closingTotalCounted = (
+            ($request->closing_20000 ?? 0) * 20000 +
+            ($request->closing_10000 ?? 0) * 10000 +
+            ($request->closing_5000 ?? 0) * 5000 +
+            ($request->closing_2000 ?? 0) * 2000 +
+            ($request->closing_1000 ?? 0) * 1000 +
+            ($request->closing_coins ?? 0)
+        );
+
+        // Calcular diferencia (lo que debería haber vs lo que hay)
+        $difference = $closingTotalCounted - $activeShift->current_balance;
+
         $activeShift->update([
             'is_active' => false,
             'ended_at' => now(),
+            'closing_20000' => $request->closing_20000 ?? 0,
+            'closing_10000' => $request->closing_10000 ?? 0,
+            'closing_5000' => $request->closing_5000 ?? 0,
+            'closing_2000' => $request->closing_2000 ?? 0,
+            'closing_1000' => $request->closing_1000 ?? 0,
+            'closing_coins' => $request->closing_coins ?? 0,
+            'closing_total_counted' => $closingTotalCounted,
+            'difference' => $difference,
+            'closing_notes' => $request->closing_notes,
         ]);
 
         // Deactivate all pasilleras
@@ -206,7 +261,11 @@ class CashManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Turno cerrado correctamente',
-            'data' => $activeShift
+            'data' => [
+                'shift' => $activeShift,
+                'difference' => $difference,
+                'closing_total_counted' => $closingTotalCounted,
+            ]
         ]);
     }
 
@@ -575,6 +634,76 @@ class CashManagementController extends Controller
         return response()->json([
             'success' => true,
             'data' => $transactions
+        ]);
+    }
+
+    /**
+     * Set initial value by admin (only when cash register is empty)
+     */
+    public function setAdminInitialValue(Request $request)
+    {
+        $request->validate([
+            'branch_id' => 'required',
+            'admin_initial_value' => 'required|numeric|min:0',
+        ]);
+
+        $user = Auth::user();
+        
+        // Verificar que el usuario sea admin o super-admin
+        if (!in_array($user->role_id, [2, 3])) { // 2=admin, 3=super-admin
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para establecer el valor inicial'
+            ], 403);
+        }
+
+        $branchId = $request->branch_id;
+
+        // Verificar que no haya turnos activos en esa sucursal
+        $activeShift = CashShift::where('branch_id', $branchId)
+            ->where('is_active', true)
+            ->first();
+
+        if ($activeShift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede establecer el valor inicial porque hay un turno activo en esta sucursal'
+            ], 400);
+        }
+
+        // Verificar que no haya saldo anterior (caja vacía)
+        $lastShift = CashShift::where('branch_id', $branchId)
+            ->where('is_active', false)
+            ->orderBy('ended_at', 'desc')
+            ->first();
+
+        if ($lastShift && $lastShift->current_balance != 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede establecer el valor inicial porque la caja tiene un saldo anterior de $' . number_format($lastShift->current_balance, 0, ',', '.')
+            ], 400);
+        }
+
+        // Crear un registro especial para el valor inicial del admin
+        $shift = CashShift::create([
+            'user_id' => $user->id,
+            'branch_id' => $branchId,
+            'previous_balance' => 0,
+            'initial_balance' => $request->admin_initial_value,
+            'total_initial_balance' => $request->admin_initial_value,
+            'current_balance' => $request->admin_initial_value,
+            'admin_initial_value' => $request->admin_initial_value,
+            'admin_user_id' => $user->id,
+            'admin_value_set_at' => now(),
+            'started_at' => now(),
+            'ended_at' => now(),
+            'is_active' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Valor inicial establecido correctamente',
+            'data' => $shift
         ]);
     }
 }

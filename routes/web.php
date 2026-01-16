@@ -181,6 +181,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/shift-status', [CashManagementController::class, 'getShiftStatus'])->name('cash-management.shift-status');
         Route::post('/shift/start', [CashManagementController::class, 'startShift'])->name('cash-management.shift.start');
         Route::post('/shift/end', [CashManagementController::class, 'endShift'])->name('cash-management.shift.end');
+        Route::post('/admin/set-initial-value', [CashManagementController::class, 'setAdminInitialValue'])->name('cash-management.admin.set-initial-value');
         Route::post('/transaction', [CashManagementController::class, 'addTransaction'])->name('cash-management.transaction');
         Route::get('/transactions', [CashManagementController::class, 'getTransactions'])->name('cash-management.transactions');
         Route::post('/pasillera', [CashManagementController::class, 'addPasillera'])->name('cash-management.pasillera');

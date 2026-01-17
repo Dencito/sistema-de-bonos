@@ -423,7 +423,7 @@ class UserController extends Controller
             'afp' => $request->afp ?? $user->afp,
             'childrens' => $request->childrens ?? $user->childrens,
             'username' => $request->username ?? $user->username,
-            'password' => $request->filled('password') ? $validatedData['password'] : $user->password,
+            'password' => $request->password ? $request->password : null,
             'branch_id' => $request->branch_id ?? $user->branch_id,
             'status_id' => $request->status_id ?? $user->status_id,
             'category_bonus_id' => $request->category_bonus_id ?? $user->category_bonus_id,

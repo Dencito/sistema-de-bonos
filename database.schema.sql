@@ -369,9 +369,9 @@ CREATE TABLE `888spa_cash_shifts` (
     `admin_value_set_at` TIMESTAMP NULL,
     `created_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NULL,
-    CONSTRAINT `cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `cash_shifts_admin_user_id_foreign` FOREIGN KEY (`admin_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+    CONSTRAINT `888spa_cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `888spa_cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `888spa_cash_shifts_admin_user_id_foreign` FOREIGN KEY (`admin_user_id`) REFERENCES `888spa_users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

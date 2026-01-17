@@ -1,87 +1,109 @@
 -- Tablas Independientes (sin dependencias de claves foráneas)
 -- Estas tablas no dependen de otras y se crean primero.
 
-DROP TABLE IF EXISTS `888spa_category_bonuses`;
+DROP TABLE IF EXISTS `empresa_category_bonuses`;
 
-DROP TABLE IF EXISTS `888spa_roles`;
-
-DROP TABLE IF EXISTS `888spa_statuses`;
-
-CREATE TABLE `888spa_category_bonuses` (
+CREATE TABLE `empresa_category_bonuses` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `base_amount` int NOT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 6 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-CREATE TABLE `888spa_roles` (
+DROP TABLE IF EXISTS `empresa_roles`;
+
+CREATE TABLE `empresa_roles` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `888spa_roles_name_unique` (`name`)
-) ENGINE = InnoDB AUTO_INCREMENT = 7 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    UNIQUE KEY `empresa_roles_name_unique` (`name`)
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 INSERT INTO
-    `888spa_roles`
+    `empresa_roles` (
+        name,
+        description,
+        created_at,
+        updated_at
+    )
 VALUES (
-        1,
         'duenio',
         'Dueño del sistema con acceso total',
         '2025-07-23 10:29:22',
         '2025-07-23 10:29:22'
     ),
     (
-        2,
         'super-admin',
         'Super administrador con acceso elevado',
         '2025-07-23 10:29:22',
         '2025-07-23 10:29:22'
     ),
     (
-        3,
         'admin',
         'Administrador del sistema',
         '2025-07-23 10:29:22',
         '2025-07-23 10:29:22'
     ),
     (
-        4,
         'supervisor',
         'Supervisor con acceso a gestión',
         '2025-07-23 10:29:22',
         '2025-07-23 10:29:22'
     ),
     (
-        5,
         'trabajador',
         'Trabajador con acceso básico',
         '2025-07-23 10:29:22',
         '2025-07-23 10:29:22'
     ),
     (
-        6,
         'jugador',
         'Jugador del sistema',
         '2025-07-23 10:29:22',
         '2025-07-23 10:29:22'
     );
 
-CREATE TABLE `888spa_statuses` (
+DROP TABLE IF EXISTS `empresa_statuses`;
+
+CREATE TABLE `empresa_statuses` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 5 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_companies`;
+INSERT INTO
+    empresa_statuses (name, created_at, updated_at)
+VALUES (
+        'Activo',
+        '2025-07-23 22:06:28',
+        '2025-07-23 22:06:28'
+    ),
+    (
+        'Inactivo',
+        '2025-07-23 22:06:28',
+        '2025-07-23 22:06:28'
+    ),
+    (
+        'En revisión',
+        '2025-07-23 22:06:28',
+        '2025-07-23 22:06:28'
+    ),
+    (
+        'Borrado',
+        '2025-07-23 22:06:28',
+        '2025-07-23 22:06:28'
+    );
 
-CREATE TABLE `888spa_companies` (
+DROP TABLE IF EXISTS `empresa_companies`;
+
+CREATE TABLE `empresa_companies` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `db_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -121,19 +143,56 @@ CREATE TABLE `888spa_companies` (
     `trial_ends_at` timestamp NULL DEFAULT NULL,
     `subscription_ends_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `888spa_companies_slug_unique` (`slug`),
-    UNIQUE KEY `888spa_companies_schema_name_unique` (`schema_name`),
-    KEY `888spa_companies_status_id_foreign` (`status_id`),
-    CONSTRAINT `888spa_companies_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `888spa_statuses` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_companies_chk_1` CHECK (json_valid(`settings`))
-) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    UNIQUE KEY `empresa_companies_slug_unique` (`slug`),
+    UNIQUE KEY `empresa_companies_schema_name_unique` (`schema_name`),
+    KEY `empresa_companies_status_id_foreign` (`status_id`),
+    CONSTRAINT `empresa_companies_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_companies_chk_1` CHECK (json_valid(`settings`))
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 INSERT INTO
-    `888spa_companies`
+    empresa_companies (
+        name,
+        db_name,
+        status_id,
+        created_at,
+        updated_at,
+        creationDate,
+        rutNumbers,
+        rutDv,
+        business,
+        prefix,
+        phone,
+        email,
+        legalRepresentativeNames,
+        legalRepresentativeLastNames,
+        rutNumbersLegalRepresentative,
+        rutDvLegalRepresentative,
+        contactNames,
+        contactLastNames,
+        rutNumbersContact,
+        rutDvContact,
+        prefixContact,
+        contactPhone,
+        contactEmail,
+        companyAddressCountry,
+        companyAddressRegion,
+        companyAddressProvince,
+        companyAddressCommune,
+        companyAddressStreet,
+        companyAddressNumber,
+        max_branches,
+        domain,
+        slug,
+        schema_name,
+        settings,
+        is_active,
+        trial_ends_at,
+        subscription_ends_at
+    )
 VALUES (
-        1,
-        '888spa',
-        'db_888spa',
+        'empresa',
+        'db_empresa',
         1,
         '2025-07-23 22:06:28',
         '2025-07-23 22:06:28',
@@ -162,48 +221,21 @@ VALUES (
         'sdfg1231',
         '123',
         10,
-        '888spa.rentamania.cl',
-        '888spa',
-        '888spa',
+        'empresa.rentamania.cl',
+        'empresa',
+        'empresa',
         '[]',
         1,
         NULL,
         NULL
     );
 
-INSERT INTO
-    `888spa_statuses`
-VALUES (
-        1,
-        'Activo',
-        '2025-07-23 22:06:28',
-        '2025-07-23 22:06:28'
-    ),
-    (
-        2,
-        'Inactivo',
-        '2025-07-23 22:06:28',
-        '2025-07-23 22:06:28'
-    ),
-    (
-        3,
-        'En revisión',
-        '2025-07-23 22:06:28',
-        '2025-07-23 22:06:28'
-    ),
-    (
-        4,
-        'Borrado',
-        '2025-07-23 22:06:28',
-        '2025-07-23 22:06:28'
-    );
-
 -- Tablas Dependientes (con dependencias de claves foráneas)
 -- Estas tablas dependen de las anteriores y se crean después.
 
-DROP TABLE IF EXISTS `888spa_branches`;
+DROP TABLE IF EXISTS `empresa_branches`;
 
-CREATE TABLE `888spa_branches` (
+CREATE TABLE `empresa_branches` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `creationDate` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -225,19 +257,19 @@ CREATE TABLE `888spa_branches` (
     `updated_at` timestamp NULL DEFAULT NULL,
     `ticketNumber` int DEFAULT '0',
     PRIMARY KEY (`id`),
-    KEY `888spa_branches_status_id_foreign` (`status_id`),
-    KEY `888spa_branches_company_id_foreign` (`company_id`),
-    CONSTRAINT `888spa_branches_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `888spa_companies` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_branches_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `888spa_statuses` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_branches_chk_1` CHECK (
+    KEY `empresa_branches_status_id_foreign` (`status_id`),
+    KEY `empresa_branches_company_id_foreign` (`company_id`),
+    CONSTRAINT `empresa_branches_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `empresa_companies` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_branches_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_branches_chk_1` CHECK (
         json_valid(`available_schedules`)
     ),
-    CONSTRAINT `888spa_branches_chk_2` CHECK (json_valid(`bonus_schedules`))
-) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    CONSTRAINT `empresa_branches_chk_2` CHECK (json_valid(`bonus_schedules`))
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_users`;
+DROP TABLE IF EXISTS `empresa_users`;
 
-CREATE TABLE `888spa_users` (
+CREATE TABLE `empresa_users` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `first_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `second_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -282,26 +314,26 @@ CREATE TABLE `888spa_users` (
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `888spa_users_phone_unique` (`phone`),
-    UNIQUE KEY `888spa_users_email_unique` (`email`),
-    UNIQUE KEY `888spa_users_username_unique` (`username`),
-    KEY `888spa_users_role_id_foreign` (`role_id`),
-    KEY `888spa_users_status_id_foreign` (`status_id`),
-    KEY `888spa_users_branch_id_foreign` (`branch_id`),
-    KEY `888spa_users_company_id_foreign` (`company_id`),
-    KEY `888spa_users_category_bonus_id_foreign` (`category_bonus_id`),
-    CONSTRAINT `888spa_users_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_users_category_bonus_id_foreign` FOREIGN KEY (`category_bonus_id`) REFERENCES `888spa_category_bonuses` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_users_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `888spa_companies` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `888spa_roles` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_users_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `888spa_statuses` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_users_chk_1` CHECK (json_valid(`fingerprints`)),
-    CONSTRAINT `888spa_users_chk_2` CHECK (json_valid(`levels`))
-) ENGINE = InnoDB AUTO_INCREMENT = 120 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    UNIQUE KEY `empresa_users_phone_unique` (`phone`),
+    UNIQUE KEY `empresa_users_email_unique` (`email`),
+    UNIQUE KEY `empresa_users_username_unique` (`username`),
+    KEY `empresa_users_role_id_foreign` (`role_id`),
+    KEY `empresa_users_status_id_foreign` (`status_id`),
+    KEY `empresa_users_branch_id_foreign` (`branch_id`),
+    KEY `empresa_users_company_id_foreign` (`company_id`),
+    KEY `empresa_users_category_bonus_id_foreign` (`category_bonus_id`),
+    CONSTRAINT `empresa_users_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_users_category_bonus_id_foreign` FOREIGN KEY (`category_bonus_id`) REFERENCES `empresa_category_bonuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_users_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `empresa_companies` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `empresa_roles` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_users_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_users_chk_1` CHECK (json_valid(`fingerprints`)),
+    CONSTRAINT `empresa_users_chk_2` CHECK (json_valid(`levels`))
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_bonuses`;
+DROP TABLE IF EXISTS `empresa_bonuses`;
 
-CREATE TABLE `888spa_bonuses` (
+CREATE TABLE `empresa_bonuses` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `amount` decimal(10, 2) NOT NULL DEFAULT '0.00',
     `user_id` bigint unsigned NOT NULL,
@@ -311,13 +343,13 @@ CREATE TABLE `888spa_bonuses` (
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `888spa_bonuses_user_id_foreign` (`user_id`),
-    CONSTRAINT `888spa_bonuses_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 93 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_bonuses_user_id_foreign` (`user_id`),
+    CONSTRAINT `empresa_bonuses_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_totems`;
+DROP TABLE IF EXISTS `empresa_totems`;
 
-CREATE TABLE `888spa_totems` (
+CREATE TABLE `empresa_totems` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -326,25 +358,24 @@ CREATE TABLE `888spa_totems` (
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `888spa_totems_code_unique` (`code`),
-    KEY `888spa_totems_branch_id_foreign` (`branch_id`),
-    CONSTRAINT `888spa_totems_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    UNIQUE KEY `empresa_totems_code_unique` (`code`),
+    KEY `empresa_totems_branch_id_foreign` (`branch_id`),
+    CONSTRAINT `empresa_totems_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `empresa_cash_shifts`;
 
-DROP TABLE IF EXISTS `888spa_cash_shifts`;
-
-CREATE TABLE `888spa_cash_shifts` (
+CREATE TABLE `empresa_cash_shifts` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NOT NULL,
     `branch_id` BIGINT UNSIGNED NOT NULL,
-    `previous_balance` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    `initial_balance` DECIMAL(15,2) NOT NULL,
-    `total_initial_balance` DECIMAL(15,2) NOT NULL,
-    `current_balance` DECIMAL(15,2) NOT NULL,
-    `total_transfers` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    `total_giros` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    `total_payments` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `previous_balance` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    `initial_balance` DECIMAL(15, 2) NOT NULL,
+    `total_initial_balance` DECIMAL(15, 2) NOT NULL,
+    `current_balance` DECIMAL(15, 2) NOT NULL,
+    `total_transfers` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    `total_giros` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    `total_payments` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
     `is_active` TINYINT(1) NOT NULL DEFAULT 1,
     `started_at` TIMESTAMP NOT NULL,
     `ended_at` TIMESTAMP NULL,
@@ -353,31 +384,30 @@ CREATE TABLE `888spa_cash_shifts` (
     `opening_5000` INT NOT NULL DEFAULT 0,
     `opening_2000` INT NOT NULL DEFAULT 0,
     `opening_1000` INT NOT NULL DEFAULT 0,
-    `opening_coins` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    `opening_total_counted` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `opening_coins` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    `opening_total_counted` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
     `closing_20000` INT NOT NULL DEFAULT 0,
     `closing_10000` INT NOT NULL DEFAULT 0,
     `closing_5000` INT NOT NULL DEFAULT 0,
     `closing_2000` INT NOT NULL DEFAULT 0,
     `closing_1000` INT NOT NULL DEFAULT 0,
-    `closing_coins` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    `closing_total_counted` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    `difference` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `closing_coins` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    `closing_total_counted` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    `difference` DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
     `closing_notes` TEXT NULL,
-    `admin_initial_value` DECIMAL(15,2) NULL,
+    `admin_initial_value` DECIMAL(15, 2) NULL,
     `admin_user_id` BIGINT UNSIGNED NULL,
     `admin_value_set_at` TIMESTAMP NULL,
     `created_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NULL,
-    CONSTRAINT `888spa_cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_cash_shifts_admin_user_id_foreign` FOREIGN KEY (`admin_user_id`) REFERENCES `888spa_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    CONSTRAINT `empresa_cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_cash_shifts_admin_user_id_foreign` FOREIGN KEY (`admin_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `empresa_pasilleras`;
 
-DROP TABLE IF EXISTS `888spa_pasilleras`;
-
-CREATE TABLE `888spa_pasilleras` (
+CREATE TABLE `empresa_pasilleras` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `cash_shift_id` bigint unsigned NOT NULL,
     `user_id` bigint unsigned DEFAULT NULL,
@@ -388,15 +418,15 @@ CREATE TABLE `888spa_pasilleras` (
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `888spa_pasilleras_cash_shift_id_foreign` (`cash_shift_id`),
-    KEY `888spa_pasilleras_user_id_foreign` (`user_id`),
-    CONSTRAINT `888spa_pasilleras_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `888spa_cash_shifts` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_pasilleras_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_pasilleras_cash_shift_id_foreign` (`cash_shift_id`),
+    KEY `empresa_pasilleras_user_id_foreign` (`user_id`),
+    CONSTRAINT `empresa_pasilleras_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `empresa_cash_shifts` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_pasilleras_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_cash_transactions`;
+DROP TABLE IF EXISTS `empresa_cash_transactions`;
 
-CREATE TABLE `888spa_cash_transactions` (
+CREATE TABLE `empresa_cash_transactions` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `cash_shift_id` bigint unsigned NOT NULL,
     `pasillera_id` bigint unsigned DEFAULT NULL,
@@ -413,30 +443,30 @@ CREATE TABLE `888spa_cash_transactions` (
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `888spa_cash_transactions_cash_shift_id_foreign` (`cash_shift_id`),
-    KEY `888spa_cash_transactions_pasillera_id_foreign` (`pasillera_id`),
-    CONSTRAINT `888spa_cash_transactions_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `888spa_cash_shifts` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_cash_transactions_pasillera_id_foreign` FOREIGN KEY (`pasillera_id`) REFERENCES `888spa_pasilleras` (`id`) ON DELETE SET NULL
-) ENGINE = InnoDB AUTO_INCREMENT = 14 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_cash_transactions_cash_shift_id_foreign` (`cash_shift_id`),
+    KEY `empresa_cash_transactions_pasillera_id_foreign` (`pasillera_id`),
+    CONSTRAINT `empresa_cash_transactions_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `empresa_cash_shifts` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_cash_transactions_pasillera_id_foreign` FOREIGN KEY (`pasillera_id`) REFERENCES `empresa_pasilleras` (`id`) ON DELETE SET NULL
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_fingerprint_logs`;
+DROP TABLE IF EXISTS `empresa_fingerprint_logs`;
 
-CREATE TABLE `888spa_fingerprint_logs` (
+CREATE TABLE `empresa_fingerprint_logs` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `user_id` bigint unsigned NOT NULL,
     `totem_id` bigint unsigned NOT NULL,
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `888spa_fingerprint_logs_user_id_foreign` (`user_id`),
-    KEY `888spa_fingerprint_logs_totem_id_foreign` (`totem_id`),
-    CONSTRAINT `888spa_fingerprint_logs_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `888spa_totems` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_fingerprint_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 712 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_fingerprint_logs_user_id_foreign` (`user_id`),
+    KEY `empresa_fingerprint_logs_totem_id_foreign` (`totem_id`),
+    CONSTRAINT `empresa_fingerprint_logs_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_fingerprint_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_shifts`;
+DROP TABLE IF EXISTS `empresa_shifts`;
 
-CREATE TABLE `888spa_shifts` (
+CREATE TABLE `empresa_shifts` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `branch_id` bigint unsigned NOT NULL,
     `opened_by_user_id` bigint unsigned NOT NULL,
@@ -447,17 +477,17 @@ CREATE TABLE `888spa_shifts` (
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `888spa_shifts_branch_id_foreign` (`branch_id`),
-    KEY `888spa_shifts_opened_by_user_id_foreign` (`opened_by_user_id`),
-    KEY `888spa_shifts_closed_by_user_id_foreign` (`closed_by_user_id`),
-    CONSTRAINT `888spa_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_shifts_closed_by_user_id_foreign` FOREIGN KEY (`closed_by_user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_shifts_opened_by_user_id_foreign` FOREIGN KEY (`opened_by_user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 41 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_shifts_branch_id_foreign` (`branch_id`),
+    KEY `empresa_shifts_opened_by_user_id_foreign` (`opened_by_user_id`),
+    KEY `empresa_shifts_closed_by_user_id_foreign` (`closed_by_user_id`),
+    CONSTRAINT `empresa_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_shifts_closed_by_user_id_foreign` FOREIGN KEY (`closed_by_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_shifts_opened_by_user_id_foreign` FOREIGN KEY (`opened_by_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_tickets`;
+DROP TABLE IF EXISTS `empresa_tickets`;
 
-CREATE TABLE `888spa_tickets` (
+CREATE TABLE `empresa_tickets` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `user_id` bigint unsigned NOT NULL,
     `totem_id` bigint unsigned NOT NULL,
@@ -466,30 +496,30 @@ CREATE TABLE `888spa_tickets` (
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `888spa_tickets_user_id_foreign` (`user_id`),
-    KEY `888spa_tickets_totem_id_foreign` (`totem_id`),
-    CONSTRAINT `888spa_tickets_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `888spa_totems` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_tickets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 1059 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_tickets_user_id_foreign` (`user_id`),
+    KEY `empresa_tickets_totem_id_foreign` (`totem_id`),
+    CONSTRAINT `empresa_tickets_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_tickets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_user_branches`;
+DROP TABLE IF EXISTS `empresa_user_branches`;
 
-CREATE TABLE `888spa_user_branches` (
+CREATE TABLE `empresa_user_branches` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `user_id` bigint unsigned NOT NULL,
     `branch_id` bigint unsigned NOT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `888spa_user_branches_user_id_foreign` (`user_id`),
-    KEY `888spa_user_branches_branch_id_foreign` (`branch_id`),
-    CONSTRAINT `888spa_user_branches_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `888spa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `888spa_user_branches_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `888spa_users` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 114 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    KEY `empresa_user_branches_user_id_foreign` (`user_id`),
+    KEY `empresa_user_branches_branch_id_foreign` (`branch_id`),
+    CONSTRAINT `empresa_user_branches_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_user_branches_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_orders`;
+DROP TABLE IF EXISTS `empresa_orders`;
 
-CREATE TABLE `888spa_orders` (
+CREATE TABLE `empresa_orders` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `total` decimal(10, 2) NOT NULL,
     `products` json NOT NULL,
@@ -504,11 +534,11 @@ CREATE TABLE `888spa_orders` (
     `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `888spa_products`;
+DROP TABLE IF EXISTS `empresa_products`;
 
-CREATE TABLE `888spa_products` (
+CREATE TABLE `empresa_products` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -518,7 +548,10 @@ CREATE TABLE `888spa_products` (
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `code` (`code`)
-) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- Tablas independientes
+-- Estas tablas son del framework laravel.
 
 DROP TABLE IF EXISTS `cache`;
 
@@ -589,7 +622,7 @@ CREATE TABLE `migrations` (
     `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `batch` int NOT NULL,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 31 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `password_reset_tokens`;
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CashShift;
 use App\Models\CashTransaction;
 use App\Models\Pasillera;
+use App\Events\CashTransactionAdded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -353,6 +354,12 @@ class CashManagementController extends Controller
             $activeShift->save();
 
             DB::commit();
+
+            // Dispatch broadcasting event
+            broadcast(new CashTransactionAdded($transaction, $activeShift, [
+                'id' => $user->id,
+                'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name)
+            ]));
 
             return response()->json([
                 'success' => true,

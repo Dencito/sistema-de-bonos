@@ -27,6 +27,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadPasillera();
+
+    const channel = window.Echo.channel('pasillera-updates');
+    channel.listen('.cashtransaction.added', (e) => {
+      alert('Nueva transacción registrada por la cajera: ' + e.user.name + '\nMonto: $' + e.transaction.amount);
+    });
+    return () => {
+      window.Echo.leave('pasillera-updates');
+    };
   }, []);
 
   const loadPasillera = async () => {
@@ -112,9 +120,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 w-12 h-12 rounded-full border-b-2 animate-spin border-primary-600"></div>
           <p className="text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -124,15 +132,15 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 safe-top safe-bottom">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 pb-24">
+      <div className="p-6 pb-24 text-white bg-gradient-to-r from-primary-600 to-primary-700">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-1">Hola, {user?.name?.split(' ')[0]}</h1>
-            <p className="text-primary-100 text-sm">Bienvenido de vuelta</p>
+            <h1 className="mb-1 text-2xl font-bold">Hola, {user?.name?.split(' ')[0]}</h1>
+            <p className="text-sm text-primary-100">Bienvenido de vuelta</p>
           </div>
           <button
             onClick={handleLogout}
-            className="p-2 hover:bg-primary-500 rounded-lg transition active:bg-primary-800"
+            className="p-2 rounded-lg transition hover:bg-primary-500 active:bg-primary-800"
           >
             <LogOut className="w-5 h-5" />
           </button>
@@ -141,14 +149,14 @@ export default function Dashboard() {
 
       {/* Balance Card */}
       <div className="px-6 -mt-16 mb-6">
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="p-6 bg-white rounded-2xl shadow-lg">
           {error ? (
-            <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-              <p className="text-gray-600 mb-4">{error}</p>
+            <div className="py-8 text-center">
+              <AlertCircle className="mx-auto mb-3 w-12 h-12 text-amber-500" />
+              <p className="mb-4 text-gray-600">{error}</p>
               <button
                 onClick={handleRefresh}
-                className="text-primary-600 font-semibold hover:text-primary-700"
+                className="font-semibold text-primary-600 hover:text-primary-700"
               >
                 Reintentar
               </button>
@@ -157,7 +165,7 @@ export default function Dashboard() {
             <>
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">Saldo Disponible</p>
+                  <p className="mb-1 text-sm text-gray-500">Saldo Disponible</p>
                   <h2 className="text-3xl font-bold text-gray-900">
                     {formatCurrency(pasillera.current_balance)}
                   </h2>
@@ -165,37 +173,37 @@ export default function Dashboard() {
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition active:bg-gray-200"
+                  className="p-2 rounded-lg transition hover:bg-gray-100 active:bg-gray-200"
                 >
                   <RefreshCw className={`w-5 h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-xl p-4">
+                <div className="p-4 bg-blue-50 rounded-xl">
                   <div className="flex items-center mb-2">
-                    <Wallet className="w-4 h-4 text-blue-600 mr-2" />
-                    <p className="text-blue-600 text-xs font-medium">Inicial</p>
+                    <Wallet className="mr-2 w-4 h-4 text-blue-600" />
+                    <p className="text-xs font-medium text-blue-600">Inicial</p>
                   </div>
-                  <p className="text-blue-900 font-semibold">
+                  <p className="font-semibold text-blue-900">
                     {formatCurrency(pasillera.initial_balance)}
                   </p>
                 </div>
 
-                <div className="bg-red-50 rounded-xl p-4">
+                <div className="p-4 bg-red-50 rounded-xl">
                   <div className="flex items-center mb-2">
-                    <TrendingDown className="w-4 h-4 text-red-600 mr-2" />
-                    <p className="text-red-600 text-xs font-medium">Gastado</p>
+                    <TrendingDown className="mr-2 w-4 h-4 text-red-600" />
+                    <p className="text-xs font-medium text-red-600">Gastado</p>
                   </div>
-                  <p className="text-red-900 font-semibold">
+                  <p className="font-semibold text-red-900">
                     {formatCurrency(pasillera.total_payments)}
                   </p>
                 </div>
               </div>
             </>
           ) : (
-            <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <div className="py-8 text-center">
+              <AlertCircle className="mx-auto mb-3 w-12 h-12 text-gray-400" />
               <p className="text-gray-600">No tienes una pasillera activa</p>
             </div>
           )}
@@ -207,25 +215,25 @@ export default function Dashboard() {
         <div className="px-6 space-y-3">
           <button
             onClick={() => navigate('/register-expense')}
-            className="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700 active:bg-primary-800 transition flex items-center justify-center shadow-lg"
+            className="flex justify-center items-center py-4 w-full font-semibold text-white rounded-xl shadow-lg transition bg-primary-600 hover:bg-primary-700 active:bg-primary-800"
           >
-            <Plus className="w-5 h-5 mr-2" />
+            <Plus className="mr-2 w-5 h-5" />
             Registrar Gasto
           </button>
 
           <button
             onClick={() => navigate('/history')}
-            className="w-full bg-white text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-50 active:bg-gray-100 transition flex items-center justify-center shadow border border-gray-200"
+            className="flex justify-center items-center py-4 w-full font-semibold text-gray-700 bg-white rounded-xl border border-gray-200 shadow transition hover:bg-gray-50 active:bg-gray-100"
           >
-            <History className="w-5 h-5 mr-2" />
+            <History className="mr-2 w-5 h-5" />
             Ver Historial
           </button>
 
           <button
             onClick={() => setShowFinalizeConfirm(true)}
-            className="w-full bg-green-600 text-white py-4 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition flex items-center justify-center shadow-lg"
+            className="flex justify-center items-center py-4 w-full font-semibold text-white bg-green-600 rounded-xl shadow-lg transition hover:bg-green-700 active:bg-green-800"
           >
-            <CheckCircle className="w-5 h-5 mr-2" />
+            <CheckCircle className="mr-2 w-5 h-5" />
             Finalizar Turno
           </button>
         </div>
@@ -234,15 +242,15 @@ export default function Dashboard() {
       {/* Recent Transactions */}
       {pasillera && pasillera.transactions && pasillera.transactions.length > 0 && (
         <div className="px-6 mt-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Últimos Movimientos</h3>
-          <div className="bg-white rounded-xl shadow overflow-hidden">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">Últimos Movimientos</h3>
+          <div className="overflow-hidden bg-white rounded-xl shadow">
             {pasillera.transactions.slice(0, 5).map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0"
+                className="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0"
               >
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="flex justify-center items-center mr-3 w-10 h-10 bg-red-100 rounded-full">
                     <DollarSign className="w-5 h-5 text-red-600" />
                   </div>
                   <div>
@@ -263,23 +271,23 @@ export default function Dashboard() {
 
       {/* Finalize Shift Confirmation Modal */}
       {showFinalizeConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+          <div className="p-6 w-full max-w-md bg-white rounded-2xl shadow-2xl">
+            <div className="mb-6 text-center">
+              <div className="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Finalizar Turno</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="mb-2 text-xl font-bold text-gray-900">Finalizar Turno</h3>
+              <p className="mb-4 text-gray-600">
                 ¿Estás seguro que deseas finalizar tu turno?
               </p>
               {pasillera && (
-                <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-gray-600 mb-1">Saldo a devolver:</p>
+                <div className="p-4 mb-4 bg-blue-50 rounded-xl">
+                  <p className="mb-1 text-sm text-gray-600">Saldo a devolver:</p>
                   <p className="text-2xl font-bold text-blue-900">
                     {formatCurrency(pasillera.current_balance)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="mt-2 text-xs text-gray-500">
                     Este saldo será devuelto al banco y tu turno será cerrado.
                   </p>
                 </div>
@@ -290,18 +298,18 @@ export default function Dashboard() {
               <button
                 onClick={() => setShowFinalizeConfirm(false)}
                 disabled={finalizing}
-                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-300 active:bg-gray-400 transition disabled:opacity-50"
+                className="flex-1 py-3 font-semibold text-gray-800 bg-gray-200 rounded-xl transition hover:bg-gray-300 active:bg-gray-400 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleFinalizeShift}
                 disabled={finalizing}
-                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition disabled:opacity-50 flex items-center justify-center"
+                className="flex flex-1 justify-center items-center py-3 font-semibold text-white bg-green-600 rounded-xl transition hover:bg-green-700 active:bg-green-800 disabled:opacity-50"
               >
                 {finalizing ? (
                   <>
-                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                    <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
                     Finalizando...
                   </>
                 ) : (

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
+use App\Events\PasilleraDataUpdated;
 use App\Models\CashShift;
 use App\Models\CashTransaction;
 use App\Models\Pasillera;
@@ -124,6 +125,16 @@ class MobilePasilleraController extends Controller
             $pasillera->load(['transactions' => function($query) {
                 $query->orderBy('created_at', 'desc');
             }]);
+
+            // Dispatch broadcasting event
+            broadcast(new PasilleraDataUpdated([
+                'pasillera' => $pasillera,
+                'transaction' => $transaction,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name)
+                ]
+            ]));
 
             return response()->json([
                 'success' => true,

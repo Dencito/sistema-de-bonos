@@ -14,7 +14,6 @@
         "laravel/reverb": "^1.4",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "pusher/pusher-php-server": "^7.2",
         "sentry/sentry-laravel": "^4.10",
         "tightenco/ziggy": "^2.0"
     },

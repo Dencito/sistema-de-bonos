@@ -72,12 +72,21 @@ export default function Dashboard({ auth }) {
 
   useEffect(() => {
     getSelectedCompany();
+    getShiftStatus();
 
-    // Solo obtener el estado del turno si el usuario es un trabajador
-    if (allowedRoles.shiftControl.includes(auth.role)) {
-      getShiftStatus();
-    }
-  }, [auth.role]);
+    // Escuchar eventos de actualización de datos de pasilleras
+    const channel = window.Echo.channel('dashboard-updates');
+    channel.listen('.data.updated', (e) => {
+      toast.success(`Nueva transacción registrada por ${e.user.name}`);
+      // Aquí puedes actualizar el estado local si es necesario
+      // Por ejemplo, refrescar alguna lista de transacciones
+    });
+
+    // Cleanup
+    return () => {
+      window.Echo.leave('dashboard-updates');
+    };
+  }, []);
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);

@@ -17,6 +17,18 @@ export default function RegisterExpense() {
 
   useEffect(() => {
     loadMachines();
+
+    // Escuchar eventos de actualización de datos
+    const channel = window.Echo.channel('dashboard-updates');
+    channel.listen('.data.updated', () => {
+      // Aquí puedes mostrar notificaciones o actualizar estado
+      // Por ejemplo, mostrar una notificación de que la transacción fue registrada
+    });
+
+    // Cleanup
+    return () => {
+      window.Echo.leave('dashboard-updates');
+    };
   }, []);
 
   const loadMachines = async () => {
@@ -84,6 +96,7 @@ export default function RegisterExpense() {
   const formatCurrency = (value) => {
     const number = parseFloat(value.replace(/[^0-9]/g, ''));
     if (isNaN(number)) return '';
+    // eslint-disable-next-line no-undef
     return new Intl.NumberFormat('es-CL').format(number);
   };
 

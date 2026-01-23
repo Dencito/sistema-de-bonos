@@ -73,18 +73,25 @@ export default function Dashboard({ auth }) {
   useEffect(() => {
     getSelectedCompany();
     getShiftStatus();
-
+    
+    console.log('[Dashboard] Conectando a Reverb...');
+    console.log('[Dashboard] Echo disponible:', !!window.Echo);
+    
     // Escuchar eventos de actualización de datos de pasilleras
     const channel = window.Echo.channel('dashboard-updates');
+    
+    console.log('[Dashboard] Canal creado:', channel);
+    
     channel.listen('.data.updated', (e) => {
+      console.log('[Dashboard] Evento recibido:', e);
       toast.success(`Nueva transacción registrada por ${e.user.name}`);
-      // Aquí puedes actualizar el estado local si es necesario
-      // Por ejemplo, refrescar alguna lista de transacciones
+      alert(`Nueva transacción registrada por ${e.user.name}`);
     });
 
     // Cleanup
     return () => {
-      window.Echo.leave('dashboard-updates');
+      console.log('[Dashboard] Desconectando del canal...');
+      window.Echo.leaveChannel('dashboard-updates');
     };
   }, []);
 

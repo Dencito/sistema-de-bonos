@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+// Canal público para actualizaciones del dashboard
+Broadcast::channel('dashboard-updates', function () {
+    return true;
 });

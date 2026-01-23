@@ -127,6 +127,12 @@ class MobilePasilleraController extends Controller
             }]);
 
             // Dispatch broadcasting event
+            \Log::info('Disparando evento PasilleraDataUpdated', [
+                'user_id' => $user->id,
+                'pasillera_id' => $pasillera->id,
+                'transaction_id' => $transaction->id
+            ]);
+            
             broadcast(new PasilleraDataUpdated([
                 'pasillera' => $pasillera,
                 'transaction' => $transaction,
@@ -134,7 +140,7 @@ class MobilePasilleraController extends Controller
                     'id' => $user->id,
                     'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name)
                 ]
-            ]));
+            ]))->toOthers();
 
             return response()->json([
                 'success' => true,

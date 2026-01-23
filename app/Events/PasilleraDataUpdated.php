@@ -14,11 +14,15 @@ class PasilleraDataUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $data;
+    public $pasillera;
+    public $transaction;
+    public $user;
 
     public function __construct($data)
     {
-        $this->data = $data;
+        $this->pasillera = $data['pasillera'] ?? null;
+        $this->transaction = $data['transaction'] ?? null;
+        $this->user = $data['user'] ?? null;
     }
 
     public function broadcastOn()
@@ -29,5 +33,14 @@ class PasilleraDataUpdated implements ShouldBroadcast
     public function broadcastAs()
     {
         return 'data.updated';
+    }
+
+    public function broadcastWith()
+    {
+        return [
+            'pasillera' => $this->pasillera,
+            'transaction' => $this->transaction,
+            'user' => $this->user,
+        ];
     }
 }

@@ -37,7 +37,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
     const [transactions, setTransactions] = useState(activeShift?.transactions || []);
     const [loading, setLoading] = useState(false);
-    
+
     // Estados para conteo de apertura
     const [opening20000, setOpening20000] = useState(0);
     const [opening10000, setOpening10000] = useState(0);
@@ -45,7 +45,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     const [opening2000, setOpening2000] = useState(0);
     const [opening1000, setOpening1000] = useState(0);
     const [openingCoins, setOpeningCoins] = useState(0);
-    
+
     // Estados para conteo de cierre
     const [closing20000, setClosing20000] = useState(0);
     const [closing10000, setClosing10000] = useState(0);
@@ -54,7 +54,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     const [closing1000, setClosing1000] = useState(0);
     const [closingCoins, setClosingCoins] = useState(0);
     const [closingNotes, setClosingNotes] = useState('');
-    
+
     // Modal states
     const [openingModalVisible, setOpeningModalVisible] = useState(false);
     const [closingModalVisible, setClosingModalVisible] = useState(false);
@@ -121,7 +121,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
             if (response.data.success) {
                 const { has_difference, opening_difference } = response.data;
-                
+
                 if (has_difference) {
                     const diffAmount = new Intl.NumberFormat('es-CL').format(Math.abs(opening_difference));
                     const diffType = opening_difference > 0 ? 'SOBRANTE' : 'FALTANTE';
@@ -132,7 +132,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 } else {
                     message.success('Turno iniciado correctamente - Conteo exacto');
                 }
-                
+
                 setShift(response.data.data);
                 setInitialBalance('');
                 setOpening20000(0);
@@ -166,12 +166,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
             if (response.data.success) {
                 const { difference, closing_total_counted } = response.data.data;
-                
+
                 let msg = 'Turno cerrado correctamente.';
                 if (difference !== 0) {
                     msg += ` Diferencia: $${new Intl.NumberFormat('es-CL').format(Math.abs(difference))} ${difference > 0 ? '(Sobrante)' : '(Faltante)'}`;
                 }
-                
+
                 message.success(msg);
                 setShift(null);
                 setPasilleras([]);
@@ -362,6 +362,54 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         },
     ];
 
+    useEffect(() => {
+        // Escuchar eventos de actualización de datos de pasilleras
+        const channel = window.Echo.channel('dashboard-updates');
+
+        console.log('[SystemBank] Canal creado:', channel);
+
+        channel.listen('.data.updated', (e) => {
+            console.log('[SystemBank] Evento recibido:', e);
+            
+            // Actualizar la pasillera específica en el estado local
+            setPasilleras(prevPasilleras => {
+                return prevPasilleras.map(pasillera => {
+                    if (pasillera.id === e.pasillera.id) {
+                        // Actualizar los datos de la pasillera
+                        return {
+                            ...pasillera,
+                            total_payments: e.pasillera.total_payments,
+                            current_balance: e.pasillera.current_balance,
+                            transactions: [e.transaction, ...(pasillera.transactions || [])]
+                        };
+                    }
+                    return pasillera;
+                });
+            });
+
+            // Actualizar el turno actual con el nuevo balance
+            setShift(prevShift => {
+                if (prevShift) {
+                    return {
+                        ...prevShift,
+                        total_payments: (parseFloat(prevShift.total_payments) + parseFloat(e.transaction.amount)).toString(),
+                        current_balance: (parseFloat(prevShift.current_balance) - parseFloat(e.transaction.amount)).toString()
+                    };
+                }
+                return prevShift;
+            });
+
+            // Mostrar notificación
+            message.success(`${e.user.name} registró un pago de $${new Intl.NumberFormat('es-CL').format(e.transaction.amount)} en ${e.transaction.machine}`);
+        });
+
+        // Cleanup
+        return () => {
+            console.log('[SystemBank] Desconectando del canal...');
+            window.Echo.leaveChannel('dashboard-updates');
+        };
+    }, []);
+
     return (
         <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
             <Head title="Sistema de Caja" />
@@ -409,10 +457,10 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                         Abrir Caja
                                     </Button>
                                 ) : (
-                                    <Button 
-                                        type="primary" 
-                                        danger 
-                                        loading={loading} 
+                                    <Button
+                                        type="primary"
+                                        danger
+                                        loading={loading}
                                         block
                                         onClick={() => setClosingModalVisible(true)}
                                     >
@@ -711,23 +759,23 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                 value={calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0))}
                                 precision={0}
                                 prefix="$"
-                                valueStyle={{ 
-                                    color: calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0 
-                                        ? '#3f8600' 
-                                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0 
-                                            ? '#1890ff' 
-                                            : '#cf1322' 
+                                valueStyle={{
+                                    color: calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
+                                        ? '#3f8600'
+                                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
+                                            ? '#1890ff'
+                                            : '#cf1322'
                                 }}
                                 suffix={
-                                    calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0 
-                                        ? '(Exacto)' 
-                                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0 
-                                            ? '(Sobrante)' 
+                                    calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
+                                        ? '(Exacto)'
+                                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
+                                            ? '(Sobrante)'
                                             : '(Faltante)'
                                 }
                             />
                         </div>
-                        
+
                         <Row gutter={[16, 16]}>
                             <Col span={12}>
                                 <Text strong>Billetes de $20.000</Text>
@@ -866,23 +914,23 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                 value={calculateClosingTotal() - (shift?.current_balance || 0)}
                                 precision={0}
                                 prefix="$"
-                                valueStyle={{ 
-                                    color: calculateClosingTotal() - (shift?.current_balance || 0) === 0 
-                                        ? '#3f8600' 
-                                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0 
-                                            ? '#1890ff' 
-                                            : '#cf1322' 
+                                valueStyle={{
+                                    color: calculateClosingTotal() - (shift?.current_balance || 0) === 0
+                                        ? '#3f8600'
+                                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0
+                                            ? '#1890ff'
+                                            : '#cf1322'
                                 }}
                                 suffix={
-                                    calculateClosingTotal() - (shift?.current_balance || 0) === 0 
-                                        ? '(Exacto)' 
-                                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0 
-                                            ? '(Sobrante)' 
+                                    calculateClosingTotal() - (shift?.current_balance || 0) === 0
+                                        ? '(Exacto)'
+                                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0
+                                            ? '(Sobrante)'
                                             : '(Faltante)'
                                 }
                             />
                         </div>
-                        
+
                         <Row gutter={[16, 16]}>
                             <Col span={12}>
                                 <Text strong>Billetes de $20.000</Text>

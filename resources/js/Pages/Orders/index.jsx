@@ -49,7 +49,7 @@ const columns = [
     render: (_, order) => (
       <Suspense fallback={<LoadingFallback />}>
         <div className="flex flex-wrap gap-3">
-          <LazyModalDeleteOrder data={order} />
+          <LazyModalDeleteOrder order={order} />
         </div>
       </Suspense>
     ),

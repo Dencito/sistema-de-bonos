@@ -366,11 +366,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         // Escuchar eventos de actualización de datos de pasilleras
         const channel = window.Echo.channel('dashboard-updates');
 
-        console.log('[SystemBank] Canal creado:', channel);
-
-        channel.listen('.data.updated', (e) => {
-            console.log('[SystemBank] Evento recibido:', e);
-            
+        channel.listen('.data.updated', (e) => {            
             // Actualizar la pasillera específica en el estado local
             setPasilleras(prevPasilleras => {
                 return prevPasilleras.map(pasillera => {
@@ -405,7 +401,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
         // Cleanup
         return () => {
-            console.log('[SystemBank] Desconectando del canal...');
             window.Echo.leaveChannel('dashboard-updates');
         };
     }, []);
@@ -414,7 +409,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
             <Head title="Sistema de Caja" />
 
-            <div className="container mx-auto p-4 space-y-4">
+            <div className="container p-4 mx-auto space-y-4">
                 <Title level={2}>Sistema de Gestión de Caja</Title>
 
                 {/* Control de Caja */}
@@ -684,9 +679,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                                                 </Button>
                                             </Space>
                                         </Space>
-                                        {
-                                            console.log(pasillera.transactions)
-                                        }
 
                                         {pasillera.transactions && pasillera.transactions.length > 0 && (
                                             <div style={{ marginTop: 16 }}>

@@ -37,7 +37,7 @@ class OrdersController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if ($user->hasAnyRole(['duenio', 'super-admin'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
@@ -81,7 +81,7 @@ class OrdersController extends Controller
     public function update(Request $request, Order $order)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if ($user->hasAnyRole(['duenio', 'super-admin'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
@@ -109,7 +109,7 @@ class OrdersController extends Controller
     public function destroy(Order $order)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['duenio', 'super-admin'])) {
+        if ($user->hasAnyRole(['duenio', 'super-admin'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 

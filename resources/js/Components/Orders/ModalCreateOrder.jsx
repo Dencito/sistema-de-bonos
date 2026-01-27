@@ -106,7 +106,13 @@ export default function ModalCreateOrder({ products }) {
         width={600}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" onFinish={onCreate} autoComplete="off" preserve={false}>
+        <Form 
+        form={form} 
+        layout="vertical" 
+        onFinish={onCreate} 
+        autoComplete="off" 
+        preserve={false}  
+        initialValues={{ quantity: 1 }}>
           <Form.Item
             label="Productos"
             name="products"
@@ -219,7 +225,7 @@ export default function ModalCreateOrder({ products }) {
               style={{ width: '100%' }}
               min={0}
               precision={2}
-              disabled
+              readOnly
             />
           </Form.Item>
 

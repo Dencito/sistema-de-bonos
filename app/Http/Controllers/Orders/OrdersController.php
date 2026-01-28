@@ -37,7 +37,7 @@ class OrdersController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if ($user->hasAnyRole(['duenio', 'super-admin'])) {
+        if (!$user->hasAnyRole(['trabajador'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
@@ -78,38 +78,10 @@ class OrdersController extends Controller
         }
     }
 
-    public function update(Request $request, Order $order)
-    {
-        $user = auth()->user();
-        if ($user->hasAnyRole(['duenio', 'super-admin'])) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-
-        try {
-            $request->validate([
-                'products' => 'required|array|min:1',
-                'quantity' => 'required|integer|min:1',
-                'payment_method' => 'required|string|in:efectivo,tarjeta,transferencia',
-                'paid_amount' => 'nullable|numeric|min:0',
-                'change' => 'nullable|numeric|min:0',
-            ]);
-
-            $order->update($request->only(['products', 'quantity', 'payment_method', 'paid_amount', 'change']));
-
-            return response()->json([
-                'message' => 'Orden actualizada exitosamente.'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar la orden: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
     public function destroy(Order $order)
     {
         $user = auth()->user();
-        if ($user->hasAnyRole(['duenio', 'super-admin'])) {
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 

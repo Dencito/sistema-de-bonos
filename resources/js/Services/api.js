@@ -90,7 +90,6 @@ export const productService = {
 
 export const orderService = {
   create: (values) => handleResponse(axios.post('/orders', values)),
-  update: (id, values) => handleResponse(axios.put(`/orders/${id}`, values)),
   delete: (id) => handleResponse(axios.delete(`/orders/${id}`)),
 };
 

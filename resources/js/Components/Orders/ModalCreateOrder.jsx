@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Button, Form, Modal, Select, InputNumber } from 'antd';
+import { Button, Form, Modal, Select, InputNumber, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { orderService } from '@services/api';
 
 const { Option } = Select;
+const { Text } = Typography;
 
 export default function ModalCreateOrder({ products }) {
   const [showModal, setShowModal] = useState(false);
@@ -132,20 +133,22 @@ export default function ModalCreateOrder({ products }) {
               }
               onChange={handleProductsChange}
             >
-              {products?.map((product) => (
-                <Option key={product.id} value={product.id}>
-                  {product.name} - {product.code}
-                </Option>
+              {products
+                ?.filter(product => product.quantity > 0)
+                .map((product) => (
+                  <Option key={product.id} value={product.id}>
+                    {product.name}
+                  </Option>
               ))}
             </Select>
           </Form.Item>
 
           <Form.Item label="Precio unitario del producto" name="price">
-            <InputNumber style={{ width: '100%' }} min={0} precision={2} disabled />
+            <InputNumber style={{ width: '100%' }} min={0} precision={0} disabled />
           </Form.Item>
 
           <Form.Item label="Stock disponible" name="availableStock">
-            <InputNumber style={{ width: '100%' }} min={0} disabled />
+            <InputNumber style={{ width: '100%' }} min={0} precision={0} disabled />
           </Form.Item>
 
           <Form.Item
@@ -204,33 +207,30 @@ export default function ModalCreateOrder({ products }) {
               placeholder="Ingrese el monto pagado"
               style={{ width: '100%' }}
               min={0}
-              precision={2}
+              precision={0}
               onChange={handlePaidAmountChange}
             />
           </Form.Item>
 
           <Form.Item
-            label={
-              <span style={{ fontSize: '1.25rem', color: 'red', fontWeight: 500 }}>
-                Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)
-              </span>
-            }            
-            name="change"
-            rules={[
-              {
-                type: 'number',
-                min: 0,
-                message: 'El vuelto debe ser mayor o igual a 0.',
-              },
-            ]}
+            label='Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)'
+            shouldUpdate={(prevValues, currentValues) => 
+              prevValues.change !== currentValues.change
+            }
           >
-            <InputNumber
-              placeholder="Vuelto calculado automáticamente"
-              style={{ width: '100%' }}
-              min={0}
-              precision={2}
-              readOnly
-            />
+            {({ getFieldValue }) => {
+              return (
+                <Text
+                  style={{
+                    fontSize: '32px',
+                    color: 'red',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  ${getFieldValue('change') ?? 0}
+                </Text>
+              );
+            }}
           </Form.Item>
 
           <Form.Item>

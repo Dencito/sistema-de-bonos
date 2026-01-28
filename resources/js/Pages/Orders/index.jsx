@@ -31,17 +31,17 @@ const columns = [
   {
     title: 'Monto pagado $',
     key: 'paidAmount',
-    render: (_, order) => order.paid_amount || 'N/A',
+    render: (_, order) => Math.trunc(order.paid_amount) || 'N/A',
   },
-  {
+  { 
     title: 'Vuelto $',
     key: 'change',
-    render: (_, order) => order.change || 'N/A',
+    render: (_, order) => Math.trunc(order.change) || 'N/A',
   },
   {
     title: 'Total $',
     key: 'total',
-    render: (_, order) => order.total,
+    render: (_, order) => Math.trunc(order.total) || 'N/A',
   },
   {
     title: 'Acciones',

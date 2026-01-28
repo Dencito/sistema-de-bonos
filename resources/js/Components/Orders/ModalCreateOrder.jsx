@@ -210,7 +210,11 @@ export default function ModalCreateOrder({ products }) {
           </Form.Item>
 
           <Form.Item
-            label="Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)"
+            label={
+              <span style={{ fontSize: '1.25rem', color: 'red', fontWeight: 500 }}>
+                Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)
+              </span>
+            }            
             name="change"
             rules={[
               {

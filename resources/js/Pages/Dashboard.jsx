@@ -74,23 +74,14 @@ export default function Dashboard({ auth }) {
     getSelectedCompany();
     getShiftStatus();
     
-    console.log('[Dashboard] Conectando a Reverb...');
-    console.log('[Dashboard] Echo disponible:', !!window.Echo);
-    
     // Escuchar eventos de actualización de datos de pasilleras
-    const channel = window.Echo.channel('dashboard-updates');
-    
-    console.log('[Dashboard] Canal creado:', channel);
-    
+    const channel = window.Echo.channel('dashboard-updates'); 
     channel.listen('.data.updated', (e) => {
-      console.log('[Dashboard] Evento recibido:', e);
       toast.success(`Nueva transacción registrada por ${e.user.name}`);
       alert(`Nueva transacción registrada por ${e.user.name}`);
     });
-
     // Cleanup
     return () => {
-      console.log('[Dashboard] Desconectando del canal...');
       window.Echo.leaveChannel('dashboard-updates');
     };
   }, []);
@@ -105,14 +96,14 @@ export default function Dashboard({ auth }) {
       user={auth.user}
       role={auth.role}
       auth={auth}
-      header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Panel</h2>}
+      header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Panel</h2>}
     >
       <Head title="Panel" />
-      <header className="flex items-center justify-between bg-white p-4 shadow-sm">
+      <header className="flex justify-between items-center p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
         <h1 className="text-4xl font-bold">Inicio</h1>
       </header>
-      <div className="flex-1 overflow-auto p-4 z-10">
+      <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">
           <div className="p-6 text-gray-900">
             <h1 className="text-3xl font-bold">Bienvenido usuario: {auth.user.username}</h1>
@@ -127,25 +118,25 @@ export default function Dashboard({ auth }) {
 
           {/* Shift Management Section - Only visible for workers */}
           {allowedRoles.shiftControl.includes(auth.role) && (
-            <div className="p-6 bg-white rounded-lg shadow-sm mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold flex items-center">
+            <div className="p-6 mb-6 bg-white rounded-lg shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="flex items-center text-xl font-semibold">
                   <Clock className="mr-2" /> Control de Turnos
                 </h3>
                 <div className="flex space-x-2">
                   <Button
                     onClick={handleStartShift}
                     disabled={shiftStatus.loading || shiftStatus.hasOpenShift}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="text-white bg-green-600 hover:bg-green-700"
                   >
-                    <LogIn className="mr-2 h-4 w-4" /> Iniciar Turno
+                    <LogIn className="mr-2 w-4 h-4" /> Iniciar Turno
                   </Button>
                   <Button
                     onClick={handleEndShift}
                     disabled={shiftStatus.loading || !shiftStatus.hasOpenShift}
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="text-white bg-red-600 hover:bg-red-700"
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Finalizar Turno
+                    <LogOut className="mr-2 w-4 h-4" /> Finalizar Turno
                   </Button>
                 </div>
               </div>
@@ -153,8 +144,8 @@ export default function Dashboard({ auth }) {
               {shiftStatus.loading ? (
                 <p>Cargando estado del turno...</p>
               ) : shiftStatus.hasOpenShift ? (
-                <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                  <p className="text-green-800 font-medium">
+                <div className="p-4 bg-green-50 rounded-md border border-green-200">
+                  <p className="font-medium text-green-800">
                     Turno activo en la sucursal: {shiftStatus.shift?.branch?.name || 'N/A'}
                   </p>
                   <p className="text-sm text-green-700">
@@ -166,7 +157,7 @@ export default function Dashboard({ auth }) {
                   </p>
                 </div>
               ) : (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="p-4 bg-yellow-50 rounded-md border border-yellow-200">
                   <p className="text-yellow-800">No hay un turno activo en este momento.</p>
                   <p className="text-sm text-yellow-700">
                     Inicie un nuevo turno para comenzar a registrar actividad.
@@ -178,9 +169,9 @@ export default function Dashboard({ auth }) {
 
           {/*  <PdfGenerator user={auth?.user} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:px-6 lg:px-8">
-                        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                        <div className="rounded-lg border shadow-sm bg-card text-card-foreground">
                             <div className="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">
-                                <h3 className="whitespace-nowrap tracking-tight text-sm font-medium">
+                                <h3 className="text-sm font-medium tracking-tight whitespace-nowrap">
                                     Sucursales
                                 </h3>
                             </div>
@@ -191,9 +182,9 @@ export default function Dashboard({ auth }) {
                                 </p>
                             </div>
                         </div>
-                        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                        <div className="rounded-lg border shadow-sm bg-card text-card-foreground">
                             <div className="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">
-                                <h3 className="whitespace-nowrap tracking-tight text-sm font-medium">
+                                <h3 className="text-sm font-medium tracking-tight whitespace-nowrap">
                                     Usuarios
                                 </h3>
                             </div>

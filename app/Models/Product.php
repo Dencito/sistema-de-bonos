@@ -17,5 +17,11 @@ class Product extends Model
         'code',
         'price',
         'quantity',
+        'branch_id',
     ];
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
 }

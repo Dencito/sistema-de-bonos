@@ -23,10 +23,17 @@ class Order extends Model
         'paid_amount',
         'change',
         'total',
+        'user_id',
+        'branch_id',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

@@ -14,8 +14,20 @@ class OrdersController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('user')->get();
-        $products = Product::all();
+        $user = auth()->user();
+        $branchId = $user->branch_id;
+
+        $orders = Order::with('user')
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->get();
+
+        $products = Product::query()
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->get();
 
         $productsMap = $products->pluck('name', 'id')->toArray();
 
@@ -50,9 +62,13 @@ class OrdersController extends Controller
                 'change' => 'nullable|numeric|min:0',
             ]);
 
-            DB::transaction(function () use ($request) {
+            DB::transaction(function () use ($request, $user) {
                 $productId = $request->products[0];
                 $product = Product::findOrFail($productId);
+
+                if ($user->branch_id && $product->branch_id !== $user->branch_id) {
+                    throw new \Exception('No tienes permiso para vender productos de otra sucursal.');
+                }
 
                 if ($request->quantity > $product->quantity) {
                     throw new \Exception('Stock insuficiente. Disponible: ' . $product->quantity);
@@ -65,6 +81,8 @@ class OrdersController extends Controller
 
                 Order::create(array_merge($request->only(['products', 'quantity', 'payment_method', 'paid_amount', 'change']), [
                     'total' => $total,
+                    'user_id' => $user->id,
+                    'branch_id' => $user->branch_id,
                 ]));
             });
 

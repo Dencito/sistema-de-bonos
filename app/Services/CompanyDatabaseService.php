@@ -337,31 +337,32 @@ class CompanyDatabaseService
                 });
             }
 
-            // 13. Crear tabla de productos
+            // 13. Crear tabla de productos (depende de sucursales)
             if (!Schema::hasTable($productsTable)) {
-                Schema::create($productsTable, function ($table) use ($productsTable) {
+                Schema::create($productsTable, function ($table) use ($branchesTable) {
                     $table->id();
                     $table->string('name');
                     $table->string('code')->unique();
-                    $table->decimal('price', 8, 2);
+                    $table->decimal('price', 10, 2);
                     $table->integer('quantity')->default(0);
-                    $table->timestamp('created_at')->useCurrent();
-                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->timestamps();
                 });
             }
 
-            // 14. Crear tabla de ordenes
+            // 14. Crear tabla de ordenes (depende de usuarios y sucursales)
             if (!Schema::hasTable($ordersTable)) {
-                Schema::create($ordersTable, function ($table) use ($ordersTable) {
+                Schema::create($ordersTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
-                    $table->decimal('total', 10, 2);
                     $table->json('products');
-                    $table->integer('quantity')->default(1);
-                    $table->enum('payment_method', ['efectivo', 'tarjeta', 'transferencia'])->nullable();
+                    $table->integer('quantity');
+                    $table->string('payment_method');
                     $table->decimal('paid_amount', 10, 2)->nullable();
                     $table->decimal('change', 10, 2)->nullable();
-                    $table->timestamp('created_at')->useCurrent();
-                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                    $table->decimal('total', 10, 2);
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->timestamps();
                 });
             }
 

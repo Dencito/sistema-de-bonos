@@ -17,7 +17,13 @@ class ProductsController extends Controller
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
-        $products = Product::all();
+        $branchId = $user->branch_id;
+
+        $products = Product::query()
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->get();
 
         $data = [
             'products' => $products
@@ -40,7 +46,12 @@ class ProductsController extends Controller
                 'quantity' => 'required|integer|min:0',
             ]);
 
-            Product::create($request->only(['name', 'code', 'price', 'quantity']));
+            $branchId = $user->branch_id;
+
+            Product::create(array_merge(
+                $request->only(['name', 'code', 'price', 'quantity']),
+                ['branch_id' => $branchId]
+            ));
 
             return response()->json([
                 'message' => 'Producto creado exitosamente.'

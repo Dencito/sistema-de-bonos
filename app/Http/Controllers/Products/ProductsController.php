@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Products;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +11,7 @@ use Inertia\Inertia;
 
 class ProductsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
@@ -18,15 +19,22 @@ class ProductsController extends Controller
         }
 
         $branchId = $user->branch_id;
+        $filterBranchId = $request->input('branch_id');
 
         $products = Product::query()
             ->when($branchId, function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId);
             })
+            ->when(!$branchId && $filterBranchId, function ($query) use ($filterBranchId) {
+                $query->where('branch_id', $filterBranchId);
+            })
             ->get();
 
+        $branches = Branch::all();
+
         $data = [
-            'products' => $products
+            'products' => $products,
+            'branches' => $branches
         ];
         return Inertia::render('Products/index', $data);
     }
@@ -44,9 +52,14 @@ class ProductsController extends Controller
                 'code' => 'required|string|max:255|unique:' . (new Product)->getTable() . ',code',
                 'price' => 'required|numeric|min:0',
                 'quantity' => 'required|integer|min:0',
+                'branch_id' => $user->branch_id ? 'nullable' : 'required',
             ]);
 
-            $branchId = $user->branch_id;
+            $branchId = $user->branch_id ?? $request->input('branch_id');
+
+            if (!$branchId) {
+                throw new \Exception('Se requiere especificar una sucursal.');
+            }
 
             Product::create(array_merge(
                 $request->only(['name', 'code', 'price', 'quantity']),
@@ -71,6 +84,10 @@ class ProductsController extends Controller
         }
 
         try {
+            if ($user->branch_id && $product->branch_id !== $user->branch_id) {
+                abort(403, 'No tienes permiso para editar productos de otra sucursal.');
+            }
+
             $request->validate([
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:255|unique:' . $product->getTable() . ',code,' . $product->id,
@@ -95,6 +112,10 @@ class ProductsController extends Controller
         $user = auth()->user();
         if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
+        }
+
+        if ($user->branch_id && $product->branch_id !== $user->branch_id) {
+            abort(403, 'No tienes permiso para eliminar productos de otra sucursal.');
         }
 
         try {

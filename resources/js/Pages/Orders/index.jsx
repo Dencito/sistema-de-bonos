@@ -1,8 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
+import { Select } from 'antd';
 
 const LazyModalCreateOrder = lazy(() => import('@/Components/Orders/ModalCreateOrder'));
 const LazyModalDeleteOrder = lazy(() => import('@/Components/Orders/ModalDeleteOrder'));
@@ -56,7 +57,18 @@ const columns = [
   },
 ];
 
-export default function OrderPage({ auth, orders, products }) {
+export default function OrderPage({ auth, orders, products, branches }) {
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const userHasBranch = auth.user?.branch_id;
+
+  const handleBranchChange = (value) => {
+    setSelectedBranch(value);
+    router.get(route('orders.index'), 
+      value ? { branch_id: value } : {},
+      { preserveState: true, preserveScroll: true }
+    );
+  };
+
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -74,10 +86,27 @@ export default function OrderPage({ auth, orders, products }) {
       <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">
           <div className="bg-white shadow-sm sm:rounded-lg">
-            <div className="flex justify-end items-center my-3 text-gray-900">
-              <Suspense fallback={<LoadingFallback />}>
-                <LazyModalCreateOrder products={products} />
-              </Suspense>
+            <div className="flex justify-between items-center my-3 text-gray-900 gap-3">
+              {!userHasBranch && branches && branches.length > 0 && (
+                <Select
+                  className="w-64"
+                  placeholder="Filtrar por sucursal"
+                  value={selectedBranch || undefined}
+                  onChange={handleBranchChange}
+                  allowClear
+                >
+                  {branches.map((branch) => (
+                    <Select.Option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              )}
+              <div className="ml-auto">
+                <Suspense fallback={<LoadingFallback />}>
+                  <LazyModalCreateOrder products={products} />
+                </Suspense>
+              </div>
             </div>
             <CustomTable
               dataSource={orders.map((order) => ({

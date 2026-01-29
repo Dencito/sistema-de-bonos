@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Button, Form, Input, Modal, Spin } from 'antd';
+import { Button, Form, Input, Modal, Select, Spin } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { productService } from '@services/api';
 
-export default function ModalCreateProduct() {
+export default function ModalCreateProduct({ branches }) {
+  const { auth } = usePage().props;
+  const userHasBranch = auth.user?.branch_id;
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -152,6 +154,26 @@ export default function ModalCreateProduct() {
         >
           <Input type="number" step="0.01" min="0" />
         </Form.Item>
+        {!userHasBranch && branches && branches.length > 0 && (
+          <Form.Item
+            name="branch_id"
+            label="Sucursal"
+            rules={[
+              {
+                required: true,
+                message: 'Debes seleccionar una sucursal',
+              },
+            ]}
+          >
+            <Select placeholder="Seleccione la sucursal">
+              {branches.map((branch) => (
+                <Select.Option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
       </Modal>
     </>
   );

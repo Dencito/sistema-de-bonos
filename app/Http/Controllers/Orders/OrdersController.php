@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Orders;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -12,20 +13,27 @@ use Inertia\Inertia;
 
 class OrdersController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $branchId = $user->branch_id;
+        $filterBranchId = $request->input('branch_id');
 
         $orders = Order::with('user')
             ->when($branchId, function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId);
+            })
+            ->when(!$branchId && $filterBranchId, function ($query) use ($filterBranchId) {
+                $query->where('branch_id', $filterBranchId);
             })
             ->get();
 
         $products = Product::query()
             ->when($branchId, function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId);
+            })
+            ->when(!$branchId && $filterBranchId, function ($query) use ($filterBranchId) {
+                $query->where('branch_id', $filterBranchId);
             })
             ->get();
 
@@ -38,9 +46,12 @@ class OrdersController extends Controller
             return $order;
         });
 
+        $branches = Branch::all();
+
         $data = [
             'orders' => $orders,
-            'products' => $products
+            'products' => $products,
+            'branches' => $branches
         ];
 
         return Inertia::render('Orders/index', $data);
@@ -101,6 +112,10 @@ class OrdersController extends Controller
         $user = auth()->user();
         if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'supervisor'])) {
             abort(403, 'No tienes permiso para realizar esta acción.');
+        }
+
+        if ($user->branch_id && $order->branch_id !== $user->branch_id) {
+            abort(403, 'No tienes permiso para eliminar órdenes de otra sucursal.');
         }
 
         try {

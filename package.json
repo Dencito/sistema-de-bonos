@@ -6,8 +6,9 @@
         "build": "vite build",
         "lint": "eslint resources/js/**/*.{js,jsx} --max-warnings=20",
         "lint:fix": "eslint --fix resources/js/**/*.{js,jsx}",
-        "format": "prettier --write resources/js/**/*.{js,jsx}",
-        "format:check": "prettier --check resources/js/**/*.{js,jsx}"
+        "format": "oxfmt",
+        "format:check": "oxfmt --check",
+        "prepare": "husky"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",
@@ -24,10 +25,12 @@
         "eslint-plugin-prettier": "^5.2.1",
         "eslint-plugin-react": "^7.37.2",
         "eslint-plugin-react-hooks": "^4.6.2",
+        "husky": "^9.1.7",
         "laravel-echo": "^1.19.0",
         "laravel-vite-plugin": "^1.0",
+        "lint-staged": "^16.2.7",
+        "oxfmt": "^0.23.0",
         "postcss": "^8.4.31",
-        "prettier": "^3.4.2",
         "pusher-js": "^8.4.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
@@ -73,5 +76,10 @@
         "tailwindcss-animate": "^1.0.7",
         "xlsx": "^0.18.5",
         "zod": "^3.24.2"
+    },
+    "lint-staged": {
+        "resources/js/**/*.{js,jsx}": [
+            "npm run format"
+        ]
     }
 }

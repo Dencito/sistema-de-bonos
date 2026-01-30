@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "trailingComma": "all",
+  "semi": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "printWidth": 100,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "htmlWhitespaceSensitivity": "strict",
+  "jsxSingleQuote": false,
+  "quoteProps": "as-needed",
+  "embeddedLanguageFormatting": "auto",
+  "proseWrap": "preserve",
+  "ignorePatterns": ["node_modules", "vendor"]
+}

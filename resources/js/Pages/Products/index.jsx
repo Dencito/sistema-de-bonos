@@ -31,7 +31,7 @@ const columns = [
   {
     title: 'Precio $',
     key: 'price',
-    render: (_, product) => product.price,
+    render: (_, product) => Intl.NumberFormat('en-US').format(Math.trunc(product.price)) || 'N/A',
   },
   {
     title: 'Stock',
@@ -48,8 +48,8 @@ const columns = [
     render: (_, product) => (
       <Suspense fallback={<LoadingFallback />}>
         <div className="flex flex-wrap gap-3">
-          <LazyModalEditProduct data={product} />
-          <LazyModalDeleteProduct data={product} />
+          <LazyModalEditProduct product={product} />
+          <LazyModalDeleteProduct product={product} />
         </div>
       </Suspense>
     ),
@@ -62,10 +62,10 @@ export default function ProductPage({ auth, products, branches }) {
 
   const handleBranchChange = (value) => {
     setSelectedBranch(value);
-    router.get(route('products.index'), 
-      value ? { branch_id: value } : {},
-      { preserveState: true, preserveScroll: true }
-    );
+    router.get(route('products.index'), value ? { branch_id: value } : {}, {
+      preserveState: true,
+      preserveScroll: true,
+    });
   };
 
   return (
@@ -83,7 +83,7 @@ export default function ProductPage({ auth, products, branches }) {
       <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">
           <div className="bg-white shadow-sm sm:rounded-lg">
-            <div className="flex justify-between items-center my-3 text-gray-900 gap-3">
+            <div className="flex gap-3 justify-between items-center my-3 text-gray-900">
               {!userHasBranch && branches && branches.length > 0 && (
                 <Select
                   className="w-64"

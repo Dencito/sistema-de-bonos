@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Form, Input, Modal, Select, Spin } from 'antd';
+import { Button, Form, Input, InputNumber, Modal, Select, Spin } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router, usePage } from '@inertiajs/react';
@@ -140,7 +140,7 @@ export default function ModalCreateProduct({ branches }) {
             },
           ]}
         >
-          <Input type="number" />
+          <InputNumber min={0} step={1} precision={0} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item
           name="price"
@@ -152,7 +152,7 @@ export default function ModalCreateProduct({ branches }) {
             },
           ]}
         >
-          <Input type="number" step="0.01" min="0" />
+          <InputNumber min={0} step={1} precision={0} style={{ width: '100%' }} />
         </Form.Item>
         {!userHasBranch && branches && branches.length > 0 && (
           <Form.Item

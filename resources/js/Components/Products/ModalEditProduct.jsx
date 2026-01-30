@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Button, Form, Input, Modal, Spin } from 'antd';
+import { Button, Form, Input, InputNumber, Modal, Spin } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { productService } from '@services/api';
 
-export default function ModalEditProduct({ data }) {
+export default function ModalEditProduct({ product }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -14,14 +14,15 @@ export default function ModalEditProduct({ data }) {
   const { successMsg, errorMsg } = useMessage();
 
   useEffect(() => {
-    if (showModal && data) {
+    if (showModal && product) {
       form.setFieldsValue({
-        name: data.name,
-        code: data.code,
-        price: data.price,
+        name: product.name,
+        code: product.code,
+        quantity: product.quantity,
+        price: new Intl.NumberFormat('en-US').format(Math.trunc(product.price)),
       });
     }
-  }, [showModal, data, form]);
+  }, [showModal, product, form]);
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -34,7 +35,7 @@ export default function ModalEditProduct({ data }) {
   const onEdit = async (values) => {
     try {
       setLoading(true);
-      const response = await productService.update(data.id, values);
+      const response = await productService.update(product.id, values);
       successMsg(response.message);
       handleCloseModal();
       router.reload();
@@ -158,7 +159,7 @@ export default function ModalEditProduct({ data }) {
             },
           ]}
         >
-          <Input type="number" step="0.01" min="0" />
+          <InputNumber min={0} step={1} precision={0} style={{ width: '100%' }} />
         </Form.Item>
       </Modal>
     </>

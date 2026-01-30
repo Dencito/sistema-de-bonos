@@ -32,17 +32,18 @@ const columns = [
   {
     title: 'Monto pagado $',
     key: 'paidAmount',
-    render: (_, order) => Math.trunc(order.paid_amount) || 'N/A',
+    render: (_, order) =>
+      new Intl.NumberFormat('en-US').format(Math.trunc(order.paid_amount)) || 'N/A',
   },
-  { 
+  {
     title: 'Vuelto $',
     key: 'change',
-    render: (_, order) => Math.trunc(order.change) || 'N/A',
+    render: (_, order) => new Intl.NumberFormat('en-US').format(Math.trunc(order.change)) || 'N/A',
   },
   {
     title: 'Total $',
     key: 'total',
-    render: (_, order) => Math.trunc(order.total) || 'N/A',
+    render: (_, order) => new Intl.NumberFormat('en-US').format(Math.trunc(order.total)) || 'N/A',
   },
   {
     title: 'Acciones',
@@ -63,10 +64,10 @@ export default function OrderPage({ auth, orders, products, branches }) {
 
   const handleBranchChange = (value) => {
     setSelectedBranch(value);
-    router.get(route('orders.index'), 
-      value ? { branch_id: value } : {},
-      { preserveState: true, preserveScroll: true }
-    );
+    router.get(route('orders.index'), value ? { branch_id: value } : {}, {
+      preserveState: true,
+      preserveScroll: true,
+    });
   };
 
   return (

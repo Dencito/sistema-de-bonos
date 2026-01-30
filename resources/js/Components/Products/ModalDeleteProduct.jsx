@@ -4,12 +4,12 @@ import { DeleteOutlined } from '@ant-design/icons';
 import { useMessage } from '@contexts/MessageShow';
 import { productService } from '@services/api';
 
-export default function ModalDeleteProduct({ data }) {
+export default function ModalDeleteProduct({ product }) {
   const { successMsg, errorMsg } = useMessage();
 
   const handleDelete = async () => {
     try {
-      const response = await productService.delete(data.id);
+      const response = await productService.delete(product.id);
       successMsg(response.message);
       router.reload();
     } catch (error) {
@@ -19,7 +19,7 @@ export default function ModalDeleteProduct({ data }) {
 
   const showDeleteConfirm = () => {
     Modal.confirm({
-      title: `¿Estás seguro de que quieres eliminar el producto ${data.name}?`,
+      title: `¿Estás seguro de que quieres eliminar el producto ${product.name}?`,
       content: 'Esta acción no se puede deshacer.',
       okText: 'Sí',
       okType: 'danger',

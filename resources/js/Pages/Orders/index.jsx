@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
@@ -70,6 +70,11 @@ export default function OrderPage({ auth, orders, products, branches }) {
     });
   };
 
+  const formattedTotal = useMemo(() => {
+    const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    return new Intl.NumberFormat('en-US').format(Math.trunc(totalSales));
+  }, [orders]);
+
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -83,11 +88,17 @@ export default function OrderPage({ auth, orders, products, branches }) {
       <header className="flex justify-between items-center p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
         <h1 className="text-4xl font-bold">Ventas Cigarros</h1>
+        <div className="text-right">
+          <div className="text-sm text-gray-600">Total de Ventas</div>
+          <div className="text-2xl font-bold text-green-600">
+            ${new Intl.NumberFormat('en-US').format(Math.trunc(formattedTotal))}
+          </div>
+        </div>
       </header>
       <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">
           <div className="bg-white shadow-sm sm:rounded-lg">
-            <div className="flex justify-between items-center my-3 text-gray-900 gap-3">
+            <div className="flex gap-3 justify-between items-center my-3 text-gray-900">
               {!userHasBranch && branches && branches.length > 0 && (
                 <Select
                   className="w-64"

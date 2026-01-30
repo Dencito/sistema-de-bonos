@@ -507,11 +507,11 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
   return (
     <Card className="p-5 max-w-[1400px] mx-auto select-none">
       <div className="mb-4 text-sm text-gray-600">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex gap-2 items-center mb-1">
           <div className="w-4 h-4 border-2 border-black"></div>
           <span>Slots disponibles para solapar con otros turnos</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2 items-center">
           <div className="w-4 h-4 border border-gray-300"></div>
           <span>Slots disponibles para selección normal</span>
         </div>
@@ -533,14 +533,13 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
             key={day.name}
             className="grid grid-cols-[120px_repeat(49,minmax(30px,1fr))] gap-0.5 items-center"
           >
-            <div className="p-2 font-medium text-left sticky left-0 bg-white z-10 text-sm">
+            <div className="sticky left-0 z-10 p-2 text-sm font-medium text-left bg-white">
               {day.name}
             </div>
             {hours.map((_, index) => {
               const slotKey = `${day.name}-${index}`;
               const isBlocked = blockedSlots[slotKey];
               const isSelected = selectedSlots[slotKey];
-              const isEdge = isEdgeSlot(day.name, index);
               const isEditingSlot =
                 editingSchedule &&
                 editingSchedule.schedules.some(
@@ -580,7 +579,7 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
               return (
                 <div
                   key={`${day.name}-${index}`}
-                  className={`h-[30px] border rounded cursor-pointer ${slotStyle} relative group`}
+                  className={`relative rounded border cursor-pointer h-[30px] ${slotStyle} group`}
                   style={{
                     opacity: isSelected ? 1 : isEditingSlot ? 0.9 : isBlocked ? 0.85 : 1,
                     transition: 'all 0.2s ease-in-out',
@@ -591,7 +590,7 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
                   onMouseUp={handleMouseUp}
                 >
                   {tooltipText && (
-                    <div className="absolute hidden group-hover:block bg-black text-white text-xs p-1 rounded whitespace-nowrap z-50 -top-7 left-1/2 transform -translate-x-1/2">
+                    <div className="hidden absolute -top-7 left-1/2 z-50 p-1 text-xs text-white whitespace-nowrap bg-black rounded transform -translate-x-1/2 group-hover:block">
                       {tooltipText}
                     </div>
                   )}
@@ -602,7 +601,7 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
         ))}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="flex gap-2 mt-4">
         {(savedSchedules.length !== 3 || editingSchedule) && (
           <Button
             type="primary"
@@ -638,14 +637,14 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
       </div>
       {isEditing && Object.entries(groupedSchedules).length > 0 && (
         <Card title="Turnos Guardados">
-          <div className="mt-2 pt-2 space-y-4">
+          <div className="pt-2 mt-2 space-y-4">
             {savedSchedules.map((scheduleItem, index) => (
               <div
                 key={index}
-                className="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
+                className="flex justify-between items-start p-3 bg-gray-50 rounded-lg"
               >
                 <div className="flex-1">
-                  <div className="text-lg font-semibold mb-2 text-gray-700">
+                  <div className="mb-2 text-lg font-semibold text-gray-700">
                     {scheduleItem.name}
                   </div>
                   <div className="grid gap-2">
@@ -659,7 +658,7 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
                       if (validRanges.length === 0) return null;
 
                       return (
-                        <div key={dayIndex} className="flex items-center gap-2">
+                        <div key={dayIndex} className="flex gap-2 items-center">
                           <span className="font-medium min-w-[100px] text-gray-600">
                             {dailySchedule.day}:
                           </span>
@@ -667,7 +666,7 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
                             {validRanges.map((range, rangeIndex) => (
                               <span
                                 key={rangeIndex}
-                                className="bg-white px-3 py-1 rounded border border-gray-200"
+                                className="px-3 py-1 bg-white rounded border border-gray-200"
                               >
                                 {range.start_time} a {range.end_time}
                               </span>

@@ -70,7 +70,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
         params,
       });
       setReportData(response.data);
-    } catch (error) {
+    } catch {
       alert('Error al generar el reporte. Por favor intente nuevamente.');
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
         params,
       });
       setReportData(response.data);
-    } catch (error) {
+    } catch {
       alert('Error al generar el reporte de turno. Por favor intente nuevamente.');
     } finally {
       setLoading(false);
@@ -134,8 +134,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
         params,
       });
       setReportData(response.data);
-    } catch (error) {
-      console.error('Error generating fingerprint logs report:', error);
+    } catch {
       alert('Error al generar el reporte de registros de huella. Por favor intente nuevamente.');
     } finally {
       setLoading(false);
@@ -173,8 +172,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
         params,
       });
       setReportData(response.data);
-    } catch (error) {
-      console.error('Error generating marcaciones report:', error);
+    } catch {
       alert('Error al generar el reporte de marcaciones. Por favor intente nuevamente.');
     } finally {
       setLoading(false);

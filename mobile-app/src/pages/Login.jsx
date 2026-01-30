@@ -38,7 +38,7 @@ export default function Login() {
       setError('Por favor configure la empresa primero. Presione el ícono de configuración.');
       try {
         await Haptics.notification({ type: 'ERROR' });
-      } catch (e) {
+      } catch {
         // Haptics not available
       }
       return;
@@ -48,7 +48,7 @@ export default function Login() {
 
     try {
       await Haptics.impact({ style: ImpactStyle.Light });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
 
@@ -60,7 +60,7 @@ export default function Login() {
       setError(result.message || 'Error al iniciar sesión');
       try {
         await Haptics.notification({ type: 'ERROR' });
-      } catch (e) {
+      } catch {
         // Haptics not available
       }
     }
@@ -69,28 +69,28 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 safe-top safe-bottom">
+    <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 safe-top safe-bottom">
       {/* Settings Button - Only visible when logged out */}
       <button
         onClick={() => navigate('/settings')}
-        className="absolute top-6 right-6 p-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-full shadow-lg transition"
+        className="absolute top-6 right-6 p-3 rounded-full shadow-lg transition bg-slate-800 hover:bg-slate-700 active:bg-slate-600"
       >
         <Settings className="w-6 h-6 text-white" />
       </button>
 
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-full mb-4">
+        <div className="mb-8 text-center">
+          <div className="inline-flex justify-center items-center mb-4 w-20 h-20 rounded-full bg-primary-600">
             <LogIn className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Pasillera</h1>
+          <h1 className="mb-2 text-3xl font-bold text-white">Pasillera</h1>
           <p className="text-slate-400">Sistema de Gestión de Gastos</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="p-8 bg-white rounded-2xl shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
                 Nombre de Usuario
               </label>
               <input
@@ -98,7 +98,7 @@ export default function Login() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                className="px-4 py-3 w-full rounded-lg border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="usuario"
                 required
                 disabled={loading}
@@ -108,7 +108,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
                 Contraseña
               </label>
               <input
@@ -116,7 +116,7 @@ export default function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                className="px-4 py-3 w-full rounded-lg border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="••••••••"
                 required
                 disabled={loading}
@@ -124,7 +124,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="px-4 py-3 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
                 {error}
               </div>
             )}
@@ -132,16 +132,16 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center"
+              className="flex justify-center items-center py-3 w-full font-semibold text-white rounded-lg transition bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
                   Iniciando sesión...
                 </>
               ) : (
                 <>
-                  <LogIn className="w-5 h-5 mr-2" />
+                  <LogIn className="mr-2 w-5 h-5" />
                   Iniciar Sesión
                 </>
               )}
@@ -149,14 +149,14 @@ export default function Login() {
           </form>
         </div>
 
-        <div className="text-center mt-6 space-y-2">
+        <div className="mt-6 space-y-2 text-center">
           {companyName && (
-            <div className="bg-slate-800 rounded-lg px-4 py-2 inline-block">
+            <div className="inline-block px-4 py-2 rounded-lg bg-slate-800">
               <p className="text-xs text-slate-400">Empresa configurada:</p>
               <p className="text-sm font-semibold text-white">{companyName}</p>
             </div>
           )}
-          <p className="text-slate-400 text-sm">
+          <p className="text-sm text-slate-400">
             v1.0.0 - Sistema de Casino
           </p>
         </div>

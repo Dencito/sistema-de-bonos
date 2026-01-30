@@ -20,8 +20,8 @@ export default function Settings() {
       if (value) {
         setCompanyName(value);
       }
-    } catch (error) {
-      console.error('Error loading company config:', error);
+    } catch {
+      // Haptics not available
     }
   };
 
@@ -36,7 +36,7 @@ export default function Settings() {
 
     try {
       await Haptics.impact({ style: ImpactStyle.Medium });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
 
@@ -50,15 +50,15 @@ export default function Settings() {
       
       try {
         await Haptics.notification({ type: 'success' });
-      } catch (e) {
+      } catch {
         // Haptics not available
       }
 
       setTimeout(() => {
         navigate('/login');
       }, 1500);
-    } catch (error) {
-      console.error('Error saving company config:', error);
+    } catch {
+      // Haptics not available
       alert('Error al guardar la configuración');
     } finally {
       setLoading(false);
@@ -71,29 +71,29 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 safe-top safe-bottom">
+    <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 safe-top safe-bottom">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-4">
+        <div className="mb-8 text-center">
+          <div className="inline-flex justify-center items-center mb-4 w-20 h-20 bg-blue-600 rounded-full">
             <SettingsIcon className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Configuración</h1>
+          <h1 className="mb-2 text-3xl font-bold text-white">Configuración</h1>
           <p className="text-slate-400">Configure la empresa</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="p-8 bg-white rounded-2xl shadow-xl">
           {saved ? (
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+            <div className="py-8 text-center">
+              <div className="inline-flex justify-center items-center mb-4 w-16 h-16 bg-green-100 rounded-full">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">¡Configuración Guardada!</h3>
+              <h3 className="mb-2 text-xl font-bold text-gray-900">¡Configuración Guardada!</h3>
               <p className="text-gray-600">Redirigiendo al login...</p>
             </div>
           ) : (
             <div className="space-y-6">
               <div>
-                <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="company" className="block mb-2 text-sm font-medium text-gray-700">
                   Nombre de la Empresa
                 </label>
                 <input
@@ -101,21 +101,21 @@ export default function Settings() {
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="px-4 py-3 w-full rounded-lg border border-gray-300 transition outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="888spa"
                   disabled={loading}
                   autoCapitalize="none"
                   autoCorrect="off"
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="mt-2 text-xs text-gray-500">
                   Ejemplo: 888spa, casino123, etc.
                 </p>
               </div>
 
               {companyName && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-xs text-gray-600 mb-1">URL de la API:</p>
-                  <p className="text-sm font-mono text-blue-900 break-all">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="mb-1 text-xs text-gray-600">URL de la API:</p>
+                  <p className="font-mono text-sm text-blue-900 break-all">
                     {constructApiUrl(companyName)}
                   </p>
                 </div>
@@ -126,25 +126,25 @@ export default function Settings() {
                   type="button"
                   onClick={() => navigate('/login')}
                   disabled={loading}
-                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 active:bg-gray-400 disabled:opacity-50 transition flex items-center justify-center"
+                  className="flex flex-1 justify-center items-center py-3 font-semibold text-gray-800 bg-gray-200 rounded-lg transition hover:bg-gray-300 active:bg-gray-400 disabled:opacity-50"
                 >
-                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  <ArrowLeft className="mr-2 w-5 h-5" />
                   Volver
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
                   disabled={loading || !companyName.trim()}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center"
+                  className="flex flex-1 justify-center items-center py-3 font-semibold text-white bg-blue-600 rounded-lg transition hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      <div className="mr-2 w-5 h-5 rounded-full border-2 border-white animate-spin border-t-transparent"></div>
                       Guardando...
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5 mr-2" />
+                      <Save className="mr-2 w-5 h-5" />
                       Guardar
                     </>
                   )}
@@ -154,7 +154,7 @@ export default function Settings() {
           )}
         </div>
 
-        <p className="text-center text-slate-400 text-sm mt-6">
+        <p className="mt-6 text-sm text-center text-slate-400">
           Configure el nombre de la empresa para conectarse al servidor correcto
         </p>
       </div>

@@ -69,7 +69,7 @@ export default function Dashboard() {
   const handleLogout = async () => {
     try {
       await Haptics.impact({ style: ImpactStyle.Medium });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
     await logout();
@@ -80,7 +80,7 @@ export default function Dashboard() {
     setFinalizing(true);
     try {
       await Haptics.impact({ style: ImpactStyle.Medium });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
 

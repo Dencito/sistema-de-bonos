@@ -30,8 +30,8 @@ function AppContent() {
       try {
         await StatusBar.setStyle({ style: Style.Dark });
         await StatusBar.setBackgroundColor({ color: '#1e293b' });
-      } catch (error) {
-        console.log('StatusBar not available:', error);
+      } catch {
+          // intentionally empty, failure is non-critical
       }
     };
 

@@ -52,17 +52,21 @@ export default function ModalCreateOrder({ products }) {
     const calculatedTotal = unitPrice * quantity;
     setTotal(calculatedTotal);
     form.setFieldsValue({
-      total: calculatedTotal,
-      price: unitPrice,
-      availableStock: selectedProduct ? selectedProduct.quantity : 0,
+      total: new Intl.NumberFormat('en-US').format(Math.trunc(calculatedTotal)),
+      price: new Intl.NumberFormat('en-US').format(Math.trunc(unitPrice)),
+      availableStock: selectedProduct
+        ? new Intl.NumberFormat('en-US').format(Math.trunc(selectedProduct.quantity))
+        : 0,
     });
     // Update change if paid_amount is set
     const paidAmount = form.getFieldValue('paid_amount') || 0;
     if (paidAmount > calculatedTotal) {
       const changeAmount = paidAmount - calculatedTotal;
-      form.setFieldsValue({ change: changeAmount });
+      form.setFieldsValue({
+        change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
+      });
     } else {
-      form.setFieldsValue({ change: 0 });
+      form.setFieldsValue({ change: new Intl.NumberFormat('en-US').format(Math.trunc(0)) });
     }
   };
 
@@ -72,14 +76,18 @@ export default function ModalCreateOrder({ products }) {
     const unitPrice = form.getFieldValue('price') || 0;
     const calculatedTotal = unitPrice * quantity;
     setTotal(calculatedTotal);
-    form.setFieldsValue({ total: calculatedTotal });
+    form.setFieldsValue({
+      total: new Intl.NumberFormat('en-US').format(Math.trunc(calculatedTotal)),
+    });
     // Also update change if paid_amount is set
     const paidAmount = form.getFieldValue('paid_amount') || 0;
     if (paidAmount > calculatedTotal) {
       const changeAmount = paidAmount - calculatedTotal;
-      form.setFieldsValue({ change: changeAmount });
+      form.setFieldsValue({
+        change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
+      });
     } else {
-      form.setFieldsValue({ change: 0 });
+      form.setFieldsValue({ change: new Intl.NumberFormat('en-US').format(Math.trunc(0)) });
     }
   };
 
@@ -88,9 +96,11 @@ export default function ModalCreateOrder({ products }) {
     const paidAmount = value || 0;
     if (paidAmount > total) {
       const changeAmount = paidAmount - total;
-      form.setFieldsValue({ change: changeAmount });
+      form.setFieldsValue({
+        change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
+      });
     } else {
-      form.setFieldsValue({ change: 0 });
+      form.setFieldsValue({ change: new Intl.NumberFormat('en-US').format(Math.trunc(0)) });
     }
   };
 
@@ -107,13 +117,14 @@ export default function ModalCreateOrder({ products }) {
         width={600}
         destroyOnClose
       >
-        <Form 
-        form={form} 
-        layout="vertical" 
-        onFinish={onCreate} 
-        autoComplete="off" 
-        preserve={false}  
-        initialValues={{ quantity: 1 }}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onCreate}
+          autoComplete="off"
+          preserve={false}
+          initialValues={{ quantity: 1 }}
+        >
           <Form.Item
             label="Productos"
             name="products"
@@ -134,12 +145,12 @@ export default function ModalCreateOrder({ products }) {
               onChange={handleProductsChange}
             >
               {products
-                ?.filter(product => product.quantity > 0)
+                ?.filter((product) => product.quantity > 0)
                 .map((product) => (
                   <Option key={product.id} value={product.id}>
                     {product.name}
                   </Option>
-              ))}
+                ))}
             </Select>
           </Form.Item>
 
@@ -213,10 +224,8 @@ export default function ModalCreateOrder({ products }) {
           </Form.Item>
 
           <Form.Item
-            label='Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)'
-            shouldUpdate={(prevValues, currentValues) => 
-              prevValues.change !== currentValues.change
-            }
+            label="Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)"
+            shouldUpdate={(prevValues, currentValues) => prevValues.change !== currentValues.change}
           >
             {({ getFieldValue }) => {
               return (

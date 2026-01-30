@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pasilleraService } from '../services/api';
-import { ArrowLeft, DollarSign, Loader2, RefreshCw, Calendar } from 'lucide-react';
+import { ArrowLeft, DollarSign, RefreshCw, Calendar } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 export default function History() {
@@ -38,7 +38,7 @@ export default function History() {
     setRefreshing(true);
     try {
       await Haptics.impact({ style: ImpactStyle.Light });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
     await loadHistory();
@@ -104,9 +104,9 @@ export default function History() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 w-12 h-12 rounded-full border-b-2 animate-spin border-primary-600"></div>
           <p className="text-gray-600">Cargando historial...</p>
         </div>
       </div>
@@ -119,21 +119,21 @@ export default function History() {
   return (
     <div className="min-h-screen bg-gray-50 safe-top safe-bottom">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="px-6 py-4 bg-white border-b border-gray-200">
+        <div className="flex justify-between items-center">
           <div className="flex items-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition active:bg-gray-200"
+              className="p-2 -ml-2 rounded-lg transition hover:bg-gray-100 active:bg-gray-200"
             >
               <ArrowLeft className="w-6 h-6 text-gray-700" />
             </button>
-            <h1 className="text-xl font-semibold text-gray-900 ml-3">Historial</h1>
+            <h1 className="ml-3 text-xl font-semibold text-gray-900">Historial</h1>
           </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="p-2 hover:bg-gray-100 rounded-lg transition active:bg-gray-200"
+            className="p-2 rounded-lg transition hover:bg-gray-100 active:bg-gray-200"
           >
             <RefreshCw className={`w-5 h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
@@ -141,29 +141,29 @@ export default function History() {
       </div>
 
       {/* Summary */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6">
+      <div className="p-6 text-white bg-gradient-to-r from-primary-600 to-primary-700">
         <div className="text-center">
-          <p className="text-primary-100 text-sm mb-1">Total Gastado</p>
+          <p className="mb-1 text-sm text-primary-100">Total Gastado</p>
           <p className="text-3xl font-bold">{formatCurrency(totalAmount)}</p>
-          <p className="text-primary-100 text-sm mt-2">{transactions.length} transacciones</p>
+          <p className="mt-2 text-sm text-primary-100">{transactions.length} transacciones</p>
         </div>
       </div>
 
       {/* Transactions List */}
       <div className="p-6">
         {error ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-4">{error}</p>
+          <div className="py-12 text-center">
+            <p className="mb-4 text-gray-600">{error}</p>
             <button
               onClick={handleRefresh}
-              className="text-primary-600 font-semibold hover:text-primary-700"
+              className="font-semibold text-primary-600 hover:text-primary-700"
             >
               Reintentar
             </button>
           </div>
         ) : transactions.length === 0 ? (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <div className="py-12 text-center">
+            <Calendar className="mx-auto mb-4 w-16 h-16 text-gray-300" />
             <p className="text-gray-600">No hay transacciones registradas</p>
           </div>
         ) : (
@@ -172,10 +172,10 @@ export default function History() {
               .sort((a, b) => new Date(b) - new Date(a))
               .map((dateKey) => (
                 <div key={dateKey}>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">
+                  <h3 className="mb-3 text-sm font-semibold text-gray-500 uppercase">
                     {getDateLabel(dateKey)}
                   </h3>
-                  <div className="bg-white rounded-xl shadow overflow-hidden">
+                  <div className="overflow-hidden bg-white rounded-xl shadow">
                     {groupedTransactions[dateKey].map((transaction, index) => (
                       <div
                         key={transaction.id}
@@ -185,8 +185,8 @@ export default function History() {
                             : ''
                         }`}
                       >
-                        <div className="flex items-center flex-1">
-                          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <div className="flex flex-1 items-center">
+                          <div className="flex flex-shrink-0 justify-center items-center mr-4 w-12 h-12 bg-red-100 rounded-full">
                             <DollarSign className="w-6 h-6 text-red-600" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -197,13 +197,13 @@ export default function History() {
                               {formatDate(transaction.created_at)}
                             </p>
                             {transaction.description && (
-                              <p className="text-xs text-gray-400 mt-1 truncate">
+                              <p className="mt-1 text-xs text-gray-400 truncate">
                                 {transaction.description}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="text-right ml-4 flex-shrink-0">
+                        <div className="flex-shrink-0 ml-4 text-right">
                           <p className="font-bold text-red-600">
                             -{formatCurrency(transaction.amount)}
                           </p>

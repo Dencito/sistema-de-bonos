@@ -51,7 +51,7 @@ export default function RegisterExpense() {
 
     try {
       await Haptics.impact({ style: ImpactStyle.Light });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
 
@@ -66,7 +66,7 @@ export default function RegisterExpense() {
         setSuccess(true);
         try {
           await Haptics.notification({ type: NotificationType.Success });
-        } catch (e) {
+        } catch {
           // Haptics not available
         }
         
@@ -77,15 +77,15 @@ export default function RegisterExpense() {
         setError(response.message);
         try {
           await Haptics.notification({ type: NotificationType.Error });
-        } catch (e) {
+        } catch {
           // Haptics not available
         }
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Error al registrar el gasto');
+    } catch {
+      setError('Error al registrar el gasto');
       try {
         await Haptics.notification({ type: NotificationType.Error });
-      } catch (e) {
+      } catch {
         // Haptics not available
       }
     } finally {
@@ -107,12 +107,12 @@ export default function RegisterExpense() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="flex justify-center items-center p-6 min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="flex justify-center items-center mx-auto mb-4 w-20 h-20 bg-green-100 rounded-full">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Gasto Registrado!</h2>
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">¡Gasto Registrado!</h2>
           <p className="text-gray-600">Redirigiendo al dashboard...</p>
         </div>
       </div>
@@ -122,15 +122,15 @@ export default function RegisterExpense() {
   return (
     <div className="min-h-screen bg-gray-50 safe-top safe-bottom">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="px-6 py-4 bg-white border-b border-gray-200">
         <div className="flex items-center">
           <button
             onClick={() => navigate('/dashboard')}
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition active:bg-gray-200"
+            className="p-2 -ml-2 rounded-lg transition hover:bg-gray-100 active:bg-gray-200"
           >
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
-          <h1 className="text-xl font-semibold text-gray-900 ml-3">Registrar Gasto</h1>
+          <h1 className="ml-3 text-xl font-semibold text-gray-900">Registrar Gasto</h1>
         </div>
       </div>
 
@@ -139,25 +139,25 @@ export default function RegisterExpense() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Monto del Gasto *
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <div className="flex absolute inset-y-0 left-0 items-center pl-4 pointer-events-none">
                 <DollarSign className="w-5 h-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 value={amount ? formatCurrency(amount) : ''}
                 onChange={handleAmountChange}
-                className="w-full pl-12 pr-4 py-4 text-2xl font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                className="py-4 pr-4 pl-12 w-full text-2xl font-semibold rounded-xl border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="0"
                 required
                 disabled={loading}
               />
             </div>
             {amount && (
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="mt-2 text-sm text-gray-500">
                 ${formatCurrency(amount)} CLP
               </p>
             )}
@@ -165,18 +165,18 @@ export default function RegisterExpense() {
 
           {/* Machine */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Máquina *
             </label>
             {loadingMachines ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
               </div>
             ) : (
               <select
                 value={machine}
                 onChange={(e) => setMachine(e.target.value)}
-                className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition appearance-none bg-white"
+                className="px-4 py-4 w-full bg-white rounded-xl border border-gray-300 transition appearance-none outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
                 disabled={loading}
               >
@@ -192,13 +192,13 @@ export default function RegisterExpense() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Descripción (Opcional)
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition resize-none"
+              className="px-4 py-3 w-full rounded-xl border border-gray-300 transition outline-none resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="Ej: Pago de premio, reparación, etc."
               rows="3"
               disabled={loading}
@@ -207,7 +207,7 @@ export default function RegisterExpense() {
 
           {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+            <div className="px-4 py-3 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200">
               {error}
             </div>
           )}
@@ -216,16 +216,16 @@ export default function RegisterExpense() {
           <button
             type="submit"
             disabled={loading || !amount || !machine}
-            className="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center shadow-lg"
+            className="flex justify-center items-center py-4 w-full font-semibold text-white rounded-xl shadow-lg transition bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="mr-2 w-5 h-5 animate-spin" />
                 Registrando...
               </>
             ) : (
               <>
-                <DollarSign className="w-5 h-5 mr-2" />
+                <DollarSign className="mr-2 w-5 h-5" />
                 Registrar Gasto
               </>
             )}

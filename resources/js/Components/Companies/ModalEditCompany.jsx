@@ -181,7 +181,7 @@ export default function ModalEditCompany({ data }) {
       <Button onClick={handleOpenModal} icon={<EditOutlined />} />
       <Modal
         style={{ top: 20 }}
-        title={<p className="text-bold text-3xl">Editar {data?.name}</p>}
+        title={<p className="text-3xl text-bold">Editar {data?.name}</p>}
         open={showModal}
         onCancel={() =>
           Modal.confirm({
@@ -258,7 +258,7 @@ export default function ModalEditCompany({ data }) {
         >
           <Input name="max_branches" onChange={onlyNumberInput} showCount maxLength={2} />
         </Form.Item>
-        <div className="flex gap-3 relative">
+        <div className="flex relative gap-3">
           <Form.Item
             className="w-10/12"
             name="rutNumbers"
@@ -364,7 +364,7 @@ export default function ModalEditCompany({ data }) {
           <Input type="email" showCount maxLength={60} />
         </Form.Item>
 
-        <Divider className="font-bold text-3xl">Representante legal</Divider>
+        <Divider className="text-3xl font-bold">Representante legal</Divider>
         <Form.Item
           name="legalRepresentativeNames"
           label="Nombres"
@@ -444,7 +444,7 @@ export default function ModalEditCompany({ data }) {
           </span>
         )}
 
-        <Divider className="font-bold text-3xl">Contacto</Divider>
+        <Divider className="text-3xl font-bold">Contacto</Divider>
 
         <Form.Item
           name="contactNames"
@@ -563,7 +563,7 @@ export default function ModalEditCompany({ data }) {
           <Input type="email" showCount maxLength={60} />
         </Form.Item>
 
-        <Divider className="font-bold text-3xl">Dirección</Divider>
+        <Divider className="text-3xl font-bold">Dirección</Divider>
 
         <div className="flex gap-5">
           <Form.Item

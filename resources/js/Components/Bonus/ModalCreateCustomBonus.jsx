@@ -17,7 +17,6 @@ export default function ModalCreateCustomBonus() {
   const [searching, setSearching] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [bonusType, setBonusType] = useState('daily');
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
@@ -196,9 +195,9 @@ export default function ModalCreateCustomBonus() {
         ]}
       >
         <Form form={form} layout="vertical">
-          <div className="border-b pb-4 mb-4">
-            <h3 className="text-lg font-semibold mb-3">Filtrar Usuarios</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="pb-4 mb-4 border-b">
+            <h3 className="mb-3 text-lg font-semibold">Filtrar Usuarios</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Form.Item
                 label="Tipo de Bono"
                 name="bonus_type"
@@ -210,10 +209,7 @@ export default function ModalCreateCustomBonus() {
                 ]}
                 initialValue="daily"
               >
-                <Select
-                  placeholder="Seleccione tipo de bono"
-                  onChange={(value) => setBonusType(value)}
-                >
+                <Select placeholder="Seleccione tipo de bono">
                   <Option value="daily">Bonos Diarios</Option>
                   <Option value="all">Todos los Bonos</Option>
                 </Select>
@@ -257,7 +253,7 @@ export default function ModalCreateCustomBonus() {
 
           {users.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-3">Usuarios Encontrados ({users.length})</h3>
+              <h3 className="mb-3 text-lg font-semibold">Usuarios Encontrados ({users.length})</h3>
               <Table
                 rowSelection={rowSelection}
                 columns={columns}
@@ -273,9 +269,9 @@ export default function ModalCreateCustomBonus() {
           )}
 
           {selectedUsers.length > 0 && (
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold mb-3">Configuración del Bono</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="pt-4 border-t">
+              <h3 className="mb-3 text-lg font-semibold">Configuración del Bono</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <Form.Item
                   label="Monto"
                   name="amount"

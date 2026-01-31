@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx'; // Importamos sheetjs
 
 export default function ExcelManager({ users: data }) {
-  const [users, setUsers] = useState(data);
+  const [users] = useState(data);
   const [newUsers, setNewUsers] = useState([]);
 
   const handleFileUpload = (e) => {

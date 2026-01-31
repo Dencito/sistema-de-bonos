@@ -60,7 +60,7 @@ export default function Dashboard() {
     setRefreshing(true);
     try {
       await Haptics.impact({ style: ImpactStyle.Light });
-    } catch (e) {
+    } catch {
       // Haptics not available
     }
     await loadPasillera();
@@ -90,7 +90,7 @@ export default function Dashboard() {
       if (response.success) {
         try {
           await Haptics.notification({ type: 'success' });
-        } catch (e) {
+        } catch {
           // Haptics not available
         }
         
@@ -103,8 +103,7 @@ export default function Dashboard() {
       } else {
         alert(response.message || 'Error al finalizar el turno');
       }
-    } catch (err) {
-      console.error('Error finalizing shift:', err);
+    } catch {
       alert(err.response?.data?.message || 'Error al finalizar el turno');
     } finally {
       setFinalizing(false);

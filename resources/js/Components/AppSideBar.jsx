@@ -204,10 +204,10 @@ export function AppSidebar({ role, roles, user }) {
                       {item.link !== '/users' ? (
                         <SidebarMenuItem key={item.label}>
                           <SidebarMenuButton asChild>
-                            <a href={item.link}>
+                            <Link href={item.link}>
                               <item.icon />
                               <span>{item.label}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ) : (

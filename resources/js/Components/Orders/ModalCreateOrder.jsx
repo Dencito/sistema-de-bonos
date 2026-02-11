@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button, Form, Modal, Select, InputNumber, Typography } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Form, Modal, Select, InputNumber, Typography, Input } from 'antd';
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { orderService } from '@services/api';
@@ -12,8 +12,11 @@ export default function ModalCreateOrder({ products }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [showSalesWithdrawalModal, setShowSalesWithdrawalModal] = useState(false);
+  const [withdrawalLoading, setWithdrawalLoading] = useState(false);
 
   const [form] = Form.useForm();
+  const [withdrawalForm] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
 
   const handleCloseModal = () => {
@@ -24,6 +27,25 @@ export default function ModalCreateOrder({ products }) {
 
   const handleOpenModal = () => {
     setShowModal(true);
+  };
+
+  const handleSalesWithdrawal = async (values) => {
+    try {
+      setWithdrawalLoading(true);
+      const response = await orderService.withdraw(values);
+      successMsg(response.message);
+      setShowSalesWithdrawalModal(false);
+      withdrawalForm.resetFields();
+      router.reload();
+    } catch (error) {
+      errorMsg(error?.response?.data?.message || 'Error al registrar el retiro.');
+    } finally {
+      setWithdrawalLoading(false);
+    }
+  };
+
+  const showSalesWithdrawalConfirm = () => {
+    setShowSalesWithdrawalModal(true);
   };
 
   const onCreate = async (values) => {
@@ -106,9 +128,74 @@ export default function ModalCreateOrder({ products }) {
 
   return (
     <>
+      <Button
+        onClick={showSalesWithdrawalConfirm}
+        className="mx-2"
+        icon={<MinusCircleOutlined />}
+        danger
+      >
+        Retiro de Ventas
+      </Button>
       <Button onClick={handleOpenModal} className="mx-2" icon={<PlusOutlined />} type="primary">
         Crear Venta
       </Button>
+      <Modal
+        title="Retiro de Ventas"
+        open={showSalesWithdrawalModal}
+        onCancel={() => {
+          setShowSalesWithdrawalModal(false);
+          withdrawalForm.resetFields();
+        }}
+        footer={null}
+        width={500}
+      >
+        <Form
+          form={withdrawalForm}
+          layout="vertical"
+          onFinish={handleSalesWithdrawal}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Monto a Retirar"
+            name="amount"
+            rules={[
+              { required: true, message: 'Por favor ingrese el monto a retirar' },
+              { type: 'number', min: 0.01, message: 'El monto debe ser mayor a 0' },
+            ]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              placeholder="Ingrese el monto"
+              prefix="$"
+              min={0.01}
+              step={0.01}
+              precision={2}
+            />
+          </Form.Item>
+
+          <Form.Item label="Descripción (Opcional)" name="description">
+            <Input.TextArea
+              rows={3}
+              placeholder="Ingrese una descripción o motivo del retiro"
+              maxLength={1000}
+            />
+          </Form.Item>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => {
+                setShowSalesWithdrawalModal(false);
+                withdrawalForm.resetFields();
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type="primary" danger htmlType="submit" loading={withdrawalLoading}>
+              Confirmar Retiro
+            </Button>
+          </div>
+        </Form>
+      </Modal>
       <Modal
         title="Crear Venta"
         open={showModal}

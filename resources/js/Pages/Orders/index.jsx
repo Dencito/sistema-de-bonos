@@ -58,7 +58,7 @@ const columns = [
   },
 ];
 
-export default function OrderPage({ auth, orders, products, branches }) {
+export default function OrderPage({ auth, orders, products, branches, withdrawals = [] }) {
   const [selectedBranch, setSelectedBranch] = useState('');
   const userHasBranch = auth.user?.branch_id;
 
@@ -72,8 +72,13 @@ export default function OrderPage({ auth, orders, products, branches }) {
 
   const formattedTotal = useMemo(() => {
     const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
-    return new Intl.NumberFormat('en-US').format(Math.trunc(totalSales));
-  }, [orders]);
+    const totalWithdrawals = withdrawals.reduce(
+      (sum, withdrawal) => sum + (parseFloat(withdrawal.amount) || 0),
+      0,
+    );
+    const netTotal = totalSales - totalWithdrawals;
+    return new Intl.NumberFormat('en-US').format(Math.trunc(netTotal));
+  }, [orders, withdrawals]);
 
   return (
     <AuthenticatedLayout

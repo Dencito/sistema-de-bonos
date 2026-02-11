@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\SalesWithdrawal;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,10 +49,21 @@ class OrdersController extends Controller
 
         $branches = Branch::all();
 
+        // Obtener retiros de ventas
+        $withdrawals = SalesWithdrawal::query()
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->when(!$branchId && $filterBranchId, function ($query) use ($filterBranchId) {
+                $query->where('branch_id', $filterBranchId);
+            })
+            ->get();
+
         $data = [
             'orders' => $orders,
             'products' => $products,
-            'branches' => $branches
+            'branches' => $branches,
+            'withdrawals' => $withdrawals
         ];
 
         return Inertia::render('Orders/index', $data);
@@ -127,6 +139,61 @@ class OrdersController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error al eliminar la orden: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function withdrawSales(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin'])) {
+            return response()->json([
+                'message' => 'No tienes permiso para realizar retiros de ventas.'
+            ], 403);
+        }
+
+        try {
+            $request->validate([
+                'amount' => 'required|numeric|min:0.01',
+                'description' => 'nullable|string|max:1000',
+            ]);
+
+            $branchId = $user->branch_id;
+
+            // Calcular total disponible
+            $totalSales = Order::when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })->sum('total');
+
+            $totalWithdrawals = SalesWithdrawal::when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            })->sum('amount');
+
+            $availableAmount = $totalSales - $totalWithdrawals;
+
+            // Validar que el monto no exceda el disponible
+            if ($request->amount > $availableAmount) {
+                return response()->json([
+                    'message' => 'El monto a retirar excede el total disponible. Disponible: $' . number_format($availableAmount, 2)
+                ], 400);
+            }
+
+            // Crear el retiro
+            SalesWithdrawal::create([
+                'user_id' => $user->id,
+                'branch_id' => $branchId,
+                'amount' => $request->amount,
+                'description' => $request->description,
+            ]);
+
+            return response()->json([
+                'message' => 'Retiro de ventas registrado exitosamente.',
+                'available_amount' => $availableAmount - $request->amount
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al registrar el retiro: ' . $e->getMessage()
             ], 500);
         }
     }

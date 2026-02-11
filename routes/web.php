@@ -173,6 +173,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrdersController::class, 'index'])->name('orders.index');
         Route::post('/', [OrdersController::class, 'store'])->name('orders.store');
+        Route::post('/withdraw', [OrdersController::class, 'withdrawSales'])->name('orders.withdraw');
         Route::delete('/{order}', [OrdersController::class, 'destroy'])->name('orders.destroy');
     });
 

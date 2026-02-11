@@ -26,6 +26,7 @@ class CompanyDatabaseService
             $fingerprintLogsTable = $request->slug . '_fingerprint_logs';
             $productsTable = $request->slug . '_products';
             $ordersTable = $request->slug . '_orders';
+            $salesWithdrawalsTable = $request->slug . '_sales_withdrawals';
             $cashShiftsTable = $request->slug . '_cash_shifts';
             $cashTransactionsTable = $request->slug . '_cash_transactions';
             $pasillerasTable = $request->slug . '_pasilleras';
@@ -366,6 +367,18 @@ class CompanyDatabaseService
                 });
             }
 
+            // 15. Crear tabla de retiros de ventas (depende de usuarios y sucursales)
+            if (!Schema::hasTable($salesWithdrawalsTable)) {
+                Schema::create($salesWithdrawalsTable, function ($table) use ($usersTable, $branchesTable) {
+                    $table->id();
+                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->decimal('amount', 15, 2);
+                    $table->text('description')->nullable();
+                    $table->timestamps();
+                });
+            }
+
             // 15. Crear tabla de turnos de caja (depende de usuarios y sucursales)
             if (!Schema::hasTable($cashShiftsTable)) {
                 Schema::create($cashShiftsTable, function ($table) use ($usersTable, $branchesTable) {
@@ -481,6 +494,7 @@ class CompanyDatabaseService
             "{$companyPrefix}_companies",
             "{$companyPrefix}_products",
             "{$companyPrefix}_orders",
+            "{$companyPrefix}_sales_withdrawals",
             "{$companyPrefix}_cash_shifts",
             "{$companyPrefix}_cash_transactions",
             "{$companyPrefix}_pasilleras",

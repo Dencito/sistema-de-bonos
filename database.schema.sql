@@ -550,6 +550,23 @@ CREATE TABLE `empresa_products` (
     UNIQUE KEY `code` (`code`)
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `empresa_sales_withdrawals`;
+
+CREATE TABLE `empresa_sales_withdrawals` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `user_id` bigint unsigned NOT NULL,
+    `branch_id` bigint unsigned NOT NULL,
+    `amount` decimal(15, 2) NOT NULL,
+    `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `empresa_sales_withdrawals_user_id_foreign` (`user_id`),
+    KEY `empresa_sales_withdrawals_branch_id_foreign` (`branch_id`),
+    CONSTRAINT `empresa_sales_withdrawals_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_sales_withdrawals_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
 -- Tablas independientes
 -- Estas tablas son del framework laravel.
 

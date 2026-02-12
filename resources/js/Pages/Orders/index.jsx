@@ -71,13 +71,29 @@ export default function OrderPage({ auth, orders, products, branches, withdrawal
   };
 
   const formattedTotal = useMemo(() => {
-    const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    console.log('🔍 Orders data:', orders);
+    console.log('🔍 Withdrawals data:', withdrawals);
+    
+    const totalSales = orders.reduce((sum, order) => {
+      console.log('Order total:', order.total, 'Type:', typeof order.total);
+      return sum + (parseFloat(order.total) || 0);
+    }, 0);
+    
     const totalWithdrawals = withdrawals.reduce(
-      (sum, withdrawal) => sum + (parseFloat(withdrawal.amount) || 0),
+      (sum, withdrawal) => {
+        console.log('Withdrawal amount:', withdrawal.amount, 'Type:', typeof withdrawal.amount);
+        return sum + (parseFloat(withdrawal.amount) || 0);
+      },
       0,
     );
+    
+    console.log('💰 Total Sales:', totalSales);
+    console.log('💸 Total Withdrawals:', totalWithdrawals);
+    
     const netTotal = totalSales - totalWithdrawals;
-    return new Intl.NumberFormat('en-US').format(Math.trunc(netTotal));
+    console.log('📊 Net Total:', netTotal);
+    
+    return netTotal;
   }, [orders, withdrawals]);
 
   return (

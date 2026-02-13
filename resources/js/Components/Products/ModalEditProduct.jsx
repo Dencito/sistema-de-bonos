@@ -145,9 +145,14 @@ export default function ModalEditProduct({ product }) {
               required: true,
               message: getValidationRequiredMessage,
             },
+            {
+              type: 'number',
+              min: 0,
+              message: 'Solo se aceptan números positivos',
+            },
           ]}
         >
-          <Input type="number" />
+          <InputNumber min={0} step={1} precision={0} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item
           name="price"
@@ -156,6 +161,11 @@ export default function ModalEditProduct({ product }) {
             {
               required: true,
               message: getValidationRequiredMessage,
+            },
+            {
+              type: 'number',
+              min: 0,
+              message: 'Solo se aceptan números positivos',
             },
           ]}
         >

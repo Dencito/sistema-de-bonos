@@ -12,6 +12,7 @@ export default function ModalCreateOrder({ products }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [unitPrice, setUnitPrice] = useState(0);
   const [showSalesWithdrawalModal, setShowSalesWithdrawalModal] = useState(false);
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
 
@@ -51,12 +52,24 @@ export default function ModalCreateOrder({ products }) {
   const onCreate = async (values) => {
     try {
       setLoading(true);
-      const response = await orderService.create({
+      
+      // Parse change from formatted string to number
+      const changeValue = typeof values.change === 'string' 
+        ? parseFloat(values.change.replace(/,/g, '')) 
+        : (values.change || 0);
+      
+      const payload = {
         ...values,
         products: [values.products],
         total,
-      });
-      successMsg(response.message);
+        change: changeValue,
+      };
+      
+      console.log('📤 Sending order payload:', payload);
+      
+      const response = await orderService.create(payload);
+      response.success ? successMsg(response.message) : errorMsg(response.message);
+      console.log('📤 Order created successfully:', response);
       handleCloseModal();
       router.reload();
     } catch (error) {
@@ -69,21 +82,25 @@ export default function ModalCreateOrder({ products }) {
   // Calculate total and set price and stock when product changes
   const handleProductsChange = (selectedProductId) => {
     const selectedProduct = products.find((p) => p.id === selectedProductId);
-    const unitPrice = selectedProduct ? selectedProduct.price : 0;
+    const price = selectedProduct ? parseFloat(selectedProduct.price) : 0;
+    setUnitPrice(price);
     const quantity = form.getFieldValue('quantity') || 1;
-    const calculatedTotal = unitPrice * quantity;
+    const calculatedTotal = price * quantity;
     setTotal(calculatedTotal);
+    console.log('🔍 Product changed - Price:', price, 'Quantity:', quantity, 'Total:', calculatedTotal);
     form.setFieldsValue({
       total: new Intl.NumberFormat('en-US').format(Math.trunc(calculatedTotal)),
-      price: new Intl.NumberFormat('en-US').format(Math.trunc(unitPrice)),
+      price: new Intl.NumberFormat('en-US').format(Math.trunc(price)),
       availableStock: selectedProduct
         ? new Intl.NumberFormat('en-US').format(Math.trunc(selectedProduct.quantity))
         : 0,
     });
     // Update change if paid_amount is set
     const paidAmount = form.getFieldValue('paid_amount') || 0;
+    console.log('💵 Paid amount:', paidAmount, 'Total:', calculatedTotal);
     if (paidAmount > calculatedTotal) {
       const changeAmount = paidAmount - calculatedTotal;
+      console.log('💰 Change calculated:', changeAmount);
       form.setFieldsValue({
         change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
       });
@@ -95,16 +112,18 @@ export default function ModalCreateOrder({ products }) {
   // Recalculate total when quantity changes
   const handleQuantityChange = (value) => {
     const quantity = value || 1;
-    const unitPrice = form.getFieldValue('price') || 0;
     const calculatedTotal = unitPrice * quantity;
     setTotal(calculatedTotal);
+    console.log('🔢 Quantity changed - Price:', unitPrice, 'Quantity:', quantity, 'Total:', calculatedTotal);
     form.setFieldsValue({
       total: new Intl.NumberFormat('en-US').format(Math.trunc(calculatedTotal)),
     });
     // Also update change if paid_amount is set
     const paidAmount = form.getFieldValue('paid_amount') || 0;
+    console.log('💵 Paid amount:', paidAmount, 'Total:', calculatedTotal);
     if (paidAmount > calculatedTotal) {
       const changeAmount = paidAmount - calculatedTotal;
+      console.log('💰 Change calculated:', changeAmount);
       form.setFieldsValue({
         change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
       });
@@ -116,8 +135,10 @@ export default function ModalCreateOrder({ products }) {
   // Auto-fill change when paid_amount changes
   const handlePaidAmountChange = (value) => {
     const paidAmount = value || 0;
+    console.log('💵 Paid amount changed:', paidAmount, 'Total:', total);
     if (paidAmount > total) {
       const changeAmount = paidAmount - total;
+      console.log('💰 Change calculated:', changeAmount);
       form.setFieldsValue({
         change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
       });
@@ -149,30 +170,17 @@ export default function ModalCreateOrder({ products }) {
         footer={null}
         width={500}
       >
+        <div className="mb-4">
+          <Text type="warning" style={{ fontSize: '14px' }}>
+            ⚠️ Se retirará TODO el dinero acumulado de ventas. El acumulador se reseteará a $0.
+          </Text>
+        </div>
         <Form
           form={withdrawalForm}
           layout="vertical"
           onFinish={handleSalesWithdrawal}
           autoComplete="off"
         >
-          <Form.Item
-            label="Monto a Retirar"
-            name="amount"
-            rules={[
-              { required: true, message: 'Por favor ingrese el monto a retirar' },
-              { type: 'number', min: 0.01, message: 'El monto debe ser mayor a 0' },
-            ]}
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              placeholder="Ingrese el monto"
-              prefix="$"
-              min={0.01}
-              step={0.01}
-              precision={2}
-            />
-          </Form.Item>
-
           <Form.Item label="Descripción (Opcional)" name="description">
             <Input.TextArea
               rows={3}
@@ -191,7 +199,7 @@ export default function ModalCreateOrder({ products }) {
               Cancelar
             </Button>
             <Button type="primary" danger htmlType="submit" loading={withdrawalLoading}>
-              Confirmar Retiro
+              Confirmar Retiro Total
             </Button>
           </div>
         </Form>
@@ -290,6 +298,18 @@ export default function ModalCreateOrder({ products }) {
             </Select>
           </Form.Item>
 
+          <Form.Item label="Total a Pagar $">
+            <Text
+              style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#1890ff',
+              }}
+            >
+              ${new Intl.NumberFormat('en-US').format(Math.trunc(total))}
+            </Text>
+          </Form.Item>
+
           <Form.Item
             label="Monto Pagado $"
             name="paid_amount"
@@ -311,10 +331,12 @@ export default function ModalCreateOrder({ products }) {
           </Form.Item>
 
           <Form.Item
-            label="Vuelto $ | Monto pagado - (Precio unitario del producto * Cantidad a vender)"
+            label="Vuelto $ | Monto pagado - Total a pagar"
             shouldUpdate={(prevValues, currentValues) => prevValues.change !== currentValues.change}
           >
             {({ getFieldValue }) => {
+              const change = getFieldValue('change') ?? 0;
+              console.log('🎯 Displaying change:', change);
               return (
                 <Text
                   style={{
@@ -323,7 +345,7 @@ export default function ModalCreateOrder({ products }) {
                     fontWeight: 'bold',
                   }}
                 >
-                  ${getFieldValue('change') ?? 0}
+                  ${change}
                 </Text>
               );
             }}

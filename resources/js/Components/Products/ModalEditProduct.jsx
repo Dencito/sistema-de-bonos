@@ -19,7 +19,7 @@ export default function ModalEditProduct({ product }) {
         name: product.name,
         code: product.code,
         quantity: product.quantity,
-        price: new Intl.NumberFormat('en-US').format(Math.trunc(product.price)),
+        price: Math.trunc(product.price),
       });
     }
   }, [showModal, product, form]);

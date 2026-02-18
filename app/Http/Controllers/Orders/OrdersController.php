@@ -59,11 +59,20 @@ class OrdersController extends Controller
             })
             ->get();
 
+        // Obtener el acumulador de ventas de la sucursal
+        $currentBranchId = $branchId ?: $filterBranchId;
+        $salesAccumulator = 0;
+        if ($currentBranchId) {
+            $branch = Branch::find($currentBranchId);
+            $salesAccumulator = $branch ? $branch->sales_accumulator : 0;
+        }
+
         $data = [
             'orders' => $orders,
             'products' => $products,
             'branches' => $branches,
-            'withdrawals' => $withdrawals
+            'withdrawals' => $withdrawals,
+            'salesAccumulator' => $salesAccumulator
         ];
 
         return Inertia::render('Orders/index', $data);
@@ -107,6 +116,12 @@ class OrdersController extends Controller
                     'user_id' => $user->id,
                     'branch_id' => $user->branch_id,
                 ]));
+
+                // Incrementar el acumulador de ventas en la sucursal
+                $branch = Branch::find($user->branch_id);
+                if ($branch) {
+                    $branch->increment('sales_accumulator', $total);
+                }
             });
 
             return response()->json([
@@ -147,7 +162,7 @@ class OrdersController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin'])) {
+        if (!$user->hasAnyRole(['duenio', 'super-admin', 'admin', 'trabajador'])) {
             return response()->json([
                 'message' => 'No tienes permiso para realizar retiros de ventas.'
             ], 403);
@@ -155,41 +170,46 @@ class OrdersController extends Controller
 
         try {
             $request->validate([
-                'amount' => 'required|numeric|min:0.01',
                 'description' => 'nullable|string|max:1000',
             ]);
 
             $branchId = $user->branch_id;
 
-            // Calcular total disponible
-            $totalSales = Order::when($branchId, function ($query) use ($branchId) {
-                $query->where('branch_id', $branchId);
-            })->sum('total');
-
-            $totalWithdrawals = SalesWithdrawal::when($branchId, function ($query) use ($branchId) {
-                $query->where('branch_id', $branchId);
-            })->sum('amount');
-
-            $availableAmount = $totalSales - $totalWithdrawals;
-
-            // Validar que el monto no exceda el disponible
-            if ($request->amount > $availableAmount) {
+            if (!$branchId) {
                 return response()->json([
-                    'message' => 'El monto a retirar excede el total disponible. Disponible: $' . number_format($availableAmount, 2)
+                    'message' => 'No tienes una sucursal asignada.'
                 ], 400);
             }
 
-            // Crear el retiro
-            SalesWithdrawal::create([
-                'user_id' => $user->id,
-                'branch_id' => $branchId,
-                'amount' => $request->amount,
-                'description' => $request->description,
-            ]);
+            DB::transaction(function () use ($user, $branchId, $request) {
+                $branch = Branch::lockForUpdate()->find($branchId);
+                
+                if (!$branch) {
+                    throw new \Exception('Sucursal no encontrada.');
+                }
+
+                $availableAmount = $branch->sales_accumulator;
+
+                // Validar que haya dinero para retirar
+                if ($availableAmount <= 0) {
+                    throw new \Exception('No hay dinero disponible para retirar.');
+                }
+
+                // Crear el retiro con el monto total acumulado
+                SalesWithdrawal::create([
+                    'user_id' => $user->id,
+                    'branch_id' => $branchId,
+                    'amount' => $availableAmount,
+                    'description' => $request->description,
+                ]);
+
+                // Resetear el acumulador a 0
+                $branch->sales_accumulator = 0;
+                $branch->save();
+            });
 
             return response()->json([
-                'message' => 'Retiro de ventas registrado exitosamente.',
-                'available_amount' => $availableAmount - $request->amount
+                'message' => 'Retiro de ventas registrado exitosamente. El acumulador ha sido reseteado a $0.'
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

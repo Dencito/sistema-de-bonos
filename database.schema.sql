@@ -252,6 +252,7 @@ CREATE TABLE `empresa_branches` (
     `bonus_schedules` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     `birthday_amount` decimal(10, 2) NOT NULL DEFAULT '0.00',
     `sales_accumulator` decimal(15, 2) NOT NULL DEFAULT '0.00',
+    `withdrawals` json DEFAULT NULL,
     `status_id` bigint unsigned NOT NULL,
     `company_id` bigint unsigned NOT NULL,
     `created_at` timestamp NULL DEFAULT NULL,

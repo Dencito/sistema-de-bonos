@@ -10,6 +10,7 @@ use App\Http\Controllers\Mobile\MobilePasilleraController;
 use App\Http\Controllers\Orders\OrdersController;
 use App\Http\Controllers\Products\ProductsController;
 use App\Http\Controllers\Reports\ReportController;
+use App\Http\Controllers\SalesTotal\SalesTotalController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\Shifts\ShiftController;
@@ -175,6 +176,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [OrdersController::class, 'store'])->name('orders.store');
         Route::post('/withdraw', [OrdersController::class, 'withdrawSales'])->name('orders.withdraw');
         Route::delete('/{order}', [OrdersController::class, 'destroy'])->name('orders.destroy');
+    });
+
+    Route::prefix('sales-total')->group(function () {
+        Route::get('/', [SalesTotalController::class, 'index'])->name('sales-total.index');
     });
 
     Route::prefix('cash-management')->group(function () {

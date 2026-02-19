@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\SalesWithdrawal;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,22 +48,16 @@ class OrdersController extends Controller
 
         $branches = Branch::all();
 
-        // Obtener retiros de ventas
-        $withdrawals = SalesWithdrawal::query()
-            ->when($branchId, function ($query) use ($branchId) {
-                $query->where('branch_id', $branchId);
-            })
-            ->when(!$branchId && $filterBranchId, function ($query) use ($filterBranchId) {
-                $query->where('branch_id', $filterBranchId);
-            })
-            ->get();
-
-        // Obtener el acumulador de ventas de la sucursal
+        // Obtener el acumulador y retiros de la sucursal
         $currentBranchId = $branchId ?: $filterBranchId;
         $salesAccumulator = 0;
+        $withdrawals = [];
         if ($currentBranchId) {
             $branch = Branch::find($currentBranchId);
-            $salesAccumulator = $branch ? $branch->sales_accumulator : 0;
+            if ($branch) {
+                $salesAccumulator = $branch->sales_accumulator;
+                $withdrawals = $branch->withdrawals ?? [];
+            }
         }
 
         $data = [
@@ -195,15 +188,20 @@ class OrdersController extends Controller
                     throw new \Exception('No hay dinero disponible para retirar.');
                 }
 
-                // Crear el retiro con el monto total acumulado
-                SalesWithdrawal::create([
+                // Obtener el array de retiros actual o inicializar vacío
+                $withdrawals = $branch->withdrawals ?? [];
+
+                // Agregar el nuevo retiro al array
+                $withdrawals[] = [
+                    'date' => now()->toDateTimeString(),
                     'user_id' => $user->id,
-                    'branch_id' => $branchId,
+                    'user_name' => $user->name,
                     'amount' => $availableAmount,
                     'description' => $request->description,
-                ]);
+                ];
 
-                // Resetear el acumulador a 0
+                // Actualizar la sucursal
+                $branch->withdrawals = $withdrawals;
                 $branch->sales_accumulator = 0;
                 $branch->save();
             });

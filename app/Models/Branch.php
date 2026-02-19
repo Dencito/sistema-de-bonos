@@ -35,6 +35,7 @@ class Branch extends Model
         'bonus_schedules',
         'birthday_amount',
         'sales_accumulator',
+        'withdrawals',
         'ticketNumber'
     ];
 
@@ -45,7 +46,8 @@ class Branch extends Model
      */
     protected $casts = [
         'birthday_amount' => 'decimal:2',
-        'sales_accumulator' => 'decimal:2'
+        'sales_accumulator' => 'decimal:2',
+        'withdrawals' => 'array'
     ];
 
     public function shifts()

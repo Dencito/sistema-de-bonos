@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   Package,
   Banknote,
+  ShoppingBasket,
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
@@ -165,6 +166,13 @@ export function AppSidebar({ role, roles, user }) {
     },
     {
       key: '15',
+      icon: ShoppingBasket,
+      label: 'Ventas Totales',
+      link: '/sales-total',
+      autorized: allowedRoles.shifts.includes(role),
+    },
+    {
+      key: '16',
       icon: Banknote,
       label: 'Sistema de Caja',
       link: '/cash-management',

@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { Select, Card, Statistic, Table, Tag } from 'antd';
-import { DollarOutlined, ShoppingOutlined, MinusCircleOutlined, WalletOutlined } from '@ant-design/icons';
+import { Select, Card, Statistic, Table } from 'antd';
+import {
+  DollarOutlined,
+  ShoppingOutlined,
+  MinusCircleOutlined,
+  WalletOutlined,
+} from '@ant-design/icons';
 import MobileButton from '@/Components/MobileButton';
 
 export default function SalesTotalPage({ auth, salesData, branches, userHasBranch }) {
@@ -48,9 +53,7 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
       role={auth.role}
       auth={auth}
       header={
-        <h2 className="z-10 text-xl font-semibold leading-tight text-gray-800">
-          Total de Ventas
-        </h2>
+        <h2 className="z-10 text-xl font-semibold leading-tight text-gray-800">Total de Ventas</h2>
       }
     >
       <Head title="Total de Ventas" />
@@ -84,8 +87,8 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
           {salesData ? (
             <>
               <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-4">{salesData.branch_name}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <h2 className="mb-4 text-2xl font-bold">{salesData.branch_name}</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <Card>
                     <Statistic
                       title="Total de Ventas"
@@ -93,7 +96,9 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
                       prefix={<ShoppingOutlined />}
                       suffix="$"
                       valueStyle={{ color: '#3f8600' }}
-                      formatter={(value) => new Intl.NumberFormat('en-US').format(Math.trunc(value))}
+                      formatter={(value) =>
+                        new Intl.NumberFormat('en-US').format(Math.trunc(value))
+                      }
                     />
                   </Card>
 
@@ -104,7 +109,9 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
                       prefix={<WalletOutlined />}
                       suffix="$"
                       valueStyle={{ color: '#1890ff' }}
-                      formatter={(value) => new Intl.NumberFormat('en-US').format(Math.trunc(value))}
+                      formatter={(value) =>
+                        new Intl.NumberFormat('en-US').format(Math.trunc(value))
+                      }
                     />
                   </Card>
 
@@ -115,7 +122,9 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
                       prefix={<MinusCircleOutlined />}
                       suffix="$"
                       valueStyle={{ color: '#cf1322' }}
-                      formatter={(value) => new Intl.NumberFormat('en-US').format(Math.trunc(value))}
+                      formatter={(value) =>
+                        new Intl.NumberFormat('en-US').format(Math.trunc(value))
+                      }
                     />
                   </Card>
 
@@ -126,15 +135,17 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
                       prefix={<DollarOutlined />}
                       suffix="$"
                       valueStyle={{ color: salesData.net_total >= 0 ? '#3f8600' : '#cf1322' }}
-                      formatter={(value) => new Intl.NumberFormat('en-US').format(Math.trunc(value))}
+                      formatter={(value) =>
+                        new Intl.NumberFormat('en-US').format(Math.trunc(value))
+                      }
                     />
                   </Card>
                 </div>
               </div>
 
               {salesData.withdrawals && salesData.withdrawals.length > 0 && (
-                <div className="bg-white shadow-sm sm:rounded-lg p-4">
-                  <h3 className="text-xl font-bold mb-4">Historial de Retiros</h3>
+                <div className="p-4 bg-white shadow-sm sm:rounded-lg">
+                  <h3 className="mb-4 text-xl font-bold">Historial de Retiros</h3>
                   <Table
                     dataSource={salesData.withdrawals.map((withdrawal, index) => ({
                       ...withdrawal,
@@ -148,8 +159,8 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
               )}
             </>
           ) : (
-            <div className="bg-white shadow-sm sm:rounded-lg p-8 text-center">
-              <p className="text-gray-500 text-lg">
+            <div className="p-8 text-center bg-white shadow-sm sm:rounded-lg">
+              <p className="text-lg text-gray-500">
                 {userHasBranch
                   ? 'No se encontraron datos para tu sucursal'
                   : 'Selecciona una sucursal para ver los datos de ventas'}

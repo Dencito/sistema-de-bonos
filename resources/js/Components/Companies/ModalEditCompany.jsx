@@ -14,7 +14,7 @@ export default function ModalEditCompany({ data }) {
   const [showModal, setShowModal] = useState(false);
   const [country, setCountry] = useState('');
   const [countries, setCountries] = useState();
-  const [regions, setRegions] = useState();
+  const [_, setRegions] = useState();
   const [errorRuts, setErrorRuts] = useState({
     company: false,
     legalRepresentative: false,

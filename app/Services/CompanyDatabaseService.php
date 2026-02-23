@@ -26,7 +26,6 @@ class CompanyDatabaseService
             $fingerprintLogsTable = $request->slug . '_fingerprint_logs';
             $productsTable = $request->slug . '_products';
             $ordersTable = $request->slug . '_orders';
-            $salesWithdrawalsTable = $request->slug . '_sales_withdrawals';
             $cashShiftsTable = $request->slug . '_cash_shifts';
             $cashTransactionsTable = $request->slug . '_cash_transactions';
             $pasillerasTable = $request->slug . '_pasilleras';
@@ -494,7 +493,6 @@ class CompanyDatabaseService
             "{$companyPrefix}_companies",
             "{$companyPrefix}_products",
             "{$companyPrefix}_orders",
-            "{$companyPrefix}_sales_withdrawals",
             "{$companyPrefix}_cash_shifts",
             "{$companyPrefix}_cash_transactions",
             "{$companyPrefix}_pasilleras",

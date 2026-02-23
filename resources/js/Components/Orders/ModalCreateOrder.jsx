@@ -52,24 +52,22 @@ export default function ModalCreateOrder({ products }) {
   const onCreate = async (values) => {
     try {
       setLoading(true);
-      
+
       // Parse change from formatted string to number
-      const changeValue = typeof values.change === 'string' 
-        ? parseFloat(values.change.replace(/,/g, '')) 
-        : (values.change || 0);
-      
+      const changeValue =
+        typeof values.change === 'string'
+          ? parseFloat(values.change.replace(/,/g, ''))
+          : values.change || 0;
+
       const payload = {
         ...values,
         products: [values.products],
         total,
         change: changeValue,
       };
-      
-      console.log('📤 Sending order payload:', payload);
-      
+
       const response = await orderService.create(payload);
       response.success ? successMsg(response.message) : errorMsg(response.message);
-      console.log('📤 Order created successfully:', response);
       handleCloseModal();
       router.reload();
     } catch (error) {
@@ -87,7 +85,6 @@ export default function ModalCreateOrder({ products }) {
     const quantity = form.getFieldValue('quantity') || 1;
     const calculatedTotal = price * quantity;
     setTotal(calculatedTotal);
-    console.log('🔍 Product changed - Price:', price, 'Quantity:', quantity, 'Total:', calculatedTotal);
     form.setFieldsValue({
       total: new Intl.NumberFormat('en-US').format(Math.trunc(calculatedTotal)),
       price: new Intl.NumberFormat('en-US').format(Math.trunc(price)),
@@ -97,10 +94,8 @@ export default function ModalCreateOrder({ products }) {
     });
     // Update change if paid_amount is set
     const paidAmount = form.getFieldValue('paid_amount') || 0;
-    console.log('💵 Paid amount:', paidAmount, 'Total:', calculatedTotal);
     if (paidAmount > calculatedTotal) {
       const changeAmount = paidAmount - calculatedTotal;
-      console.log('💰 Change calculated:', changeAmount);
       form.setFieldsValue({
         change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
       });
@@ -114,16 +109,13 @@ export default function ModalCreateOrder({ products }) {
     const quantity = value || 1;
     const calculatedTotal = unitPrice * quantity;
     setTotal(calculatedTotal);
-    console.log('🔢 Quantity changed - Price:', unitPrice, 'Quantity:', quantity, 'Total:', calculatedTotal);
     form.setFieldsValue({
       total: new Intl.NumberFormat('en-US').format(Math.trunc(calculatedTotal)),
     });
     // Also update change if paid_amount is set
     const paidAmount = form.getFieldValue('paid_amount') || 0;
-    console.log('💵 Paid amount:', paidAmount, 'Total:', calculatedTotal);
     if (paidAmount > calculatedTotal) {
       const changeAmount = paidAmount - calculatedTotal;
-      console.log('💰 Change calculated:', changeAmount);
       form.setFieldsValue({
         change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
       });
@@ -135,10 +127,8 @@ export default function ModalCreateOrder({ products }) {
   // Auto-fill change when paid_amount changes
   const handlePaidAmountChange = (value) => {
     const paidAmount = value || 0;
-    console.log('💵 Paid amount changed:', paidAmount, 'Total:', total);
     if (paidAmount > total) {
       const changeAmount = paidAmount - total;
-      console.log('💰 Change calculated:', changeAmount);
       form.setFieldsValue({
         change: new Intl.NumberFormat('en-US').format(Math.trunc(changeAmount)),
       });
@@ -189,7 +179,7 @@ export default function ModalCreateOrder({ products }) {
             />
           </Form.Item>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex gap-2 justify-end">
             <Button
               onClick={() => {
                 setShowSalesWithdrawalModal(false);
@@ -336,7 +326,6 @@ export default function ModalCreateOrder({ products }) {
           >
             {({ getFieldValue }) => {
               const change = getFieldValue('change') ?? 0;
-              console.log('🎯 Displaying change:', change);
               return (
                 <Text
                   style={{

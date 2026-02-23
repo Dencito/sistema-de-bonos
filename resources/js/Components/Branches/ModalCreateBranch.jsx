@@ -12,7 +12,7 @@ export default function ModalCreateBranch({ companies }) {
   const [loading, setLoading] = useState(false);
   const [country, setCountry] = useState('');
   const [countries, setCountries] = useState();
-  const [regions, setRegions] = useState();
+  const [_, setRegions] = useState();
   const [availableScheduleModalVisible, setAvailableScheduleModalVisible] = useState(false);
   const [bonusScheduleModalVisible, setBonusScheduleModalVisible] = useState(false);
   const [availableSchedules, setAvailableSchedules] = useState([]);
@@ -151,7 +151,7 @@ export default function ModalCreateBranch({ companies }) {
             <Input name="birthday_amount" onChange={onlyNumberInput} showCount maxLength={15} />
           </Form.Item>
 
-          <Divider className="font-bold text-3xl">Dirección</Divider>
+          <Divider className="text-3xl font-bold">Dirección</Divider>
 
           <div className="flex gap-5">
             <Form.Item

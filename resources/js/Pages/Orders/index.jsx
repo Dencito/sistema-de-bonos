@@ -58,7 +58,7 @@ const columns = [
   },
 ];
 
-export default function OrderPage({ auth, orders, products, branches, withdrawals = [], salesAccumulator = 0 }) {
+export default function OrderPage({ auth, orders, products, branches, salesAccumulator = 0 }) {
   const [selectedBranch, setSelectedBranch] = useState('');
   const userHasBranch = auth.user?.branch_id;
 
@@ -71,13 +71,7 @@ export default function OrderPage({ auth, orders, products, branches, withdrawal
   };
 
   const formattedTotal = useMemo(() => {
-    console.log('� Sales Accumulator from backend:', salesAccumulator);
-    console.log('Type:', typeof salesAccumulator);
-    
-    const total = parseFloat(salesAccumulator) || 0;
-    console.log('� Parsed Total:', total);
-    
-    return total;
+    return parseFloat(salesAccumulator) || 0;
   }, [salesAccumulator]);
 
   return (

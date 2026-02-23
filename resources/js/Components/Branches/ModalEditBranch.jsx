@@ -12,7 +12,7 @@ export default function ModalEditBranch({ data, statuses }) {
   const [loading, setLoading] = useState(false);
   const [country, setCountry] = useState('');
   const [countries, setCountries] = useState();
-  const [regions, setRegions] = useState();
+  const [_, setRegions] = useState();
   const [availableScheduleModalVisible, setAvailableScheduleModalVisible] = useState(false);
   const [bonusScheduleModalVisible, setBonusScheduleModalVisible] = useState(false);
   const [availableSchedules, setAvailableSchedules] = useState([]);
@@ -115,7 +115,7 @@ export default function ModalEditBranch({ data, statuses }) {
       <Button onClick={handleOpenModal} icon={<EditOutlined />} />
       <Modal
         style={{ top: 20 }}
-        title={<p className="text-bold text-3xl">Editando: {data?.name}</p>}
+        title={<p className="text-3xl text-bold">Editando: {data?.name}</p>}
         open={showModal}
         onCancel={handleCloseModal}
         footer={null}

@@ -15,7 +15,7 @@ export default function ModalCreateCompany() {
   const [showModal, setShowModal] = useState(false);
   const [country, setCountry] = useState('');
   const [countries, setCountries] = useState();
-  const [regions, setRegions] = useState();
+  const [_, setRegions] = useState();
   const [errorRuts, setErrorRuts] = useState({
     company: false,
     legalRepresentative: false,
@@ -221,7 +221,7 @@ export default function ModalCreateCompany() {
       />
       <Modal
         style={{ top: 20 }}
-        title={<p className="text-bold text-3xl">Crear empresa</p>}
+        title={<p className="text-3xl text-bold">Crear empresa</p>}
         confirmLoading={loading}
         zIndex={20}
         open={showModal}
@@ -275,9 +275,9 @@ export default function ModalCreateCompany() {
               <Spin
                 size="large"
                 tip={
-                  <div className="flex flex-col items-center justify-center">
-                    <p className="text-bold text-2xl">Estamos creando la empresa</p>
-                    <p className="text-bold text-xl">Esto puede llegar a tardar unos segundos</p>
+                  <div className="flex flex-col justify-center items-center">
+                    <p className="text-2xl text-bold">Estamos creando la empresa</p>
+                    <p className="text-xl text-bold">Esto puede llegar a tardar unos segundos</p>
                   </div>
                 }
                 fullscreen
@@ -340,7 +340,7 @@ export default function ModalCreateCompany() {
         >
           <Input name="max_branches" onChange={onlyNumberInput} showCount maxLength={2} />
         </Form.Item>
-        <div className="flex gap-3 relative">
+        <div className="flex relative gap-3">
           <Form.Item
             className="w-10/12"
             name="rutNumbers"
@@ -446,7 +446,7 @@ export default function ModalCreateCompany() {
           <Input type="email" showCount maxLength={60} />
         </Form.Item>
 
-        <Divider className="font-bold text-3xl">Representante legal</Divider>
+        <Divider className="text-3xl font-bold">Representante legal</Divider>
         <Form.Item
           name="legalRepresentativeNames"
           label="Nombres"
@@ -526,7 +526,7 @@ export default function ModalCreateCompany() {
           </span>
         )}
 
-        <Divider className="font-bold text-3xl">Contacto</Divider>
+        <Divider className="text-3xl font-bold">Contacto</Divider>
 
         <Form.Item
           name="contactNames"
@@ -645,7 +645,7 @@ export default function ModalCreateCompany() {
           <Input type="email" showCount maxLength={60} />
         </Form.Item>
 
-        <Divider className="font-bold text-3xl">Dirección</Divider>
+        <Divider className="text-3xl font-bold">Dirección</Divider>
 
         <div className="flex gap-5">
           <Form.Item

@@ -96,29 +96,6 @@ export default function Schedule({ onScheduleSave, isEditing, initialSchedules =
     return selectedColor;
   };
 
-  const isEdgeSlot = (day, hour) => {
-    // Si estamos editando, permitir seleccionar slots del turno actual
-    if (editingSchedule) {
-      const isCurrentScheduleSlot = editingSchedule.schedules.some((schedule) => {
-        if (schedule.day !== day) return false;
-        return schedule.ranges.some((range) => {
-          const startHour =
-            parseInt(range.start_time.split(':')[0]) * 2 +
-            (range.start_time.split(':')[1] === '30' ? 1 : 0);
-          const endHour =
-            parseInt(range.end_time.split(':')[0]) * 2 +
-            (range.end_time.split(':')[1] === '30' ? 1 : 0);
-          return hour >= startHour && hour <= endHour;
-        });
-      });
-      if (isCurrentScheduleSlot) return true;
-    }
-
-    // Permitir solapar en cualquier posición
-    // Siempre devolvemos true para permitir seleccionar cualquier slot
-    return true;
-  };
-
   const handleMouseDown = (day, hour) => {
     if (savedSchedules.length === 3 && !editingSchedule) {
       message.error('Se ha alcanzado el límite máximo de 3 turnos.');

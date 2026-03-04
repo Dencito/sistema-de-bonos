@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
@@ -68,6 +68,14 @@ export default function ProductPage({ auth, products, branches }) {
     });
   };
 
+  const totalQuantity = useMemo(() => {
+    return products.reduce((sum, product) => sum + (product.quantity || 0), 0);
+  }, [products]);
+
+  const totalAmount = useMemo(() => {
+    return products.reduce((sum, product) => sum + (product.price * product.quantity || 0), 0);
+  }, [products]);
+
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -79,6 +87,16 @@ export default function ProductPage({ auth, products, branches }) {
       <header className="flex justify-between items-center p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
         <h1 className="text-4xl font-bold">Productos</h1>
+        <div className="text-right">
+          <div className="text-sm text-gray-600">Cantidad Total</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {new Intl.NumberFormat('en-US').format(totalQuantity)}
+          </div>
+          <div className="mt-2 text-sm text-gray-600">Valor Total</div>
+          <div className="text-2xl font-bold text-green-600">
+            ${new Intl.NumberFormat('en-US').format(Math.trunc(totalAmount))}
+          </div>
+        </div>
       </header>
       <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">

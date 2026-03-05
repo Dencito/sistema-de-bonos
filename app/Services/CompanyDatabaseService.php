@@ -300,7 +300,7 @@ class CompanyDatabaseService
 
             // 10. Crear tabla de tickets (depende de usuarios y tomos)
             if (!Schema::hasTable($ticketsTable)) {
-                Schema::create($ticketsTable, function ($table) use ($usersTable, $totemsTable) {
+                Schema::create($ticketsTable, function ($table) use ($usersTable, $totemsTable, $ticketsTable) {
                     $table->id();
                     $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
                     $table->foreignId('totem_id')->constrained($totemsTable)->onDelete('cascade');
@@ -309,6 +309,8 @@ class CompanyDatabaseService
                     $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });
+                
+                DB::statement("ALTER TABLE `{$ticketsTable}` ADD UNIQUE KEY `{$ticketsTable}_user_type_date_unique` (`user_id`, `type`, (CAST(`created_at` AS DATE)))");
             }
 
             // 11. Crear tabla de turnos (depende de usuarios y sucursales)

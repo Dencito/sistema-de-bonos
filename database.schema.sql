@@ -500,6 +500,11 @@ CREATE TABLE `empresa_tickets` (
     PRIMARY KEY (`id`),
     KEY `empresa_tickets_user_id_foreign` (`user_id`),
     KEY `empresa_tickets_totem_id_foreign` (`totem_id`),
+    UNIQUE KEY `empresa_tickets_user_type_date_unique` (
+        `user_id`,
+        `type`,
+        (CAST(`created_at` AS DATE))
+    ),
     CONSTRAINT `empresa_tickets_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE CASCADE,
     CONSTRAINT `empresa_tickets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

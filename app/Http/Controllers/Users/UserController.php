@@ -772,6 +772,10 @@ class UserController extends Controller
 
         $now = now();
         
+        DB::beginTransaction();
+        
+        try {
+        
         $bonusesAvailableAdditionals = $user->bonuses->filter(function($bonus) use ($now) {
             // Check if bonus is active
             if (!$bonus->active) {
@@ -826,10 +830,10 @@ class UserController extends Controller
             $startTime = $now->copy()->setTime(6, 0, 0);
         }
         
-        $ticketsTypeBonusByUser = $user
-            ->tickets
+        $ticketsTypeBonusByUser = Ticket::where('user_id', $user->id)
             ->where('type', 'Bono Diario')
             ->where('created_at', '>=', $startTime)
+            ->lockForUpdate()
             ->first();
 
         $bonusesAvailableCategoryBonus = $user->categoryBonus;
@@ -849,11 +853,13 @@ class UserController extends Controller
         }
 
         // Verificar bono de cumpleaños (una vez al año)
-        $ticketsTypeBirthdayByUser = $user
-            ->tickets
+        // FIXED: Consultar directamente a la BD en lugar de usar relación cargada
+        // lockForUpdate() previene race conditions
+        $ticketsTypeBirthdayByUser = Ticket::where('user_id', $user->id)
             ->where('type', 'Bono Cumpleaños')
             ->where('created_at', '>=', now()->startOfYear())
             ->where('created_at', '<=', now()->endOfYear())
+            ->lockForUpdate()
             ->first();
 
         $isBirthday = false;
@@ -881,6 +887,7 @@ class UserController extends Controller
 
         // verifica si esta vacio
         if ($tickets === []) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'No tienes bonos disponibles'
             ], 409);
@@ -901,6 +908,9 @@ class UserController extends Controller
             'result' => $fingerprintResult ? $fingerprintResult->toArray() : null,
         ]);
 
+        // Confirmar la transacción si todo salió bien
+        DB::commit();
+
         return response()->json([
             'data' => [
                 'tickets' => collect($tickets)->map(function ($ticket) {
@@ -913,6 +923,20 @@ class UserController extends Controller
                 }),
             ],
         ]);
+        
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al generar tickets de bonos', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Error al procesar los bonos. Por favor intente nuevamente.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function markFingerprint(Request $request, $isMarkPlayer = false)

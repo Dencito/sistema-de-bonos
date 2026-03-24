@@ -87,22 +87,42 @@ class TotemController extends Controller
             if (!$branch) {
                 return response()->json([
                     'message' => 'Sucursal no encontrada'
-                ], 409);
+                ], 404);
             }
 
+            // Buscar si el tótem ya existe por código
             $totem = Totem::where('code', $validated['code'])->first();
+            
             if ($totem) {
+                // Si el tótem existe y tiene la misma sucursal, retornar el existente
+                if ($totem->branch_id == $validated['branch_id']) {
+                    return response()->json([
+                        'message' => 'El tótem ya está asociado a esta sucursal',
+                        'totem' => $totem
+                    ], 200);
+                }
+                
+                // Si el tótem existe pero con diferente sucursal, actualizar la sucursal
+                $totem->update([
+                    'name' => $validated['name'],
+                    'branch_id' => $validated['branch_id'],
+                    'active' => $validated['active'] ?? $totem->active
+                ]);
+                
                 return response()->json([
-                    'message' => 'El tótem ya existe'
+                    'message' => 'Tótem cambiado de sucursal exitosamente',
+                    'totem' => $totem
                 ], 200);
             }
 
+            // Si el tótem no existe, crear uno nuevo
             $totem = Totem::create($validated);
-            if ($totem) {
-                return response()->json([
-                    'message' => 'Tótem asociado correctamente'
-                ], 201);
-            }
+            
+            return response()->json([
+                'message' => 'Tótem creado y asociado correctamente',
+                'totem' => $totem
+            ], 201);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error al asociar el tótem: ' . $e->getMessage()

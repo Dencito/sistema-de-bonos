@@ -5,10 +5,11 @@ import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 
 const LazyModalCreateTotem = lazy(() => import('@/Components/Totems/ModalCreateTotem'));
+const LazyModalEditTotem = lazy(() => import('@/Components/Totems/ModalEditTotem'));
 
 const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
-const columns = [
+const columns = (branches) => [
   {
     title: 'Nombre',
     dataIndex: 'name',
@@ -35,9 +36,20 @@ const columns = [
       ></div>
     ),
   },
+  {
+    title: 'Acciones',
+    key: 'actions',
+    render: (_, record) => (
+      <div className="flex gap-2">
+        <Suspense fallback={<div>...</div>}>
+          <LazyModalEditTotem data={record} branches={branches} />
+        </Suspense>
+      </div>
+    ),
+  },
 ];
 
-export default function TotemPage({ auth, totems, branches }) {
+export default function TotemPage({ auth, records, branches }) {
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -59,11 +71,11 @@ export default function TotemPage({ auth, totems, branches }) {
               </Suspense>
             </div>
             <CustomTable
-              dataSource={totems.map((totem) => ({
+              dataSource={records.map((totem) => ({
                 ...totem,
                 key: totem.id,
               }))}
-              columns={columns}
+              columns={columns(branches)}
               scroll={{ x: true }}
             />
           </div>

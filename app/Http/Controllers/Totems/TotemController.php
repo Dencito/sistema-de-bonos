@@ -16,7 +16,7 @@ class TotemController extends Controller
         $branches = Branch::all();
 
         return Inertia::render('Totems/index', [
-            'totems' => $totems,
+            'records' => $totems,
             'branches' => $branches,
         ]);
     }
@@ -64,7 +64,9 @@ class TotemController extends Controller
         ]);
 
         $totem->update($validated);
-        return $totem;
+        
+        // Recargar el tótem con la relación branch para el frontend
+        return $totem->load('branch');
     }
 
     public function destroy(Totem $totem)

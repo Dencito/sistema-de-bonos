@@ -716,11 +716,19 @@ class UserController extends Controller
             ], 404);
         }
 
-        $branch = $user->branches->find($totem->branch_id)->first();
+        // Verificar que el usuario tenga sucursales asignadas
+        if (!$user->branches || $user->branches->isEmpty()) {
+            return response()->json([
+                'message' => 'El usuario no tiene sucursales asignadas.'
+            ], 403);
+        }
+
+        // find() ya retorna el modelo o null, no necesita ->first()
+        $branch = $user->branches->find($totem->branch_id);
 
         if (!$branch) {
             return response()->json([
-                'message' => 'La sucursal no fue encontrada en nuestros registros o no se encuentra configurada.'
+                'message' => 'La sucursal no fue encontrada en nuestros registros o el usuario no tiene acceso a esta sucursal.'
             ], 404);
         }
 

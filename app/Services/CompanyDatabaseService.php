@@ -220,7 +220,7 @@ class CompanyDatabaseService
                     $table->integer('code')->nullable();
                     $table->foreignId('role_id')->constrained($rolesTable)->onDelete('cascade');
                     $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
-                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('cascade');
                     $table->foreignId('category_bonus_id')->nullable()->constrained($categoryBonusesTable)->onDelete('cascade');
                     $table->enum('cargo', ['PASILLER@', 'CAJER@', 'GUARDIA', 'ANFITRION', 'RECAUDADOR', 'ASISTENTE', 'OTRO'])->nullable();

@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { Form, Input, Select, Switch } from 'antd';
+import { Button, Form, Input, Modal, Select, Switch } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
-import { ModalForm } from '@components-v2/ModalForm';
-import { CustomButton } from '@components-v2/CustomButton';
 import axios from 'axios';
 
 export default function ModalEditTotem({ data, branches }) {
@@ -41,32 +39,61 @@ export default function ModalEditTotem({ data, branches }) {
   };
 
   const handleOpenModal = () => {
+    form.setFieldsValue({
+      name: data?.name,
+      code: data?.code,
+      branch_id: data?.branch_id,
+      active: data?.active ?? true,
+    });
     setShowModal(true);
   };
 
   return (
     <>
-      <CustomButton
+      <Button
         onClick={handleOpenModal}
         type="primary"
         icon={<EditOutlined />}
         aria-label="Editar tótem"
       />
-      <ModalForm
-        title="Editar Tótem"
+      <Modal
+        style={{ top: 20 }}
+        title={<p className="text-bold text-3xl">Editar Tótem</p>}
+        confirmLoading={loading}
+        zIndex={20}
         open={showModal}
-        onCancel={handleCloseModal}
-        onFinish={onUpdate}
-        form={form}
-        loading={loading}
+        onCancel={() =>
+          !loading &&
+          Modal.confirm({
+            title: '¿Estás seguro de que quieres salir?',
+            content: 'Se perderán los cambios no guardados.',
+            okText: 'Sí',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk() {
+              handleCloseModal();
+            },
+          })
+        }
         okText="Actualizar"
         cancelText="Cancelar"
-        initialValues={{
-          name: data?.name,
-          code: data?.code,
-          branch_id: data?.branch_id,
-          active: data?.active ?? true,
+        okButtonProps={{
+          autoFocus: true,
+          htmlType: 'submit',
         }}
+        modalRender={(dom) => (
+          <Form
+            layout="vertical"
+            form={form}
+            name="form_edit_totem"
+            disabled={loading}
+            className="z-40"
+            onFinish={(values) => onUpdate(values)}
+            onFinishFailed={() => errorMsg('Verifica todos los campos')}
+          >
+            {dom}
+          </Form>
+        )}
       >
         <Form.Item
           name="name"
@@ -123,7 +150,7 @@ export default function ModalEditTotem({ data, branches }) {
         <Form.Item name="active" label="Estado" valuePropName="checked">
           <Switch checkedChildren="Activo" unCheckedChildren="Inactivo" />
         </Form.Item>
-      </ModalForm>
+      </Modal>
     </>
   );
 }

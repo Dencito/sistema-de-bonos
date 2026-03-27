@@ -6,6 +6,7 @@ import MobileButton from '@/Components/MobileButton';
 
 const LazyModalCreateTotem = lazy(() => import('@/Components/Totems/ModalCreateTotem'));
 const LazyModalEditTotem = lazy(() => import('@/Components/Totems/ModalEditTotem'));
+const LazyModalDeleteTotem = lazy(() => import('@/Components/Totems/ModalDeleteTotem'));
 
 const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
@@ -43,6 +44,9 @@ const columns = (branches) => [
       <div className="flex gap-2">
         <Suspense fallback={<div>...</div>}>
           <LazyModalEditTotem data={record} branches={branches} />
+        </Suspense>
+        <Suspense fallback={<div>...</div>}>
+          <LazyModalDeleteTotem totem={record} />
         </Suspense>
       </div>
     ),

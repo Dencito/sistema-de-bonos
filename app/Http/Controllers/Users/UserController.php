@@ -1074,13 +1074,12 @@ class UserController extends Controller
     private function validateSchedules($schedules)
     {
         $currentTime = now()->setTimezone('America/Santiago');
-        $currentDay = strtolower($currentTime->format('l'));  // Get current day name in lowercase
+        $currentDay = strtolower($currentTime->format('l'));
         $currentTimeStr = $currentTime->format('H:i');
 
-        // Si no hay horarios, retornamos false
+        // Si no hay horarios, retornamos true (sin restricciones)
         if (empty($schedules)) {
-            return false;
-            return false;
+            return true;
         }
 
         // Si es un string JSON, lo decodificamos
@@ -1090,7 +1089,7 @@ class UserController extends Controller
 
         // Verificamos que sea un array válido
         if (!is_array($schedules)) {
-            return false;
+            return true;
         }
 
         // Traducción de días de inglés a español
@@ -1115,8 +1114,6 @@ class UserController extends Controller
                 continue;
             }
 
-            $scheduleName = $schedule['name'] ?? "Schedule {$scheduleIndex}";
-
             // Buscar el horario para el día actual
             $daySchedules = null;
             foreach ($schedule['schedules'] as $ds) {
@@ -1130,20 +1127,31 @@ class UserController extends Controller
                 continue;
             }
 
-            // Verificar si hay times disponibles para el día actual
-            if (isset($daySchedules['times']) && is_array($daySchedules['times'])) {
-                $timesCount = count($daySchedules['times']);
-                
-                // Debug: Show first and last few times to verify the array content
-                $firstTimes = array_slice($daySchedules['times'], 0, 5);
-                $lastTimes = array_slice($daySchedules['times'], -5);
-                
-                // Buscar match exacto en el array de times
-                if (in_array($currentTimeStr, $daySchedules['times'])) {
-                    return true;
+            // Verificar usando ranges (más eficiente y confiable)
+            if (isset($daySchedules['ranges']) && is_array($daySchedules['ranges'])) {
+                foreach ($daySchedules['ranges'] as $range) {
+                    if (!isset($range['start_time']) || !isset($range['end_time'])) {
+                        continue;
+                    }
+
+                    $startTime = $range['start_time'];
+                    $endTime = $range['end_time'];
+
+                    // Caso especial: 00:00 a 24:00 significa todo el día
+                    if ($startTime === '00:00' && ($endTime === '24:00' || $endTime === '23:59')) {
+                        return true;
+                    }
+
+                    // Normalizar 24:00 a 23:59
+                    if ($endTime === '24:00') {
+                        $endTime = '23:59';
+                    }
+
+                    // Verificar si el tiempo actual está en el rango
+                    if ($this->isTimeInRange($currentTimeStr, $startTime, $endTime)) {
+                        return true;
+                    }
                 }
-            } else {
-                return false;
             }
         }
 

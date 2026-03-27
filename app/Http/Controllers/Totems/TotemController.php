@@ -58,8 +58,8 @@ class TotemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'code' => 'sometimes|string|unique:totems,code,' . $totem->id,
-            'branch_id' => 'sometimes|exists:branches,id',
+            'code' => 'sometimes|string',
+            'branch_id' => 'sometimes',
             'active' => 'nullable|boolean'
         ]);
 

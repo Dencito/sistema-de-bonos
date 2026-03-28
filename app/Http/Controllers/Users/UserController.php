@@ -12,7 +12,6 @@ use App\Models\Role;
 use App\Models\ShiftRecord;
 use App\Models\Status;
 use App\Models\Ticket;
-use App\Models\Totem;
 use App\Models\User;
 use App\Models\UserBranches;
 use Illuminate\Http\Request;
@@ -596,14 +595,10 @@ class UserController extends Controller
         return response()->json(['message' => 'User not found with rutOrCode:' . $request->rutOrCode], 404);
     }
 
-    public function getFingerprintsByRole($totemUUID)
+    public function getFingerprintsByRole($branchId)
     {
-        $totem = Totem::with('branch')->where('code', $totemUUID)->first();
-        if (!$totem) {
-            return response()->json(['message' => 'Totem no encontrado'], 404);
-        }
 
-        $branch = $totem->branch;
+        $branch = Branch::find($branchId);
 
         $users = User::with(['role:id,name', 'status:id,name', 'branches'])
             ->whereIn('role_id', [5, 6])
@@ -647,14 +642,13 @@ class UserController extends Controller
         ]);
     }
 
-    public function getBonusesAvailablesUserById($id, $totemUUID)
+    public function getBonusesAvailablesUserById($id, $branchId)
     {
         $user = User::with([
             'bonuses',
             'categoryBonus',
             'branches:id,company_id',
             'branches.company',
-            'branches.totem',
             'branches.shifts',
             'status',
             'role',
@@ -709,29 +703,22 @@ class UserController extends Controller
             ], 403);
         }
 
-        $totem = Totem::with('branch')->where('code', $totemUUID)->first();
-        if (!$totem || !$totem->branch) {
-            return response()->json([
-                'message' => 'El UUID del totem no fue encontrado en nuestros registros o no se encuentra configurado.'
-            ], 404);
-        }
-
-        // Verificar que el usuario tenga acceso a la sucursal del totem
-        $userHasAccess = $user->branches()->where('branch_id', $totem->branch_id)->exists();
-        
-        if (!$userHasAccess) {
-            return response()->json([
-                'message' => 'El usuario no tiene acceso a esta sucursal.'
-            ], 403);
-        }
-
-        // Obtener la sucursal directamente desde la BD para tener todos los atributos
-        $branch = Branch::find($totem->branch_id);
+        // Obtener la sucursal directamente desde la BD
+        $branch = Branch::find($branchId);
 
         if (!$branch) {
             return response()->json([
                 'message' => 'La sucursal no fue encontrada en nuestros registros.'
             ], 404);
+        }
+
+        // Verificar que el usuario tenga acceso a la sucursal
+        $userHasAccess = $user->branches()->where('branch_id', $branchId)->exists();
+        
+        if (!$userHasAccess) {
+            return response()->json([
+                'message' => 'El usuario no tiene acceso a esta sucursal.'
+            ], 403);
         }
 
         // Validar available_schedules
@@ -815,7 +802,7 @@ class UserController extends Controller
             
             $ticket = Ticket::create([
                 'user_id' => $user->id,
-                'totem_id' => $totem->id,
+                'branch_id' => $branch->id,
                 'total_amount' => $SumaBonosAdditionals,
                 'type' => 'Bono Extraordinario',
             ]);
@@ -854,7 +841,7 @@ class UserController extends Controller
                                                         
             $ticket = Ticket::create([
                 'user_id' => $user->id,
-                'totem_id' => $totem->id,
+                'branch_id' => $branch->id,
                 'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
                 'type' => 'Bono Diario',
             ]);
@@ -886,7 +873,7 @@ class UserController extends Controller
             
             $ticket = Ticket::create([
                 'user_id' => $user->id,
-                'totem_id' => $totem->id,
+                'branch_id' => $branch->id,
                 'total_amount' => $branch->birthday_amount,
                 'type' => 'Bono Cumpleaños',
             ]);
@@ -905,13 +892,13 @@ class UserController extends Controller
 
         Log::info('Llamando a markFingerprint para jugador', [
             'user_id' => $user->id,
-            'totem_uuid' => $totem->code,
+            'branch_id' => $branch->id,
             'tickets_count' => count($tickets),
         ]);
 
         $fingerprintResult = $this->markFingerprint(new Request([
             'user_id' => $user->id,
-            'totem_uuid' => $totem->code,
+            'branch_id' => $branch->id,
         ]), true);
 
         Log::info('Resultado de markFingerprint', [
@@ -953,29 +940,25 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required',
-            'totem_uuid' => 'required',
+            'branch_id' => 'required',
         ]);
 
         $user = User::select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'email', 'role_id', 'branch_id', 'status_id', 'cargo', 'levels')
             ->find($validated['user_id']);
-        $totem = Totem::with('branch')->where('code', $validated['totem_uuid'])->first();
+        
         if (!$user) {
             return response()->json([
                 'message' => 'Usuario no encontrado'
             ], 404);
         }
 
-        // Para jugadores, usar el branch del totem ya que no tienen branch_id directo
-        if ($isMarkPlayer) {
-            $branch = $totem ? $totem->branch : null;
-        } else {
-            $branch = $user->branch;
-        }
+        // Obtener la sucursal desde el parámetro validado
+        $branch = Branch::find($validated['branch_id']);
 
         if (!$branch) {
             return response()->json([
-                'message' => 'El usuario no tiene una sucursal asignada'
-            ], 400);
+                'message' => 'La sucursal no fue encontrada'
+            ], 404);
         }
 
         if ((string) $user->status_id !== '1') {
@@ -984,18 +967,10 @@ class UserController extends Controller
             ], 409);
         }
 
-        if (!$totem) {
-            return response()->json([
-                'message' => 'Totem no encontrado'
-            ], 404);
-        }
-
         if ($isMarkPlayer === false) {
             // Validar que haya pasado al menos 1 hora desde el último registro en la misma sucursal
             $lastLog = FingerprintLog::query()
-                ->whereHas('totem', function ($query) use ($totem) {
-                    $query->where('branch_id', $totem->branch_id);
-                })
+                ->where('branch_id', $branch->id)
                 ->where('user_id', $user->id)
                 ->latest()
                 ->first();
@@ -1011,7 +986,7 @@ class UserController extends Controller
         }
 
         $totalLogs = FingerprintLog::where('user_id', $user->id)
-            ->where('totem_id', $totem->id)
+            ->where('branch_id', $branch->id)
             ->count();
         $isEntry = ($totalLogs % 2 === 0);  // Si el total actual es par, el próximo será impar (entrada)
 
@@ -1045,13 +1020,13 @@ class UserController extends Controller
 
         $fingerprintLog = FingerprintLog::create([
             'user_id' => $user->id,
-            'totem_id' => $totem->id,
+            'branch_id' => $branch->id,
         ]);
 
         Log::info('FingerprintLog creado', [
             'fingerprint_log_id' => $fingerprintLog->id,
             'user_id' => $user->id,
-            'totem_id' => $totem->id,
+            'branch_id' => $branch->id,
             'isMarkPlayer' => $isMarkPlayer,
             'created_at' => $fingerprintLog->created_at,
         ]);
@@ -1220,8 +1195,7 @@ class UserController extends Controller
                     $q->select('id', 'first_name', 'second_name', 'first_last_name', 'second_last_name', 'role_id');
                 },
                 'user.role:id,name',
-                'totem',
-                'totem.branch:id,name'
+                'branch:id,name'
             ]);
         
         // Filtrar por turno específico
@@ -1232,9 +1206,7 @@ class UserController extends Controller
         
         // Filtrar por sucursal
         if ($request->filled('branch_id')) {
-            $query->whereHas('totem', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
+            $query->where('branch_id', $request->branch_id);
         }
         
         // Filtrar por rango de fechas
@@ -1277,8 +1249,7 @@ class UserController extends Controller
                            $log->user->first_last_name . ' ' . ($log->user->second_last_name ?? '')),
                     'role' => $log->user->role->name ?? null
                 ],
-                'branch' => $log->totem->branch->name ?? 'N/A',
-                'totem' => $log->totem->name ?? 'N/A',
+                'branch' => $log->branch->name ?? 'N/A',
                 'timestamp' => $log->created_at->format('Y-m-d H:i:s'),
                 'type' => $isEntry ? 'Entrada' : 'Salida',
             ];
@@ -1334,7 +1305,7 @@ class UserController extends Controller
         // Procesar cada trabajador para incluir sus registros de entrada/salida
         $workersReport = $workers->map(function ($worker) use ($startDate, $endDate) {
             // Obtener registros de huella del trabajador en el rango de fechas
-            $fingerprintLogs = FingerprintLog::with(['totem.branch:id,name'])
+            $fingerprintLogs = FingerprintLog::with(['branch:id,name'])
                 ->where('user_id', $worker->id)
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->orderBy('created_at', 'asc')
@@ -1351,7 +1322,7 @@ class UserController extends Controller
                     // Es una entrada
                     $currentEntry = [
                         'entry_time' => $log->created_at->format('Y-m-d H:i:s'),
-                        'entry_branch' => $log->totem->branch->name ?? 'N/A',
+                        'entry_branch' => $log->branch->name ?? 'N/A',
                         'exit_time' => null,
                         'exit_branch' => null,
                         'duration' => null
@@ -1360,7 +1331,7 @@ class UserController extends Controller
                     // Es una salida
                     if ($currentEntry) {
                         $currentEntry['exit_time'] = $log->created_at->format('Y-m-d H:i:s');
-                        $currentEntry['exit_branch'] = $log->totem->branch->name ?? 'N/A';
+                        $currentEntry['exit_branch'] = $log->branch->name ?? 'N/A';
                         
                         // Calcular duración
                         $entryTime = Carbon::parse($currentEntry['entry_time']);

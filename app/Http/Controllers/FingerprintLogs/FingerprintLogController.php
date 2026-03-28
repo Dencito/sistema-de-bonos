@@ -4,7 +4,6 @@ namespace App\Http\Controllers\FingerprintLogs;
 
 use App\Models\FingerprintLog;
 use App\Models\User;
-use App\Models\Totem;
 use App\Models\Branch;
 use App\Models\ShiftRecord;
 use Illuminate\Http\Request;
@@ -21,8 +20,7 @@ class FingerprintLogController extends Controller
 
         $query = FingerprintLog::with([
                 'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id,branch_id,status_id,role_id',
-                'totem:id,name,branch_id', 
-                'totem.branch:id,name', 
+                'branch:id,name', 
                 'user.role:id,name'
             ]);
         
@@ -52,9 +50,7 @@ class FingerprintLogController extends Controller
         
         // Filtro por sucursal
         if ($request->filled('branch_id')) {
-            $query->whereHas('totem', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
+            $query->where('branch_id', $request->branch_id);
         }
         
         // El filtro por turno ahora se maneja en el frontend
@@ -73,14 +69,6 @@ class FingerprintLogController extends Controller
             ->get();
             
         $branches = Branch::select('id', 'name')->get();
-        
-        // Cargar totems solo si es necesario y limitar la cantidad
-        $totems = [];
-        if ($request->filled('branch_id')) {
-            $totems = Totem::select('id', 'name', 'branch_id')
-                ->where('branch_id', $request->branch_id)
-                ->get();
-        }
         
         // Cargar turnos para el filtro
         // Obtener los últimos 50 turnos (cerrados y abiertos) ordenados por fecha de apertura descendente
@@ -110,7 +98,6 @@ class FingerprintLogController extends Controller
         return Inertia::render('FingerprintLogs/index', [
             'fingerprintLogs' => $fingerprintLogs,
             'users' => $users,
-            'totems' => $totems,
             'branches' => $branches,
             'shifts' => $shifts,
             'filters' => $request->only(['start_date', 'end_date', 'user_id', 'role_id', 'branch_id', 'per_page'])
@@ -121,7 +108,7 @@ class FingerprintLogController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'totem_id' => 'required|exists:totems,id',
+            'branch_id' => 'required',
         ]);
 
         return FingerprintLog::create($validated);
@@ -129,14 +116,14 @@ class FingerprintLogController extends Controller
 
     public function show(FingerprintLog $fingerprintLog)
     {
-        return $fingerprintLog->load(['user', 'totem', 'totem.branch']);
+        return $fingerprintLog->load(['user', 'branch']);
     }
 
     public function update(Request $request, FingerprintLog $fingerprintLog)
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'totem_id' => 'required|exists:totems,id',
+            'branch_id' => 'required',
         ]);
 
         $fingerprintLog->update($validated);
@@ -157,8 +144,7 @@ class FingerprintLogController extends Controller
         $query = FingerprintLog::with([
             'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id,branch_id,status_id',
             'user.role:id,name',
-            'totem:id,name,branch_id',
-            'totem.branch:id,name'
+            'branch:id,name'
         ]);
         
         // Filter by date range
@@ -181,9 +167,7 @@ class FingerprintLogController extends Controller
         
         // Filter by branch
         if ($request->filled('branch_id')) {
-            $query->whereHas('totem', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
+            $query->where('branch_id', $request->branch_id);
         }
         
         // El filtro por turno ahora se maneja en el frontend
@@ -206,7 +190,7 @@ class FingerprintLogController extends Controller
         
         // Group logs by branch
         $logsByBranch = $logs->groupBy(function($log) {
-            return $log->totem && $log->totem->branch ? $log->totem->branch->name : 'Sin sucursal';
+            return $log->branch ? $log->branch->name : 'Sin sucursal';
         });
         
         foreach ($logsByBranch as $branchName => $branchLogs) {
@@ -231,13 +215,9 @@ class FingerprintLogController extends Controller
                     'role_id' => $log->user->role_id,
                     'role_name' => $log->user->role ? $log->user->role->name : 'N/A'
                 ] : null,
-                'totem' => $log->totem ? [
-                    'id' => $log->totem->id,
-                    'name' => $log->totem->name,
-                    'branch' => $log->totem->branch ? [
-                        'id' => $log->totem->branch->id,
-                        'name' => $log->totem->branch->name
-                    ] : null
+                'branch' => $log->branch ? [
+                    'id' => $log->branch->id,
+                    'name' => $log->branch->name
                 ] : null,
                 'created_at' => $log->created_at,
                 'is_worker' => $log->user && $log->user->role_id == 5,
@@ -256,8 +236,7 @@ class FingerprintLogController extends Controller
 {
     $query = FingerprintLog::with([
         'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id,branch_id,status_id,role_id',
-        'totem:id,name,branch_id', 
-        'totem.branch:id,name', 
+        'branch:id,name', 
         'user.role:id,name'
     ]);
     
@@ -287,9 +266,7 @@ class FingerprintLogController extends Controller
     
     // Filtro por sucursal
     if ($request->filled('branch_id')) {
-        $query->whereHas('totem', function($q) use ($request) {
-            $q->where('branch_id', $request->branch_id);
-        });
+        $query->where('branch_id', $request->branch_id);
     }
     
     // El filtro por turno ahora se maneja en el frontend
@@ -307,7 +284,7 @@ class FingerprintLogController extends Controller
     
     // Group logs by branch
     $logsByBranch = $fingerprintLogs->groupBy(function($log) {
-        return $log->totem && $log->totem->branch ? $log->totem->branch->name : 'Sin sucursal';
+        return $log->branch ? $log->branch->name : 'Sin sucursal';
     });
     
     foreach ($logsByBranch as $branchName => $branchLogs) {

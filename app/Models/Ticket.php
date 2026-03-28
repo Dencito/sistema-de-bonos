@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
-use App\Models\Totem;
+use App\Models\Branch;
 use App\Traits\CompanyScope;
 
 class Ticket extends Model
@@ -15,7 +15,7 @@ class Ticket extends Model
     
     protected $fillable = [
         'user_id',
-        'totem_id',
+        'branch_id',
         'type',
         'total_amount',
         'ticket_number',
@@ -36,11 +36,11 @@ class Ticket extends Model
     }
     
     /**
-     * Get the totem that generated the ticket.
+     * Get the branch that owns the ticket.
      */
-    public function totem(): BelongsTo
+    public function branch(): BelongsTo
     {
-        return $this->belongsTo(Totem::class);
+        return $this->belongsTo(Branch::class);
     }
     
     /**

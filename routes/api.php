@@ -36,7 +36,7 @@ Route::get('/test-mail', function (Request $request) {
 });
 
 Route::prefix('users')->group(function () {
-    Route::get('/{id}/bonuses/{totemUUID}/totem', [UserController::class, 'getBonusesAvailablesUserById']);
+    Route::get('/{id}/bonuses/{branchId}/branches', [UserController::class, 'getBonusesAvailablesUserById']);
 
     Route::post('/attendance', [UserController::class, 'markFingerprint']);
 
@@ -44,7 +44,7 @@ Route::prefix('users')->group(function () {
 
     Route::post('/enroll', [UserController::class, 'enroll']);
 
-    Route::get('/fingerprints/{totemUUID}/totem', [UserController::class, 'getFingerprintsByRole']);
+    Route::get('/fingerprints/{branchId}/branches', [UserController::class, 'getFingerprintsByRole']);
     
     Route::get('/fingerprint-logs/by-shift', [UserController::class, 'getFingerprintLogsByShift']);
     

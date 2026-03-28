@@ -13,7 +13,7 @@ class FingerprintLog extends Model
     
     protected $fillable = [
         'user_id',
-        'totem_id',
+        'branch_id',
     ];
 
     /**
@@ -39,9 +39,9 @@ class FingerprintLog extends Model
      */
     public function getTypeAttribute()
     {
-        // Contar cuántos registros previos tiene este usuario en este tótem
+        // Contar cuántos registros previos tiene este usuario en esta sucursal
         $position = FingerprintLog::where('user_id', $this->user_id)
-            ->where('totem_id', $this->totem_id)
+            ->where('branch_id', $this->branch_id)
             ->where('created_at', '<=', $this->created_at)
             ->count();
         
@@ -59,11 +59,11 @@ class FingerprintLog extends Model
     }
 
     /**
-     * Get the totem that registered the fingerprint.
+     * Get the branch that registered the fingerprint.
      */
-    public function totem()
+    public function branch()
     {
-        return $this->belongsTo(Totem::class, 'totem_id', 'id');
+        return $this->belongsTo(Branch::class, 'branch_id', 'id');
     }
 
     /**
@@ -91,10 +91,10 @@ class FingerprintLog extends Model
     }
 
     /**
-     * Scope a query to only include logs from a specific totem.
+     * Scope a query to only include logs from a specific branch.
      */
-    public function scopeFromTotem(Builder $query, int $totemId)
+    public function scopeFromBranch(Builder $query, int $branchId)
     {
-        return $query->where('totem_id', $totemId);
+        return $query->where('branch_id', $branchId);
     }
 }

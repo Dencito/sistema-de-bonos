@@ -36,14 +36,9 @@ const columns = [
     ),
   },
   {
-    title: 'Tótem',
-    key: 'totem',
-    render: (_, record) => record.totem?.name || 'N/A',
-  },
-  {
     title: 'Sucursal',
     key: 'branch',
-    render: (_, record) => record.totem?.branch?.name || 'N/A',
+    render: (_, record) => record.branch?.name || 'N/A',
   },
   {
     title: 'Fecha y Hora',
@@ -183,7 +178,7 @@ export default function FingerprintLogPage({
         Rol: log.user?.role?.name || 'N/A',
         Tipo: log.type || 'N/A',
         Tótem: log.totem?.name || 'N/A',
-        Sucursal: log.totem?.branch?.name || 'N/A',
+        Sucursal: log?.branch?.name || 'N/A',
         'Fecha y Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
       }));
 

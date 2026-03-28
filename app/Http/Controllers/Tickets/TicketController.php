@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Tickets;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Branch;
-use App\Models\Totem;
 use App\Models\ShiftRecord;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -23,8 +22,7 @@ class TicketController extends Controller
         
         $query = Ticket::with([
             'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id',
-            'totem:id,name,branch_id',
-            'totem.branch:id,name,ticketNumber'
+            'branch:id,name,ticketNumber',
         ]);
         
         // Filtro por fecha de inicio
@@ -61,11 +59,9 @@ class TicketController extends Controller
             $query->where('type', $request->type);
         }
         
-        // Filtro por totem/sucursal
+        // Filtro por sucursal
         if ($request->filled('branch_id')) {
-            $query->whereHas('totem', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
+            $query->where('branch_id', $request->branch_id);
         }
 
         // Si el usuario tiene role_id 5 (jugador), filtrar por tickets generados durante su turno actual
@@ -112,19 +108,11 @@ class TicketController extends Controller
             
         $branches = Branch::select('id', 'name')->get();
         
-        // Cargar totems solo si es necesario
-        $totems = [];
-        if ($request->filled('branch_id')) {
-            $totems = Totem::select('id', 'name', 'branch_id')
-                ->where('branch_id', $request->branch_id)
-                ->get();
-        }
             
         return Inertia::render('Tickets/index', [
             'tickets' => $tickets,
             'users' => $users,
             'branches' => $branches,
-            'totems' => $totems,
             'filters' => $request->only(['start_date', 'end_date', 'user_id', 'type', 'branch_id', 'per_page'])
         ]);
     }
@@ -133,7 +121,7 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required',
-            'totem_id' => 'required',
+            'branch_id' => 'required',
             'total_amount' => 'required|numeric',
             'active' => 'nullable|boolean'
         ]);
@@ -152,7 +140,7 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required',
-            'totem_id' => 'required',
+            'branch_id' => 'required',
             'total_amount' => 'required|numeric',
             'active' => 'nullable|boolean'
         ]);
@@ -180,8 +168,7 @@ class TicketController extends Controller
         $user = auth()->user();
         
         $query = Ticket::with([
-            'totem:id,name,branch_id',
-            'totem.branch:id,name,ticketNumber'
+            'branch:id,name,ticketNumber'
         ]);
         
         // Filtro por fecha de inicio
@@ -204,11 +191,9 @@ class TicketController extends Controller
             $query->where('type', $request->type);
         }
         
-        // Filtro por totem/sucursal
+        // Filtro por sucursal
         if ($request->filled('branch_id')) {
-            $query->whereHas('totem', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
+            $query->where('branch_id', $request->branch_id);
         }
 
         // Si el usuario tiene role_id 5 (trabajador), filtrar por tickets generados durante su turno actual
@@ -250,8 +235,8 @@ class TicketController extends Controller
             }
         } else {
             // Para otros roles, obtener de la primera sucursal de los tickets (si existe)
-            if ($tickets->isNotEmpty() && $tickets->first()->totem && $tickets->first()->totem->branch) {
-                $ticketNumber = $tickets->first()->totem->branch->ticketNumber ?? 0;
+            if ($tickets->isNotEmpty() && $tickets->first()->branch) {
+                $ticketNumber = $tickets->first()->branch->ticketNumber ?? 0;
             }
         }
         
@@ -276,8 +261,7 @@ class TicketController extends Controller
         $query = Ticket::with([
             'user:id,first_name,second_name,first_last_name,second_last_name,email,role_id',
             'user.role:id,name',
-            'totem:id,name,branch_id',
-            'totem.branch:id,name'
+            'branch:id,name'
         ]);
         
         // Filtro por fecha de inicio
@@ -300,11 +284,9 @@ class TicketController extends Controller
             $query->where('type', $request->type);
         }
         
-        // Filtro por totem/sucursal
+        // Filtro por sucursal
         if ($request->filled('branch_id')) {
-            $query->whereHas('totem', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
+            $query->where('branch_id', $request->branch_id);
         }
         
         // Si el usuario tiene role_id 5 (jugador), filtrar por tickets generados durante su turno actual
@@ -357,7 +339,7 @@ class TicketController extends Controller
         
         // Agrupar por sucursal
         $byBranch = $tickets->groupBy(function($ticket) {
-            return $ticket->totem && $ticket->totem->branch ? $ticket->totem->branch->name : 'Sin sucursal';
+            return $ticket->branch ? $ticket->branch->name : 'Sin sucursal';
         })->map(function ($group) {
             return [
                 'total' => $group->count(),

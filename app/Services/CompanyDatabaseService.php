@@ -298,12 +298,12 @@ class CompanyDatabaseService
                 });
             }
 
-            // 10. Crear tabla de tickets (depende de usuarios y tomos)
+            // 10. Crear tabla de tickets (depende de usuarios y sucursales)
             if (!Schema::hasTable($ticketsTable)) {
-                Schema::create($ticketsTable, function ($table) use ($usersTable, $totemsTable, $ticketsTable) {
+                Schema::create($ticketsTable, function ($table) use ($usersTable, $branchesTable, $ticketsTable) {
                     $table->id();
                     $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('totem_id')->nullable()->constrained($totemsTable)->onDelete('set null');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->decimal('total_amount', 10, 2)->default(0);
                     $table->string('type');
                     $table->timestamp('created_at')->useCurrent();
@@ -328,12 +328,12 @@ class CompanyDatabaseService
                 });
             }
 
-            // 12. Crear tabla de registros de huellas (depende de usuarios y totems)
+            // 12. Crear tabla de registros de huellas (depende de usuarios y sucursales)
             if (!Schema::hasTable($fingerprintLogsTable)) {
-                Schema::create($fingerprintLogsTable, function ($table) use ($usersTable, $totemsTable) {
+                Schema::create($fingerprintLogsTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
                     $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('totem_id')->nullable()->constrained($totemsTable)->onDelete('set null');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });

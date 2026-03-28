@@ -23,14 +23,9 @@ const columns = [
     render: (_, record) => record.user?.first_name + ' ' + record.user?.first_last_name || 'N/A',
   },
   {
-    title: 'Tótem',
-    key: 'totem',
-    render: (_, record) => record.totem?.name || 'N/A',
-  },
-  {
     title: 'Sucursal',
     key: 'branch',
-    render: (_, record) => record.totem?.branch?.name || 'N/A',
+    render: (_, record) => record?.branch?.name || 'N/A',
   },
   {
     title: 'Tipo',

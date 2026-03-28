@@ -122,13 +122,13 @@ export function AppSidebar({ role, roles, user }) {
       link: '/total-amounts',
       autorized: false,
     },
-    {
+    /* {
       key: '8',
       icon: SquareStack,
       label: 'Tótems',
       link: '/totems',
       autorized: allowedRoles.totems.includes(role),
-    },
+    } */,
     {
       key: '10',
       icon: SquareStack,

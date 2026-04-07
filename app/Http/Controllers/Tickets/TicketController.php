@@ -64,34 +64,49 @@ class TicketController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
-        // Si el usuario tiene role_id 5 (jugador), filtrar por tickets generados durante su turno actual
+        // Si el usuario tiene role_id 5 (trabajador), filtrar por tickets del último turno de su sucursal
         if ($user->role_id == 5) {
-            // Buscar el último turno abierto del usuario
-            $lastShift = ShiftRecord::where('opened_by_user_id', $user->id)
-                ->orderBy('opening_time', 'desc')
-                ->first();
-                
-            if ($lastShift) {
-                $startTime = Carbon::parse($lastShift->opening_time);
-                $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
-                
-                // Filtrar tickets generados durante el turno
-                $query->where('created_at', '>=', $startTime)
-                      ->where('created_at', '<=', $endTime);
-                      
-                // Log para depuración
-                \Log::info('Tickets - Filtro por turno del usuario aplicado:', [
-                    'user_id' => $user->id,
-                    'shift_id' => $lastShift->id,
-                    'opening_time' => $startTime->toDateTimeString(),
-                    'closing_time' => $endTime->toDateTimeString()
-                ]);
+            // Obtener el branch_id del trabajador directamente
+            if ($user->branch_id) {
+                // Buscar el último turno de la sucursal del trabajador
+                $lastShift = ShiftRecord::where('branch_id', $user->branch_id)
+                    ->orderBy('opening_time', 'desc')
+                    ->first();
+                    
+                if ($lastShift) {
+                    $startTime = Carbon::parse($lastShift->opening_time);
+                    $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
+                    
+                    // Filtrar tickets generados durante el turno de la sucursal
+                    $query->where('branch_id', $user->branch_id)
+                          ->where('created_at', '>=', $startTime)
+                          ->where('created_at', '<=', $endTime);
+                          
+                    // Log para depuración
+                    \Log::info('Tickets - Filtro por último turno de la sucursal aplicado:', [
+                        'user_id' => $user->id,
+                        'branch_id' => $user->branch_id,
+                        'shift_id' => $lastShift->id,
+                        'opening_time' => $startTime->toDateTimeString(),
+                        'closing_time' => $endTime->toDateTimeString(),
+                        'total_tickets_in_query' => $query->count()
+                    ]);
+                } else {
+                    // Si no hay turno en la sucursal, no mostrar tickets
+                    $query->whereRaw('1 = 0'); // No results
+                    
+                    // Log para depuración
+                    \Log::info('Tickets - Sucursal sin turnos, no se muestran tickets:', [
+                        'user_id' => $user->id,
+                        'branch_id' => $user->branch_id
+                    ]);
+                }
             } else {
-                // Si no tiene turno, mostrar solo sus tickets
-                $query->where('user_id', $user->id);
+                // Si no tiene sucursal asignada, no mostrar tickets
+                $query->whereRaw('1 = 0'); // No results
                 
                 // Log para depuración
-                \Log::info('Tickets - Usuario sin turno, mostrando solo sus tickets:', [
+                \Log::info('Tickets - Usuario sin sucursal asignada:', [
                     'user_id' => $user->id
                 ]);
             }
@@ -196,23 +211,30 @@ class TicketController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
-        // Si el usuario tiene role_id 5 (trabajador), filtrar por tickets generados durante su turno actual
+        // Si el usuario tiene role_id 5 (trabajador), filtrar por tickets del último turno de su sucursal
         if ($user->role_id == 5) {
-            // Buscar el último turno abierto del usuario
-            $lastShift = ShiftRecord::where('opened_by_user_id', $user->id)
-                ->orderBy('opening_time', 'desc')
-                ->first();
-                
-            if ($lastShift) {
-                $startTime = Carbon::parse($lastShift->opening_time);
-                $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
-                
-                // Filtrar tickets generados durante el turno
-                $query->where('created_at', '>=', $startTime)
-                      ->where('created_at', '<=', $endTime);
+            // Obtener el branch_id del trabajador directamente
+            if ($user->branch_id) {
+                // Buscar el último turno de la sucursal del trabajador
+                $lastShift = ShiftRecord::where('branch_id', $user->branch_id)
+                    ->orderBy('opening_time', 'desc')
+                    ->first();
+                    
+                if ($lastShift) {
+                    $startTime = Carbon::parse($lastShift->opening_time);
+                    $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
+                    
+                    // Filtrar tickets generados durante el turno de la sucursal
+                    $query->where('branch_id', $user->branch_id)
+                          ->where('created_at', '>=', $startTime)
+                          ->where('created_at', '<=', $endTime);
+                } else {
+                    // Si no hay turno en la sucursal, no mostrar tickets
+                    $query->whereRaw('1 = 0');
+                }
             } else {
-                // Si no tiene turno, mostrar solo sus tickets
-                $query->where('user_id', $user->id);
+                // Si no tiene sucursal asignada, no mostrar tickets
+                $query->whereRaw('1 = 0');
             }
         }
         
@@ -228,10 +250,9 @@ class TicketController extends Controller
         
         // Si el usuario es trabajador (role_id 5), obtener el ticketNumber de su sucursal
         if ($user->role_id == 5) {
-            // Obtener la sucursal del trabajador a través de sus branches
-            $userBranch = $user->branches()->first();
-            if ($userBranch) {
-                $ticketNumber = $userBranch->ticketNumber ?? 0;
+            // Obtener la sucursal del trabajador directamente
+            if ($user->branch) {
+                $ticketNumber = $user->branch->ticketNumber ?? 0;
             }
         } else {
             // Para otros roles, obtener de la primera sucursal de los tickets (si existe)
@@ -289,35 +310,49 @@ class TicketController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
         
-        // Si el usuario tiene role_id 5 (jugador), filtrar por tickets generados durante su turno actual
+        // Si el usuario tiene role_id 5 (trabajador), filtrar por tickets del último turno de su sucursal
         $user = auth()->user();
         if ($user->role_id == 5) {
-            // Buscar el último turno abierto del usuario
-            $lastShift = ShiftRecord::where('opened_by_user_id', $user->id)
-                ->orderBy('opening_time', 'desc')
-                ->first();
-                
-            if ($lastShift) {
-                $startTime = Carbon::parse($lastShift->opening_time);
-                $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
-                
-                // Filtrar tickets generados durante el turno
-                $query->where('created_at', '>=', $startTime)
-                      ->where('created_at', '<=', $endTime);
-                      
-                // Log para depuración
-                \Log::info('Tickets Export - Filtro por turno del usuario aplicado:', [
-                    'user_id' => $user->id,
-                    'shift_id' => $lastShift->id,
-                    'opening_time' => $startTime->toDateTimeString(),
-                    'closing_time' => $endTime->toDateTimeString()
-                ]);
+            // Obtener el branch_id del trabajador directamente
+            if ($user->branch_id) {
+                // Buscar el último turno de la sucursal del trabajador
+                $lastShift = ShiftRecord::where('branch_id', $user->branch_id)
+                    ->orderBy('opening_time', 'desc')
+                    ->first();
+                    
+                if ($lastShift) {
+                    $startTime = Carbon::parse($lastShift->opening_time);
+                    $endTime = $lastShift->closing_time ? Carbon::parse($lastShift->closing_time) : Carbon::now();
+                    
+                    // Filtrar tickets generados durante el turno de la sucursal
+                    $query->where('branch_id', $user->branch_id)
+                          ->where('created_at', '>=', $startTime)
+                          ->where('created_at', '<=', $endTime);
+                          
+                    // Log para depuración
+                    \Log::info('Tickets Export - Filtro por último turno de la sucursal aplicado:', [
+                        'user_id' => $user->id,
+                        'branch_id' => $user->branch_id,
+                        'shift_id' => $lastShift->id,
+                        'opening_time' => $startTime->toDateTimeString(),
+                        'closing_time' => $endTime->toDateTimeString()
+                    ]);
+                } else {
+                    // Si no hay turno en la sucursal, no mostrar tickets
+                    $query->whereRaw('1 = 0');
+                    
+                    // Log para depuración
+                    \Log::info('Tickets Export - Sucursal sin turnos, no se muestran tickets:', [
+                        'user_id' => $user->id,
+                        'branch_id' => $user->branch_id
+                    ]);
+                }
             } else {
-                // Si no tiene turno, mostrar solo sus tickets
-                $query->where('user_id', $user->id);
+                // Si no tiene sucursal asignada, no mostrar tickets
+                $query->whereRaw('1 = 0');
                 
                 // Log para depuración
-                \Log::info('Tickets Export - Usuario sin turno, mostrando solo sus tickets:', [
+                \Log::info('Tickets Export - Usuario sin sucursal asignada:', [
                     'user_id' => $user->id
                 ]);
             }

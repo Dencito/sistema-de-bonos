@@ -203,7 +203,7 @@ export default function TicketPage({ auth, tickets, users, branches, filters }) 
       const ticketsData = response.data.tickets.map((ticket) => ({
         ID: `Ticket #${ticket.id}`,
         Usuario: `${ticket.user?.first_name || ''} ${ticket.user?.first_last_name || ''}`,
-        Sucursal: ticket.totem?.branch?.name || 'N/A',
+        Sucursal: ticket.branch?.name || 'N/A',
         Tipo: ticket.type,
         'Monto Total': Math.floor(ticket.total_amount),
         'Fecha de Creación': format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm:ss'),

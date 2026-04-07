@@ -70,6 +70,8 @@ export default function Dashboard({ auth }) {
     }
   };
 
+  console.log(shiftStatus)
+
   useEffect(() => {
     getSelectedCompany();
     getShiftStatus();

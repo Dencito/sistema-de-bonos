@@ -5,6 +5,7 @@ import {
   Clock,
   Home,
   LogOut,
+  Lock,
   MapPinHouse,
   SquareStack,
   Users,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
+import ChangePasswordModal from '@/Components/ChangePasswordModal';
 
 /* global route */
 
@@ -55,6 +57,7 @@ export function AppSidebar({ role, roles, user }) {
   const isTickets = getSubdomain() === 'tickets';
   const path = window.location.pathname;
   const [isOpen, setIsOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Menú de navegación
   const menuItems = [
@@ -255,6 +258,16 @@ export function AppSidebar({ role, roles, user }) {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  onClick={() => setShowPasswordModal(true)}
+                  className="border border-blue-300 hover:bg-blue-500 hover:text-white cursor-pointer"
+                >
+                  <Lock />
+                  <span>Cambiar Contraseña</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   asChild
                   className="border border-red-300 hover:bg-red-400 hover:text-white"
                 >
@@ -268,6 +281,11 @@ export function AppSidebar({ role, roles, user }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <ChangePasswordModal 
+        open={showPasswordModal} 
+        onClose={() => setShowPasswordModal(false)} 
+      />
     </Sidebar>
   );
 }

@@ -69,9 +69,7 @@ export default function Dashboard({ auth }) {
       toast.error(error.response?.data?.message || 'Error al finalizar el turno');
     }
   };
-
-  console.log(shiftStatus)
-
+  
   useEffect(() => {
     getSelectedCompany();
     getShiftStatus();
@@ -151,8 +149,8 @@ export default function Dashboard({ auth }) {
                     Turno activo en la sucursal: {shiftStatus.shift?.branch?.name || 'N/A'}
                   </p>
                   <p className="text-sm text-green-700">
-                    Iniciado por: {shiftStatus.shift?.openedBy?.first_name}{' '}
-                    {shiftStatus.shift?.openedBy?.first_last_name}
+                    Iniciado por: {shiftStatus.shift?.opened_by?.first_name}{' '}
+                    {shiftStatus.shift?.opened_by?.first_last_name}
                   </p>
                   <p className="text-sm text-green-700">
                     Hora de inicio: {formatDateTime(shiftStatus.shift?.opening_time)}

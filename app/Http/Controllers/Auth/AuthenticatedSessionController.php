@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\User;
+use App\Models\Company;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -61,15 +62,29 @@ class AuthenticatedSessionController extends Controller
             // El usuario está activo, permitimos el acceso sin verificar roles
             Log::info('Usuario activo, permitiendo acceso', ['user_id' => $user->id]);
 
+            // Obtener la empresa del request (si viene de una URL con empresa)
+            // O usar la empresa por defecto del usuario
+            $companyName = $request->input('company') ?? $this->getDefaultCompany($user);
+            
+            if (!$companyName) {
+                Log::error('No se pudo determinar la empresa', ['user_id' => $user->id]);
+                Auth::logout();
+                return back()->withErrors([
+                    'login' => 'No se pudo determinar la empresa. Contacta al administrador.',
+                ]);
+            }
+
+            $dashboardUrl = "/{$companyName}/";
+
             Log::info('Redirigiendo al usuario después de login exitoso', [
                 'user_id' => $user->id,
-                'redirect_to' => RouteServiceProvider::HOME,
+                'company' => $companyName,
+                'redirect_to' => $dashboardUrl,
                 'is_authenticated' => Auth::check(),
-                'session_id' => $request->session()->getId(),
-                'cookies' => $request->cookies->all()
+                'session_id' => $request->session()->getId()
             ]);
             
-            return redirect()->intended(RouteServiceProvider::HOME);
+            return redirect()->intended($dashboardUrl);
         } catch (\Exception $e) {
             Log::error('Error en autenticación', [
                 'error' => $e->getMessage(),
@@ -78,6 +93,32 @@ class AuthenticatedSessionController extends Controller
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Get the default company name for the user
+     * This is used as fallback when no company is specified in the request
+     */
+    private function getDefaultCompany(User $user): ?string
+    {
+        // Opción 1: Si el usuario tiene company_id directo
+        if ($user->company_id) {
+            $company = Company::find($user->company_id);
+            return $company ? $company->name : null;
+        }
+
+        // Opción 2: Si el usuario tiene relación con empresa a través de branches
+        if ($user->branch_id) {
+            $branch = $user->branch;
+            if ($branch && $branch->company_id) {
+                $company = Company::find($branch->company_id);
+                return $company ? $company->name : null;
+            }
+        }
+
+        // Opción 3: Obtener la primera empresa disponible
+        $company = Company::first();
+        return $company ? $company->name : null;
     }
 
     /**
@@ -90,6 +131,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }
+

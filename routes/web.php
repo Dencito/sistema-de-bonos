@@ -30,11 +30,16 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Rutas que NO requieren tenant (login, register, etc.)
+require __DIR__ . '/auth.php';
 
-Route::middleware('auth')->group(function () {
+// Todas las rutas con prefijo {company} para multi-tenancy
+Route::prefix('{company}')->middleware(['auth', 'verified'])->group(function () {
+    
+    // Dashboard
+    Route::get('/', function () {
+        return Inertia::render('Dashboard');
+    })->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
@@ -208,6 +213,5 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Ruta especial para crear usuario owner (sin tenant)
 Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');
-
-require __DIR__ . '/auth.php';

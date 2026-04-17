@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Form, Input, Checkbox, Button, Alert } from 'antd';
 import GuestLayout from '@layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
@@ -7,12 +7,25 @@ import { roleNames } from '@utils/constants';
 import { authService } from '@services/api';
 
 export default function Login({ status, auth }) {
+  const [companyFromUrl, setCompanyFromUrl] = useState('');
+  
   const { data, setData, processing, errors, reset } = useForm({
     login: '',
     password: '',
     remember: false,
+    company: '',
   });
   const { successMsg, errorMsg } = useMessage();
+
+  // Extraer empresa de la URL si existe
+  useEffect(() => {
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    if (pathSegments.length > 0 && pathSegments[0] !== 'login') {
+      const company = pathSegments[0];
+      setCompanyFromUrl(company);
+      setData('company', company);
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -33,7 +46,7 @@ export default function Login({ status, auth }) {
   };
 
   const submit = async () => {
-    const { login, password } = data;
+    const { login, password, company } = data;
     if (auth?.users === 0) {
       return handleCreateOwner({
         username: login,
@@ -47,9 +60,11 @@ export default function Login({ status, auth }) {
         login,
         password,
         remember: data.remember,
+        company: company || companyFromUrl, // Enviar empresa si existe
       });
       if (response.success) {
-        router.visit(route('dashboard'));
+        // El backend ya redirige automáticamente a /{company}/
+        window.location.reload();
       } else {
         console.error('Error de login reportado por el servidor:', response.message);
         errorMsg(response.message);
@@ -95,6 +110,19 @@ export default function Login({ status, auth }) {
             value={data.password}
             onChange={(e) => setData('password', e.target.value)}
             autoComplete="current-password"
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Empresa (opcional)"
+          help={companyFromUrl ? `Empresa detectada: ${companyFromUrl}` : 'Si no especificas, usaremos tu empresa por defecto'}
+        >
+          <Input
+            id="company"
+            name="company"
+            value={data.company}
+            onChange={(e) => setData('company', e.target.value)}
+            placeholder="Ej: 888spa, tickets"
           />
         </Form.Item>
 

@@ -16,17 +16,6 @@ export default function Dashboard({ auth }) {
     loading: true,
   });
 
-  const getSelectedCompany = async () => {
-    try {
-      const response = await companyService.getSelected();
-      window.localStorage.setItem('companySelect', await response.data.company);
-      return response.data.company;
-    } catch (error) {
-      console.error('Error al obtener la empresa seleccionada:', error);
-      return null;
-    }
-  };
-
   const getShiftStatus = async () => {
     try {
       setShiftStatus((prev) => ({ ...prev, loading: true }));
@@ -71,7 +60,6 @@ export default function Dashboard({ auth }) {
   };
   
   useEffect(() => {
-    getSelectedCompany();
     getShiftStatus();
     
     // Escuchar eventos de actualización de datos de pasilleras

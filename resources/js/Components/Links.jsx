@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
+import { getCurrentCompany } from '@/Utils/tenant';
 
 export const Links = ({ role, roles }) => {
   const formattedRoles = roles.map((role) => ({
@@ -19,19 +20,8 @@ export const Links = ({ role, roles }) => {
     displayName: roleDisplayNames[role.name] || role.name,
   }));
 
-  function getSubdomain() {
-    var host = document.location.host;
-    var partes = host.split('.');
-    var subdominio = partes[0];
-
-    if (subdominio === 'www') {
-      subdominio = '';
-    }
-
-    return subdominio;
-  }
-
-  const isTickets = getSubdomain() === 'tickets';
+  const currentCompany = getCurrentCompany();
+  const isTickets = currentCompany === 'tickets';
 
   const path = window.location.pathname;
   const [isOpen, setIsOpen] = useState(false);

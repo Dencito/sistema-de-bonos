@@ -20,6 +20,7 @@ import {
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
 import ChangePasswordModal from '@/Components/ChangePasswordModal';
+import { getCurrentCompany } from '@/Utils/tenant';
 
 /* global route */
 
@@ -42,19 +43,8 @@ export function AppSidebar({ role, roles, user }) {
       displayName: roleDisplayNames[role.name] || role.name,
     })) || [];
 
-  function getSubdomain() {
-    var host = document.location.host;
-    var partes = host.split('.');
-    var subdominio = partes[0];
-
-    if (subdominio === 'www') {
-      subdominio = '';
-    }
-
-    return subdominio;
-  }
-
-  const isTickets = getSubdomain() === 'tickets';
+  const currentCompany = getCurrentCompany();
+  const isTickets = currentCompany === 'tickets';
   const path = window.location.pathname;
   const [isOpen, setIsOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -193,7 +183,7 @@ export function AppSidebar({ role, roles, user }) {
                 <div className="ps-5">
                   <div>
                     <span className="font-semibold">Empresa:</span>
-                    <p className="mb-3 text-lg font-bold uppercase">{getSubdomain()}</p>
+                    <p className="mb-3 text-lg font-bold uppercase">{currentCompany}</p>
                     {user && (
                       <>
                         <span className="font-semibold">Usuario:</span>

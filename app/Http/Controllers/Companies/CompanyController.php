@@ -44,12 +44,6 @@ class CompanyController extends Controller
                 abort(403, 'No tienes permiso para acceder a esta página.');
             }
 
-            $companySelectSession = $request->session()->get('selected_company');
-
-            if (auth()->user()->hasAnyRole(2)) {
-                $request->name = $companySelectSession;
-            }
-
             $companies = Company::with(['branches', 'status'])
                 ->when($request->name, function ($query, $name) {
                     $query->where('name', 'like', "%{$name}%");
@@ -464,45 +458,26 @@ class CompanyController extends Controller
         }
     }
 
-    // Seleccionar una empresa y almacenarla en la sesión
-    public function selectCompany(Request $request)
+    /**
+     * Get current company from URL path
+     */
+    public function getSelected(Request $request)
     {
         try {
-            $companyName = $request->input('name');
-
-            if (!$companyName) {
-                return response()->json(['error' => 'El nombre de la empresa es requerido.'], 400);
-            }
-
-            $company = Company::where('name', $companyName)->first();
-
+            // La empresa ahora viene del middleware SetTenantFromPath
+            $company = $request->get('tenant_company');
+            
             if (!$company) {
-                return response()->json(['error' => 'La empresa no existe.'], 404);
+                return response()->json(['error' => 'No se pudo determinar la empresa'], 404);
             }
 
-            // Almacenar el ID de la empresa en la sesión
-            session(['selected_company' => $company->id]);
-
-            return response()->json(['success' => true]);
-        } catch (\Throwable $e) {
-            $this->logError($e, 'companies.selectCompany', [
-                'company_name' => $request->input('name')
+            return response()->json([
+                'success' => true,
+                'company' => $company->name
             ]);
-            throw $e;
-        }
-    }
-
-    public function deselectCompany(Request $request)
-    {
-        try {
-            // Elimina la empresa seleccionada de la sesión
-            $request->session()->forget('selected_company');
-
-            // Responde con éxito
-            return response()->json(['success' => true]);
         } catch (\Throwable $e) {
-            $this->logError($e, 'companies.deselectCompany');
-            return response()->json(['error' => 'Error al deseleccionar la empresa'], 500);
+            $this->logError($e, 'companies.getSelected');
+            return response()->json(['error' => 'Error al obtener la empresa'], 500);
         }
     }
 

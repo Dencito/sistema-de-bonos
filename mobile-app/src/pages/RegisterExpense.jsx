@@ -56,9 +56,14 @@ export default function RegisterExpense() {
     }
 
     try {
+      const realAmount = parseFloat(amount) * 1000;
+      const formattedMachine = machine.toLowerCase().startsWith('maquina') 
+        ? machine 
+        : `maquina ${machine}`;
+
       const response = await pasilleraService.registerExpense(
-        parseFloat(amount),
-        machine,
+        realAmount,
+        formattedMachine,
         description
       );
 
@@ -148,17 +153,17 @@ export default function RegisterExpense() {
               </div>
               <input
                 type="text"
-                value={amount ? formatCurrency(amount) : ''}
+                value={amount ? new Intl.NumberFormat('es-CL').format(amount) : ''}
                 onChange={handleAmountChange}
                 className="py-4 pr-4 pl-12 w-full text-2xl font-semibold rounded-xl border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="0"
+                placeholder="Ej: 1 = $1.000"
                 required
                 disabled={loading}
               />
             </div>
             {amount && (
-              <p className="mt-2 text-sm text-gray-500">
-                ${formatCurrency(amount)} CLP
+              <p className="mt-2 text-sm font-medium text-primary-600">
+                Total a registrar: ${formatCurrency((parseFloat(amount) * 1000).toString())} CLP
               </p>
             )}
           </div>

@@ -123,12 +123,8 @@ export default function ModalCreateCustomBonus() {
         const daysDiff = endDay.diff(startDay, 'day');
 
         for (let i = 0; i <= daysDiff; i++) {
-          let dStart = values.start_datetime.add(i, 'day');
-          let dEnd = dStart.clone().hour(values.end_datetime.hour()).minute(values.end_datetime.minute()).second(values.end_datetime.second());
-          
-          if (dEnd.valueOf() <= dStart.valueOf()) {
-            dEnd = dEnd.add(1, 'day');
-          }
+          let dStart = values.start_datetime.add(i, 'day').startOf('day');
+          let dEnd = dStart.clone().endOf('day');
 
           const sendData = {
             amount: values.amount,

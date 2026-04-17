@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, DatePicker, Modal, Select, Table, Button, message } from 'antd';
+import { Form, Input, DatePicker, Modal, Select, Table, Button, message, Checkbox } from 'antd';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
@@ -107,7 +107,7 @@ export default function ModalCreateCustomBonus() {
 
     try {
       setLoading(true);
-      const values = await form.validateFields(['amount', 'start_datetime', 'end_datetime']);
+      const values = await form.validateFields(['amount', 'start_datetime', 'end_datetime', 'replicate_daily']);
 
       const startDateTime = values.start_datetime?.format('YYYY-MM-DD HH:mm:ss');
       const endDateTime = values.end_datetime?.format('YYYY-MM-DD HH:mm:ss');
@@ -115,33 +115,52 @@ export default function ModalCreateCustomBonus() {
       // Extraer solo los IDs de los usuarios seleccionados
       const userIds = selectedUsers.map((user) => user.id);
 
-      // Crear un array de promesas para la creación de bonos
-      const createPromises = userIds.map((userId) => {
+      const createPromises = [];
+
+      if (values.replicate_daily && values.start_datetime && values.end_datetime) {
+        const startDay = values.start_datetime.startOf('day');
+        const endDay = values.end_datetime.startOf('day');
+        const daysDiff = endDay.diff(startDay, 'day');
+
+        for (let i = 0; i <= daysDiff; i++) {
+          let dStart = values.start_datetime.add(i, 'day');
+          let dEnd = dStart.clone().hour(values.end_datetime.hour()).minute(values.end_datetime.minute()).second(values.end_datetime.second());
+          
+          if (dEnd.valueOf() <= dStart.valueOf()) {
+            dEnd = dEnd.add(1, 'day');
+          }
+
+          const sendData = {
+            amount: values.amount,
+            start_datetime: dStart.format('YYYY-MM-DD HH:mm:ss'),
+            end_datetime: dEnd.format('YYYY-MM-DD HH:mm:ss'),
+            user_ids: userIds,
+          };
+          createPromises.push(bonusService.createMultiple(sendData));
+        }
+      } else {
         const sendData = {
           amount: values.amount,
           start_datetime: startDateTime,
           end_datetime: endDateTime,
-          user_id: userId,
+          user_ids: userIds,
         };
-        return bonusService.create(sendData);
-      });
+        createPromises.push(bonusService.createMultiple(sendData));
+      }
 
       // Esperar a que todas las promesas se resuelvan
       const results = await Promise.allSettled(createPromises);
 
-      // Contar los bonos creados exitosamente
-      const successCount = results.filter(
-        (result) => result.status === 'fulfilled' && result.value.success,
-      ).length;
-      const failCount = userIds.length - successCount;
+      const hasSuccess = results.some((result) => result.status === 'fulfilled' && result.value.success);
+      const hasError = results.some((result) => result.status === 'rejected' || !result.value.success);
 
-      // Mostrar una sola alerta con el resumen
-      if (successCount > 0) {
-        successMsg(`Bonos creados correctamente para ${successCount} usuarios`);
-      }
-
-      if (failCount > 0) {
-        errorMsg(`No se pudieron crear bonos para ${failCount} usuarios`);
+      // Mostrar alertas
+      if (hasSuccess && !hasError) {
+        successMsg(`Bonos creados correctamente para los usuarios seleccionados`);
+      } else if (hasSuccess && hasError) {
+        message.warning(`Algunos bonos se crearon, pero hubo errores en otros`);
+      } else if (hasError) {
+        errorMsg(`No se pudieron crear los bonos`);
       }
 
       // Actualizar la página y cerrar el modal
@@ -323,6 +342,10 @@ export default function ModalCreateCustomBonus() {
                     placeholder="Seleccione fecha de fin"
                     style={{ width: '100%' }}
                   />
+                </Form.Item>
+
+                <Form.Item name="replicate_daily" valuePropName="checked">
+                  <Checkbox>Replicar día a día</Checkbox>
                 </Form.Item>
               </div>
             </div>

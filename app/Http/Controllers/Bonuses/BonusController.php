@@ -195,7 +195,7 @@ class BonusController extends Controller
         // Validar los datos de la solicitud
         $validated = $request->validate([
             'user_ids' => 'required|array',
-            'user_ids.*' => 'exists:users,id',
+            'user_ids.*' => 'required',
             'amount' => 'required|numeric|min:0|max:9999999.99',
             'start_datetime' => 'nullable|date',
             'end_datetime' => 'nullable|date|after_or_equal:start_datetime',

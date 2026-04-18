@@ -26,6 +26,7 @@ export const userService = {
   update: (id, values) => handleResponse(axios.put(`/users/${id}`, values)),
   delete: (id) => handleResponse(axios.delete(`/users/${id}`)),
   filterByBonus: (params) => handleResponse(axios.get('/api/users/filter-by-bonus', { params })),
+  searchPlayers: (params) => handleResponse(axios.get('/api/users/search-players', { params })),
 };
 
 export const companyService = {

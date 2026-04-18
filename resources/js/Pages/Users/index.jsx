@@ -998,7 +998,7 @@ export default function UserPage({
                   <>
                     <ModalCreateBonus />
                     <ModalCreateCustomBonus />
-                    <ModalCreateDoubleBonuses branches={branches} />
+                    <ModalCreateDoubleBonuses branches={branches} categories={categories} />
                   </>
                 )}
               </div>

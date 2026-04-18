@@ -305,25 +305,24 @@ class BonusController extends Controller
     {
         // Validar los datos de la solicitud
         $validated = $request->validate([
-            'branch_id' => 'required',
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'required',
             'start_datetime' => 'required|date',
             'end_datetime' => 'required|date|after_or_equal:start_datetime',
         ]);
         
-        $branchId = $validated['branch_id'];
+        $userIds = $validated['user_ids'];
         
-        // Buscar todos los jugadores (role_id = 6) que tengan asignada esta sucursal
+        // Buscar todos los jugadores (role_id = 6) seleccionados
         $players = User::where('role_id', 6)
-            ->whereHas('branches', function($query) use ($branchId) {
-                $query->where('branch_id', $branchId);
-            })
+            ->whereIn('id', $userIds)
             ->with('categoryBonus')
             ->get();
         
         if ($players->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No se encontraron jugadores en la sucursal seleccionada',
+                'message' => 'No se encontraron jugadores válidos en la selección',
             ], 404);
         }
         

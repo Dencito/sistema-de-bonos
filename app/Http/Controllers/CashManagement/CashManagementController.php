@@ -111,12 +111,14 @@ class CashManagementController extends Controller
     {
         $request->validate([
             'initial_balance' => 'required|numeric|min:0',
-            'opening_20000' => 'nullable|integer|min:0',
-            'opening_10000' => 'nullable|integer|min:0',
-            'opening_5000' => 'nullable|integer|min:0',
-            'opening_2000' => 'nullable|integer|min:0',
-            'opening_1000' => 'nullable|integer|min:0',
-            'opening_coins' => 'nullable|numeric|min:0',
+            'simple_mode'     => 'nullable|boolean',
+            'opening_total'   => 'nullable|numeric|min:0',
+            'opening_20000'   => 'nullable|integer|min:0',
+            'opening_10000'   => 'nullable|integer|min:0',
+            'opening_5000'    => 'nullable|integer|min:0',
+            'opening_2000'    => 'nullable|integer|min:0',
+            'opening_1000'    => 'nullable|integer|min:0',
+            'opening_coins'   => 'nullable|numeric|min:0',
         ]);
 
         $user = Auth::user();
@@ -152,56 +154,59 @@ class CashManagementController extends Controller
             ->first();
 
         $previousBalance = $previousShift ? $previousShift->current_balance : 0;
-        
-        // Calcular total contado de apertura
-        $openingTotalCounted = (
-            ($request->opening_20000 ?? 0) * 20000 +
-            ($request->opening_10000 ?? 0) * 10000 +
-            ($request->opening_5000 ?? 0) * 5000 +
-            ($request->opening_2000 ?? 0) * 2000 +
-            ($request->opening_1000 ?? 0) * 1000 +
-            ($request->opening_coins ?? 0)
-        );
-        
-        // El saldo esperado es: saldo anterior + saldo inicial agregado
-        $expectedBalance = $previousBalance + $request->initial_balance;
-        
-        // Calcular diferencia de apertura (lo que hay vs lo que debería haber)
-        $openingDifference = $openingTotalCounted - $expectedBalance;
-        
-        // El turno comienza con el monto CONTADO, no con el esperado
-        $shift = CashShift::create([
-            'user_id' => $user->id,
-            'branch_id' => $branchId,
-            'previous_balance' => $previousBalance,
-            'initial_balance' => $request->initial_balance,
-            'total_initial_balance' => $expectedBalance,
-            'current_balance' => $openingTotalCounted, // Comienza con lo contado
-            'started_at' => now(),
-            'opening_20000' => $request->opening_20000 ?? 0,
-            'opening_10000' => $request->opening_10000 ?? 0,
-            'opening_5000' => $request->opening_5000 ?? 0,
-            'opening_2000' => $request->opening_2000 ?? 0,
-            'opening_1000' => $request->opening_1000 ?? 0,
-            'opening_coins' => $request->opening_coins ?? 0,
-            'opening_total_counted' => $openingTotalCounted,
-            'difference' => $openingDifference, // Guardar diferencia de apertura
-        ]);
 
-        $message = 'Turno iniciado correctamente';
-        if ($openingDifference != 0) {
-            $diffAmount = number_format(abs($openingDifference), 0, ',', '.');
-            $message .= $openingDifference > 0 
-                ? " - SOBRANTE de $$diffAmount en apertura" 
-                : " - FALTANTE de $$diffAmount en apertura";
+        $simpleMode = filter_var($request->simple_mode, FILTER_VALIDATE_BOOLEAN);
+
+        if ($simpleMode) {
+            // Modo simple: el usuario declara directamente el total en caja
+            $openingTotalCounted = (float) ($request->opening_total ?? 0);
+            $openingDifference = 0; // No calculamos diferencia en modo simple
+        } else {
+            // Modo desglose: calculamos el total a partir de los billetes
+            $openingTotalCounted = (
+                ($request->opening_20000 ?? 0) * 20000 +
+                ($request->opening_10000 ?? 0) * 10000 +
+                ($request->opening_5000 ?? 0) * 5000 +
+                ($request->opening_2000 ?? 0) * 2000 +
+                ($request->opening_1000 ?? 0) * 1000 +
+                ($request->opening_coins ?? 0)
+            );
+            // El saldo esperado es: saldo anterior + saldo inicial agregado
+            $expectedBalance = $previousBalance + $request->initial_balance;
+            // Diferencia entre lo contado y lo esperado
+            $openingDifference = $openingTotalCounted - $expectedBalance;
         }
 
+        // El turno comienza con el monto declarado
+        $shift = CashShift::create([
+            'user_id'               => $user->id,
+            'branch_id'             => $branchId,
+            'previous_balance'      => $previousBalance,
+            'initial_balance'       => $request->initial_balance,
+            'total_initial_balance' => $previousBalance + $request->initial_balance,
+            'current_balance'       => $openingTotalCounted,
+            'started_at'            => now(),
+            'opening_20000'         => $simpleMode ? 0 : ($request->opening_20000 ?? 0),
+            'opening_10000'         => $simpleMode ? 0 : ($request->opening_10000 ?? 0),
+            'opening_5000'          => $simpleMode ? 0 : ($request->opening_5000 ?? 0),
+            'opening_2000'          => $simpleMode ? 0 : ($request->opening_2000 ?? 0),
+            'opening_1000'          => $simpleMode ? 0 : ($request->opening_1000 ?? 0),
+            'opening_coins'         => $simpleMode ? 0 : ($request->opening_coins ?? 0),
+            'opening_total_counted' => $openingTotalCounted,
+            'difference'            => $openingDifference,
+        ]);
+
+        $hasDifference = !$simpleMode && $openingDifference != 0;
+        $message = $hasDifference
+            ? ('Turno iniciado con ' . ($openingDifference > 0 ? 'SOBRANTE' : 'FALTANTE') . ' de $' . number_format(abs($openingDifference), 0, ',', '.') . ' en apertura')
+            : 'Turno iniciado correctamente';
+
         return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => $shift,
-            'opening_difference' => $openingDifference,
-            'has_difference' => $openingDifference != 0
+            'success'           => true,
+            'message'           => $message,
+            'data'              => $shift,
+            'opening_difference'=> $openingDifference,
+            'has_difference'    => $hasDifference,
         ]);
     }
 
@@ -211,11 +216,13 @@ class CashManagementController extends Controller
     public function endShift(Request $request)
     {
         $request->validate([
+            'simple_mode'   => 'nullable|boolean',
+            'closing_total' => 'nullable|numeric|min:0',
             'closing_20000' => 'nullable|integer|min:0',
             'closing_10000' => 'nullable|integer|min:0',
-            'closing_5000' => 'nullable|integer|min:0',
-            'closing_2000' => 'nullable|integer|min:0',
-            'closing_1000' => 'nullable|integer|min:0',
+            'closing_5000'  => 'nullable|integer|min:0',
+            'closing_2000'  => 'nullable|integer|min:0',
+            'closing_1000'  => 'nullable|integer|min:0',
             'closing_coins' => 'nullable|numeric|min:0',
             'closing_notes' => 'nullable|string',
         ]);
@@ -244,31 +251,38 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        // Calcular total contado de cierre
-        $closingTotalCounted = (
-            ($request->closing_20000 ?? 0) * 20000 +
-            ($request->closing_10000 ?? 0) * 10000 +
-            ($request->closing_5000 ?? 0) * 5000 +
-            ($request->closing_2000 ?? 0) * 2000 +
-            ($request->closing_1000 ?? 0) * 1000 +
-            ($request->closing_coins ?? 0)
-        );
+        $simpleMode = filter_var($request->simple_mode, FILTER_VALIDATE_BOOLEAN);
 
-        // Calcular diferencia (lo que debería haber vs lo que hay)
-        $difference = $closingTotalCounted - $activeShift->current_balance;
+        if ($simpleMode) {
+            // Modo simple: el usuario declara directamente el total en caja al cierre
+            $closingTotalCounted = (float) ($request->closing_total ?? 0);
+            $difference = 0; // No calculamos diferencia en modo simple
+        } else {
+            // Modo desglose: calculamos el total a partir de los billetes
+            $closingTotalCounted = (
+                ($request->closing_20000 ?? 0) * 20000 +
+                ($request->closing_10000 ?? 0) * 10000 +
+                ($request->closing_5000  ?? 0) * 5000  +
+                ($request->closing_2000  ?? 0) * 2000  +
+                ($request->closing_1000  ?? 0) * 1000  +
+                ($request->closing_coins ?? 0)
+            );
+            // Diferencia: lo contado vs lo que debería haber en caja
+            $difference = $closingTotalCounted - $activeShift->current_balance;
+        }
 
         $activeShift->update([
-            'is_active' => false,
-            'ended_at' => now(),
-            'closing_20000' => $request->closing_20000 ?? 0,
-            'closing_10000' => $request->closing_10000 ?? 0,
-            'closing_5000' => $request->closing_5000 ?? 0,
-            'closing_2000' => $request->closing_2000 ?? 0,
-            'closing_1000' => $request->closing_1000 ?? 0,
-            'closing_coins' => $request->closing_coins ?? 0,
+            'is_active'             => false,
+            'ended_at'              => now(),
+            'closing_20000'         => $simpleMode ? 0 : ($request->closing_20000 ?? 0),
+            'closing_10000'         => $simpleMode ? 0 : ($request->closing_10000 ?? 0),
+            'closing_5000'          => $simpleMode ? 0 : ($request->closing_5000  ?? 0),
+            'closing_2000'          => $simpleMode ? 0 : ($request->closing_2000  ?? 0),
+            'closing_1000'          => $simpleMode ? 0 : ($request->closing_1000  ?? 0),
+            'closing_coins'         => $simpleMode ? 0 : ($request->closing_coins ?? 0),
             'closing_total_counted' => $closingTotalCounted,
-            'difference' => $difference,
-            'closing_notes' => $request->closing_notes,
+            'difference'            => $difference,
+            'closing_notes'         => $request->closing_notes,
         ]);
 
         // Deactivate all pasilleras
@@ -278,9 +292,9 @@ class CashManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Turno cerrado correctamente',
-            'data' => [
-                'shift' => $activeShift,
-                'difference' => $difference,
+            'data'    => [
+                'shift'                 => $activeShift,
+                'difference'            => $difference,
                 'closing_total_counted' => $closingTotalCounted,
             ]
         ]);

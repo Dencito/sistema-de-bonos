@@ -17,7 +17,8 @@ import {
   Popconfirm,
   Select,
 } from 'antd';
-import { DeleteOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ReloadOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons';
+import { Switch } from 'antd';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
@@ -33,6 +34,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
   const [transactions, setTransactions] = useState(activeShift?.transactions || []);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Estados para conteo de apertura
   const [opening20000, setOpening20000] = useState(0);
@@ -54,6 +56,10 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   // Modal states
   const [openingModalVisible, setOpeningModalVisible] = useState(false);
   const [closingModalVisible, setClosingModalVisible] = useState(false);
+  const [openingSimpleMode, setOpeningSimpleMode] = useState(true);
+  const [openingSimpleTotal, setOpeningSimpleTotal] = useState('');
+  const [closingSimpleMode, setClosingSimpleMode] = useState(true);
+  const [closingSimpleTotal, setClosingSimpleTotal] = useState('');
 
   useEffect(() => {
     if (activeShift) {
@@ -74,6 +80,23 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       console.error('Error fetching shift status:', error);
     }
   };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchShiftStatus();
+    setRefreshing(false);
+  };
+
+  const RefreshBtn = ({ tooltip = 'Actualizar' }) => (
+    <Button
+      type="text"
+      size="small"
+      icon={<ReloadOutlined spin={refreshing} />}
+      onClick={handleRefresh}
+      loading={refreshing}
+      title={tooltip}
+    />
+  );
 
   const calculateOpeningTotal = () => {
     return (
@@ -98,8 +121,23 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   };
 
   const handleStartShift = async () => {
-    if (!initialBalance || initialBalance <= 0) {
-      message.error('Ingrese un saldo inicial válido');
+    // In simple mode use the direct total; in denomination mode use the calculated sum
+    const effectiveTotal = openingSimpleMode
+      ? Number(openingSimpleTotal)
+      : calculateOpeningTotal();
+
+    if (!initialBalance || Number(initialBalance) <= 0) {
+      message.error('Ingrese un saldo a agregar válido (mayor a 0)');
+      return;
+    }
+
+    if (!openingSimpleMode && effectiveTotal <= 0) {
+      message.error('El conteo de billetes no puede ser 0');
+      return;
+    }
+
+    if (openingSimpleMode && (!openingSimpleTotal || Number(openingSimpleTotal) <= 0)) {
+      message.error('Ingrese el monto total de la caja (mayor a 0)');
       return;
     }
 
@@ -107,12 +145,14 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     try {
       const response = await axios.post('/cash-management/shift/start', {
         initial_balance: initialBalance,
-        opening_20000: opening20000,
-        opening_10000: opening10000,
-        opening_5000: opening5000,
-        opening_2000: opening2000,
-        opening_1000: opening1000,
-        opening_coins: openingCoins,
+        opening_total: openingSimpleMode ? openingSimpleTotal : calculateOpeningTotal(),
+        opening_20000: openingSimpleMode ? 0 : opening20000,
+        opening_10000: openingSimpleMode ? 0 : opening10000,
+        opening_5000: openingSimpleMode ? 0 : opening5000,
+        opening_2000: openingSimpleMode ? 0 : opening2000,
+        opening_1000: openingSimpleMode ? 0 : opening1000,
+        opening_coins: openingSimpleMode ? 0 : openingCoins,
+        simple_mode: openingSimpleMode,
       });
 
       if (response.data.success) {
@@ -128,6 +168,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
         setShift(response.data.data);
         setInitialBalance('');
+        setOpeningSimpleTotal('');
         setOpening20000(0);
         setOpening10000(0);
         setOpening5000(0);
@@ -145,15 +186,21 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   };
 
   const handleEndShift = async () => {
+    if (closingSimpleMode && (!closingSimpleTotal || Number(closingSimpleTotal) <= 0)) {
+      message.error('Ingrese el monto total de la caja al cierre (mayor a 0)');
+      return;
+    }
     setLoading(true);
     try {
       const response = await axios.post('/cash-management/shift/end', {
-        closing_20000: closing20000,
-        closing_10000: closing10000,
-        closing_5000: closing5000,
-        closing_2000: closing2000,
-        closing_1000: closing1000,
-        closing_coins: closingCoins,
+        simple_mode: closingSimpleMode,
+        closing_total: closingSimpleMode ? closingSimpleTotal : undefined,
+        closing_20000: closingSimpleMode ? 0 : closing20000,
+        closing_10000: closingSimpleMode ? 0 : closing10000,
+        closing_5000: closingSimpleMode ? 0 : closing5000,
+        closing_2000: closingSimpleMode ? 0 : closing2000,
+        closing_1000: closingSimpleMode ? 0 : closing1000,
+        closing_coins: closingSimpleMode ? 0 : closingCoins,
         closing_notes: closingNotes,
       });
 
@@ -161,7 +208,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         const { difference } = response.data.data;
 
         let msg = 'Turno cerrado correctamente.';
-        if (difference !== 0) {
+        if (!closingSimpleMode && difference !== 0) {
           msg += ` Diferencia: $${new Intl.NumberFormat('es-CL').format(Math.abs(difference))} ${difference > 0 ? '(Sobrante)' : '(Faltante)'}`;
         }
 
@@ -169,6 +216,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         setShift(null);
         setPasilleras([]);
         setTransactions([]);
+        setClosingSimpleTotal('');
         setClosing20000(0);
         setClosing10000(0);
         setClosing5000(0);
@@ -332,68 +380,36 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     },
   ];
 
-  useEffect(() => {
-    // Escuchar eventos de actualización de datos de pasilleras
-    const channel = window.Echo.channel('dashboard-updates');
-
-    channel.listen('.data.updated', (e) => {
-      // Actualizar la pasillera específica en el estado local
-      setPasilleras((prevPasilleras) => {
-        return prevPasilleras.map((pasillera) => {
-          if (pasillera.id === e.pasillera.id) {
-            // Actualizar los datos de la pasillera
-            return {
-              ...pasillera,
-              total_payments: e.pasillera.total_payments,
-              current_balance: e.pasillera.current_balance,
-              transactions: [e.transaction, ...(pasillera.transactions || [])],
-            };
-          }
-          return pasillera;
-        });
-      });
-
-      // Actualizar el turno actual con el nuevo balance
-      setShift((prevShift) => {
-        if (prevShift) {
-          return {
-            ...prevShift,
-            total_payments: (
-              parseFloat(prevShift.total_payments) + parseFloat(e.transaction.amount)
-            ).toString(),
-            current_balance: (
-              parseFloat(prevShift.current_balance) - parseFloat(e.transaction.amount)
-            ).toString(),
-          };
-        }
-        return prevShift;
-      });
-
-      // Mostrar notificación
-      message.success(
-        `${e.user.name} registró un pago de $${new Intl.NumberFormat('es-CL').format(e.transaction.amount)} en ${e.transaction.machine}`,
-      );
-    });
-
-    // Cleanup
-    return () => {
-      window.Echo.leaveChannel('dashboard-updates');
-    };
-  }, []);
 
   return (
     <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
       <Head title="Sistema de Caja" />
 
       <div className="container p-4 mx-auto space-y-4">
-        <Title level={2}>Sistema de Gestión de Caja</Title>
+        <div className="flex items-center gap-3">
+          <Title level={2} style={{ margin: 0 }}>Sistema de Gestión de Caja</Title>
+          <Button
+            icon={<ReloadOutlined spin={refreshing} />}
+            onClick={handleRefresh}
+            loading={refreshing}
+            title="Actualizar toda la página"
+          >
+            Actualizar
+          </Button>
+        </div>
 
         {/* Control de Caja */}
-        <Card title="Control de Caja">
+        <Card
+          title="Control de Caja"
+          extra={<RefreshBtn tooltip="Actualizar saldos de caja" />}
+        >
           <Row gutter={[16, 16]}>
             <Col xs={24} md={12}>
               <Space direction="vertical" style={{ width: '100%' }} size="large">
-                <Statistic title="Saldo Anterior" value={prevBalance} precision={2} prefix="$" />
+                <div className="flex items-center gap-2">
+                  <Statistic title="Saldo Anterior" value={prevBalance} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar saldo anterior" />
+                </div>
                 <div>
                   <Text strong>Saldo a Agregar</Text>
                   <InputNumber
@@ -437,37 +453,29 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             </Col>
             <Col xs={24} md={12}>
               <Space direction="vertical" style={{ width: '100%' }}>
-                <Statistic
-                  title="Saldo Actual"
-                  value={shift?.current_balance || 0}
-                  precision={2}
-                  prefix="$"
-                />
-                <Statistic
-                  title="Total Transferencias"
-                  value={shift?.total_transfers || 0}
-                  precision={2}
-                  prefix="$"
-                />
-                <Statistic
-                  title="Total Giros"
-                  value={shift?.total_giros || 0}
-                  precision={2}
-                  prefix="$"
-                />
-                <Statistic
-                  title="Total Pagos"
-                  value={shift?.total_payments || 0}
-                  precision={2}
-                  prefix="$"
-                />
+                <div className="flex items-center gap-2">
+                  <Statistic title="Saldo Actual" value={shift?.current_balance || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar saldo actual" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Statistic title="Total Transferencias" value={shift?.total_transfers || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar transferencias" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Statistic title="Total Giros" value={shift?.total_giros || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar giros" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Statistic title="Total Pagos" value={shift?.total_payments || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar pagos" />
+                </div>
               </Space>
             </Col>
           </Row>
         </Card>
 
         {/* Nueva Transacción */}
-        <Card title="Nueva Transacción">
+        <Card title="Nueva Transacción" extra={<RefreshBtn tooltip="Actualizar transacciones" />}>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             <div>
               <Text strong>Monto</Text>
@@ -518,7 +526,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         </Card>
 
         {/* Control de Pasilleras */}
-        <Card title="Control de Pasilleras">
+        <Card title="Control de Pasilleras" extra={<RefreshBtn tooltip="Actualizar pasilleras" />}>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             <Row gutter={16}>
               <Col xs={24} sm={10}>
@@ -573,14 +581,17 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     size="small"
                     title={`Pasillera: ${pasillera.user?.first_name} ${pasillera.user?.first_last_name}`}
                     extra={
-                      <Popconfirm
-                        title="¿Eliminar esta pasillera?"
-                        onConfirm={() => handleDeletePasillera(pasillera.id)}
-                        okText="Sí"
-                        cancelText="No"
-                      >
-                        <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                      </Popconfirm>
+                      <Space size="small">
+                        <RefreshBtn tooltip={`Actualizar datos de ${pasillera.user?.first_name}`} />
+                        <Popconfirm
+                          title="¿Eliminar esta pasillera?"
+                          onConfirm={() => handleDeletePasillera(pasillera.id)}
+                          okText="Sí"
+                          cancelText="No"
+                        >
+                          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                        </Popconfirm>
+                      </Space>
                     }
                   >
                     <Row gutter={[8, 8]}>
@@ -600,55 +611,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                         <Text strong>{formatCurrency(pasillera.current_balance)}</Text>
                       </Col>
                     </Row>
-
-                    <Space
-                      direction="vertical"
-                      style={{ width: '100%', marginTop: 16 }}
-                      size="small"
-                    >
-                      <InputNumber
-                        style={{ width: '100%' }}
-                        placeholder="Monto"
-                        id={`monto-${pasillera.id}`}
-                        disabled={!shift?.is_active}
-                        min={0}
-                        precision={2}
-                      />
-                      <Input
-                        placeholder="Máquina"
-                        id={`maquina-${pasillera.id}`}
-                        disabled={!shift?.is_active}
-                      />
-                      <Space style={{ width: '100%' }}>
-                        {/* <Button
-                                                    type="primary"
-                                                    onClick={() => {
-                                                        const montoInput = document.getElementById(`monto-${pasillera.id}`);
-                                                        const maquinaInput = document.getElementById(`maquina-${pasillera.id}`);
-                                                        if (montoInput && maquinaInput) {
-                                                            const monto = montoInput.value;
-                                                            const maquina = maquinaInput.value;
-                                                            if (monto && maquina) {
-                                                                handlePasilleraPayment(pasillera.id, monto, maquina);
-                                                                montoInput.value = '';
-                                                                maquinaInput.value = '';
-                                                            }
-                                                        }
-                                                    }}
-                                                    disabled={!shift?.is_active}
-                                                    loading={loading}
-                                                    block
-                                                >
-                                                    Registrar Pago
-                                                </Button> */}
-                        <Button
-                          icon={<ReloadOutlined />}
-                          onClick={() => handleResetPasillera(pasillera.id)}
-                        >
-                          Reiniciar
-                        </Button>
-                      </Space>
-                    </Space>
 
                     {pasillera.transactions && pasillera.transactions.length > 0 && (
                       <div style={{ marginTop: 16 }}>
@@ -675,7 +637,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         </Card>
 
         {/* Historial de Transacciones */}
-        <Card title="Historial de Transacciones">
+        <Card title="Historial de Transacciones" extra={<RefreshBtn tooltip="Actualizar historial" />}>
           <Table
             columns={transactionColumns}
             dataSource={transactions}
@@ -687,7 +649,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
         {/* Modal de Apertura de Caja */}
         <Modal
-          title="Conteo de Apertura de Caja"
+          title="Apertura de Caja"
           open={openingModalVisible}
           onOk={handleStartShift}
           onCancel={() => setOpeningModalVisible(false)}
@@ -697,153 +659,136 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           confirmLoading={loading}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="large">
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Statistic
-                  title="Saldo Esperado"
-                  value={prevBalance + (Number(initialBalance) || 0)}
-                  precision={0}
-                  prefix="$"
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-              <Col span={12}>
-                <Statistic
-                  title="Total Contado"
-                  value={calculateOpeningTotal()}
-                  precision={0}
-                  prefix="$"
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Col>
-            </Row>
 
-            <div>
-              <Statistic
-                title="Diferencia"
-                value={calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0))}
-                precision={0}
-                prefix="$"
-                valueStyle={{
-                  color:
-                    calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
-                      ? '#3f8600'
-                      : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
-                        ? '#1890ff'
-                        : '#cf1322',
-                }}
-                suffix={
-                  calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
-                    ? '(Exacto)'
-                    : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
-                      ? '(Sobrante)'
-                      : '(Faltante)'
-                }
+            {/* Mode toggle */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <Switch
+                checked={openingSimpleMode}
+                onChange={setOpeningSimpleMode}
+                checkedChildren="Monto directo"
+                unCheckedChildren="Desglose billetes"
               />
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                {openingSimpleMode
+                  ? 'Ingresa el total de dinero en caja directamente.'
+                  : 'Detalla la cantidad de cada billete para mayor control.'}
+              </Text>
             </div>
 
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $20.000</Text>
+            {openingSimpleMode ? (
+              /* SIMPLE MODE */
+              <div>
+                <Text strong>Total en caja al abrir *</Text>
                 <InputNumber
                   style={{ width: '100%', marginTop: 8 }}
-                  value={opening20000}
-                  onChange={setOpening20000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening20000 * 20000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $10.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={opening10000}
-                  onChange={setOpening10000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening10000 * 10000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $5.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={opening5000}
-                  onChange={setOpening5000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening5000 * 5000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $2.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={opening2000}
-                  onChange={setOpening2000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening2000 * 2000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $1.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={opening1000}
-                  onChange={setOpening1000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(opening1000 * 1000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Monedas</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={openingCoins}
-                  onChange={setOpeningCoins}
-                  min={0}
-                  placeholder="Monto en monedas"
+                  value={openingSimpleTotal}
+                  onChange={setOpeningSimpleTotal}
+                  placeholder="Ej: 150000"
+                  min={1}
                   precision={0}
+                  size="large"
                 />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(openingCoins)}</Text>
-              </Col>
-            </Row>
+                {openingSimpleTotal > 0 && (
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Monto ingresado: <strong>${new Intl.NumberFormat('es-CL').format(openingSimpleTotal)}</strong>
+                  </Text>
+                )}
+              </div>
+            ) : (
+              /* DENOMINATION MODE */
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                <Row gutter={[16, 16]}>
+                  <Col span={12}>
+                    <Statistic
+                      title="Saldo Esperado"
+                      value={prevBalance + (Number(initialBalance) || 0)}
+                      precision={0}
+                      prefix="$"
+                      valueStyle={{ color: '#3f8600' }}
+                    />
+                  </Col>
+                  <Col span={12}>
+                    <Statistic
+                      title="Total Contado"
+                      value={calculateOpeningTotal()}
+                      precision={0}
+                      prefix="$"
+                      valueStyle={{ color: '#1890ff' }}
+                    />
+                  </Col>
+                </Row>
+
+                <div>
+                  <Statistic
+                    title="Diferencia"
+                    value={calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0))}
+                    precision={0}
+                    prefix="$"
+                    valueStyle={{
+                      color:
+                        calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
+                          ? '#3f8600'
+                          : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
+                            ? '#1890ff'
+                            : '#cf1322',
+                    }}
+                    suffix={
+                      calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
+                        ? '(Exacto)'
+                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
+                          ? '(Sobrante)'
+                          : '(Faltante)'
+                    }
+                  />
+                </div>
+
+                {[{ label: '$20.000', state: opening20000, setter: setOpening20000, val: 20000 },
+                { label: '$10.000', state: opening10000, setter: setOpening10000, val: 10000 },
+                { label: '$5.000', state: opening5000, setter: setOpening5000, val: 5000 },
+                { label: '$2.000', state: opening2000, setter: setOpening2000, val: 2000 },
+                { label: '$1.000', state: opening1000, setter: setOpening1000, val: 1000 },
+                ].map(({ label, state, setter, val }) => (
+                  <Row key={label} gutter={[16, 8]} align="middle">
+                    <Col span={12}>
+                      <Text strong>Billetes de {label}</Text>
+                      <InputNumber
+                        style={{ width: '100%', marginTop: 8 }}
+                        value={state}
+                        onChange={setter}
+                        min={0}
+                        placeholder="Cantidad"
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(state * val)}</Text>
+                    </Col>
+                  </Row>
+                ))}
+
+                <Row gutter={[16, 8]} align="middle">
+                  <Col span={12}>
+                    <Text strong>Monedas</Text>
+                    <InputNumber
+                      style={{ width: '100%', marginTop: 8 }}
+                      value={openingCoins}
+                      onChange={setOpeningCoins}
+                      min={0}
+                      placeholder="Monto en monedas"
+                      precision={0}
+                    />
+                  </Col>
+                  <Col span={12}>
+                    <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(openingCoins)}</Text>
+                  </Col>
+                </Row>
+              </Space>
+            )}
           </Space>
         </Modal>
 
         {/* Modal de Cierre de Caja */}
         <Modal
-          title="Conteo de Cierre de Caja"
+          title="Cierre de Caja"
           open={closingModalVisible}
           onOk={handleEndShift}
           onCancel={() => setClosingModalVisible(false)}
@@ -853,147 +798,130 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           confirmLoading={loading}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="large">
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Statistic
-                  title="Saldo Esperado en Caja"
-                  value={shift?.current_balance || 0}
-                  precision={0}
-                  prefix="$"
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-              <Col span={12}>
-                <Statistic
-                  title="Total Contado"
-                  value={calculateClosingTotal()}
-                  precision={0}
-                  prefix="$"
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Col>
-            </Row>
 
-            <div>
-              <Statistic
-                title="Diferencia"
-                value={calculateClosingTotal() - (shift?.current_balance || 0)}
-                precision={0}
-                prefix="$"
-                valueStyle={{
-                  color:
-                    calculateClosingTotal() - (shift?.current_balance || 0) === 0
-                      ? '#3f8600'
-                      : calculateClosingTotal() - (shift?.current_balance || 0) > 0
-                        ? '#1890ff'
-                        : '#cf1322',
-                }}
-                suffix={
-                  calculateClosingTotal() - (shift?.current_balance || 0) === 0
-                    ? '(Exacto)'
-                    : calculateClosingTotal() - (shift?.current_balance || 0) > 0
-                      ? '(Sobrante)'
-                      : '(Faltante)'
-                }
+            {/* Mode toggle */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <Switch
+                checked={closingSimpleMode}
+                onChange={setClosingSimpleMode}
+                checkedChildren="Monto directo"
+                unCheckedChildren="Desglose billetes"
               />
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                {closingSimpleMode
+                  ? 'Ingresa el total de dinero en caja al cerrar directamente.'
+                  : 'Detalla la cantidad de cada billete para mayor control.'}
+              </Text>
             </div>
 
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $20.000</Text>
+            {closingSimpleMode ? (
+              /* SIMPLE MODE */
+              <div>
+                <Text strong>Total en caja al cerrar *</Text>
                 <InputNumber
                   style={{ width: '100%', marginTop: 8 }}
-                  value={closing20000}
-                  onChange={setClosing20000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing20000 * 20000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $10.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={closing10000}
-                  onChange={setClosing10000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing10000 * 10000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $5.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={closing5000}
-                  onChange={setClosing5000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing5000 * 5000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $2.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={closing2000}
-                  onChange={setClosing2000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing2000 * 2000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Billetes de $1.000</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={closing1000}
-                  onChange={setClosing1000}
-                  min={0}
-                  placeholder="Cantidad"
-                />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closing1000 * 1000)}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <Text strong>Monedas</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={closingCoins}
-                  onChange={setClosingCoins}
-                  min={0}
-                  placeholder="Monto en monedas"
+                  value={closingSimpleTotal}
+                  onChange={setClosingSimpleTotal}
+                  placeholder="Ej: 150000"
+                  min={1}
                   precision={0}
+                  size="large"
                 />
-              </Col>
-              <Col span={12}>
-                <Text>Total: ${new Intl.NumberFormat('es-CL').format(closingCoins)}</Text>
-              </Col>
-            </Row>
+                {closingSimpleTotal > 0 && (
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Monto ingresado: <strong>${new Intl.NumberFormat('es-CL').format(closingSimpleTotal)}</strong>
+                  </Text>
+                )}
+              </div>
+            ) : (
+              /* DENOMINATION MODE */
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                <Row gutter={[16, 16]}>
+                  <Col span={12}>
+                    <Statistic
+                      title="Saldo Esperado en Caja"
+                      value={shift?.current_balance || 0}
+                      precision={0}
+                      prefix="$"
+                      valueStyle={{ color: '#3f8600' }}
+                    />
+                  </Col>
+                  <Col span={12}>
+                    <Statistic
+                      title="Total Contado"
+                      value={calculateClosingTotal()}
+                      precision={0}
+                      prefix="$"
+                      valueStyle={{ color: '#1890ff' }}
+                    />
+                  </Col>
+                </Row>
+
+                <div>
+                  <Statistic
+                    title="Diferencia"
+                    value={calculateClosingTotal() - (shift?.current_balance || 0)}
+                    precision={0}
+                    prefix="$"
+                    valueStyle={{
+                      color:
+                        calculateClosingTotal() - (shift?.current_balance || 0) === 0
+                          ? '#3f8600'
+                          : calculateClosingTotal() - (shift?.current_balance || 0) > 0
+                            ? '#1890ff'
+                            : '#cf1322',
+                    }}
+                    suffix={
+                      calculateClosingTotal() - (shift?.current_balance || 0) === 0
+                        ? '(Exacto)'
+                        : calculateClosingTotal() - (shift?.current_balance || 0) > 0
+                          ? '(Sobrante)'
+                          : '(Faltante)'
+                    }
+                  />
+                </div>
+
+                {[{ label: '$20.000', state: closing20000, setter: setClosing20000, val: 20000 },
+                  { label: '$10.000', state: closing10000, setter: setClosing10000, val: 10000 },
+                  { label: '$5.000',  state: closing5000,  setter: setClosing5000,  val: 5000  },
+                  { label: '$2.000',  state: closing2000,  setter: setClosing2000,  val: 2000  },
+                  { label: '$1.000',  state: closing1000,  setter: setClosing1000,  val: 1000  },
+                ].map(({ label, state, setter, val }) => (
+                  <Row key={label} gutter={[16, 8]} align="middle">
+                    <Col span={12}>
+                      <Text strong>Billetes de {label}</Text>
+                      <InputNumber
+                        style={{ width: '100%', marginTop: 8 }}
+                        value={state}
+                        onChange={setter}
+                        min={0}
+                        placeholder="Cantidad"
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(state * val)}</Text>
+                    </Col>
+                  </Row>
+                ))}
+
+                <Row gutter={[16, 8]} align="middle">
+                  <Col span={12}>
+                    <Text strong>Monedas</Text>
+                    <InputNumber
+                      style={{ width: '100%', marginTop: 8 }}
+                      value={closingCoins}
+                      onChange={setClosingCoins}
+                      min={0}
+                      placeholder="Monto en monedas"
+                      precision={0}
+                    />
+                  </Col>
+                  <Col span={12}>
+                    <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(closingCoins)}</Text>
+                  </Col>
+                </Row>
+              </Space>
+            )}
 
             <div>
               <Text strong>Notas de Cierre</Text>

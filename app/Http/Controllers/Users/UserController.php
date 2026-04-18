@@ -480,13 +480,46 @@ class UserController extends Controller
         ]);
     }
 
+    public function searchPlayers(Request $request)
+    {
+        $query = User::where('role_id', 6)->with(['role:id,name', 'status:id,name', 'branches', 'categoryBonus']);
+
+        if ($request->filled('branch_id')) {
+            $branchId = $request->branch_id;
+            $query->whereHas('branches', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        }
+
+        if ($request->filled('category_bonus_id')) {
+            $query->where('category_bonus_id', $request->category_bonus_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'LIKE', "%{$search}%")
+                  ->orWhere('first_name', 'LIKE', "%{$search}%")
+                  ->orWhere('first_last_name', 'LIKE', "%{$search}%")
+                  ->orWhere('rutNumbers', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $users = $query->limit(100)->get();
+
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ]);
+    }
+
     public function assignMultipleBranches(Request $request)
     {
         // Validar los datos de la solicitud
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'required',
             'branches' => 'required|array',
-            'branches.*' => 'exists:branches,id',
+            'branches.*' => 'required',
         ]);
 
         $bonusId = $validated['user_id'];

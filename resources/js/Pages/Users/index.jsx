@@ -18,7 +18,7 @@ import { allowedRoles, roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
 import { formatDateTime } from '@/Utils/date';
 import { DownloadOutlined } from '@ant-design/icons';
-import { Button, message } from 'antd';
+import { Button, message, Input, Select } from 'antd';
 import * as XLSX from 'xlsx';
 import { bonusService } from '@/Services/api';
 import axios from 'axios';
@@ -234,6 +234,7 @@ export default function UserPage({
               branches={branches}
               roles={roles}
               data={user}
+              userAuth={auth?.user}
               userType={data?.role}
               categories={categories}
               roleDisplayNames={roleDisplayNames}
@@ -248,6 +249,7 @@ export default function UserPage({
                 branches: user?.branches?.map((branch) => branch?.id),
               }}
               categories={categories}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
@@ -278,17 +280,16 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${
-              branch?.status?.name === 'Activo'
-                ? 'bg-green-300'
-                : branch?.status?.name === 'Inactivo'
-                  ? 'bg-red-200'
-                  : branch?.status?.name === 'En revisión'
-                    ? 'bg-orange-300'
-                    : branch?.status?.name === 'Borrado'
-                      ? 'bg-red-400'
-                      : ''
-            } 
+            className={`${branch?.status?.name === 'Activo'
+              ? 'bg-green-300'
+              : branch?.status?.name === 'Inactivo'
+                ? 'bg-red-200'
+                : branch?.status?.name === 'En revisión'
+                  ? 'bg-orange-300'
+                  : branch?.status?.name === 'Borrado'
+                    ? 'bg-red-400'
+                    : ''
+              } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -313,6 +314,7 @@ export default function UserPage({
               branches={branches}
               roles={roles}
               data={user}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
             />
@@ -326,6 +328,7 @@ export default function UserPage({
                 branches: user?.branches?.map((branch) => branch?.id),
               }}
               categories={categories}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
@@ -383,17 +386,16 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${
-              branch?.status?.name === 'Activo'
-                ? 'bg-green-300'
-                : branch?.status?.name === 'Inactivo'
-                  ? 'bg-red-200'
-                  : branch?.status?.name === 'En revisión'
-                    ? 'bg-orange-300'
-                    : branch?.status?.name === 'Borrado'
-                      ? 'bg-red-400'
-                      : ''
-            } 
+            className={`${branch?.status?.name === 'Activo'
+              ? 'bg-green-300'
+              : branch?.status?.name === 'Inactivo'
+                ? 'bg-red-200'
+                : branch?.status?.name === 'En revisión'
+                  ? 'bg-orange-300'
+                  : branch?.status?.name === 'Borrado'
+                    ? 'bg-red-400'
+                    : ''
+              } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -417,6 +419,7 @@ export default function UserPage({
               companies={companies}
               branches={branches}
               roles={roles}
+              userAuth={auth?.user}
               data={user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
@@ -426,6 +429,7 @@ export default function UserPage({
               companies={companies}
               branches={branches}
               roles={roles}
+              userAuth={auth?.user}
               data={{
                 ...user,
                 branches: user?.branches?.map((branch) => branch?.id),
@@ -486,17 +490,16 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${
-              branch?.status?.name === 'Activo'
-                ? 'bg-green-300'
-                : branch?.status?.name === 'Inactivo'
-                  ? 'bg-red-200'
-                  : branch?.status?.name === 'En revisión'
-                    ? 'bg-orange-300'
-                    : branch?.status?.name === 'Borrado'
-                      ? 'bg-red-400'
-                      : ''
-            } 
+            className={`${branch?.status?.name === 'Activo'
+              ? 'bg-green-300'
+              : branch?.status?.name === 'Inactivo'
+                ? 'bg-red-200'
+                : branch?.status?.name === 'En revisión'
+                  ? 'bg-orange-300'
+                  : branch?.status?.name === 'Borrado'
+                    ? 'bg-red-400'
+                    : ''
+              } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -525,9 +528,8 @@ export default function UserPage({
           if (!type) return <span className="text-gray-400">-</span>;
           return (
             <span
-              className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                type === 'Entrada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}
+              className={`px-2 py-1 rounded-full text-xs font-semibold ${type === 'Entrada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}
             >
               {type}
             </span>
@@ -545,6 +547,7 @@ export default function UserPage({
               branches={branches}
               roles={roles}
               data={user}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
             />
@@ -557,6 +560,7 @@ export default function UserPage({
                 ...user,
                 branches: user?.branches?.map((branch) => branch?.id),
               }}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
@@ -567,20 +571,20 @@ export default function UserPage({
       },
       ...(data.role === 'trabajador'
         ? [
-            {
-              title: 'Huella Digital',
-              key: 'has_fingerprint',
-              render: (_, user) => (
-                <span
-                  style={{
-                    color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
-                  }}
-                >
-                  <FingerprintIcon />
-                </span>
-              ),
-            },
-          ]
+          {
+            title: 'Huella Digital',
+            key: 'has_fingerprint',
+            render: (_, user) => (
+              <span
+                style={{
+                  color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
+                }}
+              >
+                <FingerprintIcon />
+              </span>
+            ),
+          },
+        ]
         : []),
     ],
     jugador: [
@@ -647,17 +651,16 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${
-              branch?.status?.name === 'Activo'
-                ? 'bg-green-300'
-                : branch?.status?.name === 'Inactivo'
-                  ? 'bg-red-200'
-                  : branch?.status?.name === 'En revisión'
-                    ? 'bg-orange-300'
-                    : branch?.status?.name === 'Borrado'
-                      ? 'bg-red-400'
-                      : ''
-            } 
+            className={`${branch?.status?.name === 'Activo'
+              ? 'bg-green-300'
+              : branch?.status?.name === 'Inactivo'
+                ? 'bg-red-200'
+                : branch?.status?.name === 'En revisión'
+                  ? 'bg-orange-300'
+                  : branch?.status?.name === 'Borrado'
+                    ? 'bg-red-400'
+                    : ''
+              } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -690,6 +693,7 @@ export default function UserPage({
               branches={branches}
               roles={roles}
               data={user}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
             />
@@ -703,6 +707,7 @@ export default function UserPage({
                 ...user,
                 branches: user?.branches?.map((branch) => branch?.id),
               }}
+              userAuth={auth?.user}
               userType={data?.role}
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
@@ -714,20 +719,20 @@ export default function UserPage({
       },
       ...(data.role === 'jugador'
         ? [
-            {
-              title: 'Huella Digital',
-              key: 'has_fingerprint',
-              render: (_, user) => (
-                <span
-                  style={{
-                    color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
-                  }}
-                >
-                  <FingerprintIcon />
-                </span>
-              ),
-            },
-          ]
+          {
+            title: 'Huella Digital',
+            key: 'has_fingerprint',
+            render: (_, user) => (
+              <span
+                style={{
+                  color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
+                }}
+              >
+                <FingerprintIcon />
+              </span>
+            ),
+          },
+        ]
         : []),
     ],
   };
@@ -767,26 +772,26 @@ export default function UserPage({
       if (startDate && !endDate) {
         return now < startDate
           ? {
-              text: 'Pendiente de activación',
-              class: 'bg-yellow-100 text-yellow-800',
-            }
+            text: 'Pendiente de activación',
+            class: 'bg-yellow-100 text-yellow-800',
+          }
           : {
-              text: 'Activo sin vencimiento',
-              class: 'bg-blue-100 text-blue-800',
-            };
+            text: 'Activo sin vencimiento',
+            class: 'bg-blue-100 text-blue-800',
+          };
       }
 
       // Solo tiene fecha de fin
       if (!startDate && endDate) {
         return now > endDate
           ? {
-              text: 'Vencido',
-              class: 'bg-red-100 text-red-800',
-            }
+            text: 'Vencido',
+            class: 'bg-red-100 text-red-800',
+          }
           : {
-              text: 'Activo',
-              class: 'bg-green-100 text-green-800',
-            };
+            text: 'Activo',
+            class: 'bg-green-100 text-green-800',
+          };
       }
 
       // Tiene ambas fechas
@@ -927,56 +932,60 @@ export default function UserPage({
         {/* <DataTable columns={columns2[data?.role]} data={users} /> */}
         <div className="w-full">
           <div className="bg-white shadow-sm sm:rounded-lg">
-            <div className="flex justify-between items-center my-3 text-gray-900">
-              <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
-                <input
-                  type="text"
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center my-4 gap-4 text-gray-900">
+              <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                <Input
                   placeholder="Buscar por usuario, nombre, apellido o rut"
-                  className="px-2 py-1 w-full rounded border sm:w-64"
+                  className="w-full sm:w-72"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  allowClear
                 />
-                <select
-                  className="px-2 py-1 w-full rounded border sm:w-40"
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
+                <Select
+                  className="w-full sm:w-48"
+                  value={selectedStatus || undefined}
+                  onChange={setSelectedStatus}
+                  placeholder="Todos los estados"
+                  allowClear
                 >
-                  <option value="">Todos los estados</option>
+                  <Select.Option value="">Todos los estados</Select.Option>
                   {statuses.map((status) => (
-                    <option key={status.id} value={status.name}>
+                    <Select.Option key={status.id} value={status.name}>
                       {status.name}
-                    </option>
+                    </Select.Option>
                   ))}
-                </select>
-                <select
-                  className="px-2 py-1 w-full rounded border sm:w-40"
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
+                </Select>
+                <Select
+                  className="w-full sm:w-48"
+                  value={selectedBranch || undefined}
+                  onChange={setSelectedBranch}
+                  placeholder="Todas las sucursales"
+                  allowClear
                 >
-                  <option value="">Todas las sucursales</option>
+                  <Select.Option value="">Todas las sucursales</Select.Option>
                   {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
+                    <Select.Option key={branch.id} value={branch.id}>
                       {branch.name}
-                    </option>
+                    </Select.Option>
                   ))}
-                </select>
-                <Button type="primary" onClick={handleSearch} className="text-white bg-blue-500">
+                </Select>
+                <Button type="primary" onClick={handleSearch}>
                   Buscar
                 </Button>
                 <Button
-                  type="primary"
+                  type="default"
                   icon={<DownloadOutlined />}
                   onClick={exportToExcel}
-                  className="text-white bg-blue-500"
                 >
                   Exportar
                 </Button>
               </div>
-              <div className="flex gap-5">
+              <div className="flex flex-wrap items-center gap-3">
                 {data?.role && (
                   <ModalCreateUser
                     userType={data?.role}
                     statuses={statuses}
+                    userAuth={auth?.user}
                     companies={companies}
                     roles={roles?.filter((item) => item?.name === data?.role)}
                     userWorkers={userWorkers}
@@ -989,7 +998,7 @@ export default function UserPage({
                   <>
                     <ModalCreateBonus />
                     <ModalCreateCustomBonus />
-                    <ModalCreateDoubleBonuses branches={branches} />
+                    <ModalCreateDoubleBonuses branches={branches} categories={categories} />
                   </>
                 )}
               </div>
@@ -1002,7 +1011,7 @@ export default function UserPage({
                   ...user,
                   key: user?.id,
                 }))}
-                columns={columns?.[data.role]}
+                columns={columns?.[data.role] || columns['supervisor']}
                 expandable={{
                   expandedRowRender,
                   rowExpandable: () => true,
@@ -1024,7 +1033,7 @@ export default function UserPage({
                   ...user,
                   key: user?.id,
                 }))}
-                columns={columns?.[data.role]}
+                columns={columns?.[data.role] || columns['supervisor']}
                 pagination={{
                   current: users?.current_page || 1,
                   pageSize: users?.per_page || 10,

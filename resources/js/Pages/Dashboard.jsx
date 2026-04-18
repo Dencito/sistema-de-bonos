@@ -58,20 +58,9 @@ export default function Dashboard({ auth }) {
       toast.error(error.response?.data?.message || 'Error al finalizar el turno');
     }
   };
-  
+
   useEffect(() => {
     getShiftStatus();
-    
-    // Escuchar eventos de actualización de datos de pasilleras
-    const channel = window.Echo.channel('dashboard-updates'); 
-    channel.listen('.data.updated', (e) => {
-      toast.success(`Nueva transacción registrada por ${e.user.name}`);
-      alert(`Nueva transacción registrada por ${e.user.name}`);
-    });
-    // Cleanup
-    return () => {
-      window.Echo.leaveChannel('dashboard-updates');
-    };
   }, []);
 
   const formatDateTime = (dateString) => {

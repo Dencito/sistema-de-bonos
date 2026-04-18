@@ -331,17 +331,21 @@ export default function TicketPage({ auth, tickets, users, branches, filters }) 
                       showSearch
                       style={{ width: '100%' }}
                       placeholder="Seleccione usuario"
-                      optionFilterProp="children"
                       value={data.user_id || undefined}
                       onChange={(value) => setData('user_id', value)}
-                      filterOption={(input, option) =>
-                        option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                      }
+                      filterOption={(input, option) => {
+                        const searchStr = input.toLowerCase();
+                        const user = users?.find(u => u.id === option.value);
+                        if (!user) return false;
+                        
+                        const searchableStr = `${user.first_name || ''} ${user.second_name || ''} ${user.first_last_name || ''} ${user.second_last_name || ''} ${user.username || ''} ${user.rutNumbers || ''}-${user.rutDv || ''} ${user.email || ''}`.toLowerCase();
+                        return searchableStr.includes(searchStr);
+                      }}
                       allowClear
                     >
                       {users?.map((user) => (
                         <Select.Option key={user.id} value={user.id}>
-                          {user.first_name} {user.first_last_name}
+                          {user.first_name} {user.first_last_name} {user.username ? `(${user.username})` : ''}
                         </Select.Option>
                       ))}
                     </Select>

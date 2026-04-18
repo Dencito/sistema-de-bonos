@@ -83,89 +83,75 @@ export function AppSidebar({ role, roles, user }) {
     {
       key: '4',
       icon: ChartBarStacked,
-      label: 'Reportes',
-      link: '/reports',
-      autorized: allowedRoles.branches.includes(role) && !isTickets,
-    },
-    {
-      key: '5',
-      icon: ChartBarStacked,
       label: 'Categorias bonos',
       link: '/categories-bonus',
       autorized: !isTickets,
     },
     {
-      key: '6',
+      key: '5',
       icon: SquareStack,
       label: 'Roles',
       link: '/roles',
       autorized: allowedRoles.roles.includes(role) && !isTickets,
     },
     {
-      key: '7',
+      key: '6',
       icon: SquareStack,
       label: 'Estados',
       link: '/statuses',
       autorized: allowedRoles.status.includes(role) && !isTickets,
     },
     {
-      key: '8',
+      key: '7',
       icon: SquareStack,
       label: 'Obtener monto totales',
       link: '/total-amounts',
       autorized: false,
     },
-    /* {
-      key: '8',
-      icon: SquareStack,
-      label: 'Tótems',
-      link: '/totems',
-      autorized: allowedRoles.totems.includes(role),
-    } */,
     {
-      key: '10',
+      key: '8',
       icon: SquareStack,
       label: 'Tickets',
       link: '/tickets',
       autorized: allowedRoles.tickets.includes(role),
     },
     {
-      key: '11',
+      key: '9',
       icon: Fingerprint,
       label: 'Registros de Huella',
       link: '/fingerprint-logs',
       autorized: allowedRoles.fingerprintLogs.includes(role),
     },
     {
-      key: '12',
+      key: '10',
       icon: Clock,
       label: 'Registro de Turnos',
       link: '/shifts',
       autorized: allowedRoles.shifts.includes(role),
     },
     {
-      key: '13',
+      key: '11',
       icon: Package,
       label: 'Productos',
       link: '/products',
       autorized: allowedRoles.shifts.includes(role),
     },
     {
-      key: '14',
+      key: '12',
       icon: ShoppingCart,
       label: 'Ventas Cigarros',
       link: '/orders',
       autorized: allowedRoles.shifts.includes(role),
     },
     {
-      key: '15',
+      key: '13',
       icon: ShoppingBasket,
       label: 'Ventas Totales',
       link: '/sales-total',
       autorized: allowedRoles.shifts.includes(role),
     },
     {
-      key: '16',
+      key: '14',
       icon: Banknote,
       label: 'Sistema de Caja',
       link: '/cash-management',
@@ -223,9 +209,8 @@ export function AppSidebar({ role, roles, user }) {
                           </SidebarMenuButton>
 
                           <SidebarMenuSub
-                            className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${
-                              isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                            }`}
+                            className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                              }`}
                           >
                             {item.children &&
                               item.children.map((subItem) => (
@@ -272,9 +257,9 @@ export function AppSidebar({ role, roles, user }) {
         </SidebarGroup>
       </SidebarContent>
 
-      <ChangePasswordModal 
-        open={showPasswordModal} 
-        onClose={() => setShowPasswordModal(false)} 
+      <ChangePasswordModal
+        open={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
       />
     </Sidebar>
   );

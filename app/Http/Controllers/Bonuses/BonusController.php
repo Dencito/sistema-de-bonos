@@ -342,7 +342,7 @@ class BonusController extends Controller
                 }
                 
                 // Calcular el monto doble basado en la categoría del jugador
-                $doubleAmount = $player->categoryBonus->base_amount * 2;
+                $doubleAmount = $player->categoryBonus->base_amount;
                 
                 // Crear el bono
                 $bonus = Bonus::create([

@@ -71,7 +71,7 @@ export default function ModalCreateDoubleBonuses({ branches, categories }) {
       if (response.data.success) {
         successMsg(
           response.data.message ||
-            `Bonos dobles creados correctamente para ${response.data.count} jugadores`,
+          `Bonos dobles creados correctamente para ${response.data.count} jugadores`,
         );
         router.visit(window.location.href, {
           preserveState: true,
@@ -133,11 +133,11 @@ export default function ModalCreateDoubleBonuses({ branches, categories }) {
       render: (_, record) => record.category_bonus?.name || <span className="text-red-500 text-xs">Sin categoría</span>,
     },
     {
-      title: 'Monto Doble',
+      title: 'Monto',
       key: 'amount',
       render: (_, record) => {
         if (!record.category_bonus?.base_amount) return '-';
-        return `$${(record.category_bonus.base_amount * 2).toLocaleString('es-CL')}`;
+        return `$${(record.category_bonus.base_amount).toLocaleString('es-CL')}`;
       },
     },
   ];

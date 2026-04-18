@@ -14,7 +14,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { validate } from 'rut.js';
 import { countries } from '@/Utils/countries.json';
 
-export default function ModalCreateUser({ userType, branches, categories = [], role }) {
+export default function ModalCreateUser({ userType, branches, categories = [], role, userAuth }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -22,6 +22,9 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
   const [errorRuts, setErrorRuts] = useState({
     user: false,
   });
+
+  const userCargo = userAuth.cargo;
+  console.log(userCargo)
 
   const onCreate = async (values) => {
     const { rutNumbers, rutDv } = form.getFieldsValue(['rutNumbers', 'rutDv']);
@@ -686,7 +689,7 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
           </Select>
         </Form.Item>
         <Form.Item name="category_bonus_id" label="Categorias de bonos">
-          <Select disabled={role === 'trabajador'} placeholder="Seleccione una categoria">
+          <Select disabled={userCargo !== 'CAJER@' && role === 'trabajador'} placeholder="Seleccione una categoria">
             {categories?.map((category) => (
               <Select.Option key={category.id} value={category.id}>
                 {category.name}

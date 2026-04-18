@@ -25,9 +25,11 @@ export default function ModalEditUser({
   roleDisplayNames,
   categories,
   role,
+  userAuth,
 }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const userCargo = userAuth?.cargo;
   const [selectedStatus, setSelectedStatus] = useState(
     data?.status_id ? String(data?.status_id) : null,
   );
@@ -134,7 +136,7 @@ export default function ModalEditUser({
       >
         <Radio.Group
           buttonStyle="solid"
-          disabled={role === 'trabajador'}
+          disabled={userCargo !== 'CAJER@' && role === 'trabajador'}
           value={selectedCategory}
           onChange={(e) => {
             setSelectedCategory(e.target.value);

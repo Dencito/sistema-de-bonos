@@ -33,6 +33,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
   const [transactions, setTransactions] = useState(activeShift?.transactions || []);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Estados para conteo de apertura
   const [opening20000, setOpening20000] = useState(0);
@@ -74,6 +75,23 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       console.error('Error fetching shift status:', error);
     }
   };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchShiftStatus();
+    setRefreshing(false);
+  };
+
+  const RefreshBtn = ({ tooltip = 'Actualizar' }) => (
+    <Button
+      type="text"
+      size="small"
+      icon={<ReloadOutlined spin={refreshing} />}
+      onClick={handleRefresh}
+      loading={refreshing}
+      title={tooltip}
+    />
+  );
 
   const calculateOpeningTotal = () => {
     return (
@@ -386,14 +404,30 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       <Head title="Sistema de Caja" />
 
       <div className="container p-4 mx-auto space-y-4">
-        <Title level={2}>Sistema de Gestión de Caja</Title>
+        <div className="flex items-center gap-3">
+          <Title level={2} style={{ margin: 0 }}>Sistema de Gestión de Caja</Title>
+          <Button
+            icon={<ReloadOutlined spin={refreshing} />}
+            onClick={handleRefresh}
+            loading={refreshing}
+            title="Actualizar toda la página"
+          >
+            Actualizar
+          </Button>
+        </div>
 
         {/* Control de Caja */}
-        <Card title="Control de Caja">
+        <Card
+          title="Control de Caja"
+          extra={<RefreshBtn tooltip="Actualizar saldos de caja" />}
+        >
           <Row gutter={[16, 16]}>
             <Col xs={24} md={12}>
               <Space direction="vertical" style={{ width: '100%' }} size="large">
-                <Statistic title="Saldo Anterior" value={prevBalance} precision={2} prefix="$" />
+                <div className="flex items-center gap-2">
+                  <Statistic title="Saldo Anterior" value={prevBalance} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar saldo anterior" />
+                </div>
                 <div>
                   <Text strong>Saldo a Agregar</Text>
                   <InputNumber
@@ -437,37 +471,29 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             </Col>
             <Col xs={24} md={12}>
               <Space direction="vertical" style={{ width: '100%' }}>
-                <Statistic
-                  title="Saldo Actual"
-                  value={shift?.current_balance || 0}
-                  precision={2}
-                  prefix="$"
-                />
-                <Statistic
-                  title="Total Transferencias"
-                  value={shift?.total_transfers || 0}
-                  precision={2}
-                  prefix="$"
-                />
-                <Statistic
-                  title="Total Giros"
-                  value={shift?.total_giros || 0}
-                  precision={2}
-                  prefix="$"
-                />
-                <Statistic
-                  title="Total Pagos"
-                  value={shift?.total_payments || 0}
-                  precision={2}
-                  prefix="$"
-                />
+                <div className="flex items-center gap-2">
+                  <Statistic title="Saldo Actual" value={shift?.current_balance || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar saldo actual" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Statistic title="Total Transferencias" value={shift?.total_transfers || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar transferencias" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Statistic title="Total Giros" value={shift?.total_giros || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar giros" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Statistic title="Total Pagos" value={shift?.total_payments || 0} precision={2} prefix="$" />
+                  <RefreshBtn tooltip="Actualizar pagos" />
+                </div>
               </Space>
             </Col>
           </Row>
         </Card>
 
         {/* Nueva Transacción */}
-        <Card title="Nueva Transacción">
+        <Card title="Nueva Transacción" extra={<RefreshBtn tooltip="Actualizar transacciones" />}>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             <div>
               <Text strong>Monto</Text>
@@ -518,7 +544,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         </Card>
 
         {/* Control de Pasilleras */}
-        <Card title="Control de Pasilleras">
+        <Card title="Control de Pasilleras" extra={<RefreshBtn tooltip="Actualizar pasilleras" />}>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             <Row gutter={16}>
               <Col xs={24} sm={10}>
@@ -573,14 +599,17 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     size="small"
                     title={`Pasillera: ${pasillera.user?.first_name} ${pasillera.user?.first_last_name}`}
                     extra={
-                      <Popconfirm
-                        title="¿Eliminar esta pasillera?"
-                        onConfirm={() => handleDeletePasillera(pasillera.id)}
-                        okText="Sí"
-                        cancelText="No"
-                      >
-                        <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                      </Popconfirm>
+                      <Space size="small">
+                        <RefreshBtn tooltip={`Actualizar datos de ${pasillera.user?.first_name}`} />
+                        <Popconfirm
+                          title="¿Eliminar esta pasillera?"
+                          onConfirm={() => handleDeletePasillera(pasillera.id)}
+                          okText="Sí"
+                          cancelText="No"
+                        >
+                          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                        </Popconfirm>
+                      </Space>
                     }
                   >
                     <Row gutter={[8, 8]}>
@@ -600,55 +629,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                         <Text strong>{formatCurrency(pasillera.current_balance)}</Text>
                       </Col>
                     </Row>
-
-                    <Space
-                      direction="vertical"
-                      style={{ width: '100%', marginTop: 16 }}
-                      size="small"
-                    >
-                      <InputNumber
-                        style={{ width: '100%' }}
-                        placeholder="Monto"
-                        id={`monto-${pasillera.id}`}
-                        disabled={!shift?.is_active}
-                        min={0}
-                        precision={2}
-                      />
-                      <Input
-                        placeholder="Máquina"
-                        id={`maquina-${pasillera.id}`}
-                        disabled={!shift?.is_active}
-                      />
-                      <Space style={{ width: '100%' }}>
-                        {/* <Button
-                                                    type="primary"
-                                                    onClick={() => {
-                                                        const montoInput = document.getElementById(`monto-${pasillera.id}`);
-                                                        const maquinaInput = document.getElementById(`maquina-${pasillera.id}`);
-                                                        if (montoInput && maquinaInput) {
-                                                            const monto = montoInput.value;
-                                                            const maquina = maquinaInput.value;
-                                                            if (monto && maquina) {
-                                                                handlePasilleraPayment(pasillera.id, monto, maquina);
-                                                                montoInput.value = '';
-                                                                maquinaInput.value = '';
-                                                            }
-                                                        }
-                                                    }}
-                                                    disabled={!shift?.is_active}
-                                                    loading={loading}
-                                                    block
-                                                >
-                                                    Registrar Pago
-                                                </Button> */}
-                        <Button
-                          icon={<ReloadOutlined />}
-                          onClick={() => handleResetPasillera(pasillera.id)}
-                        >
-                          Reiniciar
-                        </Button>
-                      </Space>
-                    </Space>
 
                     {pasillera.transactions && pasillera.transactions.length > 0 && (
                       <div style={{ marginTop: 16 }}>
@@ -675,7 +655,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         </Card>
 
         {/* Historial de Transacciones */}
-        <Card title="Historial de Transacciones">
+        <Card title="Historial de Transacciones" extra={<RefreshBtn tooltip="Actualizar historial" />}>
           <Table
             columns={transactionColumns}
             dataSource={transactions}

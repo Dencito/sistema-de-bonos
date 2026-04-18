@@ -18,7 +18,7 @@ import { allowedRoles, roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
 import { formatDateTime } from '@/Utils/date';
 import { DownloadOutlined } from '@ant-design/icons';
-import { Button, message } from 'antd';
+import { Button, message, Input, Select } from 'antd';
 import * as XLSX from 'xlsx';
 import { bonusService } from '@/Services/api';
 import axios from 'axios';
@@ -932,52 +932,55 @@ export default function UserPage({
         {/* <DataTable columns={columns2[data?.role]} data={users} /> */}
         <div className="w-full">
           <div className="bg-white shadow-sm sm:rounded-lg">
-            <div className="flex justify-between items-center my-3 text-gray-900">
-              <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
-                <input
-                  type="text"
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center my-4 gap-4 text-gray-900">
+              <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                <Input
                   placeholder="Buscar por usuario, nombre, apellido o rut"
-                  className="px-2 py-1 w-full rounded border sm:w-64"
+                  className="w-full sm:w-72"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  allowClear
                 />
-                <select
-                  className="px-2 py-1 w-full rounded border sm:w-40"
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
+                <Select
+                  className="w-full sm:w-48"
+                  value={selectedStatus || undefined}
+                  onChange={setSelectedStatus}
+                  placeholder="Todos los estados"
+                  allowClear
                 >
-                  <option value="">Todos los estados</option>
+                  <Select.Option value="">Todos los estados</Select.Option>
                   {statuses.map((status) => (
-                    <option key={status.id} value={status.name}>
+                    <Select.Option key={status.id} value={status.name}>
                       {status.name}
-                    </option>
+                    </Select.Option>
                   ))}
-                </select>
-                <select
-                  className="px-2 py-1 w-full rounded border sm:w-40"
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
+                </Select>
+                <Select
+                  className="w-full sm:w-48"
+                  value={selectedBranch || undefined}
+                  onChange={setSelectedBranch}
+                  placeholder="Todas las sucursales"
+                  allowClear
                 >
-                  <option value="">Todas las sucursales</option>
+                  <Select.Option value="">Todas las sucursales</Select.Option>
                   {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
+                    <Select.Option key={branch.id} value={branch.id}>
                       {branch.name}
-                    </option>
+                    </Select.Option>
                   ))}
-                </select>
-                <Button type="primary" onClick={handleSearch} className="text-white bg-blue-500">
+                </Select>
+                <Button type="primary" onClick={handleSearch}>
                   Buscar
                 </Button>
                 <Button
-                  type="primary"
+                  type="default"
                   icon={<DownloadOutlined />}
                   onClick={exportToExcel}
-                  className="text-white bg-blue-500"
                 >
                   Exportar
                 </Button>
               </div>
-              <div className="flex gap-5">
+              <div className="flex flex-wrap items-center gap-3">
                 {data?.role && (
                   <ModalCreateUser
                     userType={data?.role}
@@ -1008,7 +1011,7 @@ export default function UserPage({
                   ...user,
                   key: user?.id,
                 }))}
-                columns={columns?.[data.role]}
+                columns={columns?.[data.role] || columns['supervisor']}
                 expandable={{
                   expandedRowRender,
                   rowExpandable: () => true,
@@ -1030,7 +1033,7 @@ export default function UserPage({
                   ...user,
                   key: user?.id,
                 }))}
-                columns={columns?.[data.role]}
+                columns={columns?.[data.role] || columns['supervisor']}
                 pagination={{
                   current: users?.current_page || 1,
                   pageSize: users?.per_page || 10,

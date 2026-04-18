@@ -24,7 +24,7 @@ export function CustomTable({
             })
           : undefined
       }
-      scroll={scroll}
+      scroll={{ x: 'max-content', ...scroll }}
       {...rest}
     />
   );

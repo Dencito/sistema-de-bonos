@@ -217,17 +217,17 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 safe-top safe-bottom">
+    <div className="min-h-screen bg-zinc-50 safe-top safe-bottom font-sans">
       {/* Header */}
-      <div className="p-6 pb-24 text-white bg-gradient-to-r from-primary-600 to-primary-700">
-        <div className="flex justify-between items-start mb-6">
+      <div className="p-6 pb-24 text-zinc-100 bg-zinc-950">
+        <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="mb-1 text-2xl font-bold">Hola, {user?.name?.split(' ')[0]}</h1>
-            <p className="text-sm text-primary-100">Bienvenido de vuelta</p>
+            <h1 className="mb-1 text-2xl font-bold tracking-tight">Hola, {user?.name?.split(' ')[0]}</h1>
+            <p className="text-sm text-zinc-400 font-medium">Bienvenido de vuelta</p>
           </div>
           <button
             onClick={handleLogout}
-            className="p-2 rounded-lg transition hover:bg-primary-500 active:bg-primary-800"
+            className="p-2 rounded-full transition hover:bg-zinc-800 active:bg-zinc-700"
           >
             <LogOut className="w-5 h-5" />
           </button>
@@ -236,53 +236,53 @@ export default function Dashboard() {
 
       {/* Balance Card */}
       <div className="px-6 -mt-16 mb-6">
-        <div className="p-6 bg-white rounded-2xl shadow-lg">
+        <div className="p-6 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-100">
           {error ? (
             <div className="py-8 text-center">
-              <AlertCircle className="mx-auto mb-3 w-12 h-12 text-amber-500" />
-              <p className="mb-4 text-gray-600">{error}</p>
+              <AlertCircle className="mx-auto mb-3 w-10 h-10 text-amber-500" />
+              <p className="mb-4 text-zinc-600 text-sm">{error}</p>
               <button
                 onClick={handleRefresh}
-                className="font-semibold text-primary-600 hover:text-primary-700"
+                className="font-medium text-zinc-900 hover:text-zinc-700 transition"
               >
                 Reintentar
               </button>
             </div>
           ) : pasillera ? (
             <>
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-8">
                 <div>
-                  <p className="mb-1 text-sm text-gray-500">Saldo Disponible</p>
-                  <h2 className="text-3xl font-bold text-gray-900">
+                  <p className="mb-1 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Saldo Disponible</p>
+                  <h2 className="text-3xl font-black text-zinc-900 tracking-tight">
                     {formatCurrency(pasillera.current_balance)}
                   </h2>
                 </div>
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="p-2 rounded-lg transition hover:bg-gray-100 active:bg-gray-200"
+                  className="p-2 bg-zinc-50 rounded-full transition hover:bg-zinc-100 active:bg-zinc-200"
                 >
-                  <RefreshCw className={`w-5 h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 text-zinc-600 ${refreshing ? 'animate-spin' : ''}`} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 rounded-xl">
-                  <div className="flex items-center mb-2">
-                    <Wallet className="mr-2 w-4 h-4 text-blue-600" />
-                    <p className="text-xs font-medium text-blue-600">Inicial</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 bg-zinc-50 rounded-2xl">
+                  <div className="flex items-center mb-1">
+                    <Wallet className="mr-1.5 w-3.5 h-3.5 text-zinc-400" />
+                    <p className="text-xs font-medium text-zinc-500">Inicial</p>
                   </div>
-                  <p className="font-semibold text-blue-900">
+                  <p className="font-bold text-zinc-900">
                     {formatCurrency(pasillera.initial_balance)}
                   </p>
                 </div>
 
-                <div className="p-4 bg-red-50 rounded-xl">
-                  <div className="flex items-center mb-2">
-                    <TrendingDown className="mr-2 w-4 h-4 text-red-600" />
-                    <p className="text-xs font-medium text-red-600">Gastado</p>
+                <div className="p-4 bg-zinc-50 rounded-2xl">
+                  <div className="flex items-center mb-1">
+                    <TrendingDown className="mr-1.5 w-3.5 h-3.5 text-zinc-400" />
+                    <p className="text-xs font-medium text-zinc-500">Gastado</p>
                   </div>
-                  <p className="font-semibold text-red-900">
+                  <p className="font-bold text-zinc-900">
                     {formatCurrency(pasillera.total_payments)}
                   </p>
                 </div>
@@ -290,8 +290,8 @@ export default function Dashboard() {
             </>
           ) : (
             <div className="py-8 text-center">
-              <AlertCircle className="mx-auto mb-3 w-12 h-12 text-gray-400" />
-              <p className="text-gray-600">No tienes una pasillera activa</p>
+              <AlertCircle className="mx-auto mb-3 w-10 h-10 text-zinc-300" />
+              <p className="text-zinc-500 text-sm">No tienes una pasillera activa</p>
             </div>
           )}
         </div>
@@ -301,37 +301,37 @@ export default function Dashboard() {
       {pasillera && (
         <div className="px-6 space-y-4">
           {/* Quick Register Expense Form */}
-          <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-100">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900 flex items-center">
-              <Plus className="w-5 h-5 mr-2 text-primary-600" />
+          <div className="p-6 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-100">
+            <h3 className="mb-5 text-lg font-bold text-zinc-900 flex items-center tracking-tight">
+              <Plus className="w-5 h-5 mr-2 text-zinc-800" />
               Registro Rápido
             </h3>
 
             {formSuccess ? (
-              <div className="flex flex-col items-center py-4">
-                <div className="flex justify-center items-center w-12 h-12 bg-green-100 rounded-full mb-2">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="flex flex-col items-center py-6">
+                <div className="flex justify-center items-center w-12 h-12 bg-zinc-100 rounded-full mb-3">
+                  <CheckCircle className="w-6 h-6 text-zinc-800" />
                 </div>
-                <p className="font-medium text-green-700">¡Gasto Registrado!</p>
+                <p className="font-semibold text-zinc-900">¡Gasto Registrado!</p>
               </div>
             ) : (
-              <form onSubmit={handleRegisterExpense} className="space-y-4">
+              <form onSubmit={handleRegisterExpense} className="space-y-5">
                 {/* Amount and Machine */}
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                   {/* Amount */}
                   <div className="flex-1">
-                    <label className="block mb-1 text-sm font-medium text-gray-700">
+                    <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                       Monto (x1000) *
                     </label>
                     <div className="relative">
-                      <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                        <DollarSign className="w-4 h-4 text-gray-400" />
+                      <div className="flex absolute inset-y-0 left-0 items-center pl-3.5 pointer-events-none">
+                        <DollarSign className="w-4 h-4 text-zinc-400" />
                       </div>
                       <input
                         type="text"
                         value={amount ? new Intl.NumberFormat('es-CL').format(amount) : ''}
                         onChange={handleAmountChange}
-                        className="py-3 pr-3 pl-9 w-full text-xl font-semibold rounded-xl border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500"
+                        className="py-3.5 pr-4 pl-10 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:font-medium placeholder:text-zinc-400"
                         placeholder="Ej: 1"
                         required
                         disabled={registering}
@@ -341,14 +341,14 @@ export default function Dashboard() {
 
                   {/* Machine */}
                   <div className="flex-1">
-                    <label className="block mb-1 text-sm font-medium text-gray-700">
+                    <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                       N° Máquina *
                     </label>
                     <input
                       type="text"
                       value={machine}
                       onChange={(e) => setMachine(e.target.value.toUpperCase())}
-                      className="py-3 px-3 w-full text-xl font-semibold rounded-xl border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500"
+                      className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:font-medium placeholder:text-zinc-400"
                       placeholder="Ej: 12"
                       required
                       disabled={registering}
@@ -357,8 +357,8 @@ export default function Dashboard() {
                 </div>
 
                 {amount && (
-                  <p className="mt-1 text-sm font-medium text-primary-600">
-                    Total a registrar: {formatCurrency(parseFloat(amount) * 1000)}
+                  <p className="text-sm font-semibold text-zinc-600 bg-zinc-50 p-3 rounded-xl border border-zinc-100">
+                    Total a registrar: <span className="text-zinc-900">{formatCurrency(parseFloat(amount) * 1000)}</span>
                   </p>
                 )}
 
@@ -368,14 +368,14 @@ export default function Dashboard() {
                     type="text"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="px-3 py-2 w-full text-sm rounded-xl border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500"
+                    className="px-4 py-3.5 w-full text-sm font-medium bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:text-zinc-400"
                     placeholder="Descripción (Opcional)"
                     disabled={registering}
                   />
                 </div>
 
                 {formError && (
-                  <div className="px-3 py-2 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
+                  <div className="px-4 py-3 text-sm font-medium text-red-600 bg-red-50 rounded-xl border border-red-100">
                     {formError}
                   </div>
                 )}
@@ -383,7 +383,7 @@ export default function Dashboard() {
                 <button
                   type="submit"
                   disabled={registering || !amount || !machine}
-                  className="flex justify-center items-center py-3 w-full font-semibold text-white rounded-xl shadow transition bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                  className="flex justify-center items-center py-4 w-full font-bold text-white rounded-2xl transition bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:bg-zinc-300 disabled:text-zinc-500"
                 >
                   {registering ? (
                     <>

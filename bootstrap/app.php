@@ -14,13 +14,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // IMPORTANTE: SetTenantSessionCookie debe correr ANTES de StartSession
+        // para que cada empresa use una cookie de sesión distinta y no se
+        // pisen usuarios de distintas empresas (soluciona CSRF token mismatch).
+        $middleware->web(prepend: [
+            \App\Http\Middleware\SetTenantSessionCookie::class,
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class
         ]);
-        
-
-        //
     })
     ->withExceptions(function (Exceptions $exceptions) {
         Integration::handles($exceptions);

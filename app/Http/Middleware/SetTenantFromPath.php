@@ -4,8 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use App\Models\Company;
 
 class SetTenantFromPath
@@ -13,46 +11,50 @@ class SetTenantFromPath
     /**
      * Handle an incoming request.
      *
+     * NOTE: Table prefixing is handled exclusively by CompanyScope trait
+     * via config('company.prefix') set in CompanyServiceProvider.
+     * This middleware only validates the tenant and injects it into the request.
+     * Do NOT set DB prefix here — that caused the double-prefix bug:
+     *   CompanyScope: 888spa_ + table  →  888spa_companies
+     *   DB prefix:    888spa_ + 888spa_companies  →  888spa_888spa_companies  💥
+     *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
     {
-        // Extraer el nombre de la empresa del path
         $segments = $request->segments();
-        
-        // Si no hay segmentos o es una ruta pública, continuar
+
+        // No segments → public root, continue
         if (empty($segments)) {
             return $next($request);
         }
 
         $companySlug = $segments[0];
 
-        // Rutas que no requieren tenant (login, register, etc.)
+        // Rutas que no requieren tenant
         $publicRoutes = ['login', 'register', 'password', 'sanctum', 'api'];
         if (in_array($companySlug, $publicRoutes)) {
             return $next($request);
         }
 
         try {
-            // Buscar la empresa por slug/name
+            // Company model does NOT use CompanyScope — it is the global master table.
+            // config('company.prefix') is already set by CompanyServiceProvider before
+            // this middleware runs, so CompanyScope prefixes all other model tables correctly.
             $company = Company::where('name', $companySlug)
                 ->orWhere('slug', $companySlug)
                 ->first();
 
             if (!$company) {
-                // Si no existe la empresa, redirigir o mostrar error
                 abort(404, 'Empresa no encontrada');
             }
 
-            // Configurar la conexión a la base de datos del tenant
-            $this->configureTenantDatabase($company);
-
-            // Inyectar la empresa en el request para uso posterior
+            // Inject tenant into the request for downstream use
             $request->merge(['tenant_company' => $company]);
-            
-            // Compartir con las vistas
+
+            // Share with Blade/Inertia views
             view()->share('currentCompany', $company);
 
         } catch (\Exception $e) {
@@ -61,27 +63,5 @@ class SetTenantFromPath
         }
 
         return $next($request);
-    }
-
-    /**
-     * Configure the database connection for the tenant
-     */
-    private function configureTenantDatabase(Company $company)
-    {
-        // Configurar el prefijo de tablas según la empresa
-        $prefix = $company->name . '_';
-
-        // Actualizar la configuración de la base de datos
-        Config::set('database.connections.mysql.prefix', $prefix);
-        
-        // Reconectar para aplicar el nuevo prefijo
-        DB::purge('mysql');
-        DB::reconnect('mysql');
-
-        // Log para debugging
-        \Log::info('Tenant database configured', [
-            'company' => $company->name,
-            'prefix' => $prefix
-        ]);
     }
 }

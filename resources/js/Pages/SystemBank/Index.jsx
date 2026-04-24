@@ -487,9 +487,35 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             <Col xs={24} md={12}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <div className="flex items-center gap-2">
-                  <Statistic title="Saldo Actual" value={shift?.current_balance || 0} precision={2} prefix="$" />
+                  <Statistic
+                    title="Saldo Actual"
+                    value={shift?.current_balance || 0}
+                    precision={2}
+                    prefix="$"
+                    valueStyle={{
+                      color: Number(shift?.current_balance || 0) < 0
+                        ? '#cf1322'
+                        : Number(shift?.current_balance || 0) === 0
+                          ? '#faad14'
+                          : '#3f8600',
+                    }}
+                  />
                   <RefreshBtn tooltip="Actualizar saldo actual" />
                 </div>
+                {Number(shift?.current_balance || 0) < 0 && (
+                  <div
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      background: '#fff1f0',
+                      border: '1px solid #ffa39e',
+                      color: '#cf1322',
+                      fontWeight: 600,
+                    }}
+                  >
+                    ⚠ Saldo negativo. Revise las transacciones registradas.
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Statistic title="Total Transferencias" value={shift?.total_transfers || 0} precision={2} prefix="$" />
                   <RefreshBtn tooltip="Actualizar transferencias" />
@@ -535,7 +561,13 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 disabled={!shift?.is_active}
                 min={0}
                 precision={2}
+                status={Number(amount || 0) > Number(shift?.current_balance || 0) ? 'warning' : ''}
               />
+              {Number(amount || 0) > 0 && Number(amount || 0) > Number(shift?.current_balance || 0) && (
+                <div style={{ color: '#faad14', marginTop: 4, fontSize: 12 }}>
+                  ⚠ El monto excede el saldo actual ({formatCurrency(shift?.current_balance || 0)}). No se podrá registrar como Giro / Pago / Otro Gasto.
+                </div>
+              )}
             </div>
             <div>
               <Text strong>Cliente</Text>

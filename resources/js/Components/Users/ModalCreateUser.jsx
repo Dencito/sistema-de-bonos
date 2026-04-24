@@ -689,7 +689,7 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
           </Select>
         </Form.Item>
         <Form.Item name="category_bonus_id" label="Categorias de bonos">
-          <Select disabled={userCargo !== 'CAJER@' && role === 'trabajador'} placeholder="Seleccione una categoria">
+          <Select disabled={role === 'trabajador'} placeholder="Seleccione una categoria">
             {categories?.map((category) => (
               <Select.Option key={category.id} value={category.id}>
                 {category.name}

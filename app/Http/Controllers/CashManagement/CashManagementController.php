@@ -353,6 +353,17 @@ class CashManagementController extends Controller
             ], 400);
         }
 
+        // Validar que las salidas no dejen la caja en negativo
+        if (in_array($request->type, ['giro', 'payment', 'other'])) {
+            if ($request->amount > $activeShift->current_balance) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saldo insuficiente. Saldo actual: $' . number_format($activeShift->current_balance, 2, ',', '.')
+                        . '. No se puede registrar un monto mayor al saldo disponible.'
+                ], 422);
+            }
+        }
+
         DB::beginTransaction();
         try {
             // Descripción automática según tipo

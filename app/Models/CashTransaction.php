@@ -14,6 +14,7 @@ class CashTransaction extends Model
         'cash_shift_id',
         'pasillera_id',
         'type',
+        'expense_type',
         'amount',
         'client',
         'machine',

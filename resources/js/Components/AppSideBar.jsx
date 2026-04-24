@@ -167,6 +167,13 @@ export function AppSidebar({ role, roles, user }) {
       link: '/cash-management',
       autorized: allowedRoles.systemBank.includes(role),
     },
+    {
+      key: '15',
+      icon: Clock,
+      label: 'Historial de Cajas',
+      link: '/cash-shift-history',
+      autorized: allowedRoles.systemBank.includes(role) || role === 1,
+    },
   ];
 
   return (

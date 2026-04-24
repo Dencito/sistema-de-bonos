@@ -306,11 +306,28 @@ class CashManagementController extends Controller
     public function addTransaction(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:transfer,payment,giro',
+            'type' => 'required|in:transfer,payment,giro,other',
             'amount' => 'required|numeric|min:0',
             'client' => 'nullable|string',
-            'machine' => 'nullable|string',
+            'machine' => 'nullable|string|max:100',
+            'expense_type' => 'nullable|string|max:150',
         ]);
+
+        // Para 'payment' requerimos máquina
+        if ($request->type === 'payment' && empty($request->machine)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe indicar el número de máquina para el pago por caja'
+            ], 422);
+        }
+
+        // Para 'other' requerimos tipo de gasto
+        if ($request->type === 'other' && empty($request->expense_type)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe indicar el tipo de gasto'
+            ], 422);
+        }
 
         $user = Auth::user();
         $branch = $user->branch;
@@ -338,11 +355,18 @@ class CashManagementController extends Controller
 
         DB::beginTransaction();
         try {
-            $description = $request->type . ' - ' . ($request->client ?: $request->machine ?: 'Sin detalle');
+            // Descripción automática según tipo
+            $detailParts = array_filter([
+                $request->client,
+                $request->machine ? 'Máquina: ' . $request->machine : null,
+                $request->expense_type,
+            ]);
+            $description = $request->type . ' - ' . (count($detailParts) ? implode(' | ', $detailParts) : 'Sin detalle');
 
             $transaction = CashTransaction::create([
                 'cash_shift_id' => $activeShift->id,
                 'type' => $request->type,
+                'expense_type' => $request->expense_type,
                 'amount' => $request->amount,
                 'client' => $request->client,
                 'machine' => $request->machine,
@@ -360,6 +384,7 @@ class CashManagementController extends Controller
                     $activeShift->current_balance -= $request->amount;
                     break;
                 case 'payment':
+                case 'other':
                     $activeShift->total_payments += $request->amount;
                     $activeShift->current_balance -= $request->amount;
                     break;

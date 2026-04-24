@@ -29,6 +29,10 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [initialBalance, setInitialBalance] = useState('');
   const [amount, setAmount] = useState('');
   const [client, setClient] = useState('');
+  const [machine, setMachine] = useState('');
+  const [expenseType, setExpenseType] = useState('');
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [otherModalVisible, setOtherModalVisible] = useState(false);
   const [pasilleras, setPasilleras] = useState(activeShift?.pasilleras || []);
   const [pasilleraUserId, setPasilleraUserId] = useState(null);
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
@@ -240,18 +244,34 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       return;
     }
 
+    // Validaciones específicas por tipo
+    if (type === 'payment' && !machine) {
+      message.error('Debe indicar el número de máquina para Pago por Caja');
+      return;
+    }
+    if (type === 'other' && !expenseType) {
+      message.error('Debe indicar el tipo de gasto');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await axios.post('/cash-management/transaction', {
         type,
         amount,
         client,
+        machine: machine || undefined,
+        expense_type: expenseType || undefined,
       });
 
       if (response.data.success) {
         message.success('Transacción registrada correctamente');
         setAmount('');
         setClient('');
+        setMachine('');
+        setExpenseType('');
+        setPaymentModalVisible(false);
+        setOtherModalVisible(false);
         fetchShiftStatus();
       }
     } catch (error) {
@@ -356,11 +376,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       title: 'Tipo',
       dataIndex: 'type',
       key: 'type',
-      render: (type) => {
+      render: (type, record) => {
         const types = {
           transfer: 'Transferencia',
           giro: 'Giro',
           payment: 'Pago por Caja',
+          other: 'Otro Gasto',
           pasillera_payment: 'Pago Pasillera',
           pasillera_return: 'Reintegro Pasillera',
         };
@@ -372,6 +393,18 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       dataIndex: 'amount',
       key: 'amount',
       render: (amount) => formatCurrency(amount),
+    },
+    {
+      title: 'Máquina',
+      dataIndex: 'machine',
+      key: 'machine',
+      render: (m) => m || '-',
+    },
+    {
+      title: 'Tipo Gasto',
+      dataIndex: 'expense_type',
+      key: 'expense_type',
+      render: (e) => e || '-',
     },
     {
       title: 'Detalle',
@@ -469,6 +502,21 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   <Statistic title="Total Pagos" value={shift?.total_payments || 0} precision={2} prefix="$" />
                   <RefreshBtn tooltip="Actualizar pagos" />
                 </div>
+                {shift?.difference != null && Number(shift.difference) !== 0 && (
+                  <div
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      background: Number(shift.difference) > 0 ? '#e6fffb' : '#fff1f0',
+                      border: `1px solid ${Number(shift.difference) > 0 ? '#87e8de' : '#ffa39e'}`,
+                    }}
+                  >
+                    <Text strong style={{ color: Number(shift.difference) > 0 ? '#13c2c2' : '#cf1322' }}>
+                      {Number(shift.difference) > 0 ? '⬆ SOBRANTE' : '⬇ FALTANTE'} de apertura:{' '}
+                      {formatCurrency(Math.abs(Number(shift.difference)))}
+                    </Text>
+                  </div>
+                )}
               </Space>
             </Col>
           </Row>
@@ -515,15 +563,107 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 Giro
               </Button>
               <Button
-                onClick={() => handleTransaction('payment')}
+                onClick={() => {
+                  if (!amount || amount <= 0) {
+                    message.error('Ingrese un monto válido');
+                    return;
+                  }
+                  setPaymentModalVisible(true);
+                }}
                 disabled={!shift?.is_active}
-                loading={loading}
               >
                 Pago por Caja
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!amount || amount <= 0) {
+                    message.error('Ingrese un monto válido');
+                    return;
+                  }
+                  setOtherModalVisible(true);
+                }}
+                disabled={!shift?.is_active}
+              >
+                Otro Gasto
               </Button>
             </Space>
           </Space>
         </Card>
+
+        {/* Modal Pago por Caja - pedir máquina */}
+        <Modal
+          title="Pago por Caja"
+          open={paymentModalVisible}
+          onCancel={() => {
+            setPaymentModalVisible(false);
+            setMachine('');
+          }}
+          onOk={() => handleTransaction('payment')}
+          confirmLoading={loading}
+          okText="Registrar"
+          cancelText="Cancelar"
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <Text strong>Monto</Text>
+              <div>{formatCurrency(amount || 0)}</div>
+            </div>
+            <div>
+              <Text strong>Cliente</Text>
+              <div>{client || '-'}</div>
+            </div>
+            <div>
+              <Text strong>N° Máquina *</Text>
+              <Input
+                autoFocus
+                value={machine}
+                onChange={(e) => setMachine(e.target.value.toUpperCase())}
+                placeholder="Ej: 12, A-05"
+                style={{ marginTop: 8 }}
+              />
+            </div>
+          </Space>
+        </Modal>
+
+        {/* Modal Otro Gasto - pedir tipo de gasto */}
+        <Modal
+          title="Otro Gasto"
+          open={otherModalVisible}
+          onCancel={() => {
+            setOtherModalVisible(false);
+            setExpenseType('');
+          }}
+          onOk={() => handleTransaction('other')}
+          confirmLoading={loading}
+          okText="Registrar"
+          cancelText="Cancelar"
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <Text strong>Monto</Text>
+              <div>{formatCurrency(amount || 0)}</div>
+            </div>
+            <div>
+              <Text strong>Tipo de Gasto *</Text>
+              <Input
+                autoFocus
+                value={expenseType}
+                onChange={(e) => setExpenseType(e.target.value)}
+                placeholder="Ej: Limpieza, Insumos, Reparación..."
+                style={{ marginTop: 8 }}
+              />
+            </div>
+            <div>
+              <Text strong>Detalle (opcional)</Text>
+              <Input
+                value={client}
+                onChange={(e) => setClient(e.target.value)}
+                placeholder="Descripción adicional"
+                style={{ marginTop: 8 }}
+              />
+            </div>
+          </Space>
+        </Modal>
 
         {/* Control de Pasilleras */}
         <Card title="Control de Pasilleras" extra={<RefreshBtn tooltip="Actualizar pasilleras" />}>

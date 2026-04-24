@@ -291,7 +291,14 @@ export default function Dashboard() {
           ) : (
             <div className="py-8 text-center">
               <AlertCircle className="mx-auto mb-3 w-10 h-10 text-zinc-300" />
-              <p className="text-zinc-500 text-sm">No tienes una pasillera activa</p>
+              <p className="text-zinc-500 text-sm mb-4">No tienes una pasillera activa</p>
+              <button
+                onClick={() => navigate('/history')}
+                className="inline-flex items-center px-4 py-2 font-semibold text-zinc-900 bg-zinc-100 rounded-xl transition hover:bg-zinc-200"
+              >
+                <History className="mr-2 w-4 h-4" />
+                Ver mi Historial
+              </button>
             </div>
           )}
         </div>

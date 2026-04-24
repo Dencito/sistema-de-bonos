@@ -3,6 +3,7 @@
 use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Branches\BranchController;
 use App\Http\Controllers\CashManagement\CashManagementController;
+use App\Http\Controllers\CashManagement\CashShiftHistoryController;
 use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Companies\CompanyController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
@@ -195,6 +196,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/pasillera/{pasilleraId}/payment', [CashManagementController::class, 'addPasilleraPayment'])->name('cash-management.pasillera.payment');
         Route::put('/pasillera/{pasilleraId}/reset', [CashManagementController::class, 'resetPasillera'])->name('cash-management.pasillera.reset');
         Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
+    });
+
+    // Cash Shift History - role 1 sees all, others filtered by their branch
+    Route::prefix('cash-shift-history')->group(function () {
+        Route::get('/', [CashShiftHistoryController::class, 'index'])->name('cash-shift-history.index');
+        Route::get('/list', [CashShiftHistoryController::class, 'list'])->name('cash-shift-history.list');
+        Route::get('/{shiftId}', [CashShiftHistoryController::class, 'show'])->name('cash-shift-history.show');
     });
 
     // Mobile Pasillera Routes

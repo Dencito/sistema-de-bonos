@@ -429,6 +429,204 @@ class CashManagementController extends Controller
     }
 
     /**
+     * Update an existing transaction (only while shift is active)
+     * Allowed types: transfer, giro, payment, other
+     * Type itself cannot be changed, only amount/client/machine/expense_type/description
+     */
+    public function updateTransaction(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'client' => 'nullable|string',
+            'machine' => 'nullable|string|max:100',
+            'expense_type' => 'nullable|string|max:150',
+            'description' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+        $transaction = CashTransaction::findOrFail($id);
+        $activeShift = CashShift::find($transaction->cash_shift_id);
+
+        if (!$activeShift || !$activeShift->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden editar transacciones del turno activo'
+            ], 400);
+        }
+
+        if ($activeShift->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No puedes modificar transacciones de otro turno'
+            ], 403);
+        }
+
+        if (!in_array($transaction->type, ['transfer', 'giro', 'payment', 'other'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este tipo de transacción no se puede editar desde aquí'
+            ], 400);
+        }
+
+        if ($transaction->type === 'payment' && empty($request->machine)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe indicar el número de máquina'
+            ], 422);
+        }
+
+        if ($transaction->type === 'other' && empty($request->expense_type)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe indicar el tipo de gasto'
+            ], 422);
+        }
+
+        $oldAmount = (float) $transaction->amount;
+        $newAmount = (float) $request->amount;
+        $delta = $newAmount - $oldAmount;
+
+        DB::beginTransaction();
+        try {
+            // Revert old impact + apply new = net delta
+            switch ($transaction->type) {
+                case 'transfer':
+                    // outgoing reversal not needed, just adjust totals
+                    $activeShift->total_transfers += $delta;
+                    $activeShift->current_balance += $delta;
+                    break;
+                case 'giro':
+                    // New balance check: delta > 0 means extra outgoing
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
+                    $activeShift->total_giros += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
+                case 'payment':
+                case 'other':
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
+                    $activeShift->total_payments += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
+            }
+            $activeShift->save();
+
+            $transaction->update([
+                'amount' => $newAmount,
+                'client' => $request->client,
+                'machine' => $request->machine,
+                'expense_type' => $request->expense_type,
+                'description' => $request->description ?: $transaction->description,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transacción actualizada correctamente',
+                'data' => [
+                    'transaction' => $transaction->fresh(),
+                    'shift' => $activeShift->fresh(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a transaction (only while shift is active)
+     */
+    public function deleteTransaction($id)
+    {
+        $user = Auth::user();
+        $transaction = CashTransaction::findOrFail($id);
+        $activeShift = CashShift::find($transaction->cash_shift_id);
+
+        if (!$activeShift || !$activeShift->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden eliminar transacciones del turno activo'
+            ], 400);
+        }
+
+        if ($activeShift->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No puedes eliminar transacciones de otro turno'
+            ], 403);
+        }
+
+        $amount = (float) $transaction->amount;
+
+        DB::beginTransaction();
+        try {
+            switch ($transaction->type) {
+                case 'transfer':
+                    $activeShift->total_transfers -= $amount;
+                    $activeShift->current_balance -= $amount;
+                    break;
+                case 'giro':
+                    $activeShift->total_giros -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
+                case 'payment':
+                case 'other':
+                    $activeShift->total_payments -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
+                case 'pasillera_payment':
+                    // Revert pasillera balance too
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
+                    $activeShift->total_payments -= $amount;
+                    break;
+                case 'pasillera_return':
+                    // reverse return: pasillera takes back balance
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->current_balance += $amount;
+                            $pasillera->is_active = true;
+                            $pasillera->save();
+                        }
+                    }
+                    $activeShift->current_balance -= $amount;
+                    break;
+            }
+            $activeShift->save();
+            $transaction->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transacción eliminada correctamente',
+                'data' => ['shift' => $activeShift->fresh()]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Add a pasillera
      */
     public function addPasillera(Request $request)

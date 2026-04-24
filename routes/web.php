@@ -191,6 +191,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/shift/end', [CashManagementController::class, 'endShift'])->name('cash-management.shift.end');
         Route::post('/admin/set-initial-value', [CashManagementController::class, 'setAdminInitialValue'])->name('cash-management.admin.set-initial-value');
         Route::post('/transaction', [CashManagementController::class, 'addTransaction'])->name('cash-management.transaction');
+        Route::put('/transaction/{id}', [CashManagementController::class, 'updateTransaction'])->name('cash-management.transaction.update');
+        Route::delete('/transaction/{id}', [CashManagementController::class, 'deleteTransaction'])->name('cash-management.transaction.delete');
         Route::get('/transactions', [CashManagementController::class, 'getTransactions'])->name('cash-management.transactions');
         Route::post('/pasillera', [CashManagementController::class, 'addPasillera'])->name('cash-management.pasillera');
         Route::post('/pasillera/{pasilleraId}/payment', [CashManagementController::class, 'addPasilleraPayment'])->name('cash-management.pasillera.payment');
@@ -210,6 +212,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [MobilePasilleraController::class, 'index'])->name('mobile.pasillera.index');
         Route::get('/api/my-active', [MobilePasilleraController::class, 'getMyActivePasillera'])->name('mobile.pasillera.my-active');
         Route::post('/api/expense', [MobilePasilleraController::class, 'registerExpense'])->name('mobile.pasillera.expense');
+        Route::put('/api/expense/{id}', [MobilePasilleraController::class, 'updateExpense'])->name('mobile.pasillera.expense.update');
+        Route::delete('/api/expense/{id}', [MobilePasilleraController::class, 'deleteExpense'])->name('mobile.pasillera.expense.delete');
         Route::get('/api/history', [MobilePasilleraController::class, 'getExpenseHistory'])->name('mobile.pasillera.history');
         Route::get('/api/machines', [MobilePasilleraController::class, 'getMachines'])->name('mobile.pasillera.machines');
         Route::get('/api/balance', [MobilePasilleraController::class, 'getBalance'])->name('mobile.pasillera.balance');

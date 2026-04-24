@@ -114,6 +114,20 @@ export const pasilleraService = {
     return response.data;
   },
 
+  updateExpense: async (id, amount, machine, description = '') => {
+    const response = await api.put(`/pasillera/expense/${id}`, {
+      amount,
+      machine,
+      description,
+    });
+    return response.data;
+  },
+
+  deleteExpense: async (id) => {
+    const response = await api.delete(`/pasillera/expense/${id}`);
+    return response.data;
+  },
+
   getBalance: async () => {
     const response = await api.get('/pasillera/balance');
     return response.data;

@@ -17,7 +17,7 @@ import {
   Popconfirm,
   Select,
 } from 'antd';
-import { DeleteOutlined, ReloadOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ReloadOutlined, PlusOutlined, SwapOutlined, EditOutlined } from '@ant-design/icons';
 import { Switch } from 'antd';
 import axios from 'axios';
 
@@ -33,6 +33,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [expenseType, setExpenseType] = useState('');
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [otherModalVisible, setOtherModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingTx, setEditingTx] = useState(null);
+  const [editAmount, setEditAmount] = useState(0);
+  const [editClient, setEditClient] = useState('');
+  const [editMachine, setEditMachine] = useState('');
+  const [editExpenseType, setEditExpenseType] = useState('');
   const [pasilleras, setPasilleras] = useState(activeShift?.pasilleras || []);
   const [pasilleraUserId, setPasilleraUserId] = useState(null);
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
@@ -411,7 +417,102 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       dataIndex: 'description',
       key: 'description',
     },
+    {
+      title: 'Acciones',
+      key: 'actions',
+      render: (_, record) => {
+        const editable = shift?.is_active && ['transfer', 'giro', 'payment', 'other'].includes(record.type);
+        const deletable = shift?.is_active && ['transfer', 'giro', 'payment', 'other'].includes(record.type);
+        if (!editable && !deletable) return '-';
+        return (
+          <Space>
+            {editable && (
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => openEditTransaction(record)}
+              />
+            )}
+            {deletable && (
+              <Popconfirm
+                title="¿Eliminar esta transacción?"
+                description="Se revertirá el efecto sobre el saldo de la caja."
+                okText="Eliminar"
+                cancelText="Cancelar"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => handleDeleteTransaction(record.id)}
+              >
+                <Button size="small" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
+    },
   ];
+
+  const openEditTransaction = (tx) => {
+    setEditingTx(tx);
+    setEditAmount(Number(tx.amount) || 0);
+    setEditClient(tx.client || '');
+    setEditMachine(tx.machine || '');
+    setEditExpenseType(tx.expense_type || '');
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateTransaction = async () => {
+    if (!editingTx) return;
+    if (!editAmount || editAmount <= 0) {
+      message.error('Ingrese un monto válido');
+      return;
+    }
+    if (editingTx.type === 'payment' && !editMachine) {
+      message.error('Debe indicar el número de máquina');
+      return;
+    }
+    if (editingTx.type === 'other' && !editExpenseType) {
+      message.error('Debe indicar el tipo de gasto');
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await axios.put(`/cash-management/transaction/${editingTx.id}`, {
+        amount: editAmount,
+        client: editClient,
+        machine: editMachine,
+        expense_type: editExpenseType,
+      });
+      if (res.data.success) {
+        message.success('Transacción actualizada');
+        setEditModalVisible(false);
+        setEditingTx(null);
+        fetchShiftStatus();
+      } else {
+        message.error(res.data.message || 'Error al actualizar');
+      }
+    } catch (err) {
+      message.error(err.response?.data?.message || 'Error al actualizar');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (id) => {
+    try {
+      setLoading(true);
+      const res = await axios.delete(`/cash-management/transaction/${id}`);
+      if (res.data.success) {
+        message.success('Transacción eliminada');
+        fetchShiftStatus();
+      } else {
+        message.error(res.data.message || 'Error al eliminar');
+      }
+    } catch (err) {
+      message.error(err.response?.data?.message || 'Error al eliminar');
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
@@ -695,6 +796,69 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
               />
             </div>
           </Space>
+        </Modal>
+
+        {/* Modal Editar Transacción */}
+        <Modal
+          title={`Editar Transacción${editingTx ? ' · ' + ({
+            transfer: 'Transferencia',
+            giro: 'Giro',
+            payment: 'Pago por Caja',
+            other: 'Otro Gasto',
+          }[editingTx.type] || editingTx.type) : ''}`}
+          open={editModalVisible}
+          onCancel={() => {
+            setEditModalVisible(false);
+            setEditingTx(null);
+          }}
+          onOk={handleUpdateTransaction}
+          confirmLoading={loading}
+          okText="Guardar"
+          cancelText="Cancelar"
+          destroyOnClose
+        >
+          {editingTx && (
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div>
+                <Text strong>Monto</Text>
+                <InputNumber
+                  style={{ width: '100%', marginTop: 8 }}
+                  value={editAmount}
+                  onChange={setEditAmount}
+                  min={0.01}
+                  precision={2}
+                />
+              </div>
+              {(editingTx.type === 'payment' || editingTx.type === 'pasillera_payment') && (
+                <div>
+                  <Text strong>N° Máquina *</Text>
+                  <Input
+                    value={editMachine}
+                    onChange={(e) => setEditMachine(e.target.value.toUpperCase())}
+                    style={{ marginTop: 8 }}
+                  />
+                </div>
+              )}
+              {editingTx.type === 'other' && (
+                <div>
+                  <Text strong>Tipo de Gasto *</Text>
+                  <Input
+                    value={editExpenseType}
+                    onChange={(e) => setEditExpenseType(e.target.value)}
+                    style={{ marginTop: 8 }}
+                  />
+                </div>
+              )}
+              <div>
+                <Text strong>Cliente / Detalle</Text>
+                <Input
+                  value={editClient}
+                  onChange={(e) => setEditClient(e.target.value)}
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            </Space>
+          )}
         </Modal>
 
         {/* Control de Pasilleras */}

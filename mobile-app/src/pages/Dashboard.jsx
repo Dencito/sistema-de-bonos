@@ -13,6 +13,9 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  Pencil,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
@@ -29,6 +32,14 @@ export default function Dashboard() {
   const [amount, setAmount] = useState('');
   const [machine, setMachine] = useState('');
   const [description, setDescription] = useState('');
+  const [editingTx, setEditingTx] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editMachine, setEditMachine] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [machines, setMachines] = useState([]);
   const [loadingMachines, setLoadingMachines] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -195,6 +206,81 @@ export default function Dashboard() {
       }
     } finally {
       setRegistering(false);
+    }
+  };
+
+  const openEditTx = async (tx) => {
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch {}
+    setEditingTx(tx);
+    setEditAmount(String(tx.amount));
+    // Strip "Maquina " prefix when showing
+    const rawMachine = tx.machine || '';
+    setEditMachine(rawMachine.replace(/^maquina\s*/i, ''));
+    // Extract description portion after " - " from description
+    const desc = tx.description || '';
+    const parts = desc.split(' - ');
+    setEditDescription(parts.length > 2 ? parts.slice(2).join(' - ') : '');
+    setEditError('');
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editingTx) return;
+    setEditError('');
+    setEditSaving(true);
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch {}
+    try {
+      const newAmount = parseFloat(editAmount);
+      if (!newAmount || newAmount <= 0) {
+        setEditError('Ingrese un monto válido');
+        setEditSaving(false);
+        return;
+      }
+      if (!editMachine) {
+        setEditError('Ingrese el número de máquina');
+        setEditSaving(false);
+        return;
+      }
+      const formattedMachine = editMachine.toLowerCase().startsWith('maquina')
+        ? editMachine
+        : `Maquina ${editMachine}`;
+      const response = await pasilleraService.updateExpense(
+        editingTx.id,
+        newAmount,
+        formattedMachine,
+        editDescription
+      );
+      if (response.success) {
+        try { await Haptics.notification({ type: 'success' }); } catch {}
+        setEditingTx(null);
+        await loadPasillera();
+      } else {
+        setEditError(response.message || 'Error al actualizar');
+      }
+    } catch (err) {
+      setEditError(err.response?.data?.message || 'Error al actualizar');
+      try { await Haptics.notification({ type: 'error' }); } catch {}
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeleteTx = async (id) => {
+    setDeletingId(id);
+    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
+    try {
+      const response = await pasilleraService.deleteExpense(id);
+      if (response.success) {
+        try { await Haptics.notification({ type: 'success' }); } catch {}
+        setConfirmDelete(null);
+        await loadPasillera();
+      } else {
+        alert(response.message || 'Error al eliminar');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error al eliminar');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -428,29 +514,176 @@ export default function Dashboard() {
       {/* Recent Transactions */}
       {pasillera && pasillera.transactions && pasillera.transactions.length > 0 && (
         <div className="px-6 mt-8 mb-6">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">Últimos Movimientos</h3>
-          <div className="overflow-hidden bg-white rounded-xl shadow">
-            {pasillera.transactions.slice(0, 5).map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0"
-              >
-                <div className="flex items-center">
-                  <div className="flex justify-center items-center mr-3 w-10 h-10 bg-red-100 rounded-full">
-                    <DollarSign className="w-5 h-5 text-red-600" />
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Últimos Movimientos</h3>
+            <button
+              onClick={() => navigate('/history')}
+              className="text-sm font-medium text-zinc-700 hover:text-zinc-900"
+            >
+              Ver todos
+            </button>
+          </div>
+          <div className="overflow-hidden bg-white rounded-xl shadow divide-y divide-gray-100">
+            {pasillera.transactions.slice(0, 5).map((transaction) => {
+              const canEdit = transaction.type === 'pasillera_payment';
+              return (
+                <div
+                  key={transaction.id}
+                  className="flex justify-between items-center p-4"
+                >
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className="flex justify-center items-center mr-3 w-10 h-10 bg-red-100 rounded-full flex-shrink-0">
+                      <DollarSign className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{transaction.machine || '-'}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(transaction.created_at).toLocaleString('es-CL')}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{transaction.machine}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(transaction.created_at).toLocaleString('es-CL')}
+                  <div className="flex items-center gap-2 ml-2">
+                    <p className="font-semibold text-red-600 whitespace-nowrap">
+                      -{formatCurrency(transaction.amount)}
                     </p>
+                    {canEdit && (
+                      <>
+                        <button
+                          onClick={() => openEditTx(transaction)}
+                          className="p-2 text-zinc-600 rounded-lg hover:bg-zinc-100 active:bg-zinc-200"
+                          aria-label="Editar"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(transaction)}
+                          className="p-2 text-red-600 rounded-lg hover:bg-red-50 active:bg-red-100"
+                          aria-label="Eliminar"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-                <p className="font-semibold text-red-600">
-                  -{formatCurrency(transaction.amount)}
-                </p>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Transaction Modal */}
+      {editingTx && (
+        <div className="flex fixed inset-0 z-50 justify-center items-end sm:items-center p-0 sm:p-4 bg-black bg-opacity-50">
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-100">
+              <h3 className="text-lg font-bold text-zinc-900">Editar Gasto</h3>
+              <button
+                onClick={() => setEditingTx(null)}
+                className="p-2 rounded-full hover:bg-zinc-100"
+              >
+                <X className="w-5 h-5 text-zinc-600" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveEdit} className="p-5 space-y-4">
+              <div>
+                <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Monto *</label>
+                <div className="relative">
+                  <div className="flex absolute inset-y-0 left-0 items-center pl-3.5 pointer-events-none">
+                    <DollarSign className="w-4 h-4 text-zinc-400" />
+                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    className="py-3.5 pr-4 pl-10 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    disabled={editSaving}
+                    required
+                  />
+                </div>
               </div>
-            ))}
+              <div>
+                <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">N° Máquina *</label>
+                <input
+                  type="text"
+                  value={editMachine}
+                  onChange={(e) => setEditMachine(e.target.value.toUpperCase())}
+                  className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  disabled={editSaving}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Descripción</label>
+                <input
+                  type="text"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="px-4 py-3.5 w-full text-sm font-medium bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  disabled={editSaving}
+                />
+              </div>
+              {editError && (
+                <div className="px-4 py-3 text-sm font-medium text-red-600 bg-red-50 rounded-xl border border-red-100">
+                  {editError}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTx(null)}
+                  disabled={editSaving}
+                  className="flex-1 py-3 font-semibold text-zinc-800 bg-zinc-100 rounded-xl hover:bg-zinc-200 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="flex flex-1 justify-center items-center py-3 font-bold text-white bg-zinc-900 rounded-xl hover:bg-zinc-800 disabled:opacity-50"
+                >
+                  {editSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+          <div className="p-6 w-full max-w-md bg-white rounded-2xl shadow-2xl">
+            <div className="mb-5 text-center">
+              <div className="flex justify-center items-center mx-auto mb-3 w-14 h-14 bg-red-100 rounded-full">
+                <Trash2 className="w-7 h-7 text-red-600" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-zinc-900">Eliminar movimiento</h3>
+              <p className="text-sm text-zinc-600">
+                {confirmDelete.machine} · {formatCurrency(confirmDelete.amount)}
+              </p>
+              <p className="mt-2 text-xs text-zinc-500">
+                Se devolverá el monto a tu saldo disponible.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={deletingId === confirmDelete.id}
+                className="flex-1 py-3 font-semibold text-zinc-800 bg-zinc-100 rounded-xl hover:bg-zinc-200 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteTx(confirmDelete.id)}
+                disabled={deletingId === confirmDelete.id}
+                className="flex flex-1 justify-center items-center py-3 font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50"
+              >
+                {deletingId === confirmDelete.id ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Eliminar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

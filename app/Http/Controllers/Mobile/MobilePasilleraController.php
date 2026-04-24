@@ -171,20 +171,29 @@ class MobilePasilleraController extends Controller
         ]);
 
         $user = Auth::user();
-        $transaction = CashTransaction::with('pasillera', 'cashShift')->findOrFail($id);
 
-        if (!$transaction->pasillera || $transaction->pasillera->user_id !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        // Buscar la pasillera activa del usuario (misma lógica que registerExpense)
+        $pasillera = Pasillera::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$pasillera) {
+            return response()->json(['success' => false, 'message' => 'No tienes una pasillera activa'], 400);
+        }
+
+        $transaction = CashTransaction::with('cashShift')->find($id);
+        if (!$transaction || $transaction->pasillera_id != $pasillera->id) {
+            return response()->json(['success' => false, 'message' => 'Transacción no encontrada en tu pasillera'], 404);
         }
         if ($transaction->type !== 'pasillera_payment') {
             return response()->json(['success' => false, 'message' => 'Solo se pueden editar pagos de pasillera'], 400);
         }
-        if (!$transaction->cashShift || !$transaction->cashShift->is_active) {
+
+        $cashShift = $transaction->cashShift ?: CashShift::find($transaction->cash_shift_id);
+        if (!$cashShift || !$cashShift->is_active) {
             return response()->json(['success' => false, 'message' => 'Solo se puede editar mientras el turno esté activo'], 400);
         }
 
-        $pasillera = $transaction->pasillera;
-        $cashShift = $transaction->cashShift;
         $oldAmount = (float) $transaction->amount;
         $newAmount = (float) $request->amount;
         $delta = $newAmount - $oldAmount;
@@ -239,20 +248,28 @@ class MobilePasilleraController extends Controller
     public function deleteExpense($id)
     {
         $user = Auth::user();
-        $transaction = CashTransaction::with('pasillera', 'cashShift')->findOrFail($id);
 
-        if (!$transaction->pasillera || $transaction->pasillera->user_id !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        $pasillera = Pasillera::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$pasillera) {
+            return response()->json(['success' => false, 'message' => 'No tienes una pasillera activa'], 400);
+        }
+
+        $transaction = CashTransaction::with('cashShift')->find($id);
+        if (!$transaction || $transaction->pasillera_id != $pasillera->id) {
+            return response()->json(['success' => false, 'message' => 'Transacción no encontrada en tu pasillera'], 404);
         }
         if ($transaction->type !== 'pasillera_payment') {
             return response()->json(['success' => false, 'message' => 'Solo se pueden eliminar pagos de pasillera'], 400);
         }
-        if (!$transaction->cashShift || !$transaction->cashShift->is_active) {
+
+        $cashShift = $transaction->cashShift ?: CashShift::find($transaction->cash_shift_id);
+        if (!$cashShift || !$cashShift->is_active) {
             return response()->json(['success' => false, 'message' => 'Solo se puede eliminar mientras el turno esté activo'], 400);
         }
 
-        $pasillera = $transaction->pasillera;
-        $cashShift = $transaction->cashShift;
         $amount = (float) $transaction->amount;
 
         DB::beginTransaction();

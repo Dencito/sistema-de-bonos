@@ -480,6 +480,30 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Eliminar las huellas de un usuario y marcar has_fingerprint = false.
+     */
+    public function clearFingerprints(User $user)
+    {
+        $user->fingerprints = null;
+        $user->has_fingerprint = false;
+        $user->save();
+
+        if (in_array($user->role_id, [5, 6])) {
+            cache()->forget('fingerprints_by_role_' . implode('_', [5, 6]));
+        }
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Huellas eliminadas correctamente',
+            'data' => [
+                'id' => $user->id,
+                'has_fingerprint' => false,
+                'fingerprints' => null,
+            ],
+        ]);
+    }
+
     public function searchPlayers(Request $request)
     {
         $query = User::where('role_id', 6)->with(['role:id,name', 'status:id,name', 'branches', 'categoryBonus']);

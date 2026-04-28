@@ -104,6 +104,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/export', [UserController::class, 'export'])->name('users.export');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
         Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/{user}/fingerprints', [UserController::class, 'clearFingerprints'])->name('users.fingerprints.clear');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 

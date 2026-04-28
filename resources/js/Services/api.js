@@ -25,6 +25,7 @@ export const userService = {
   create: (values) => handleResponse(axios.post('/users', values)),
   update: (id, values) => handleResponse(axios.put(`/users/${id}`, values)),
   delete: (id) => handleResponse(axios.delete(`/users/${id}`)),
+  clearFingerprints: (id) => handleResponse(axios.delete(`/users/${id}/fingerprints`)),
   filterByBonus: (params) => handleResponse(axios.get('/api/users/filter-by-bonus', { params })),
   searchPlayers: (params) => handleResponse(axios.get('/api/users/search-players', { params })),
 };

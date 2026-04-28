@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ModalCreateUser from '@/Components/Users/ModalCreateUser';
 import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
+import ModalDeleteFingerprints from '@/Components/Users/ModalDeleteFingerprints';
 import ModalEditUser from '@/Components/Users/ModalEditUser';
 import ModalViewUser from '@/Components/Users/ModalViewUser';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
@@ -254,6 +255,7 @@ export default function UserPage({
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
             />
+            <ModalDeleteFingerprints data={user} />
             <ModalDeleteUser data={user} />
           </div>
         ),
@@ -333,6 +335,7 @@ export default function UserPage({
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
             />
+            <ModalDeleteFingerprints data={user} />
             <ModalDeleteUser data={user} />
           </div>
         ),
@@ -439,6 +442,7 @@ export default function UserPage({
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
             />
+            <ModalDeleteFingerprints data={user} />
             <ModalDeleteUser data={user} />
           </div>
         ),
@@ -565,6 +569,7 @@ export default function UserPage({
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
             />
+            <ModalDeleteFingerprints data={user} />
             <ModalDeleteUser data={user} />
           </div>
         ),
@@ -712,6 +717,7 @@ export default function UserPage({
               roleDisplayNames={roleDisplayNames}
               role={auth?.role}
             />
+            <ModalDeleteFingerprints data={user} />
             <ModalDeleteUser data={user} />
             {allowedRoles.createBonus.includes(auth?.role) && <ModalCreateBonus data={user} />}
           </div>

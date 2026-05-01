@@ -626,7 +626,7 @@ class UserController extends Controller
 
         $request->validate([
             'rutOrCode' => 'required|string',
-            'fingerprints' => 'required|array|min:1|max:10',
+            'fingerprints' => 'required|array',
             'fingerprints.*.data' => 'required|string',
         ]);
 

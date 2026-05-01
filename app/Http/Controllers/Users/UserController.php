@@ -605,7 +605,6 @@ class UserController extends Controller
                 ->orWhere('code', $request->rutOrCode);
         })
             ->whereIn('role_id', [5, 6])
-            ->where('has_fingerprint', false)
             ->first();
 
         if (!$userToEnroll) {
@@ -637,7 +636,6 @@ class UserController extends Controller
                 ->orWhere('code', $request->rutOrCode);
         })
             ->whereIn('role_id', [5, 6])
-            ->where('has_fingerprint', false)
             ->update([
                 'fingerprints' => $request->input('fingerprints'),
                 'has_fingerprint' => true,

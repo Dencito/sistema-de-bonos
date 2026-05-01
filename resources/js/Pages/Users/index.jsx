@@ -5,6 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ModalCreateUser from '@/Components/Users/ModalCreateUser';
 import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
 import ModalDeleteFingerprints from '@/Components/Users/ModalDeleteFingerprints';
+import ModalViewFingerprints from '@/Components/Users/ModalViewFingerprints';
 import ModalEditUser from '@/Components/Users/ModalEditUser';
 import ModalViewUser from '@/Components/Users/ModalViewUser';
 import ModalCreateBonus from '@/Components/Bonus/ModalCreateBonus';
@@ -512,7 +513,10 @@ export default function UserPage({
         title: 'Cant. Huellas',
         key: 'quantityFingerprint',
         render: (_, user) => (
-          <p className="p-1 font-bold rounded-lg">{user?.fingerprints?.length || 0}</p>
+          <div className="flex items-center gap-2">
+            <p className="p-1 font-bold rounded-lg">{user?.fingerprints?.length || 0}</p>
+            <ModalViewFingerprints data={user} />
+          </div>
         ),
       },
       {
@@ -674,7 +678,10 @@ export default function UserPage({
         title: 'Cant. Huellas',
         key: 'quantityFingerprint',
         render: (_, user) => (
-          <p className="p-1 font-bold rounded-lg">{user?.fingerprints?.length || 0}</p>
+          <div className="flex items-center gap-2">
+            <p className="p-1 font-bold rounded-lg">{user?.fingerprints?.length || 0}</p>
+            <ModalViewFingerprints data={user} />
+          </div>
         ),
       },
       {

@@ -52,7 +52,7 @@ class CompanyDatabaseService
                     $table->id();
                     $table->string('name');
                     $table->string('db_name')->nullable();
-                    $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
+                    $table->foreignId('status_id')->nullable()->constrained($statusesTable)->onDelete('set null');
                     $table->timestamps();
                     $table->date('creationDate')->nullable();
                     $table->string('rutNumbers')->nullable();
@@ -173,8 +173,8 @@ class CompanyDatabaseService
                     $table->json('bonus_schedules')->nullable();
                     $table->decimal('birthday_amount', 10, 2)->default(0.0);
                     $table->integer('ticketNumber')->default(0);
-                    $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
-                    $table->foreignId('company_id')->constrained($companiesTable)->onDelete('cascade');
+                    $table->foreignId('status_id')->nullable()->constrained($statusesTable)->onDelete('set null');
+                    $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('set null');
                     $table->timestamps();
                 });
             }
@@ -218,11 +218,11 @@ class CompanyDatabaseService
                     $table->integer('rutNumbers')->nullable();
                     $table->string('rutDv')->nullable();
                     $table->integer('code')->nullable();
-                    $table->foreignId('role_id')->constrained($rolesTable)->onDelete('cascade');
-                    $table->foreignId('status_id')->constrained($statusesTable)->onDelete('cascade');
+                    $table->foreignId('role_id')->nullable()->constrained($rolesTable)->onDelete('set null');
+                    $table->foreignId('status_id')->nullable()->constrained($statusesTable)->onDelete('set null');
                     $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
-                    $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('cascade');
-                    $table->foreignId('category_bonus_id')->nullable()->constrained($categoryBonusesTable)->onDelete('cascade');
+                    $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('set null');
+                    $table->foreignId('category_bonus_id')->nullable()->constrained($categoryBonusesTable)->onDelete('set null');
                     $table->enum('cargo', ['PASILLER@', 'CAJER@', 'GUARDIA', 'ANFITRION', 'RECAUDADOR', 'ASISTENTE', 'OTRO'])->nullable();
                     $table->json('levels')->nullable();
                     $table->timestamps();
@@ -267,7 +267,7 @@ class CompanyDatabaseService
                 Schema::create($bonusesTable, function ($table) use ($usersTable) {
                     $table->id();
                     $table->decimal('amount', 10, 2)->default(0);
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->boolean('active')->default(true);
                     $table->dateTime('start_datetime')->nullable();
                     $table->dateTime('end_datetime')->nullable();
@@ -279,8 +279,8 @@ class CompanyDatabaseService
             if (!Schema::hasTable($userBranchesTable)) {
                 Schema::create($userBranchesTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->timestamps();
                 });
             }
@@ -291,7 +291,7 @@ class CompanyDatabaseService
                     $table->id();
                     $table->string('name')->nullable();
                     $table->string('code')->unique();
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->boolean('active')->default(true);
                     $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
@@ -302,7 +302,7 @@ class CompanyDatabaseService
             if (!Schema::hasTable($ticketsTable)) {
                 Schema::create($ticketsTable, function ($table) use ($usersTable, $branchesTable, $ticketsTable) {
                     $table->id();
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->decimal('total_amount', 10, 2)->default(0);
                     $table->string('type');
@@ -317,9 +317,9 @@ class CompanyDatabaseService
             if (!Schema::hasTable($shiftsTable)) {
                 Schema::create($shiftsTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
-                    $table->foreignId('opened_by_user_id')->constrained($usersTable)->onDelete('cascade')->nullable();
-                    $table->foreignId('closed_by_user_id')->nullable()->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
+                    $table->foreignId('opened_by_user_id')->nullable()->constrained($usersTable)->onDelete('set null');
+                    $table->foreignId('closed_by_user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->timestamp('opening_time')->useCurrent()->nullable();
                     $table->timestamp('closing_time')->nullable()->nullable();
                     $table->enum('status', ['open', 'closed'])->default('open');
@@ -332,7 +332,7 @@ class CompanyDatabaseService
             if (!Schema::hasTable($fingerprintLogsTable)) {
                 Schema::create($fingerprintLogsTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                    $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
@@ -347,7 +347,7 @@ class CompanyDatabaseService
                     $table->string('code')->unique();
                     $table->decimal('price', 10, 2);
                     $table->integer('quantity')->default(0);
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->timestamps();
                 });
             }
@@ -362,20 +362,8 @@ class CompanyDatabaseService
                     $table->decimal('paid_amount', 10, 2)->nullable();
                     $table->decimal('change', 10, 2)->nullable();
                     $table->decimal('total', 10, 2);
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
-                    $table->timestamps();
-                });
-            }
-
-            // 15. Crear tabla de retiros de ventas (depende de usuarios y sucursales)
-            if (!Schema::hasTable($salesWithdrawalsTable)) {
-                Schema::create($salesWithdrawalsTable, function ($table) use ($usersTable, $branchesTable) {
-                    $table->id();
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
-                    $table->decimal('amount', 15, 2);
-                    $table->text('description')->nullable();
+                    $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->timestamps();
                 });
             }
@@ -384,8 +372,8 @@ class CompanyDatabaseService
             if (!Schema::hasTable($cashShiftsTable)) {
                 Schema::create($cashShiftsTable, function ($table) use ($usersTable, $branchesTable) {
                     $table->id();
-                    $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
-                    $table->foreignId('branch_id')->constrained($branchesTable)->onDelete('cascade');
+                    $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->decimal('previous_balance', 15, 2)->default(0);
                     $table->decimal('initial_balance', 15, 2);
                     $table->decimal('total_initial_balance', 15, 2);
@@ -432,8 +420,8 @@ class CompanyDatabaseService
             if (!Schema::hasTable($pasillerasTable)) {
                 Schema::create($pasillerasTable, function ($table) use ($cashShiftsTable, $usersTable) {
                 $table->id();
-                $table->foreignId('cash_shift_id')->constrained($cashShiftsTable)->onDelete('cascade');
-                $table->foreignId('user_id')->constrained($usersTable)->onDelete('cascade');
+                $table->foreignId('cash_shift_id')->nullable()->constrained($cashShiftsTable)->onDelete('set null');
+                $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                 $table->decimal('initial_balance', 15, 2);
                 $table->decimal('total_payments', 15, 2)->default(0);
                 $table->decimal('current_balance', 15, 2);
@@ -446,7 +434,7 @@ class CompanyDatabaseService
             if (!Schema::hasTable($cashTransactionsTable)) {
                 Schema::create($cashTransactionsTable, function ($table) use ($cashShiftsTable, $pasillerasTable) {
                     $table->id();
-                    $table->foreignId('cash_shift_id')->constrained($cashShiftsTable)->onDelete('cascade');
+                    $table->foreignId('cash_shift_id')->nullable()->constrained($cashShiftsTable)->onDelete('set null');
                     $table->foreignId('pasillera_id')->nullable()->constrained($pasillerasTable)->onDelete('set null');
                     $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_return']);
                     $table->decimal('amount', 15, 2);

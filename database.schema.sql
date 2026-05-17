@@ -107,7 +107,7 @@ CREATE TABLE `empresa_companies` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `db_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `status_id` bigint unsigned NOT NULL,
+    `status_id` bigint unsigned DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     `creationDate` date DEFAULT NULL,
@@ -146,7 +146,7 @@ CREATE TABLE `empresa_companies` (
     UNIQUE KEY `empresa_companies_slug_unique` (`slug`),
     UNIQUE KEY `empresa_companies_schema_name_unique` (`schema_name`),
     KEY `empresa_companies_status_id_foreign` (`status_id`),
-    CONSTRAINT `empresa_companies_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_companies_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE SET NULL,
     CONSTRAINT `empresa_companies_chk_1` CHECK (json_valid(`settings`))
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
@@ -253,16 +253,16 @@ CREATE TABLE `empresa_branches` (
     `birthday_amount` decimal(10, 2) NOT NULL DEFAULT '0.00',
     `sales_accumulator` decimal(15, 2) NOT NULL DEFAULT '0.00',
     `withdrawals` json DEFAULT NULL,
-    `status_id` bigint unsigned NOT NULL,
-    `company_id` bigint unsigned NOT NULL,
+    `status_id` bigint unsigned DEFAULT NULL,
+    `company_id` bigint unsigned DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     `ticketNumber` int DEFAULT '0',
     PRIMARY KEY (`id`),
     KEY `empresa_branches_status_id_foreign` (`status_id`),
     KEY `empresa_branches_company_id_foreign` (`company_id`),
-    CONSTRAINT `empresa_branches_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `empresa_companies` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_branches_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_branches_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `empresa_companies` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_branches_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE SET NULL,
     CONSTRAINT `empresa_branches_chk_1` CHECK (
         json_valid(`available_schedules`)
     ),
@@ -298,8 +298,8 @@ CREATE TABLE `empresa_users` (
     `rutNumbers` int DEFAULT NULL,
     `rutDv` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `code` int DEFAULT NULL,
-    `role_id` bigint unsigned NOT NULL,
-    `status_id` bigint unsigned NOT NULL,
+    `role_id` bigint unsigned DEFAULT NULL,
+    `status_id` bigint unsigned DEFAULT NULL,
     `branch_id` bigint unsigned DEFAULT NULL,
     `company_id` bigint unsigned DEFAULT NULL,
     `category_bonus_id` bigint unsigned DEFAULT NULL,
@@ -324,11 +324,11 @@ CREATE TABLE `empresa_users` (
     KEY `empresa_users_branch_id_foreign` (`branch_id`),
     KEY `empresa_users_company_id_foreign` (`company_id`),
     KEY `empresa_users_category_bonus_id_foreign` (`category_bonus_id`),
-    CONSTRAINT `empresa_users_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_users_category_bonus_id_foreign` FOREIGN KEY (`category_bonus_id`) REFERENCES `empresa_category_bonuses` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_users_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `empresa_companies` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `empresa_roles` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_users_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_users_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_users_category_bonus_id_foreign` FOREIGN KEY (`category_bonus_id`) REFERENCES `empresa_category_bonuses` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_users_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `empresa_companies` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `empresa_roles` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_users_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `empresa_statuses` (`id`) ON DELETE SET NULL,
     CONSTRAINT `empresa_users_chk_1` CHECK (json_valid(`fingerprints`)),
     CONSTRAINT `empresa_users_chk_2` CHECK (json_valid(`levels`))
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
@@ -338,7 +338,7 @@ DROP TABLE IF EXISTS `empresa_bonuses`;
 CREATE TABLE `empresa_bonuses` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `amount` decimal(10, 2) NOT NULL DEFAULT '0.00',
-    `user_id` bigint unsigned NOT NULL,
+    `user_id` bigint unsigned DEFAULT NULL,
     `active` tinyint(1) NOT NULL DEFAULT '1',
     `start_datetime` datetime DEFAULT NULL,
     `end_datetime` datetime DEFAULT NULL,
@@ -346,7 +346,7 @@ CREATE TABLE `empresa_bonuses` (
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `empresa_bonuses_user_id_foreign` (`user_id`),
-    CONSTRAINT `empresa_bonuses_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_bonuses_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_totems`;
@@ -355,14 +355,14 @@ CREATE TABLE `empresa_totems` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `branch_id` bigint unsigned NOT NULL,
+    `branch_id` bigint unsigned DEFAULT NULL,
     `active` tinyint(1) NOT NULL DEFAULT '1',
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `empresa_totems_code_unique` (`code`),
     KEY `empresa_totems_branch_id_foreign` (`branch_id`),
-    CONSTRAINT `empresa_totems_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_totems_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_cash_shifts`;
@@ -402,8 +402,8 @@ CREATE TABLE `empresa_cash_shifts` (
     `admin_value_set_at` TIMESTAMP NULL,
     `created_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NULL,
-    CONSTRAINT `empresa_cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_cash_shifts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_cash_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE SET NULL,
     CONSTRAINT `empresa_cash_shifts_admin_user_id_foreign` FOREIGN KEY (`admin_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
@@ -411,7 +411,7 @@ DROP TABLE IF EXISTS `empresa_pasilleras`;
 
 CREATE TABLE `empresa_pasilleras` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `cash_shift_id` bigint unsigned NOT NULL,
+    `cash_shift_id` bigint unsigned DEFAULT NULL,
     `user_id` bigint unsigned DEFAULT NULL,
     `initial_balance` decimal(15, 2) NOT NULL,
     `total_payments` decimal(15, 2) NOT NULL DEFAULT '0.00',
@@ -422,15 +422,15 @@ CREATE TABLE `empresa_pasilleras` (
     PRIMARY KEY (`id`),
     KEY `empresa_pasilleras_cash_shift_id_foreign` (`cash_shift_id`),
     KEY `empresa_pasilleras_user_id_foreign` (`user_id`),
-    CONSTRAINT `empresa_pasilleras_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `empresa_cash_shifts` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_pasilleras_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_pasilleras_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `empresa_cash_shifts` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_pasilleras_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_cash_transactions`;
 
 CREATE TABLE `empresa_cash_transactions` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `cash_shift_id` bigint unsigned NOT NULL,
+    `cash_shift_id` bigint unsigned DEFAULT NULL,
     `pasillera_id` bigint unsigned DEFAULT NULL,
     `type` enum(
         'transfer',
@@ -447,7 +447,7 @@ CREATE TABLE `empresa_cash_transactions` (
     PRIMARY KEY (`id`),
     KEY `empresa_cash_transactions_cash_shift_id_foreign` (`cash_shift_id`),
     KEY `empresa_cash_transactions_pasillera_id_foreign` (`pasillera_id`),
-    CONSTRAINT `empresa_cash_transactions_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `empresa_cash_shifts` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `empresa_cash_transactions_cash_shift_id_foreign` FOREIGN KEY (`cash_shift_id`) REFERENCES `empresa_cash_shifts` (`id`) ON DELETE SET NULL,
     CONSTRAINT `empresa_cash_transactions_pasillera_id_foreign` FOREIGN KEY (`pasillera_id`) REFERENCES `empresa_pasilleras` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
@@ -455,23 +455,23 @@ DROP TABLE IF EXISTS `empresa_fingerprint_logs`;
 
 CREATE TABLE `empresa_fingerprint_logs` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `user_id` bigint unsigned NOT NULL,
-    `totem_id` bigint unsigned NOT NULL,
+    `user_id` bigint unsigned DEFAULT NULL,
+    `totem_id` bigint unsigned DEFAULT NULL,
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `empresa_fingerprint_logs_user_id_foreign` (`user_id`),
     KEY `empresa_fingerprint_logs_totem_id_foreign` (`totem_id`),
-    CONSTRAINT `empresa_fingerprint_logs_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_fingerprint_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_fingerprint_logs_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_fingerprint_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_shifts`;
 
 CREATE TABLE `empresa_shifts` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `branch_id` bigint unsigned NOT NULL,
-    `opened_by_user_id` bigint unsigned NOT NULL,
+    `branch_id` bigint unsigned DEFAULT NULL,
+    `opened_by_user_id` bigint unsigned DEFAULT NULL,
     `closed_by_user_id` bigint unsigned DEFAULT NULL,
     `opening_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     `closing_time` timestamp NULL DEFAULT NULL,
@@ -482,17 +482,17 @@ CREATE TABLE `empresa_shifts` (
     KEY `empresa_shifts_branch_id_foreign` (`branch_id`),
     KEY `empresa_shifts_opened_by_user_id_foreign` (`opened_by_user_id`),
     KEY `empresa_shifts_closed_by_user_id_foreign` (`closed_by_user_id`),
-    CONSTRAINT `empresa_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_shifts_closed_by_user_id_foreign` FOREIGN KEY (`closed_by_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_shifts_opened_by_user_id_foreign` FOREIGN KEY (`opened_by_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_shifts_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_shifts_closed_by_user_id_foreign` FOREIGN KEY (`closed_by_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_shifts_opened_by_user_id_foreign` FOREIGN KEY (`opened_by_user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_tickets`;
 
 CREATE TABLE `empresa_tickets` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `user_id` bigint unsigned NOT NULL,
-    `totem_id` bigint unsigned NOT NULL,
+    `user_id` bigint unsigned DEFAULT NULL,
+    `totem_id` bigint unsigned DEFAULT NULL,
     `total_amount` decimal(10, 2) NOT NULL DEFAULT '0.00',
     `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -505,23 +505,23 @@ CREATE TABLE `empresa_tickets` (
         `type`,
         (CAST(`created_at` AS DATE))
     ),
-    CONSTRAINT `empresa_tickets_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_tickets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_tickets_totem_id_foreign` FOREIGN KEY (`totem_id`) REFERENCES `empresa_totems` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_tickets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_user_branches`;
 
 CREATE TABLE `empresa_user_branches` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-    `user_id` bigint unsigned NOT NULL,
-    `branch_id` bigint unsigned NOT NULL,
+    `user_id` bigint unsigned DEFAULT NULL,
+    `branch_id` bigint unsigned DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `empresa_user_branches_user_id_foreign` (`user_id`),
     KEY `empresa_user_branches_branch_id_foreign` (`branch_id`),
-    CONSTRAINT `empresa_user_branches_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `empresa_user_branches_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `empresa_user_branches_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `empresa_branches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `empresa_user_branches_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `empresa_users` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `empresa_orders`;

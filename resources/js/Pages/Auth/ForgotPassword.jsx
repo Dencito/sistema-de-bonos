@@ -2,13 +2,14 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { Form, Input, Button, Alert } from 'antd';
 import { useMessage } from '@contexts/MessageShow';
+import { getRouteParams } from '@utils/helpers';
 
 export default function ForgotPassword({ status }) {
   const { successMsg, errorMsg } = useMessage();
   const { post, processing } = useForm();
 
   const onFinish = (values) => {
-    post(route('password.email', values), {
+    post(route('password.email', getRouteParams(values)), {
       onSuccess: () => {
         successMsg('Se ha enviado el enlace de recuperación a tu correo', 'success');
       },

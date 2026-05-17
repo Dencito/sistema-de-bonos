@@ -2,6 +2,7 @@ import { Form, Input, Button } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
+import { getRouteParams } from '@utils/helpers';
 
 export default function ResetPassword({ token, email }) {
   const { showMessage } = useMessage();
@@ -9,11 +10,11 @@ export default function ResetPassword({ token, email }) {
 
   const onFinish = (values) => {
     post(
-      route('password.store', {
+      route('password.store', getRouteParams({
         ...values,
         token: token,
         email: email,
-      }),
+      })),
       {
         onSuccess: () => {
           showMessage('Tu contraseña ha sido restablecida correctamente', 'success');

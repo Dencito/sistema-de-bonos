@@ -1,12 +1,13 @@
 import { Button, Typography, Alert, Form } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { getRouteParams } from '@utils/helpers';
 
 export default function VerifyEmail({ status }) {
   const { post, processing } = useForm({});
 
   const submit = () => {
-    post(route('verification.send'));
+    post(route('verification.send', getRouteParams()));
   };
 
   return (
@@ -35,7 +36,7 @@ export default function VerifyEmail({ status }) {
           </Button>
 
           <Link
-            href={route('logout')}
+            href={route('logout', getRouteParams())}
             method="post"
             as="button"
             className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

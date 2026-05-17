@@ -32,10 +32,11 @@ class BranchController extends Controller
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
-        $companySelectSession = $request->session()->get('selected_company');
+        // Company is now in the URL, no session needed
+        $companyFromUrl = $request->route('company');
 
         if (auth()->user()->hasAnyRole(3, 4, 5)) {
-            $request->company = $companySelectSession;
+            $request->company = $companyFromUrl;
         }
         $companies = Company::all()->map(function ($company) {
             return [

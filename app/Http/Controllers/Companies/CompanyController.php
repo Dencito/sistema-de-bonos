@@ -44,10 +44,11 @@ class CompanyController extends Controller
                 abort(403, 'No tienes permiso para acceder a esta página.');
             }
 
-            $companySelectSession = $request->session()->get('selected_company');
+            // Company is now in the URL, no session needed
+            $companyFromUrl = $request->route('company');
 
             if (auth()->user()->hasAnyRole(2)) {
-                $request->name = $companySelectSession;
+                $request->name = $companyFromUrl;
             }
 
             $companies = Company::with(['branches', 'status'])
@@ -161,12 +162,13 @@ class CompanyController extends Controller
             $company = Company::create($data);
 
             //Dentro tiene la validacion si es local o no
-            $domain = $this->createCompanyDirectory($company);
+            // No longer creating subdomains, using URL prefix instead
+            // $domain = $this->createCompanyDirectory($company);
 
-            if(env("APP_ENV") === "prod") {
-                $this->godaddyService->createSubdomain( $slug);
-                $this->cpanelService->createSubdomain( $slug);
-            }
+            // if(env("APP_ENV") === "prod") {
+            //     $this->godaddyService->createSubdomain( $slug);
+            //     $this->cpanelService->createSubdomain( $slug);
+            // }
             $this->companyDatabaseService->createCompanyTables($request);
 
             return response()->json([
@@ -279,10 +281,10 @@ class CompanyController extends Controller
 
         $replacements = [
             // 'DB_DATABASE' => 'tenant_' . $company->slug,
-            'APP_URL' => 'https://' . $company->domain,
-            'SESSION_DOMAIN' => $company->domain,
-            'APP_PRIMARY_SUBDOMAIN' => $company->name,
-            'SANCTUM_STATEFUL_DOMAINS' => $company->domain
+            'APP_URL' => 'https://' . env('APP_DOMAIN'),
+            'SESSION_DOMAIN' => null,
+            'APP_PRIMARY_SUBDOMAIN' => null,
+            'SANCTUM_STATEFUL_DOMAINS' => env('APP_DOMAIN')
         ];
 
         foreach ($replacements as $key => $value) {
@@ -464,7 +466,7 @@ class CompanyController extends Controller
         }
     }
 
-    // Seleccionar una empresa y almacenarla en la sesión
+    // Seleccionar una empresa (ya no usa sesión)
     public function selectCompany(Request $request)
     {
         try {
@@ -480,10 +482,8 @@ class CompanyController extends Controller
                 return response()->json(['error' => 'La empresa no existe.'], 404);
             }
 
-            // Almacenar el ID de la empresa en la sesión
-            session(['selected_company' => $company->id]);
-
-            return response()->json(['success' => true]);
+            // Company is now in the URL, no session needed
+            return response()->json(['success' => true, 'company' => $company]);
         } catch (\Throwable $e) {
             $this->logError($e, 'companies.selectCompany', [
                 'company_name' => $request->input('name')
@@ -495,10 +495,7 @@ class CompanyController extends Controller
     public function deselectCompany(Request $request)
     {
         try {
-            // Elimina la empresa seleccionada de la sesión
-            $request->session()->forget('selected_company');
-
-            // Responde con éxito
+            // No session to clear
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
             $this->logError($e, 'companies.deselectCompany');

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Form, Input, Button } from 'antd';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { getRouteParams } from '@utils/helpers';
 
 export default function Register() {
   const { data, setData, post, processing, errors, reset } = useForm({
@@ -17,7 +18,7 @@ export default function Register() {
   }, []);
 
   const submit = () => {
-    post(route('register'));
+    post(route('register', getRouteParams()));
   };
 
   return (
@@ -69,7 +70,7 @@ export default function Register() {
 
         <Form.Item className="flex items-center justify-end mt-4">
           <Link
-            href={route('login')}
+            href={route('login', getRouteParams())}
             className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Already registered?

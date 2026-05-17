@@ -1,7 +1,7 @@
 import Axios from 'axios';
 
 const axios = Axios.create({
-  baseURL: import.meta.env.VITE_REVERB_HOST,
+  baseURL: 'http://127.0.0.1:8000',
   headers: {
     'X-Requested-With': 'XMLHttpRequest',
   },

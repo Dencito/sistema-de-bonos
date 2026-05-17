@@ -25,7 +25,7 @@ class ConfirmablePasswordController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        if (! Auth::guard('web')->validate([
+        if (! Auth::guard('api')->validate([
             'username' => $request->user()->username,
             'password' => $request->password,
         ])) {
@@ -34,7 +34,11 @@ class ConfirmablePasswordController extends Controller
             ]);
         }
 
-        $request->session()->put('auth.password_confirmed_at', time());
+        // Password confirmation timestamp stored in token instead of session
+        // For JWT, we can rely on the token itself as confirmation
+        $request->user()->currentAccessToken()->update([
+            'password_confirmed_at' => time()
+        ]);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, CompanyScope;
+    use HasFactory, Notifiable, CompanyScope;
 
     protected $fillable = [
         'first_name',
@@ -190,4 +190,5 @@ class User extends Authenticatable
             $this->attributes['password'] = bcrypt($value);
         }
     }
+
 }

@@ -40,15 +40,21 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
+        // Set company prefix from route parameter before authentication
+        $company = $this->route('company');
+        if ($company) {
+            config(['company.prefix' => $company]);
+        }
+
         Log::info('Iniciando proceso de autenticación', [
             'login' => $this->input('login'),
             'remember' => $this->boolean('remember'),
             'ip' => $this->ip(),
             'user_agent' => $this->header('User-Agent'),
-            'session_id' => $this->session()->getId(),
-            'has_session_cookie' => $this->hasCookie('laravel_session')
+            'company_prefix' => config('company.prefix'),
+            'route_company' => $company,
         ]);
-        
+
         $this->ensureIsNotRateLimited();
         Log::info('Verificación de rate limit superada');
 
@@ -61,32 +67,28 @@ class LoginRequest extends FormRequest
             Log::info('Autenticación exitosa con username', [
                 'user_id' => Auth::id(),
                 'remember' => $this->boolean('remember'),
-                'session_id' => $this->session()->getId()
             ]);
             RateLimiter::clear($this->throttleKey());
             return;
         }
         Log::warning('Autenticación fallida con username');
-        
+
         // Intentar autenticación con email como alternativa
         Log::info('Intentando autenticación con email', ['email' => $login]);
         if (Auth::attempt(['email' => $login, 'password' => $password], $this->boolean('remember'))) {
             Log::info('Autenticación exitosa con email', [
                 'user_id' => Auth::id(),
                 'remember' => $this->boolean('remember'),
-                'session_id' => $this->session()->getId()
             ]);
             RateLimiter::clear($this->throttleKey());
             return;
         }
         Log::warning('Autenticación fallida con email');
-        
+
         // Si no coincide con ninguno, incrementa el contador de intentos fallidos
         Log::error('Autenticación fallida para ambos métodos', [
             'login' => $login,
             'throttle_key' => $this->throttleKey(),
-            'session_id' => $this->session()->getId(),
-            'cookies' => $this->cookies->all()
         ]);
         RateLimiter::hit($this->throttleKey());
 

@@ -2,12 +2,8 @@
 
 namespace App\Providers;
 
-use App\Services\CompanyDatabaseService;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
-use Sentry\Breadcrumb;
-use Sentry\Sentry;
 
 class CompanyServiceProvider extends ServiceProvider
 {
@@ -16,77 +12,37 @@ class CompanyServiceProvider extends ServiceProvider
         //
     }
 
-    protected function getSubdomainFromHost($host)
+    public function boot()
     {
-        $host = str_replace('www.', '', $host);
-
-        $parts = explode('.', $host);
-        if (count($parts) >= 3) {
-            //return "888spa";
-            return $parts[0];
-        }
-
-        return null;
-    }
-
-    protected function isLocalEnvironment($host)
-    {
-        return $host === 'localhost' || str_contains($host, 'localhost:') || str_contains($host, '127.0.0.1');
-    }
-
-    public function boot(CompanyDatabaseService $companyDatabaseService)
-    {
-        try {
+        if (!app()->runningInConsole()) {
             $request = request();
-            $host = $request->getHost();
-            $subdomain;
-            Log::info('Host original: ' . $host);
+            if ($request) {
+                $company = $request->route('company');
 
-            if ($this->isLocalEnvironment($host)) {
-                $subdomain = $request->header('X-Company-Prefix', '888spa');
-                Log::info('Usando entorno local, subdomain desde header: ' . $subdomain);
-            } else {
-                if (empty($host)) {
-                    throw new \Exception('Host no válido: está vacío');
+                if (empty($company)) {
+                    Config::set('company.prefix', null);
+                    return;
                 }
 
-                $subdomain = $this->getSubdomainFromHost($host);
-                if (empty($subdomain)) {
-                    throw new \Exception('No se pudo extraer el subdominio del host');
+                // For local development, allow override via header
+                $host = $request->getHost();
+                $isLocal = $host === 'localhost' || str_contains($host, 'localhost:') || str_contains($host, '127.0.0.1');
+                
+                if ($isLocal) {
+                    $headerCompany = $request->header('X-Company-Prefix');
+                    if ($headerCompany) {
+                        $company = $headerCompany;
+                    }
                 }
+
+                // Check if it's the main app (e.g., 'tickets')
+                if ($company === 'tickets') {
+                    Config::set('company.prefix', null);
+                    return;
+                }
+
+                Config::set('company.prefix', $company);
             }
-
-            Log::info('APP_PRIMARY_SUBDOMAIN: ' . env('APP_PRIMARY_SUBDOMAIN'));
-            if ($subdomain === 'tickets') {
-                Config::set('company.prefix', null);
-                return;
-            }
-
-            // TODO
-            // $tablesExist = $companyDatabaseService->validateCompanyTables($subdomain);
-            /* \Sentry\addBreadcrumb(
-                new \Sentry\Breadcrumb(
-                    \Sentry\Breadcrumb::LEVEL_INFO,
-                    \Sentry\Breadcrumb::TYPE_DEFAULT,
-                    'company.subdomain',
-                    'Validación de tablas',
-                    [
-                        'subdomain' => $subdomain,
-                        'tablesExist' => $tablesExist
-                    ]
-                )
-            ); */
-
-            // TODO: Verifify if tables exist
-            /* if (!$tablesExist) {
-                throw new \Exception("Acceso inválido: Las tablas para {$subdomain} no existen");
-            } */
-
-            Config::set('company.prefix', $subdomain);
-        } catch (\Exception $e) {
-            \Sentry\captureException($e);
-            Config::set('company.prefix', null);
-            throw $e;
         }
     }
 }

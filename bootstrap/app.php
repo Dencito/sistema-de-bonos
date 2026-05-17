@@ -14,10 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // IMPORTANTE: SetTenantSessionCookie debe correr ANTES de StartSession
-        // para que cada empresa use una cookie de sesión distinta y no se
-        // pisen usuarios de distintas empresas (soluciona CSRF token mismatch).
-        $middleware->web(prepend: [
+        // Remove session middleware
+        $middleware->remove([
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \App\Http\Middleware\SetTenantSessionCookie::class,
         ]);
 

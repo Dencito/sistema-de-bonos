@@ -5,6 +5,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMessage } from '@contexts/MessageShow';
 import { roleNames } from '@utils/constants';
 import { authService } from '@services/api';
+import { getRouteParams } from '@utils/helpers';
 
 export default function Login({ status, auth }) {
   const { data, setData, processing, errors, reset } = useForm({
@@ -114,7 +115,7 @@ export default function Login({ status, auth }) {
           </Button>
         </Form.Item>
       </Form>
-      <Link href={route('password.request')} className="text-sm text-gray-600 hover:text-gray-900">
+      <Link href={route('password.request', getRouteParams())} className="text-sm text-gray-600 hover:text-gray-900">
         ¿Olvidaste tu contraseña?
       </Link>
     </GuestLayout>

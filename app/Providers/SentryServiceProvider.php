@@ -37,11 +37,6 @@ class SentryServiceProvider extends ServiceProvider
 
             // Add performance metrics
             $scope->setExtra('memory_usage', memory_get_usage(true));
-            
-            // Add session data (excluding sensitive information)
-            if (session()->has('locale')) {
-                $scope->setExtra('user_locale', session('locale'));
-            }
 
             // Add custom breadcrumb for tracking user journey
             \Sentry\addBreadcrumb(

@@ -62,8 +62,7 @@ class HandleInertiaRequests extends Middleware
             $defaultCompany = $user->company ?: $user->branch->company ?? null;
 
             if ($defaultCompany) {
-                // Almacenar la compañía seleccionada en la sesión
-                $request->session()->put('selected_company', $defaultCompany->name);
+                // Company is now in the URL, no session needed
                 $selectedCompany = $defaultCompany;
             }
         }

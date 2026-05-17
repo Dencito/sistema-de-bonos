@@ -23,7 +23,6 @@ class AuthenticatedSessionController extends Controller
     {
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
         ]);
     }
 
@@ -33,26 +32,20 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         Log::info('Inicio de autenticación', ['request_data' => $request->only(['login', 'remember'])]);
-        
+
         try {
             Log::info('Intentando autenticar usuario');
             $request->authenticate();
             Log::info('Usuario autenticado correctamente');
 
-            Log::info('Regenerando sesión');
-            $request->session()->regenerate();
-            Log::info('Sesión regenerada correctamente', ['session_id' => $request->session()->getId()]);
-
             // Verificar estado del usuario
             $user = Auth::user();
             Log::info('Usuario autenticado', ['user_id' => $user->id, 'username' => $user->username, 'status_id' => $user->status_id]);
-            
+
             if ((string)$user->status_id !== '1') {
                 Log::warning('Usuario bloqueado o eliminado', ['user_id' => $user->id, 'status_id' => $user->status_id]);
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                
+                Auth::guard('web')->logout();
+
                 return back()->withErrors([
                     'login' => 'Tu cuenta fue bloqueada o se encuentra eliminada.',
                 ]);
@@ -65,10 +58,8 @@ class AuthenticatedSessionController extends Controller
                 'user_id' => $user->id,
                 'redirect_to' => RouteServiceProvider::HOME,
                 'is_authenticated' => Auth::check(),
-                'session_id' => $request->session()->getId(),
-                'cookies' => $request->cookies->all()
             ]);
-            
+
             return redirect()->intended(RouteServiceProvider::HOME);
         } catch (\Exception $e) {
             Log::error('Error en autenticación', [
@@ -86,9 +77,6 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
 
         return redirect('/');
     }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Branches\BranchController;
 use App\Http\Controllers\CashManagement\CashManagementController;
@@ -31,12 +33,75 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Routes with company prefix
+Route::prefix('{company}')->group(function () {
+    // Authentication routes (guest)
+    Route::middleware('guest')->group(function () {
+        Route::get('register', function () {
+            return Inertia::render('Auth/Register');
+        })->name('register');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('register', function () {
+            // Registration logic
+        });
+
+        Route::get('login', function () {
+            return Inertia::render('Auth/Login');
+        })->name('login');
+
+        Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+        Route::get('forgot-password', function () {
+            return Inertia::render('Auth/ForgotPassword');
+        })->name('password.request');
+
+        Route::post('forgot-password', function () {
+            // Password reset link logic
+        })->name('password.email');
+
+        Route::get('reset-password/{token}', function ($token) {
+            return Inertia::render('Auth/ResetPassword', ['token' => $token]);
+        })->name('password.reset');
+
+        Route::post('reset-password', function () {
+            // Password reset logic
+        })->name('password.store');
+    });
+
+    Route::get('/', function () {
+        return Inertia::render('Dashboard');
+    })->middleware(['auth', 'verified'])->name('dashboard');
+
+    Route::middleware('auth')->group(function () {
+        // Authentication routes (authenticated)
+        Route::get('verify-email', function () {
+            return Inertia::render('Auth/VerifyEmail');
+        })->name('verification.notice');
+
+        Route::get('verify-email/{id}/{hash}', function ($id, $hash) {
+            // Email verification logic
+        })->middleware(['signed', 'throttle:6,1'])
+            ->name('verification.verify');
+
+        Route::post('email/verification-notification', function () {
+            // Email verification notification logic
+        })->middleware('throttle:6,1')
+            ->name('verification.send');
+
+        Route::get('confirm-password', function () {
+            return Inertia::render('Auth/ConfirmPassword');
+        })->name('password.confirm');
+
+        Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+
+        Route::put('password', function () {
+            // Password update logic
+        })->name('password.update');
+
+        Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+            ->name('logout');
+
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -61,17 +126,17 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/select', function (Request $request) {
             $request->validate(['company' => 'required']);
-            $request->session()->put('selected_company', $request->input('company'));
+            // Company is now in the URL, no session needed
             return response()->json(['message' => 'Company selected successfully']);
         });
 
         Route::get('/selected', function (Request $request) {
-            $company = $request->session()->get('selected_company');
+            $company = $request->route('company');
             return response()->json(['company' => $company]);
         });
 
         Route::post('/clear', function () {
-            session()->forget('selected_company');
+            // No session to clear
             return response()->json(['message' => 'Company selection cleared.']);
         })->name('clear-company');
     });
@@ -219,8 +284,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/api/machines', [MobilePasilleraController::class, 'getMachines'])->name('mobile.pasillera.machines');
         Route::get('/api/balance', [MobilePasilleraController::class, 'getBalance'])->name('mobile.pasillera.balance');
     });
+    });
 });
 
 Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');
-
-require __DIR__ . '/auth.php';

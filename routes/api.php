@@ -17,89 +17,92 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Routes with company prefix
+Route::prefix('{company}')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    })->middleware('auth:api');
 
-Route::middleware(['auth', 'web'])->group(function () {
-    Route::get('/companies/verify', [CompanyController::class, 'verifyCompany']);
-});
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/companies/verify', [CompanyController::class, 'verifyCompany']);
+    });
 
-Route::middleware('web')->post('/companies/select', [CompanyController::class, 'selectCompany']);
-Route::middleware('web')->post('/companies/deselect', [CompanyController::class, 'deselectCompany']);
+    Route::post('/companies/select', [CompanyController::class, 'selectCompany']);
+    Route::post('/companies/deselect', [CompanyController::class, 'deselectCompany']);
 
-Route::get('/test-mail', function (Request $request) {
-    Mail::to(env('MAIL_TO_SEND'))
-        ->send(new BranchCreatedMail('asd', Company::first()->name, 'user-pruebas'));
+    Route::get('/test-mail', function (Request $request) {
+        Mail::to(env('MAIL_TO_SEND'))
+            ->send(new BranchCreatedMail('asd', Company::first()->name, 'user-pruebas'));
 
-    return response()->json(['message' => 'Correo enviado exitosamente'], 200);
-});
+        return response()->json(['message' => 'Correo enviado exitosamente'], 200);
+    });
 
-Route::prefix('users')->group(function () {
-    Route::get('/{id}/bonuses/{branchId}/branches', [UserController::class, 'getBonusesAvailablesUserById']);
+    Route::prefix('users')->group(function () {
+        Route::get('/{id}/bonuses/{branchId}/branches', [UserController::class, 'getBonusesAvailablesUserById']);
 
-    Route::post('/attendance', [UserController::class, 'markFingerprint']);
+        Route::post('/attendance', [UserController::class, 'markFingerprint']);
 
-    Route::post('/totem/login', [UserController::class, 'ValidateLoginTotem']);
+        Route::post('/totem/login', [UserController::class, 'ValidateLoginTotem']);
 
-    Route::post('/enroll', [UserController::class, 'enroll']);
+        Route::post('/enroll', [UserController::class, 'enroll']);
 
-    Route::get('/fingerprints/{branchId}/branches', [UserController::class, 'getFingerprintsByRole']);
-    
-    Route::get('/fingerprint-logs/by-shift', [UserController::class, 'getFingerprintLogsByShift']);
-    
-    Route::get('/reports/workers', [UserController::class, 'getWorkersReport']);
-    
-    Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);
-    
+        Route::get('/fingerprints/{branchId}/branches', [UserController::class, 'getFingerprintsByRole']);
+        
+        Route::get('/fingerprint-logs/by-shift', [UserController::class, 'getFingerprintLogsByShift']);
+        
+        Route::get('/reports/workers', [UserController::class, 'getWorkersReport']);
+        
+        Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);
+        
+        Route::get('/reports/players', [ReportController::class, 'playersReport']);
+        
+        Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
+        
+        Route::get('/filter-by-bonus', [UserController::class, 'filterUsersByBonus']);
+        
+        Route::get('/search-players', [UserController::class, 'searchPlayers']);
+    });
+
+    Route::post('/totems/associate-with-branch', [TotemController::class, 'associateWithBranch']);
+
+    Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);
+
+    Route::get('/branches', [BranchController::class, 'getBranches']);
+
+    Route::apiResource('tickets', TicketController::class);
+
+    Route::apiResource('totems', TotemController::class);
+
+    Route::apiResource('shifts', ShiftRecordController::class);
+
+    // Direct report routes
     Route::get('/reports/players', [ReportController::class, 'playersReport']);
-    
     Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
-    
-    Route::get('/filter-by-bonus', [UserController::class, 'filterUsersByBonus']);
-    
-    Route::get('/search-players', [UserController::class, 'searchPlayers']);
-});
+    Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);
 
-Route::post('/totems/associate-with-branch', [TotemController::class, 'associateWithBranch']);
+    // Mobile API Routes
+    // Public routes (no authentication required)
+    Route::prefix('mobile')->group(function () {
+        Route::post('/login', [MobileAuthController::class, 'login']);
+    });
 
-Route::patch('/shifts/{shift}/close', [ShiftRecordController::class, 'close']);
-
-Route::get('/branches', [BranchController::class, 'getBranches']);
-
-Route::apiResource('tickets', TicketController::class);
-
-Route::apiResource('totems', TotemController::class);
-
-Route::apiResource('shifts', ShiftRecordController::class);
-
-// Direct report routes
-Route::get('/reports/players', [ReportController::class, 'playersReport']);
-Route::get('/reports/shift/{id}', [ReportController::class, 'shiftReport']);
-Route::get('/reports/fingerprint-logs', [ReportsController::class, 'getFingerprintLogsReport']);
-
-// Mobile API Routes
-// Public routes (no authentication required)
-Route::prefix('mobile')->group(function () {
-    Route::post('/login', [MobileAuthController::class, 'login']);
-});
-
-// Protected mobile routes (require authentication)
-Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
-    // Auth routes
-    Route::post('/logout', [MobileAuthController::class, 'logout']);
-    Route::get('/me', [MobileAuthController::class, 'me']);
-    Route::post('/refresh', [MobileAuthController::class, 'refresh']);
-    
-    // Pasillera routes
-    Route::prefix('pasillera')->group(function () {
-        Route::get('/my-active', [MobilePasilleraController::class, 'getMyActivePasillera']);
-        Route::post('/expense', [MobilePasilleraController::class, 'registerExpense']);
-        Route::put('/expense/{id}', [MobilePasilleraController::class, 'updateExpense']);
-        Route::delete('/expense/{id}', [MobilePasilleraController::class, 'deleteExpense']);
-        Route::get('/history', [MobilePasilleraController::class, 'getExpenseHistory']);
-        Route::get('/machines', [MobilePasilleraController::class, 'getMachines']);
-        Route::get('/balance', [MobilePasilleraController::class, 'getBalance']);
-        Route::post('/finalize-shift', [MobilePasilleraController::class, 'finalizeShift']);
+    // Protected mobile routes (require authentication)
+    Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
+        // Auth routes
+        Route::post('/logout', [MobileAuthController::class, 'logout']);
+        Route::get('/me', [MobileAuthController::class, 'me']);
+        Route::post('/refresh', [MobileAuthController::class, 'refresh']);
+        
+        // Pasillera routes
+        Route::prefix('pasillera')->group(function () {
+            Route::get('/my-active', [MobilePasilleraController::class, 'getMyActivePasillera']);
+            Route::post('/expense', [MobilePasilleraController::class, 'registerExpense']);
+            Route::put('/expense/{id}', [MobilePasilleraController::class, 'updateExpense']);
+            Route::delete('/expense/{id}', [MobilePasilleraController::class, 'deleteExpense']);
+            Route::get('/history', [MobilePasilleraController::class, 'getExpenseHistory']);
+            Route::get('/machines', [MobilePasilleraController::class, 'getMachines']);
+            Route::get('/balance', [MobilePasilleraController::class, 'getBalance']);
+            Route::post('/finalize-shift', [MobilePasilleraController::class, 'finalizeShift']);
+        });
     });
 });

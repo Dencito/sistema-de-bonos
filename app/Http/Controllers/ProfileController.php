@@ -26,7 +26,6 @@ class ProfileController extends Controller
         try {
             return Inertia::render('Profile/Edit', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-                'status' => session('status'),
             ]);
         } catch (\Throwable $exception) {
             $this->logError($exception, 'profile.edit');
@@ -129,12 +128,9 @@ class ProfileController extends Controller
 
             $user = $request->user();
 
-            Auth::logout();
+            Auth::guard('web')->logout();
 
             $user->delete();
-
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
 
             return Redirect::to('/');
         } catch (\Throwable $exception) {

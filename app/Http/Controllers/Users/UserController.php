@@ -872,7 +872,7 @@ class UserController extends Controller
 
         // Verificar bono diario (una vez al día, considerando turnos nocturnos)
         $currentHour = $now->hour;
-        
+
         // Si es madrugada (00:00 - 06:00), verificar desde las 06:00 del día anterior
         // para evitar bonos del mismo turno nocturno
         if ($currentHour >= 0 && $currentHour < 6) {
@@ -881,7 +881,7 @@ class UserController extends Controller
             // Horario normal: verificar desde las 06:00 del día actual
             $startTime = $now->copy()->setTime(6, 0, 0);
         }
-        
+
         $ticketsTypeBonusByUser = Ticket::where('user_id', $user->id)
             ->where('type', 'Bono Diario')
             ->where('created_at', '>=', $startTime)
@@ -889,19 +889,94 @@ class UserController extends Controller
             ->first();
 
         $bonusesAvailableCategoryBonus = $user->categoryBonus;
-        
+
+        // Obtener el día de la semana en español
+        $daysInSpanish = ['Sunday' => 'domingo', 'Monday' => 'lunes', 'Tuesday' => 'martes', 'Wednesday' => 'miercoles', 'Thursday' => 'jueves', 'Friday' => 'viernes', 'Saturday' => 'sabado'];
+        $currentDayEnglish = $now->format('l');
+        $currentDaySpanish = $daysInSpanish[$currentDayEnglish];
+
+        // Obtener configuración de asistencia de la sucursal
+        $attendanceEnabled = $branch->bonus_attendance_enabled ?? false;
+        $attendanceDays = [];
+        $categoryPayoutDay = null;
+
+        if ($attendanceEnabled) {
+            if ($branch->bonus_attendance_days) {
+                $attendanceDays = is_string($branch->bonus_attendance_days) ? json_decode($branch->bonus_attendance_days, true) : $branch->bonus_attendance_days;
+            }
+            $categoryPayoutDay = $branch->bonus_category_payout_day;
+        }
+
         if ($bonusesAvailableCategoryBonus && !$ticketsTypeBonusByUser) {
-            $branch->ticketNumber = $branch->ticketNumber + 1;
-            $branch->save();
-                                                        
-            $ticket = Ticket::create([
-                'user_id' => $user->id,
-                'branch_id' => $branch->id,
-                'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
-                'type' => 'Bono Diario',
-            ]);
-            $ticket->ticket_number = $branch->ticketNumber;
-            $tickets[] = $ticket;
+            if ($attendanceEnabled && $attendanceDays && $categoryPayoutDay) {
+                // Lógica con asistencia activada
+                if (in_array($currentDaySpanish, $attendanceDays)) {
+                    // Si hoy es un día de asistencia (ej: domingo a jueves), NO se da bono
+                    // No hacemos nada, el fingerprint_log ya existe si el usuario vino
+                } elseif ($currentDaySpanish === 'viernes') {
+                    // Si hoy es viernes, SI se da bono diario normal
+                    $branch->ticketNumber = $branch->ticketNumber + 1;
+                    $branch->save();
+
+                    $ticket = Ticket::create([
+                        'user_id' => $user->id,
+                        'branch_id' => $branch->id,
+                        'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
+                        'type' => 'Bono Diario',
+                    ]);
+                    $ticket->ticket_number = $branch->ticketNumber;
+                    $tickets[] = $ticket;
+                } elseif ($currentDaySpanish === $categoryPayoutDay) {
+                    // Si hoy es el día de cobro (ej: sábado)
+                    // Verificar si asistió todos los días configurados + viernes usando fingerprint logs
+                    $weekStart = $now->copy()->startOfWeek()->subDays(1)->startOfDay(); // Domingo 00:00
+                    $weekEnd = $now->copy()->subDay()->endOfDay(); // Viernes 23:59
+
+                    // Verificar si hay fingerprint_logs para cada día de la semana
+                    $fingerprintLogs = FingerprintLog::where('user_id', $user->id)
+                        ->where('branch_id', $branch->id)
+                        ->whereBetween('created_at', [$weekStart, $weekEnd])
+                        ->get();
+
+                    // Obtener los días únicos con logs
+                    $daysWithLogs = $fingerprintLogs->map(function ($log) {
+                        return $log->created_at->format('Y-m-d');
+                    })->unique();
+
+                    // Verificar si asistió todos los días configurados + viernes
+                    // attendanceDays (ej: domingo a jueves = 5 días) + viernes = 6 días
+                    $requiredDays = count($attendanceDays) + 1; // +1 por el viernes
+
+                    if ($daysWithLogs->count() >= $requiredDays) {
+                        $branch->ticketNumber = $branch->ticketNumber + 1;
+                        $branch->save();
+
+                        $ticket = Ticket::create([
+                            'user_id' => $user->id,
+                            'branch_id' => $branch->id,
+                            'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
+                            'type' => 'Bono Diario',
+                        ]);
+                        $ticket->ticket_number = $branch->ticketNumber;
+                        $tickets[] = $ticket;
+                    }
+                    // Si faltó algún día, no se da bono
+                }
+                // Si hoy no es un día de asistencia ni de pago, no entregar bono
+            } else {
+                // Comportamiento normal (sin asistencia activada)
+                $branch->ticketNumber = $branch->ticketNumber + 1;
+                $branch->save();
+
+                $ticket = Ticket::create([
+                    'user_id' => $user->id,
+                    'branch_id' => $branch->id,
+                    'total_amount' => $bonusesAvailableCategoryBonus->base_amount,
+                    'type' => 'Bono Diario',
+                ]);
+                $ticket->ticket_number = $branch->ticketNumber;
+                $tickets[] = $ticket;
+            }
         }
 
         // Verificar bono de cumpleaños (una vez al año)

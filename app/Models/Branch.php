@@ -36,7 +36,10 @@ class Branch extends Model
         'birthday_amount',
         'sales_accumulator',
         'withdrawals',
-        'ticketNumber'
+        'ticketNumber',
+        'bonus_attendance_enabled',
+        'bonus_attendance_days',
+        'bonus_category_payout_day'
     ];
 
     /**
@@ -47,7 +50,9 @@ class Branch extends Model
     protected $casts = [
         'birthday_amount' => 'decimal:2',
         'sales_accumulator' => 'decimal:2',
-        'withdrawals' => 'array'
+        'withdrawals' => 'array',
+        'bonus_attendance_enabled' => 'boolean',
+        'bonus_attendance_days' => 'array',
     ];
 
     public function shifts()

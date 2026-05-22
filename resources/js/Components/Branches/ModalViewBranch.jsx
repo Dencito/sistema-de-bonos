@@ -142,9 +142,9 @@ export default function ModalViewBranch({ data, statuses, companies }) {
             },
           ]}
         >
-          <Select showSearch placeholder="Seleccione la empresa">
+          <Select showSearch placeholder="Seleccione la empresa" optionLabelProp="label">
             {companies?.map((company) => (
-              <Select.Option key={company?.id} value={company?.id}>
+              <Select.Option key={company?.id} value={company?.id} label={company?.name}>
                 {company?.name}
               </Select.Option>
             ))}
@@ -160,9 +160,9 @@ export default function ModalViewBranch({ data, statuses, companies }) {
             },
           ]}
         >
-          <Select showSearch placeholder="Seleccione el estado">
+          <Select showSearch placeholder="Seleccione el estado" optionLabelProp="label">
             {statuses?.map((status) => (
-              <Select.Option key={status?.id} value={status?.id}>
+              <Select.Option key={status?.id} value={status?.id} label={status?.name}>
                 {status?.name}
               </Select.Option>
             ))}
@@ -291,6 +291,26 @@ export default function ModalViewBranch({ data, statuses, companies }) {
             ))}
           </div>
         </Form.Item>
+
+        <Divider className="font-bold text-3xl">Asistencia para Bonos Diarios</Divider>
+        <Form.Item label="Sistema de asistencia habilitado">
+          <Input value={data?.bonus_attendance_enabled ? 'Sí' : 'No'} disabled />
+        </Form.Item>
+
+        {data?.bonus_attendance_enabled && (
+          <>
+            <Form.Item label="Días sin bono">
+              <Input
+                value={data?.bonus_attendance_days ? data?.bonus_attendance_days.join(', ') : 'No configurado'}
+                disabled
+              />
+            </Form.Item>
+
+            <Form.Item label="Día de cobro del bono de categoría">
+              <Input value={data?.bonus_category_payout_day || 'No configurado'} disabled />
+            </Form.Item>
+          </>
+        )}
       </Modal>
     </>
   );

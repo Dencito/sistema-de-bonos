@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Divider, Form, Input, Modal, Select, Space, Card, Tag } from 'antd';
+import { Button, Divider, Form, Input, Modal, Select, Space, Card, Tag, Checkbox } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { getValidationRequiredMessage } from '@utils/messagesValidationes';
 import { router } from '@inertiajs/react';
@@ -17,6 +17,9 @@ export default function ModalCreateBranch({ companies }) {
   const [bonusScheduleModalVisible, setBonusScheduleModalVisible] = useState(false);
   const [availableSchedules, setAvailableSchedules] = useState([]);
   const [bonusSchedules, setBonusSchedules] = useState([]);
+  const [attendanceEnabled, setAttendanceEnabled] = useState(false);
+  const [attendanceDays, setAttendanceDays] = useState([]);
+  const [categoryPayoutDay, setCategoryPayoutDay] = useState(null);
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
@@ -57,7 +60,12 @@ export default function ModalCreateBranch({ companies }) {
         values.company_id = companies[0].id;
       }
 
-      const { success, message } = await branchService.create(values);
+      const { success, message } = await branchService.create({
+        ...values,
+        bonus_attendance_enabled: attendanceEnabled,
+        bonus_attendance_days: JSON.stringify(attendanceDays || []),
+        bonus_category_payout_day: categoryPayoutDay,
+      });
       if (!success) {
         errorMsg(message);
         return;
@@ -79,6 +87,9 @@ export default function ModalCreateBranch({ companies }) {
     setCountry('');
     setAvailableSchedules([]);
     setBonusSchedules([]);
+    setAttendanceEnabled(false);
+    setAttendanceDays([]);
+    setCategoryPayoutDay(null);
     form.resetFields();
     setLoading(false);
     setShowModal(false);
@@ -172,9 +183,10 @@ export default function ModalCreateBranch({ companies }) {
                 }}
                 showSearch
                 placeholder="Seleccionar país"
+                optionLabelProp="label"
               >
                 {countries?.map((country) => (
-                  <Select.Option key={country?.name} value={country?.name}>
+                  <Select.Option key={country?.name} value={country?.name} label={country?.name}>
                     {country?.name}
                   </Select.Option>
                 ))}
@@ -192,7 +204,7 @@ export default function ModalCreateBranch({ companies }) {
                 },
               ]}
             >
-              <Select showSearch placeholder="Seleccionar región">
+              <Select showSearch placeholder="Seleccionar región" optionLabelProp="label">
                 {(() => {
                   const selectedCountry = countries?.find(
                     (country) => country?.name === form?.getFieldsValue()?.branchAddressCountry,
@@ -204,7 +216,7 @@ export default function ModalCreateBranch({ companies }) {
                     selectedCountry?.districts ||
                     [];
                   return regions.map((region) => (
-                    <Select.Option key={region} value={region}>
+                    <Select.Option key={region} value={region} label={region}>
                       {region}
                     </Select.Option>
                   ));
@@ -315,6 +327,61 @@ export default function ModalCreateBranch({ companies }) {
               </Space>
             </Card>
           </Space>
+
+          <Divider orientation="left">Asistencia para Bonos Diarios</Divider>
+          <Card size="small">
+            <Form.Item label="Activar sistema de asistencia">
+              <Checkbox
+                checked={attendanceEnabled}
+                onChange={(e) => setAttendanceEnabled(e.target.checked)}
+              >
+                Habilitar sistema de asistencia para bonos diarios
+              </Checkbox>
+            </Form.Item>
+
+            {attendanceEnabled && (
+              <>
+                <Form.Item label="Días sin bono (ej: domingo a jueves)">
+                  <Select
+                    mode="multiple"
+                    placeholder="Selecciona días sin bono"
+                    value={attendanceDays}
+                    onChange={setAttendanceDays}
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Option value="lunes">Lunes</Select.Option>
+                    <Select.Option value="martes">Martes</Select.Option>
+                    <Select.Option value="miercoles">Miércoles</Select.Option>
+                    <Select.Option value="jueves">Jueves</Select.Option>
+                    <Select.Option value="viernes">Viernes</Select.Option>
+                    <Select.Option value="sabado">Sábado</Select.Option>
+                    <Select.Option value="domingo">Domingo</Select.Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item label="Día de cobro del bono de categoría (ej: sábado)">
+                  <Select
+                    placeholder="Selecciona día de cobro"
+                    value={categoryPayoutDay}
+                    onChange={setCategoryPayoutDay}
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Option value="lunes">Lunes</Select.Option>
+                    <Select.Option value="martes">Martes</Select.Option>
+                    <Select.Option value="miercoles">Miércoles</Select.Option>
+                    <Select.Option value="jueves">Jueves</Select.Option>
+                    <Select.Option value="viernes">Viernes</Select.Option>
+                    <Select.Option value="sabado">Sábado</Select.Option>
+                    <Select.Option value="domingo">Domingo</Select.Option>
+                  </Select>
+                </Form.Item>
+
+                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                  <p><strong>Nota:</strong> El viernes siempre se da bono diario normal. El día de cobro verifica si asistió todos los días configurados + viernes usando fingerprint logs.</p>
+                </div>
+              </>
+            )}
+          </Card>
 
           <Form.Item hidden name="available_schedules">
             <Input />

@@ -234,7 +234,10 @@ class BranchController extends Controller
             'status_id' => 'required|integer',
             'available_schedules' => 'nullable|json',
             'bonus_schedules' => 'nullable|json',
-            'birthday_amount' => 'nullable|numeric'
+            'birthday_amount' => 'nullable|numeric',
+            'bonus_attendance_enabled' => 'nullable',
+            'bonus_attendance_days' => 'nullable',
+            'bonus_category_payout_day' => 'nullable'
         ]);
 
         if ($validator->fails()) {

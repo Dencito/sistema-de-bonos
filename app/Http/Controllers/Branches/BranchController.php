@@ -114,7 +114,10 @@ class BranchController extends Controller
                 'status_id' => 1,
                 'available_schedules' => $request->available_schedules,
                 'bonus_schedules' => $request->bonus_schedules,
-                'birthday_amount' => $request->birthday_amount
+                'birthday_amount' => $request->birthday_amount,
+                'bonus_attendance_enabled' => $request->bonus_attendance_enabled ?? false,
+                'bonus_attendance_days' => $request->bonus_attendance_days,
+                'bonus_category_payout_day' => $request->bonus_category_payout_day
             ]);
 
             return response()->json([
@@ -284,7 +287,10 @@ class BranchController extends Controller
             'status_id',
             'available_schedules',
             'bonus_schedules',
-            'birthday_amount'
+            'birthday_amount',
+            'bonus_attendance_enabled',
+            'bonus_attendance_days',
+            'bonus_category_payout_day'
         ]);
 
         // Detectar cambios

@@ -301,7 +301,15 @@ export default function ModalViewBranch({ data, statuses, companies }) {
           <>
             <Form.Item label="Días sin bono">
               <Input
-                value={data?.bonus_attendance_days ? data?.bonus_attendance_days.join(', ') : 'No configurado'}
+                value={
+                  data?.bonus_attendance_days
+                    ? (Array.isArray(data.bonus_attendance_days)
+                        ? data.bonus_attendance_days.join(', ')
+                        : (typeof data.bonus_attendance_days === 'string'
+                            ? JSON.parse(data.bonus_attendance_days).join(', ')
+                            : 'No configurado'))
+                    : 'No configurado'
+                }
                 disabled
               />
             </Form.Item>

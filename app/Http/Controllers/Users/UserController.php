@@ -679,7 +679,7 @@ class UserController extends Controller
                             });
                     });
             })
-            ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv']);
+            ->get(['id', 'username', 'first_name', 'first_last_name', 'fingerprints', 'role_id', 'status_id', 'rutNumbers', 'rutDv', 'code']);
 
         return response()->json([
             'data' => $users->map(function ($user) use ($branch) {
@@ -688,7 +688,7 @@ class UserController extends Controller
                     'username' => $user->first_name . ' ' . $user->first_last_name,
                     'firstName' => $user->first_name,
                     'lastName' => $user->first_last_name,
-                    'rut' => $user->rutNumbers . '-' . $user->rutDv,
+                    'rut' => $user->rutNumbers . '-' . $user->rutDv . ($user->code ? ' (' . $user->code . ')' : ''),
                     'fingerprints' => $user->fingerprints,
                     'role' => $user->role->name,
                     'branch' => $branch->name,

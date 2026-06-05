@@ -9,10 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -32,52 +30,22 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        Log::info('Inicio de autenticación', ['request_data' => $request->only(['login', 'remember'])]);
-        
-        try {
-            Log::info('Intentando autenticar usuario');
-            $request->authenticate();
-            Log::info('Usuario autenticado correctamente');
+        $request->authenticate();
+        $request->session()->regenerate();
 
-            Log::info('Regenerando sesión');
-            $request->session()->regenerate();
-            Log::info('Sesión regenerada correctamente', ['session_id' => $request->session()->getId()]);
+        $user = Auth::user();
 
-            // Verificar estado del usuario
-            $user = Auth::user();
-            Log::info('Usuario autenticado', ['user_id' => $user->id, 'username' => $user->username, 'status_id' => $user->status_id]);
-            
-            if ((string)$user->status_id !== '1') {
-                Log::warning('Usuario bloqueado o eliminado', ['user_id' => $user->id, 'status_id' => $user->status_id]);
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                
-                return back()->withErrors([
-                    'login' => 'Tu cuenta fue bloqueada o se encuentra eliminada.',
-                ]);
-            }
+        if ((string)$user->status_id !== '1') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-            // El usuario está activo, permitimos el acceso sin verificar roles
-            Log::info('Usuario activo, permitiendo acceso', ['user_id' => $user->id]);
-
-            Log::info('Redirigiendo al usuario después de login exitoso', [
-                'user_id' => $user->id,
-                'redirect_to' => RouteServiceProvider::HOME,
-                'is_authenticated' => Auth::check(),
-                'session_id' => $request->session()->getId(),
-                'cookies' => $request->cookies->all()
+            return back()->withErrors([
+                'login' => 'Tu cuenta fue bloqueada o se encuentra eliminada.',
             ]);
-            
-            return redirect()->intended(RouteServiceProvider::HOME);
-        } catch (\Exception $e) {
-            Log::error('Error en autenticación', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->only(['login', 'remember'])
-            ]);
-            throw $e;
         }
+
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

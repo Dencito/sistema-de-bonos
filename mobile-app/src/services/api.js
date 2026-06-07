@@ -3,6 +3,8 @@ import { Preferences } from '@capacitor/preferences';
 
 // Function to get dynamic API URL based on company configuration
 const getApiUrl = async () => {
+  //remove later
+  return "http://127.0.0.1:8000/api/mobile";
   try {
     const { value: companyName } = await Preferences.get({ key: 'company_name' });
     if (companyName) {

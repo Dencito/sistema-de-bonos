@@ -8,20 +8,41 @@ import ModalSetInitialCash from './ModalSetInitialCash';
 import { formatDate } from '@utils/date';
 import FilterModal from './FilterModal';
 import ModalRequestMoreBranches from './ModalRequestMoreBranches';
+import { CheckCircle, XCircle, AlertCircle, Trash2 } from 'lucide-react';
 
 const { Column } = Table;
 
+const getStatusBadge = (statusName) => {
+  const statusConfig = {
+    'Activo': { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle },
+    'Inactivo': { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
+    'En revisión': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertCircle },
+    'Borrado': { bg: 'bg-gray-100', text: 'text-gray-700', icon: Trash2 },
+  };
+
+  const config = statusConfig[statusName] || statusConfig['Inactivo'];
+  const Icon = config.icon;
+
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <Icon className="w-3 h-3 mr-1" />
+      {statusName}
+    </span>
+  );
+};
+
 export const TableDataBranches = ({ auth, branches, statuses, companies, filters }) => {
   return (
-    <div className="bg-white shadow-sm sm:rounded-lg">
-      <div className="text-gray-900 my-3"></div>
-      <div className="text-gray-900 my-3 flex items-center justify-between">
-        <FilterModal filters={filters} statuses={statuses} />
-        {branches?.length < auth?.create_more_branches?.max_branches ? (
-          <ModalCreateBranch companies={companies} />
-        ) : (
-          <ModalRequestMoreBranches />
-        )}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <FilterModal filters={filters} statuses={statuses} />
+          {branches?.length < auth?.create_more_branches?.max_branches ? (
+            <ModalCreateBranch companies={companies} />
+          ) : (
+            <ModalRequestMoreBranches />
+          )}
+        </div>
       </div>
       <Table
         className="overflow-auto"
@@ -29,42 +50,54 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
           ...branch,
           key: branch.id,
         }))}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total: ${total} registros`,
+        }}
+        rowClassName="hover:bg-gray-50 transition-colors"
       >
-        <Column title="Nombre" dataIndex="name" key="id" />
+        <Column
+          title="Nombre"
+          dataIndex="name"
+          key="id"
+          className="font-medium text-gray-900"
+        />
         <Column
           title="Empleados"
           key="employs"
-          render={(_, branch) => <p>{branch.numberOfEmployees}</p>}
+          render={(_, branch) => (
+            <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium">
+              {branch.numberOfEmployees}
+            </span>
+          )}
         />
         <Column
           title="Fecha de creación"
           key="creationDate"
-          render={(_, branch) => <p>{formatDate(branch.created_at)}</p>}
+          render={(_, branch) => (
+            <span className="text-gray-600 text-sm">{formatDate(branch.created_at)}</span>
+          )}
         />
         <Column
-          title="Bono por cumpleaños"
+          title="Bono cumpleaños"
           key="birthday_amount"
-          render={(_, branch) => <p>{branch.birthday_amount}</p>}
+          render={(_, branch) => (
+            <span className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-sm font-medium">
+              ${branch.birthday_amount || 0}
+            </span>
+          )}
         />
         <Column
           title="Estado"
           key="status"
-          render={(_, branch) => (
-            <div
-              className={`${
-                (branch?.status?.name === 'Activo' && 'bg-green-300') ||
-                (branch?.status?.name === 'Inactivo' && 'bg-red-200') ||
-                (branch?.status?.name === 'En revisión' && 'bg-orange-300') ||
-                (branch?.status?.name === 'Borrado' && 'bg-red-400')
-              } font-bold rounded-full text-center p-1 w-6 h-6`}
-            ></div>
-          )}
+          render={(_, branch) => getStatusBadge(branch?.status?.name)}
         />
         <Column
           title="Acciones"
           key="actions"
           render={(_, branch) => (
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
               <ModalSetInitialCash
                 key={`cash_${branch.id}`}
                 branch={branch}

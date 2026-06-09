@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CashShift;
 use App\Models\CashTransaction;
 use App\Models\Pasillera;
+use App\Models\User;
 use App\Events\CashTransactionAdded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

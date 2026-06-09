@@ -55,11 +55,9 @@ export default function Dashboard() {
     { value: 'pasillera_payment', label: 'Pago Pasillera', requiresMachine: true },
     { value: 'transfer', label: 'Transferencia', requiresMachine: true },
     { value: 'giro', label: 'Giro', requiresMachine: true },
-    { value: 'payment', label: 'Pago por Caja', requiresMachine: true },
     { value: 'other', label: 'Otro Gasto', requiresMachine: false, requiresExpenseType: true },
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
-    { value: 'prestamo', label: 'Préstamo', requiresClient: true },
   ];
 
   useEffect(() => {

@@ -288,7 +288,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     }
   };
 
-  const handleTransaction = async (type, adminUserId = null) => {
+  const handleTransaction = async (type, adminUserId = null, overrideExpenseType = null) => {
     if (!amount || amount <= 0) {
       message.error('Ingrese un monto válido');
       return;
@@ -299,7 +299,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       message.error('Debe indicar el número de máquina para Pago por Caja');
       return;
     }
-    if (type === 'other' && !expenseType) {
+    const effectiveExpenseType = overrideExpenseType || expenseType;
+    if (type === 'other' && !effectiveExpenseType) {
       message.error('Debe indicar el tipo de gasto');
       return;
     }
@@ -315,7 +316,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       formData.append('amount', amount);
       if (client) formData.append('client', client);
       if (machine) formData.append('machine', machine);
-      if (expenseType) formData.append('expense_type', expenseType);
+      if (effectiveExpenseType) formData.append('expense_type', effectiveExpenseType);
       if (expenseImage) formData.append('image', expenseImage);
       if (adminUserId) formData.append('admin_user_id', adminUserId);
 
@@ -1096,7 +1097,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           onOk={() => {
             const finalExpenseType = otherExpenseType === 'Otros' ? otherExpenseCustom : otherExpenseType;
             setExpenseType(finalExpenseType);
-            handleTransaction('other');
+            handleTransaction('other', null, finalExpenseType);
           }}
           confirmLoading={loading}
           okText="Registrar"
@@ -1434,7 +1435,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                         const isBalanceZero = Number(pasillera.current_balance) === 0 && !hasReintegro;
 
                         return (
-                          <Col xs={24} md={items.length === 1 ? 24 : 12} key={pasillera.id}>
+                          <Col xs={24} md={24} key={pasillera.id}>
                             <Card
                               size="small"
                               title={

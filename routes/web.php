@@ -225,4 +225,13 @@ Route::middleware('auth')->group(function () {
 
 Route::post('/users/owner', [UserController::class, 'store'])->name('users.store');
 
+// Ruta para servir imágenes de expense-images directamente desde storage
+Route::get('/storage/expense-images/{filename}', function ($filename) {
+    $path = storage_path('app/public/expense-images/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+})->where('filename', '.*');
+
 require __DIR__ . '/auth.php';

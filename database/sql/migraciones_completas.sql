@@ -33,6 +33,18 @@ ALTER TABLE `chillan_cash_transactions`
 ADD COLUMN image VARCHAR(255) NULL AFTER description;
 
 -- =====================================================
+-- PASO 3: Actualizar ENUM de type en cash_transactions
+-- =====================================================
+
+-- Para 888spa
+ALTER TABLE `888spa_cash_transactions`
+MODIFY COLUMN type ENUM('transfer', 'payment', 'giro', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal', 'pasillera_payment', 'pasillera_return') NOT NULL;
+
+-- Para chillan
+ALTER TABLE `chillan_cash_transactions`
+MODIFY COLUMN type ENUM('transfer', 'payment', 'giro', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal', 'pasillera_payment', 'pasillera_return') NOT NULL;
+
+-- =====================================================
 -- PASO 3: Agregar admin_user_id a cash_transactions
 -- =====================================================
 

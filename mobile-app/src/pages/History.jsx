@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pasilleraService } from '../services/api';
-import { ArrowLeft, DollarSign, RefreshCw, Calendar } from 'lucide-react';
+import { ArrowLeft, DollarSign, RefreshCw, Calendar, RotateCcw } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 export default function History() {
@@ -114,7 +114,14 @@ export default function History() {
   }
 
   const groupedTransactions = groupByDate(transactions);
-  const totalAmount = transactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+  const totalGastado = transactions
+    .filter(t => t.type === 'pasillera_payment')
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+  const totalReintegros = transactions
+    .filter(t => t.type === 'pasillera_return')
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+  const totalPagos = transactions.filter(t => t.type === 'pasillera_payment').length;
+  const totalDevoluciones = transactions.filter(t => t.type === 'pasillera_return').length;
 
   return (
     <div className="min-h-screen bg-gray-50 safe-top safe-bottom">
@@ -142,11 +149,20 @@ export default function History() {
 
       {/* Summary */}
       <div className="p-6 text-white bg-gradient-to-r from-primary-600 to-primary-700">
-        <div className="text-center">
+        <div className="text-center mb-4">
           <p className="mb-1 text-sm text-primary-100">Total Gastado</p>
-          <p className="text-3xl font-bold">{formatCurrency(totalAmount)}</p>
-          <p className="mt-2 text-sm text-primary-100">{transactions.length} transacciones</p>
+          <p className="text-3xl font-bold">{formatCurrency(totalGastado)}</p>
+          <p className="mt-2 text-sm text-primary-100">{totalPagos} transacciones</p>
         </div>
+        {totalDevoluciones > 0 && (
+          <div className="mt-3 pt-3 border-t border-white/20 flex justify-center gap-6">
+            <div className="text-center">
+              <p className="text-xs text-primary-100">Reintegros</p>
+              <p className="text-lg font-bold text-green-300">+{formatCurrency(totalReintegros)}</p>
+              <p className="text-xs text-primary-200">{totalDevoluciones} {totalDevoluciones === 1 ? 'devolución' : 'devoluciones'}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Transactions List */}
@@ -175,41 +191,50 @@ export default function History() {
                   <h3 className="mb-3 text-sm font-semibold text-gray-500 uppercase">
                     {getDateLabel(dateKey)}
                   </h3>
-                  <div className="overflow-hidden bg-white rounded-xl shadow">
-                    {groupedTransactions[dateKey].map((transaction, index) => (
-                      <div
-                        key={transaction.id}
-                        className={`flex items-center justify-between p-4 ${
-                          index !== groupedTransactions[dateKey].length - 1
-                            ? 'border-b border-gray-100'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex flex-1 items-center">
-                          <div className="flex flex-shrink-0 justify-center items-center mr-4 w-12 h-12 bg-red-100 rounded-full">
-                            <DollarSign className="w-6 h-6 text-red-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate">
-                              {transaction.machine}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {formatDate(transaction.created_at)}
-                            </p>
-                            {transaction.description && (
-                              <p className="mt-1 text-xs text-gray-400 truncate">
-                                {transaction.description}
+                  <div className="overflow-hidden rounded-xl shadow divide-y divide-gray-100">
+                    {groupedTransactions[dateKey].map((transaction) => {
+                      const isReintegro = transaction.type === 'pasillera_return';
+                      return (
+                        <div
+                          key={transaction.id}
+                          className={`flex items-center justify-between p-4 ${
+                            isReintegro ? 'bg-green-50' : 'bg-white'
+                          }`}
+                        >
+                          <div className="flex flex-1 items-center">
+                            <div className={`flex flex-shrink-0 justify-center items-center mr-4 w-12 h-12 rounded-full ${
+                              isReintegro ? 'bg-green-100' : 'bg-red-100'
+                            }`}>
+                              {isReintegro
+                                ? <RotateCcw className="w-6 h-6 text-green-600" />
+                                : <DollarSign className="w-6 h-6 text-red-600" />
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">
+                                {isReintegro ? 'Reintegro' : transaction.machine}
                               </p>
+                              <p className="text-sm text-gray-500">
+                                {formatDate(transaction.created_at)}
+                              </p>
+                              {transaction.description && (
+                                <p className="mt-1 text-xs text-gray-400 truncate">
+                                  {transaction.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0 ml-4 text-right">
+                            <p className={`font-bold ${isReintegro ? 'text-green-600' : 'text-red-600'}`}>
+                              {isReintegro ? '+' : '-'}{formatCurrency(transaction.amount)}
+                            </p>
+                            {isReintegro && (
+                              <p className="text-xs text-green-500 mt-0.5">devuelto</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex-shrink-0 ml-4 text-right">
-                          <p className="font-bold text-red-600">
-                            -{formatCurrency(transaction.amount)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

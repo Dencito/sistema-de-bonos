@@ -205,7 +205,8 @@ class UserController extends Controller
             'role' => 'nullable|string',
             'branches' => 'nullable',
             'branches.*' => 'nullable',
-            'cargo' => 'nullable|string',
+            'cargo' => 'nullable|array',
+            'cargo.*' => 'nullable|string',
             'levels' => 'nullable',
         ]);
 
@@ -396,11 +397,12 @@ class UserController extends Controller
             'role_id' => 'nullable',
             'branches' => 'nullable|array',
             'branches.*' => 'nullable',
-            'cargo' => 'nullable|string',
+            'cargo' => 'nullable|array',
+            'cargo.*' => 'nullable|string',
             'levels' => 'nullable|array',
         ]);
 
-        $user->update([
+        $updateData = [
             'first_name' => $request->first_name ?? $user->first_name,
             'second_name' => $request->second_name ?? $user->second_name,
             'first_last_name' => $request->first_last_name ?? $user->first_last_name,
@@ -422,14 +424,19 @@ class UserController extends Controller
             'afp' => $request->afp ?? $user->afp,
             'childrens' => $request->childrens ?? $user->childrens,
             'username' => $request->username ?? $user->username,
-            'password' => $request->password ? $request->password : null,
             'branch_id' => $request->branch_id ?? $user->branch_id,
             'status_id' => $request->status_id ?? $user->status_id,
             'category_bonus_id' => $request->category_bonus_id ?? $user->category_bonus_id,
             'role_id' => $request->role_id ?? $user->role_id,
             'cargo' => $request->cargo ?? $user->cargo,
             'levels' => $request->levels ?? $user->levels,
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = $request->password;
+        }
+
+        $user->update($updateData);
 
         if ($request->has('branches')) {
             $user->branches()->sync($request->branches);
@@ -1121,8 +1128,8 @@ class UserController extends Controller
         $isEntry = ($totalLogs % 2 === 0);  // Si el total actual es par, el próximo será impar (entrada)
 
         // Validación para cajeros y pasilleras: no pueden registrar salida si tienen turno activo
-        if (!$isEntry && in_array($user->cargo, ['CAJER@', 'PASILLER@'])) {
-            if ($user->cargo === 'CAJER@') {
+        if (!$isEntry && array_intersect($user->cargo ?? [], ['CAJER@', 'PASILLER@'])) {
+            if (in_array('CAJER@', $user->cargo ?? [])) {
                 // Verificar si tiene un turno de caja activo
                 $activeCashShift = \App\Models\CashShift::where('user_id', $user->id)
                     ->where('branch_id', $branch->id)
@@ -1134,7 +1141,7 @@ class UserController extends Controller
                         'message' => 'No puedes registrar tu salida hasta que cierres tu caja. Por favor, finaliza tu turno primero.'
                     ], 400);
                 }
-            } elseif ($user->cargo === 'PASILLER@') {
+            } elseif (in_array('PASILLER@', $user->cargo ?? [])) {
                 // Verificar si tiene una pasillera activa
                 $activePasillera = \App\Models\Pasillera::where('user_id', $user->id)
                     ->where('is_active', true)

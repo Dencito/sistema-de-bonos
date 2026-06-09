@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, Select, Modal } from 'antd';
+import { Form, Input, Select, Modal, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import {
   getValidationEmailMessage,
@@ -518,7 +518,35 @@ export default function ModalViewUser({ data, statuses, roles, branches, userTyp
           </Select>
         </Form.Item>
         <Form.Item name="cargo" label="Cargo" initialValue={data?.cargo}>
-          <Input showCount maxLength={20} />
+          <div>
+            {(() => {
+              const cargo = data?.cargo;
+              let cargoArray = [];
+
+              if (Array.isArray(cargo)) {
+                cargoArray = cargo;
+              } else if (typeof cargo === 'string') {
+                try {
+                  const parsed = JSON.parse(cargo);
+                  cargoArray = Array.isArray(parsed) ? parsed : [parsed];
+                } catch {
+                  cargoArray = [cargo];
+                }
+              } else if (cargo && typeof cargo === 'object') {
+                cargoArray = Object.values(cargo);
+              }
+
+              return cargoArray.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {cargoArray.map((c, idx) => (
+                    <Tag key={idx} color="blue">{c}</Tag>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: '#999' }}>-</span>
+              );
+            })()}
+          </div>
         </Form.Item>
 
         <Form.Item name="levels" label="Niveles" initialValue={data?.levels}>

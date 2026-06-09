@@ -226,7 +226,7 @@ class CompanyDatabaseService
                     $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
                     $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('set null');
                     $table->foreignId('category_bonus_id')->nullable()->constrained($categoryBonusesTable)->onDelete('set null');
-                    $table->enum('cargo', ['PASILLER@', 'CAJER@', 'GUARDIA', 'ANFITRION', 'RECAUDADOR', 'ASISTENTE', 'OTRO'])->nullable();
+                    $table->json('cargo')->nullable();
                     $table->json('levels')->nullable();
                     $table->timestamps();
                 });
@@ -435,15 +435,17 @@ class CompanyDatabaseService
 
             // 17. Crear tabla de transacciones de caja (depende de cash_shifts y pasilleras)
             if (!Schema::hasTable($cashTransactionsTable)) {
-                Schema::create($cashTransactionsTable, function ($table) use ($cashShiftsTable, $pasillerasTable) {
+                Schema::create($cashTransactionsTable, function ($table) use ($cashShiftsTable, $pasillerasTable, $usersTable) {
                     $table->id();
                     $table->foreignId('cash_shift_id')->nullable()->constrained($cashShiftsTable)->onDelete('set null');
                     $table->foreignId('pasillera_id')->nullable()->constrained($pasillerasTable)->onDelete('set null');
-                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_return']);
+                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_return', 'deposit', 'withdrawal', 'other', 'sorteo', 'bonus_especial', 'prestamo']);
                     $table->decimal('amount', 15, 2);
                     $table->string('client')->nullable();
                     $table->string('machine')->nullable();
                     $table->text('description')->nullable();
+                    $table->string('image')->nullable();
+                    $table->foreignId('admin_user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->timestamps();
                 });
             }

@@ -11,6 +11,7 @@ use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Mobile\MobileAuthController;
 use App\Http\Controllers\Mobile\MobilePasilleraController;
+use App\Http\Controllers\CashManagement\CashManagementController;
 use App\Mail\BranchCreatedMail;
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -101,5 +102,13 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
         Route::get('/machines', [MobilePasilleraController::class, 'getMachines']);
         Route::get('/balance', [MobilePasilleraController::class, 'getBalance']);
         Route::post('/finalize-shift', [MobilePasilleraController::class, 'finalizeShift']);
+    });
+
+    // Cash Management routes
+    Route::prefix('cash-management')->group(function () {
+        Route::post('/transaction', [CashManagementController::class, 'addTransaction']);
+        Route::put('/transaction/{id}', [CashManagementController::class, 'updateTransaction']);
+        Route::delete('/transaction/{id}', [CashManagementController::class, 'deleteTransaction']);
+        Route::get('/transactions', [CashManagementController::class, 'getTransactions']);
     });
 });

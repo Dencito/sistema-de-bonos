@@ -191,6 +191,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/shift/start', [CashManagementController::class, 'startShift'])->name('cash-management.shift.start');
         Route::post('/shift/end', [CashManagementController::class, 'endShift'])->name('cash-management.shift.end');
         Route::post('/admin/set-initial-value', [CashManagementController::class, 'setAdminInitialValue'])->name('cash-management.admin.set-initial-value');
+        Route::post('/admin/validate-credentials', [CashManagementController::class, 'validateCredentials'])->name('cash-management.admin.validate-credentials');
+        Route::post('/admin/validate-current-password', [CashManagementController::class, 'validateCurrentPassword'])->name('cash-management.admin.validate-current-password');
         Route::post('/transaction', [CashManagementController::class, 'addTransaction'])->name('cash-management.transaction');
         Route::put('/transaction/{id}', [CashManagementController::class, 'updateTransaction'])->name('cash-management.transaction.update');
         Route::delete('/transaction/{id}', [CashManagementController::class, 'deleteTransaction'])->name('cash-management.transaction.delete');

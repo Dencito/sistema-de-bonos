@@ -116,6 +116,15 @@ export const pasilleraService = {
     return response.data;
   },
 
+  registerTransaction: async (formData) => {
+    const response = await api.post('/cash-management/transaction', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   updateExpense: async (id, amount, machine, description = '') => {
     const response = await api.put(`/pasillera/expense/${id}`, {
       amount,

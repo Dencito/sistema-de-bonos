@@ -313,7 +313,6 @@ class MobilePasilleraController extends Controller
         $transactions = CashTransaction::whereHas('pasillera', function($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
-            ->where('type', 'pasillera_payment')
             ->with(['pasillera', 'cashShift'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)

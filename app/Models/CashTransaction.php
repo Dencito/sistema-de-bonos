@@ -19,6 +19,8 @@ class CashTransaction extends Model
         'client',
         'machine',
         'description',
+        'image',
+        'admin_user_id',
     ];
 
     protected $casts = [
@@ -33,5 +35,10 @@ class CashTransaction extends Model
     public function pasillera()
     {
         return $this->belongsTo(Pasillera::class);
+    }
+
+    public function adminUser()
+    {
+        return $this->belongsTo(User::class, 'admin_user_id');
     }
 }

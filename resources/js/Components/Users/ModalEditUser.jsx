@@ -46,6 +46,12 @@ export default function ModalEditUser({
   const onUpdate = async (values) => {
     try {
       setLoading(true);
+
+      // Convertir cargo a JSON si es array
+      if (values.cargo && Array.isArray(values.cargo)) {
+        values.cargo = JSON.stringify(values.cargo);
+      }
+
       const response = await userService.update(data.id, {
         ...values,
         role_id: values?.role_id === undefined ? data?.role_id : values?.role_id,
@@ -751,7 +757,7 @@ export default function ModalEditUser({
         </Form.Item>
 
         <Form.Item initialValue={data?.cargo} name="cargo" label="Cargo">
-          <Select placeholder="Seleccione un cargo">
+          <Select mode="multiple" placeholder="Seleccione uno o más cargos">
             <Select.Option value="PASILLER@">PASILLER@</Select.Option>
             <Select.Option value="CAJER@">CAJER@</Select.Option>
             <Select.Option value="GUARDIA">GUARDIA</Select.Option>

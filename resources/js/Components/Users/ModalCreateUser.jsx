@@ -39,6 +39,11 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
       );
     }
 
+    // Convertir cargo a JSON si es array
+    if (values.cargo && Array.isArray(values.cargo)) {
+      values.cargo = JSON.stringify(values.cargo);
+    }
+
     values.role = userType;
     try {
       setLoading(true);
@@ -507,7 +512,7 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
         </Form.Item>
 
         <Form.Item name="cargo" label="Cargo">
-          <Select placeholder="Seleccione un cargo">
+          <Select mode="multiple" placeholder="Seleccione uno o más cargos">
             <Select.Option value="PASILLER@">PASILLER@</Select.Option>
             <Select.Option value="CAJER@">CAJER@</Select.Option>
             <Select.Option value="GUARDIA">GUARDIA</Select.Option>

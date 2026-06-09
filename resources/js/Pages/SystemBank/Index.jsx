@@ -16,14 +16,18 @@ import {
   message,
   Popconfirm,
   Select,
+  Tag,
+  Divider,
+  Upload,
+  Alert,
 } from 'antd';
-import { DeleteOutlined, ReloadOutlined, PlusOutlined, SwapOutlined, EditOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ReloadOutlined, PlusOutlined, SwapOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons';
 import { Switch } from 'antd';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
 
-export default function SystemBank({ auth, activeShift, previousBalance, availableUsers = [] }) {
+export default function SystemBank({ auth, activeShift, previousBalance, availableUsers = [], branch }) {
   const [shift, setShift] = useState(activeShift);
   const [prevBalance, setPrevBalance] = useState(previousBalance || 0);
   const [initialBalance, setInitialBalance] = useState('');
@@ -33,6 +37,17 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [expenseType, setExpenseType] = useState('');
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [otherModalVisible, setOtherModalVisible] = useState(false);
+  const [clientModalVisible, setClientModalVisible] = useState(false);
+  const [clientTransactionType, setClientTransactionType] = useState('');
+  const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [authTransactionType, setAuthTransactionType] = useState('');
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authUser, setAuthUser] = useState(null);
+  const [inactivityModalVisible, setInactivityModalVisible] = useState(() => {
+    return localStorage.getItem('sessionLocked') === 'true';
+  });
+  const [unlockPassword, setUnlockPassword] = useState('');
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
   const [editAmount, setEditAmount] = useState(0);
@@ -40,9 +55,13 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [editMachine, setEditMachine] = useState('');
   const [editExpenseType, setEditExpenseType] = useState('');
   const [pasilleras, setPasilleras] = useState(activeShift?.pasilleras || []);
+  const [otherExpenseType, setOtherExpenseType] = useState('');
+  const [otherExpenseCustom, setOtherExpenseCustom] = useState('');
+  const [expenseImage, setExpenseImage] = useState(null);
   const [pasilleraUserId, setPasilleraUserId] = useState(null);
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
   const [transactions, setTransactions] = useState(activeShift?.transactions || []);
+  const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,6 +69,19 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [opening20000, setOpening20000] = useState(0);
   const [opening10000, setOpening10000] = useState(0);
   const [opening5000, setOpening5000] = useState(0);
+
+  // Gastos comunes (pueden ser editados según lo que indique Ces)
+  const commonExpenses = [
+    'Limpieza',
+    'Insumos',
+    'Reparación',
+    'Mantenimiento',
+    'Servicios',
+    'Alimentos',
+    'Transporte',
+    'Publicidad',
+    'Otros',
+  ];
   const [opening2000, setOpening2000] = useState(0);
   const [opening1000, setOpening1000] = useState(0);
   const [openingCoins, setOpeningCoins] = useState(0);
@@ -85,6 +117,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         setPrevBalance(response.data.data.previousBalance);
         setPasilleras(response.data.data.activeShift?.pasilleras || []);
         setTransactions(response.data.data.activeShift?.transactions || []);
+      }
+      // Cargar transacciones y tickets del turno activo
+      const txResponse = await axios.get('/cash-management/transactions');
+      if (txResponse.data.success) {
+        setTransactions(txResponse.data.data.transactions || []);
+        setTickets(txResponse.data.data.tickets || []);
       }
     } catch (error) {
       console.error('Error fetching shift status:', error);
@@ -129,6 +167,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       parseFloat(closingCoins || 0)
     );
   };
+
+  // Combinar transacciones y tickets en un solo array ordenado por fecha
+  const combinedHistory = [
+    ...transactions.map(t => ({ ...t, source: 'transaction' })),
+    ...tickets.map(t => ({ ...t, source: 'ticket' }))
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const handleStartShift = async () => {
     // In simple mode use the direct total; in denomination mode use the calculated sum
@@ -244,7 +288,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     }
   };
 
-  const handleTransaction = async (type) => {
+  const handleTransaction = async (type, adminUserId = null) => {
     if (!amount || amount <= 0) {
       message.error('Ingrese un monto válido');
       return;
@@ -259,15 +303,26 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       message.error('Debe indicar el tipo de gasto');
       return;
     }
+    if (['sorteo', 'bonus_especial', 'prestamo'].includes(type) && !client) {
+      message.error('Debe indicar el nombre del cliente');
+      return;
+    }
 
     setLoading(true);
     try {
-      const response = await axios.post('/cash-management/transaction', {
-        type,
-        amount,
-        client,
-        machine: machine || undefined,
-        expense_type: expenseType || undefined,
+      const formData = new FormData();
+      formData.append('type', type);
+      formData.append('amount', amount);
+      if (client) formData.append('client', client);
+      if (machine) formData.append('machine', machine);
+      if (expenseType) formData.append('expense_type', expenseType);
+      if (expenseImage) formData.append('image', expenseImage);
+      if (adminUserId) formData.append('admin_user_id', adminUserId);
+
+      const response = await axios.post('/cash-management/transaction', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       if (response.data.success) {
@@ -276,12 +331,46 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         setClient('');
         setMachine('');
         setExpenseType('');
+        setOtherExpenseType('');
+        setOtherExpenseCustom('');
+        setExpenseImage(null);
         setPaymentModalVisible(false);
         setOtherModalVisible(false);
+        setClientModalVisible(false);
+        setClientTransactionType('');
+        setAuthModalVisible(false);
+        setAuthUsername('');
+        setAuthPassword('');
+        setAuthUser(null);
+        setAuthTransactionType('');
         fetchShiftStatus();
       }
     } catch (error) {
       message.error(error.response?.data?.message || 'Error al registrar transacción');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAuthTransaction = async () => {
+    if (!authUsername || !authPassword) {
+      message.error('Debe ingresar usuario y contraseña');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post('/cash-management/admin/validate-credentials', {
+        username: authUsername,
+        password: authPassword,
+      });
+
+      if (response.data.success) {
+        setAuthUser(response.data.user);
+        await handleTransaction(authTransactionType, response.data.user.id);
+      }
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Credenciales inválidas');
     } finally {
       setLoading(false);
     }
@@ -371,6 +460,71 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     }).format(amount || 0);
   };
 
+  // Inactivity timer
+  const INACTIVITY_TIMEOUT = 30 * 1000; // 30 segundos
+  let inactivityTimer;
+
+  const resetInactivityTimer = () => {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      setInactivityModalVisible(true);
+      localStorage.setItem('sessionLocked', 'true');
+    }, INACTIVITY_TIMEOUT);
+  };
+
+  useEffect(() => {
+    // Si la sesión ya está bloqueada, no iniciar el timer
+    if (inactivityModalVisible) {
+      return;
+    }
+
+    const handleActivity = () => {
+      if (!inactivityModalVisible) {
+        resetInactivityTimer();
+      }
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    resetInactivityTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [inactivityModalVisible]);
+
+  const handleUnlockSession = async () => {
+    if (!unlockPassword) {
+      message.error('Ingrese su contraseña');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post('/cash-management/admin/validate-current-password', {
+        password: unlockPassword,
+      });
+
+      if (response.data.success) {
+        message.success('Sesión desbloqueada');
+        setInactivityModalVisible(false);
+        setUnlockPassword('');
+        localStorage.removeItem('sessionLocked');
+        resetInactivityTimer();
+      }
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Contraseña incorrecta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const transactionColumns = [
     {
       title: 'Fecha',
@@ -383,6 +537,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       dataIndex: 'type',
       key: 'type',
       render: (type, record) => {
+        if (record.source === 'ticket') {
+          return <Tag color="blue">Ticket</Tag>;
+        }
         const types = {
           transfer: 'Transferencia',
           giro: 'Giro',
@@ -390,6 +547,11 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           other: 'Otro Gasto',
           pasillera_payment: 'Pago Pasillera',
           pasillera_return: 'Reintegro Pasillera',
+          sorteo: 'Sorteo',
+          bonus_especial: 'Bono Especial',
+          prestamo: 'Préstamo',
+          deposit: 'Agregar Dinero',
+          withdrawal: 'Quitar Dinero',
         };
         return types[type] || type;
       },
@@ -398,31 +560,131 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       title: 'Monto',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount) => formatCurrency(amount),
+      render: (amount, record) => {
+        const value = record.source === 'ticket' ? record.total_amount : amount;
+        return formatCurrency(value);
+      },
     },
     {
       title: 'Máquina',
       dataIndex: 'machine',
       key: 'machine',
-      render: (m) => m || '-',
+      render: (m, record) => {
+        if (record.source === 'ticket') return record.ticket_number || '-';
+        return m || '-';
+      },
     },
     {
       title: 'Tipo Gasto',
       dataIndex: 'expense_type',
       key: 'expense_type',
-      render: (e) => e || '-',
+      render: (e, record) => {
+        if (record.source === 'ticket') return record.type || '-';
+        return e || '-';
+      },
     },
     {
       title: 'Detalle',
       dataIndex: 'description',
       key: 'description',
+      render: (desc, record) => {
+        if (record.source === 'ticket') {
+          return `Ticket #${record.ticket_number} - ${record.user?.first_name} ${record.user?.first_last_name || ''}`;
+        }
+        return desc;
+      },
+    },
+    {
+      title: 'Operado por',
+      key: 'admin_user',
+      render: (_, record) => {
+        if (record.source === 'ticket') return '-';
+        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
+          return record.admin_user.name || '-';
+        }
+        return '-';
+      },
+    },
+    {
+      title: 'Billetes',
+      key: 'bills',
+      render: (_, record) => {
+        const shiftData = shift;
+        if (!shiftData) return '-';
+        return (
+          <Button
+            type="link"
+            size="small"
+            onClick={() => {
+              Modal.info({
+                title: 'Desglose de Billetes',
+                width: 500,
+                content: (
+                  <div>
+                    <h4>Apertura</h4>
+                    <div style={{ marginBottom: 16 }}>
+                      <div>$20.000: {shiftData.opening_20000 || 0} x 20.000 = {formatCurrency((shiftData.opening_20000 || 0) * 20000)}</div>
+                      <div>$10.000: {shiftData.opening_10000 || 0} x 10.000 = {formatCurrency((shiftData.opening_10000 || 0) * 10000)}</div>
+                      <div>$5.000: {shiftData.opening_5000 || 0} x 5.000 = {formatCurrency((shiftData.opening_5000 || 0) * 5000)}</div>
+                      <div>$2.000: {shiftData.opening_2000 || 0} x 2.000 = {formatCurrency((shiftData.opening_2000 || 0) * 2000)}</div>
+                      <div>$1.000: {shiftData.opening_1000 || 0} x 1.000 = {formatCurrency((shiftData.opening_1000 || 0) * 1000)}</div>
+                      <div>Monedas: {formatCurrency(shiftData.opening_coins || 0)}</div>
+                      <Divider />
+                      <div style={{ fontWeight: 'bold' }}>Total Apertura: {formatCurrency(shiftData.opening_total_counted || 0)}</div>
+                    </div>
+                    {!shiftData.is_active && (
+                      <>
+                        <h4>Cierre</h4>
+                        <div>
+                          <div>$20.000: {shiftData.closing_20000 || 0} x 20.000 = {formatCurrency((shiftData.closing_20000 || 0) * 20000)}</div>
+                          <div>$10.000: {shiftData.closing_10000 || 0} x 10.000 = {formatCurrency((shiftData.closing_10000 || 0) * 10000)}</div>
+                          <div>$5.000: {shiftData.closing_5000 || 0} x 5.000 = {formatCurrency((shiftData.closing_5000 || 0) * 5000)}</div>
+                          <div>$2.000: {shiftData.closing_2000 || 0} x 2.000 = {formatCurrency((shiftData.closing_2000 || 0) * 2000)}</div>
+                          <div>$1.000: {shiftData.closing_1000 || 0} x 1.000 = {formatCurrency((shiftData.closing_1000 || 0) * 1000)}</div>
+                          <div>Monedas: {formatCurrency(shiftData.closing_coins || 0)}</div>
+                          <Divider />
+                          <div style={{ fontWeight: 'bold' }}>Total Cierre: {formatCurrency(shiftData.closing_total_counted || 0)}</div>
+                          <div style={{ fontWeight: 'bold', color: shiftData.difference !== 0 ? (shiftData.difference > 0 ? '#52c41a' : '#ff4d4f') : undefined }}>
+                            Diferencia: {shiftData.difference !== 0 ? (shiftData.difference > 0 ? '+' : '') : ''}{formatCurrency(shiftData.difference || 0)}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ),
+              });
+            }}
+          >
+            Ver desglose
+          </Button>
+        );
+      },
+    },
+    {
+      title: 'Imagen',
+      dataIndex: 'image',
+      key: 'image',
+      render: (image) => {
+        if (!image) return '-';
+        return (
+          <a
+            href={`/storage/${image}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#1890ff' }}
+          >
+            Ver imagen
+          </a>
+        );
+      },
     },
     {
       title: 'Acciones',
       key: 'actions',
       render: (_, record) => {
-        const editable = shift?.is_active && ['transfer', 'giro', 'payment', 'other'].includes(record.type);
-        const deletable = shift?.is_active && ['transfer', 'giro', 'payment', 'other'].includes(record.type);
+        if (record.source === 'ticket') return '-';
+        const editable = shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
+        const deletable = shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
         if (!editable && !deletable) return '-';
         return (
           <Space>
@@ -520,16 +782,25 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       <Head title="Sistema de Caja" />
 
       <div className="container p-4 mx-auto space-y-4">
-        <div className="flex items-center gap-3">
-          <Title level={2} style={{ margin: 0 }}>Sistema de Gestión de Caja</Title>
-          <Button
-            icon={<ReloadOutlined spin={refreshing} />}
-            onClick={handleRefresh}
-            loading={refreshing}
-            title="Actualizar toda la página"
-          >
-            Actualizar
-          </Button>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <Title level={2} style={{ margin: 0 }}>Sistema de Gestión de Caja</Title>
+            <Button
+              icon={<ReloadOutlined spin={refreshing} />}
+              onClick={handleRefresh}
+              loading={refreshing}
+              title="Actualizar toda la página"
+            >
+              Actualizar
+            </Button>
+          </div>
+          {branch?.name && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <Text type="secondary" style={{ fontSize: 13 }}>Sucursal:</Text>
+              <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>{branch.name}</Text>
+            </div>
+          )}
         </div>
 
         {/* Control de Caja */}
@@ -719,6 +990,60 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
               >
                 Otro Gasto
               </Button>
+              <Button
+                onClick={() => {
+                  if (!amount || amount <= 0) {
+                    message.error('Ingrese un monto válido');
+                    return;
+                  }
+                  setClientTransactionType('sorteo');
+                  setClientModalVisible(true);
+                }}
+                disabled={!shift?.is_active}
+              >
+                Sorteo
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!amount || amount <= 0) {
+                    message.error('Ingrese un monto válido');
+                    return;
+                  }
+                  setClientTransactionType('bonus_especial');
+                  setClientModalVisible(true);
+                }}
+                disabled={!shift?.is_active}
+              >
+                Bono Especial
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!amount || amount <= 0) {
+                    message.error('Ingrese un monto válido');
+                    return;
+                  }
+                  setAuthTransactionType('deposit');
+                  setAuthModalVisible(true);
+                }}
+                disabled={!shift?.is_active}
+                type="primary"
+              >
+                Agregar Dinero
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!amount || amount <= 0) {
+                    message.error('Ingrese un monto válido');
+                    return;
+                  }
+                  setAuthTransactionType('withdrawal');
+                  setAuthModalVisible(true);
+                }}
+                disabled={!shift?.is_active}
+                danger
+              >
+                Quitar Dinero
+              </Button>
             </Space>
           </Space>
         </Card>
@@ -764,9 +1089,15 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           open={otherModalVisible}
           onCancel={() => {
             setOtherModalVisible(false);
-            setExpenseType('');
+            setOtherExpenseType('');
+            setOtherExpenseCustom('');
+            setExpenseImage(null);
           }}
-          onOk={() => handleTransaction('other')}
+          onOk={() => {
+            const finalExpenseType = otherExpenseType === 'Otros' ? otherExpenseCustom : otherExpenseType;
+            setExpenseType(finalExpenseType);
+            handleTransaction('other');
+          }}
           confirmLoading={loading}
           okText="Registrar"
           cancelText="Cancelar"
@@ -778,20 +1109,183 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             </div>
             <div>
               <Text strong>Tipo de Gasto *</Text>
-              <Input
+              <Select
                 autoFocus
-                value={expenseType}
-                onChange={(e) => setExpenseType(e.target.value)}
-                placeholder="Ej: Limpieza, Insumos, Reparación..."
-                style={{ marginTop: 8 }}
-              />
+                value={otherExpenseType}
+                onChange={(value) => {
+                  setOtherExpenseType(value);
+                  if (value !== 'Otros') {
+                    setOtherExpenseCustom('');
+                  }
+                }}
+                placeholder="Seleccione el tipo de gasto"
+                style={{ width: '100%', marginTop: 8 }}
+              >
+                {commonExpenses.map((expense) => (
+                  <Select.Option key={expense} value={expense}>
+                    {expense}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
+            {otherExpenseType === 'Otros' && (
+              <div>
+                <Text strong>Especifique el gasto *</Text>
+                <Input
+                  value={otherExpenseCustom}
+                  onChange={(e) => setOtherExpenseCustom(e.target.value)}
+                  placeholder="Ej: Compras, Viáticos, etc."
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            )}
             <div>
               <Text strong>Detalle (opcional)</Text>
               <Input
                 value={client}
                 onChange={(e) => setClient(e.target.value)}
                 placeholder="Descripción adicional"
+                style={{ marginTop: 8 }}
+              />
+            </div>
+            <div>
+              <Text strong>Adjuntar imagen (opcional)</Text>
+              <Upload
+                accept="image/*"
+                listType="picture-card"
+                maxCount={1}
+                beforeUpload={(file) => {
+                  const isImage = file.type.startsWith('image/');
+                  if (!isImage) {
+                    message.error('Solo se permiten archivos de imagen');
+                    return Upload.LIST_IGNORE;
+                  }
+                  const isLt5M = file.size / 1024 / 1024 < 5;
+                  if (!isLt5M) {
+                    message.error('La imagen no puede superar 5MB');
+                    return Upload.LIST_IGNORE;
+                  }
+                  setExpenseImage(file);
+                  return false;
+                }}
+                onRemove={() => setExpenseImage(null)}
+                style={{ marginTop: 8 }}
+              >
+                {expenseImage ? null : (
+                  <div>
+                    <UploadOutlined />
+                    <div style={{ marginTop: 8 }}>Subir imagen</div>
+                  </div>
+                )}
+              </Upload>
+            </div>
+          </Space>
+        </Modal>
+
+        {/* Modal Cliente - para Sorteo, Bono Especial, Préstamo */}
+        <Modal
+          title={clientTransactionType === 'sorteo' ? 'Sorteo' : clientTransactionType === 'bonus_especial' ? 'Bono Especial' : 'Préstamo'}
+          open={clientModalVisible}
+          onCancel={() => {
+            setClientModalVisible(false);
+            setClient('');
+            setClientTransactionType('');
+          }}
+          onOk={() => handleTransaction(clientTransactionType)}
+          confirmLoading={loading}
+          okText="Registrar"
+          cancelText="Cancelar"
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <Text strong>Monto</Text>
+              <div>{formatCurrency(amount || 0)}</div>
+            </div>
+            <div>
+              <Text strong>Cliente *</Text>
+              <Input
+                autoFocus
+                value={client}
+                onChange={(e) => setClient(e.target.value)}
+                placeholder="Nombre del cliente"
+                style={{ marginTop: 8 }}
+              />
+            </div>
+          </Space>
+        </Modal>
+
+        {/* Modal Autenticación - para Agregar/Quitar Dinero */}
+        <Modal
+          title={authTransactionType === 'deposit' ? 'Agregar Dinero a Caja' : 'Quitar Dinero de Caja'}
+          open={authModalVisible}
+          onCancel={() => {
+            setAuthModalVisible(false);
+            setAuthUsername('');
+            setAuthPassword('');
+            setAuthUser(null);
+            setAuthTransactionType('');
+          }}
+          onOk={handleAuthTransaction}
+          confirmLoading={loading}
+          okText="Confirmar"
+          cancelText="Cancelar"
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <Text strong>Monto</Text>
+              <div>{formatCurrency(amount || 0)}</div>
+            </div>
+            <Divider />
+            <div>
+              <Text strong>Usuario *</Text>
+              <Input
+                autoFocus
+                value={authUsername}
+                onChange={(e) => setAuthUsername(e.target.value)}
+                placeholder="Nombre de usuario"
+                style={{ marginTop: 8 }}
+              />
+            </div>
+            <div>
+              <Text strong>Contraseña *</Text>
+              <Input.Password
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                placeholder="Contraseña"
+                style={{ marginTop: 8 }}
+              />
+            </div>
+          </Space>
+        </Modal>
+
+        {/* Modal Inactividad - Bloqueo por seguridad */}
+        <Modal
+          title="Sesión Bloqueada por Inactividad"
+          open={inactivityModalVisible}
+          closable={false}
+          maskClosable={false}
+          footer={[
+            <Button key="unlock" type="primary" onClick={handleUnlockSession} loading={loading}>
+              Desbloquear
+            </Button>,
+          ]}
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Alert
+              message="Por seguridad, su sesión ha sido bloqueada por inactividad."
+              description="Ingrese su contraseña para continuar."
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <div>
+              <Text strong>Contraseña *</Text>
+              <Input.Password
+                autoFocus
+                value={unlockPassword}
+                onChange={(e) => setUnlockPassword(e.target.value)}
+                placeholder="Ingrese su contraseña"
+                onPressEnter={handleUnlockSession}
                 style={{ marginTop: 8 }}
               />
             </div>
@@ -910,65 +1404,139 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
               </Col>
             </Row>
 
-            <Row gutter={[16, 16]}>
-              {pasilleras.map((pasillera) => (
-                <Col xs={24} md={12} key={pasillera.id}>
-                  <Card
-                    size="small"
-                    title={`Pasillera: ${pasillera.user?.first_name} ${pasillera.user?.first_last_name}`}
-                    extra={
-                      <Space size="small">
-                        <RefreshBtn tooltip={`Actualizar datos de ${pasillera.user?.first_name}`} />
-                        <Popconfirm
-                          title="¿Eliminar esta pasillera?"
-                          onConfirm={() => handleDeletePasillera(pasillera.id)}
-                          okText="Sí"
-                          cancelText="No"
-                        >
-                          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                        </Popconfirm>
-                      </Space>
-                    }
-                  >
-                    <Row gutter={[8, 8]}>
-                      <Col span={12}>
-                        <Text type="secondary">Saldo Inicial:</Text>
-                        <br />
-                        <Text strong>{formatCurrency(pasillera.initial_balance)}</Text>
-                      </Col>
-                      <Col span={12}>
-                        <Text type="secondary">Pagos:</Text>
-                        <br />
-                        <Text strong>{formatCurrency(pasillera.total_payments)}</Text>
-                      </Col>
-                      <Col span={12}>
-                        <Text type="secondary">Saldo Actual:</Text>
-                        <br />
-                        <Text strong>{formatCurrency(pasillera.current_balance)}</Text>
-                      </Col>
-                    </Row>
+{(() => {
+                const fmtTs = (ts) => ts ? new Date(ts).toLocaleString('es-AR', {
+                  day: '2-digit', month: '2-digit', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                }) : '-';
 
-                    {pasillera.transactions && pasillera.transactions.length > 0 && (
-                      <div style={{ marginTop: 16 }}>
-                        <Text strong>Registros:</Text>
-                        <div style={{ maxHeight: 150, overflowY: 'auto', marginTop: 8 }}>
-                          {pasillera.transactions.map((registro, index) => (
-                            <div key={index} style={{ fontSize: 12, marginBottom: 4 }}>
-                              {registro.type === 'pasillera_payment' ? '' : 'Reintegro '}
-                              {formatCurrency(registro.amount)}{' '}
-                              {registro.type === 'pasillera_payment'
-                                ? `- Máquina: ${registro.machine} -${' '}`
-                                : ''}
-                              {new Date(registro.created_at).toLocaleString('es-AR')}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                const grouped = {};
+                pasilleras.forEach(p => {
+                  const uid = p.user?.id ?? 'unknown';
+                  if (!grouped[uid]) grouped[uid] = { user: p.user, items: [] };
+                  grouped[uid].items.push(p);
+                });
+
+                const groupList = Object.values(grouped);
+                return groupList.map(({ user, items }, groupIdx) => (
+                  <div key={user?.id ?? 'unknown'} style={{ marginBottom: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <Text strong style={{ fontSize: 14 }}>
+                        👤 {user?.first_name} {user?.first_last_name}
+                      </Text>
+                      <Tag color="blue">{items.length} turno{items.length !== 1 ? 's' : ''}</Tag>
+                    </div>
+
+                    <Row gutter={[16, 16]}>
+                      {items.map((pasillera) => {
+                        const hasReintegro = pasillera.transactions?.some(t => t.type === 'pasillera_return');
+                        const reintegroTx = pasillera.transactions?.find(t => t.type === 'pasillera_return');
+                        const isBalanceZero = Number(pasillera.current_balance) === 0 && !hasReintegro;
+
+                        return (
+                          <Col xs={24} md={items.length === 1 ? 24 : 12} key={pasillera.id}>
+                            <Card
+                              size="small"
+                              title={
+                                <span style={{ color: hasReintegro ? '#389e0d' : undefined }}>
+                                  {`Turno #${pasillera.id}`}
+                                  {hasReintegro && (
+                                    <Tag color="success" style={{ marginLeft: 8, fontSize: 11 }}>✓ Reintegrado</Tag>
+                                  )}
+                                  {isBalanceZero && (
+                                    <Tag color="warning" style={{ marginLeft: 8, fontSize: 11 }}>Saldo en $0</Tag>
+                                  )}
+                                </span>
+                              }
+                              style={{
+                                borderColor: hasReintegro ? '#b7eb8f' : undefined,
+                                background: hasReintegro ? '#f6ffed' : undefined,
+                              }}
+                              headStyle={{ background: hasReintegro ? '#d9f7be' : undefined }}
+                              extra={
+                                !hasReintegro && (
+                                  <Space size="small">
+                                    <RefreshBtn tooltip={`Actualizar datos de ${user?.first_name}`} />
+                                    <Popconfirm
+                                      title="¿Eliminar esta pasillera?"
+                                      onConfirm={() => handleDeletePasillera(pasillera.id)}
+                                      okText="Sí"
+                                      cancelText="No"
+                                    >
+                                      <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                                    </Popconfirm>
+                                  </Space>
+                                )
+                              }
+                            >
+                              <Row gutter={[8, 8]}>
+                                <Col span={12}>
+                                  <Text type="secondary">Saldo Inicial:</Text>
+                                  <br />
+                                  <Text strong>{formatCurrency(pasillera.initial_balance)}</Text>
+                                </Col>
+                                <Col span={12}>
+                                  <Text type="secondary">Pagos:</Text>
+                                  <br />
+                                  <Text strong>{formatCurrency(pasillera.total_payments)}</Text>
+                                </Col>
+                                <Col span={12}>
+                                  <Text type="secondary">Saldo Actual:</Text>
+                                  <br />
+                                  <Text strong style={{ color: hasReintegro ? '#52c41a' : isBalanceZero ? '#fa8c16' : undefined }}>
+                                    {formatCurrency(pasillera.current_balance)}
+                                  </Text>
+                                </Col>
+                              </Row>
+
+                              <Divider style={{ margin: '10px 0' }} />
+
+                              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                                <div>🕐 <Text type="secondary" style={{ fontSize: 12 }}>Asignado:</Text>{' '}
+                                  <Text style={{ fontSize: 12 }}>{fmtTs(pasillera.created_at)}</Text>
+                                </div>
+                                {hasReintegro && reintegroTx && (
+                                  <div style={{ marginTop: 4 }}>
+                                    ✅ <Text style={{ fontSize: 12, color: '#52c41a' }}>Reintegrado:</Text>{' '}
+                                    <Text style={{ fontSize: 12 }}>{fmtTs(reintegroTx.created_at)}</Text>
+                                  </div>
+                                )}
+                                {isBalanceZero && (
+                                  <div style={{ marginTop: 4, color: '#fa8c16' }}>
+                                    ⚠ Saldo llegó a $0
+                                  </div>
+                                )}
+                              </div>
+
+                              {pasillera.transactions && pasillera.transactions.length > 0 && (
+                                <div style={{ marginTop: 12 }}>
+                                  <Text strong style={{ fontSize: 12 }}>Registros:</Text>
+                                  <div style={{ maxHeight: 150, overflowY: 'auto', marginTop: 6 }}>
+                                    {pasillera.transactions.map((registro, index) => (
+                                      <div key={index} style={{
+                                        fontSize: 12, marginBottom: 4,
+                                        color: registro.type === 'pasillera_return' ? '#52c41a' : undefined
+                                      }}>
+                                        {registro.type === 'pasillera_return' ? '↩ Reintegro ' : ''}
+                                        {formatCurrency(registro.amount)}{' '}
+                                        {registro.type === 'pasillera_payment' ? `- Máquina: ${registro.machine} - ` : ''}
+                                        {new Date(registro.created_at).toLocaleString('es-AR')}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </Card>
+                          </Col>
+                        );
+                      })}
+                    </Row>
+                    {groupIdx < groupList.length - 1 && (
+                      <Divider style={{ margin: '16px 0' }} />
                     )}
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+                  </div>
+                ));
+              })()}
           </Space>
         </Card>
 
@@ -976,8 +1544,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         <Card title="Historial de Transacciones" extra={<RefreshBtn tooltip="Actualizar historial" />}>
           <Table
             columns={transactionColumns}
-            dataSource={transactions}
-            rowKey="id"
+            dataSource={combinedHistory}
+            rowKey={(record) => `${record.source}-${record.id}`}
             pagination={{ pageSize: 10 }}
             scroll={{ x: 800 }}
           />
@@ -995,6 +1563,15 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           confirmLoading={loading}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="large">
+
+            {/* Branch info */}
+            {branch?.name && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                <Text type="secondary" style={{ fontSize: 13 }}>Sucursal:</Text>
+                <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>{branch.name}</Text>
+              </div>
+            )}
 
             {/* Mode toggle */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">

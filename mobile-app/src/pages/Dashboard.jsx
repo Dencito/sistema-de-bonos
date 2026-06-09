@@ -16,6 +16,7 @@ import {
   Pencil,
   Trash2,
   X,
+  Clock,
 } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
@@ -32,6 +33,10 @@ export default function Dashboard() {
   const [amount, setAmount] = useState('');
   const [machine, setMachine] = useState('');
   const [description, setDescription] = useState('');
+  const [transactionType, setTransactionType] = useState('pasillera_payment');
+  const [client, setClient] = useState('');
+  const [expenseType, setExpenseType] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
   const [editingTx, setEditingTx] = useState(null);
   const [editAmount, setEditAmount] = useState('');
   const [editMachine, setEditMachine] = useState('');
@@ -46,18 +51,39 @@ export default function Dashboard() {
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState(false);
 
+  const transactionTypes = [
+    { value: 'pasillera_payment', label: 'Pago Pasillera', requiresMachine: true },
+    { value: 'transfer', label: 'Transferencia', requiresMachine: true },
+    { value: 'giro', label: 'Giro', requiresMachine: true },
+    { value: 'payment', label: 'Pago por Caja', requiresMachine: true },
+    { value: 'other', label: 'Otro Gasto', requiresMachine: false, requiresExpenseType: true },
+    { value: 'sorteo', label: 'Sorteo', requiresClient: true },
+    { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
+    { value: 'prestamo', label: 'Préstamo', requiresClient: true },
+  ];
+
   useEffect(() => {
     loadPasillera();
     loadMachines();
+    updateTime();
+
+    // Actualizar hora cada segundo
+    const timeInterval = setInterval(updateTime, 1000);
 
     const channel = window.Echo.channel('pasillera-updates');
     channel.listen('.cashtransaction.added', (e) => {
       alert('Nueva transacción registrada por la cajera: ' + e.user.name + '\nMonto: $' + e.transaction.amount);
     });
     return () => {
+      clearInterval(timeInterval);
       window.Echo.leave('pasillera-updates');
     };
   }, []);
+
+  const updateTime = () => {
+    const now = new Date();
+    setCurrentTime(now.toLocaleString('es-CL'));
+  };
 
   const loadPasillera = async () => {
     try {
@@ -163,15 +189,40 @@ export default function Dashboard() {
 
     try {
       const realAmount = parseFloat(amount) * 1000;
-      const formattedMachine = machine.toLowerCase().startsWith('maquina')
-        ? machine
-        : `Maquina ${machine}`;
 
-      const response = await pasilleraService.registerExpense(
-        realAmount,
-        formattedMachine,
-        description
-      );
+      // Validaciones según tipo
+      const currentType = transactionTypes.find(t => t.value === transactionType);
+      if (currentType.requiresMachine && !machine) {
+        setFormError('Debe indicar el número de máquina');
+        setRegistering(false);
+        return;
+      }
+      if (currentType.requiresClient && !client) {
+        setFormError('Debe indicar el nombre del cliente');
+        setRegistering(false);
+        return;
+      }
+      if (currentType.requiresExpenseType && !expenseType) {
+        setFormError('Debe indicar el tipo de gasto');
+        setRegistering(false);
+        return;
+      }
+
+      let response;
+
+      if (transactionType === 'pasillera_payment') {
+        // Pago Pasillera usa el endpoint dedicado de pasillera
+        response = await pasilleraService.registerExpense(realAmount, machine, description);
+      } else {
+        const formData = new FormData();
+        formData.append('type', transactionType);
+        formData.append('amount', realAmount);
+        if (machine) formData.append('machine', machine);
+        if (client) formData.append('client', client);
+        if (expenseType) formData.append('expense_type', expenseType);
+        if (description) formData.append('description', description);
+        response = await pasilleraService.registerTransaction(formData);
+      }
 
       if (response.success) {
         setFormSuccess(true);
@@ -311,12 +362,20 @@ export default function Dashboard() {
             <h1 className="mb-1 text-2xl font-bold tracking-tight">Hola, {user?.name?.split(' ')[0]}</h1>
             <p className="text-sm text-zinc-400 font-medium">Bienvenido de vuelta</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-full transition hover:bg-zinc-800 active:bg-zinc-700"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {currentTime && (
+              <div className="flex items-center text-xs text-zinc-400">
+                <Clock className="w-3 h-3 mr-1" />
+                {currentTime}
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-full transition hover:bg-zinc-800 active:bg-zinc-700"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -405,14 +464,73 @@ export default function Dashboard() {
                 <div className="flex justify-center items-center w-12 h-12 bg-zinc-100 rounded-full mb-3">
                   <CheckCircle className="w-6 h-6 text-zinc-800" />
                 </div>
-                <p className="font-semibold text-zinc-900">¡Gasto Registrado!</p>
+                <p className="font-semibold text-zinc-900">¡Transacción Registrada!</p>
               </div>
             ) : (
-              <form onSubmit={handleRegisterExpense} className="space-y-5">
-                {/* Amount and Machine */}
-                <div className="flex gap-4">
-                  {/* Amount */}
-                  <div className="flex-1">
+              <form onSubmit={handleRegisterExpense} className="space-y-4">
+                {/* Transaction Type */}
+                <div>
+                  <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                    Tipo de Transacción *
+                  </label>
+                  <select
+                    value={transactionType}
+                    onChange={(e) => setTransactionType(e.target.value)}
+                    className="px-3 py-3 w-full bg-white rounded-lg border border-zinc-200 transition appearance-none outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
+                    required
+                    disabled={registering}
+                  >
+                    {transactionTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount and Machine - side by side when machine is required */}
+                {transactionTypes.find(t => t.value === transactionType)?.requiresMachine ? (
+                  <div className="flex gap-4">
+                    {/* Amount */}
+                    <div className="flex-1">
+                      <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                        Monto (x1000) *
+                      </label>
+                      <div className="relative">
+                        <div className="flex absolute inset-y-0 left-0 items-center pl-3.5 pointer-events-none">
+                          <DollarSign className="w-4 h-4 text-zinc-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={amount ? new Intl.NumberFormat('es-CL').format(amount) : ''}
+                          onChange={handleAmountChange}
+                          className="py-3.5 pr-4 pl-10 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:font-medium placeholder:text-zinc-400"
+                          placeholder="Ej: 1"
+                          required
+                          disabled={registering}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Machine */}
+                    <div className="flex-1">
+                      <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                        N° Máquina *
+                      </label>
+                      <input
+                        type="text"
+                        value={machine}
+                        onChange={(e) => setMachine(e.target.value.toUpperCase())}
+                        className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:font-medium placeholder:text-zinc-400"
+                        placeholder="Ej: 12"
+                        required
+                        disabled={registering}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* Amount only when machine is not required */
+                  <div>
                     <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                       Monto (x1000) *
                     </label>
@@ -431,22 +549,66 @@ export default function Dashboard() {
                       />
                     </div>
                   </div>
+                )}
 
-                  {/* Machine */}
-                  <div className="flex-1">
+                {/* Client - conditional */}
+                {transactionTypes.find(t => t.value === transactionType)?.requiresClient && (
+                  <div>
                     <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                      N° Máquina *
+                      Cliente *
                     </label>
                     <input
                       type="text"
-                      value={machine}
-                      onChange={(e) => setMachine(e.target.value.toUpperCase())}
-                      className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:font-medium placeholder:text-zinc-400"
-                      placeholder="Ej: 12"
-                      required
+                      value={client}
+                      onChange={(e) => setClient(e.target.value)}
+                      className="px-3 py-3 w-full bg-white rounded-lg border border-zinc-200 transition outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
+                      placeholder="Nombre del cliente"
+                      required={transactionTypes.find(t => t.value === transactionType)?.requiresClient}
                       disabled={registering}
                     />
                   </div>
+                )}
+
+                {/* Expense Type - conditional */}
+                {transactionTypes.find(t => t.value === transactionType)?.requiresExpenseType && (
+                  <div>
+                    <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                      Tipo de Gasto *
+                    </label>
+                    <select
+                      value={expenseType}
+                      onChange={(e) => setExpenseType(e.target.value)}
+                      className="px-3 py-3 w-full bg-white rounded-lg border border-zinc-200 transition appearance-none outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
+                      required
+                      disabled={registering}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="Limpieza">Limpieza</option>
+                      <option value="Insumos">Insumos</option>
+                      <option value="Reparación">Reparación</option>
+                      <option value="Mantenimiento">Mantenimiento</option>
+                      <option value="Servicios">Servicios</option>
+                      <option value="Alimentos">Alimentos</option>
+                      <option value="Transporte">Transporte</option>
+                      <option value="Publicidad">Publicidad</option>
+                      <option value="Otros">Otros</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Description */}
+                <div>
+                  <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                    Descripción (Opcional)
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="px-3 py-3 w-full rounded-lg border border-zinc-200 transition outline-none resize-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
+                    placeholder="Descripción adicional"
+                    rows="2"
+                    disabled={registering}
+                  />
                 </div>
 
                 {amount && (
@@ -454,18 +616,6 @@ export default function Dashboard() {
                     Total a registrar: <span className="text-zinc-900">{formatCurrency(parseFloat(amount) * 1000)}</span>
                   </p>
                 )}
-
-                {/* Description (Optional) */}
-                <div>
-                  <input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="px-4 py-3.5 w-full text-sm font-medium bg-zinc-50 rounded-2xl border border-zinc-200 transition outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 placeholder:text-zinc-400"
-                    placeholder="Descripción (Opcional)"
-                    disabled={registering}
-                  />
-                </div>
 
                 {formError && (
                   <div className="px-4 py-3 text-sm font-medium text-red-600 bg-red-50 rounded-xl border border-red-100">
@@ -475,7 +625,7 @@ export default function Dashboard() {
 
                 <button
                   type="submit"
-                  disabled={registering || !amount || !machine}
+                  disabled={registering || !amount}
                   className="flex justify-center items-center py-4 w-full font-bold text-white rounded-2xl transition bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:bg-zinc-300 disabled:text-zinc-500"
                 >
                   {registering ? (
@@ -525,26 +675,44 @@ export default function Dashboard() {
           </div>
           <div className="overflow-hidden bg-white rounded-xl shadow divide-y divide-gray-100">
             {pasillera.transactions.slice(0, 5).map((transaction) => {
-              const canEdit = transaction.type === 'pasillera_payment';
+              const canEdit = ['pasillera_payment', 'transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo'].includes(transaction.type);
+              const typeLabels = {
+                transfer: 'Transferencia',
+                giro: 'Giro',
+                payment: 'Pago por Caja',
+                other: 'Otro Gasto',
+                sorteo: 'Sorteo',
+                bonus_especial: 'Bono Especial',
+                prestamo: 'Préstamo',
+                deposit: 'Agregar Dinero',
+                withdrawal: 'Quitar Dinero',
+                pasillera_payment: 'Pago Máquina',
+                pasillera_return: 'Reintegro',
+              };
+              const typeLabel = typeLabels[transaction.type] || transaction.type;
+              const isPositive = ['deposit', 'pasillera_return'].includes(transaction.type);
               return (
                 <div
                   key={transaction.id}
                   className="flex justify-between items-center p-4"
                 >
                   <div className="flex items-center flex-1 min-w-0">
-                    <div className="flex justify-center items-center mr-3 w-10 h-10 bg-red-100 rounded-full flex-shrink-0">
-                      <DollarSign className="w-5 h-5 text-red-600" />
+                    <div className={`flex justify-center items-center mr-3 w-10 h-10 rounded-full flex-shrink-0 ${isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
+                      <DollarSign className={`w-5 h-5 ${isPositive ? 'text-green-600' : 'text-red-600'}`} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{transaction.machine || '-'}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-medium text-gray-900 truncate">{typeLabel}</p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {transaction.client || transaction.machine || transaction.expense_type || '-'}
+                      </p>
+                      <p className="text-xs text-gray-400">
                         {new Date(transaction.created_at).toLocaleString('es-CL')}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
-                    <p className="font-semibold text-red-600 whitespace-nowrap">
-                      -{formatCurrency(transaction.amount)}
+                    <p className={`font-semibold whitespace-nowrap ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                      {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </p>
                     {canEdit && (
                       <>

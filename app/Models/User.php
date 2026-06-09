@@ -59,6 +59,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'levels' => 'json',
         'fingerprints' => 'json',
+        'cargo' => 'json',
     ];
 
     protected static function boot()
@@ -166,12 +167,22 @@ class User extends Authenticatable
         $this->attributes['levels'] = json_encode($value);
     }
 
+    public function setCargoAttribute($value)
+    {
+        $this->attributes['cargo'] = json_encode($value);
+    }
+
     public function getFingerprintsAttribute($value)
     {
         return json_decode($value, true);
     }
-    
+
     public function getLevelsAttribute($value)
+    {
+        return json_decode($value, true);
+    }
+
+    public function getCargoAttribute($value)
     {
         return json_decode($value, true);
     }

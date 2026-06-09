@@ -10,6 +10,7 @@ use App\Events\CashTransactionAdded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class CashManagementController extends Controller
@@ -47,7 +48,7 @@ class CashManagementController extends Controller
             ->first();
 
         // Get available users for pasilleras (only users with cargo 'PASILLER@')
-        $availableUsers = \App\Models\User::where('cargo', 'PASILLER@')
+        $availableUsers = \App\Models\User::whereJsonContains('cargo', 'PASILLER@')
             ->where('status_id', 1) // Active users only
             ->where('branch_id', $branchId)
             ->select('id', 'first_name', 'first_last_name', 'second_name', 'second_last_name')
@@ -63,6 +64,7 @@ class CashManagementController extends Controller
             'activeShift' => $activeShift,
             'previousBalance' => $previousShift ? $previousShift->current_balance : 0,
             'availableUsers' => $availableUsers,
+            'branch' => ['id' => $branch->id, 'name' => $branch->name],
         ]);
     }
 
@@ -306,11 +308,13 @@ class CashManagementController extends Controller
     public function addTransaction(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:transfer,payment,giro,other',
+            'type' => 'required|in:transfer,payment,giro,other,sorteo,bonus_especial,prestamo,deposit,withdrawal',
             'amount' => 'required|numeric|min:0',
             'client' => 'nullable|string',
             'machine' => 'nullable|string|max:100',
             'expense_type' => 'nullable|string|max:150',
+            'image' => 'nullable|image|max:5120',
+            'admin_user_id' => 'nullable|integer',
         ]);
 
         // Para 'payment' requerimos máquina
@@ -341,10 +345,22 @@ class CashManagementController extends Controller
 
         $branchId = $branch->id;
 
-        $activeShift = CashShift::where('user_id', $user->id)
-            ->where('branch_id', $branchId)
+        // Detectar si el usuario autenticado es una pasillera activa
+        $activePasillera = \App\Models\Pasillera::where('user_id', $user->id)
             ->where('is_active', true)
             ->first();
+
+        if ($activePasillera) {
+            // Usar el CashShift asociado a la pasillera
+            $activeShift = CashShift::where('id', $activePasillera->cash_shift_id)
+                ->where('is_active', true)
+                ->first();
+        } else {
+            $activeShift = CashShift::where('user_id', $user->id)
+                ->where('branch_id', $branchId)
+                ->where('is_active', true)
+                ->first();
+        }
 
         if (!$activeShift) {
             return response()->json([
@@ -353,19 +369,26 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        // Validar que las salidas no dejen la caja en negativo
-        if (in_array($request->type, ['giro', 'payment', 'other'])) {
-            if ($request->amount > $activeShift->current_balance) {
+        // Validar saldo: si es pasillera, validar contra su propio saldo
+        $balanceSource = $activePasillera ? $activePasillera->current_balance : $activeShift->current_balance;
+        if (in_array($request->type, ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'withdrawal'])) {
+            if ($request->amount > $balanceSource) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Saldo insuficiente. Saldo actual: $' . number_format($activeShift->current_balance, 2, ',', '.')
-                        . '. No se puede registrar un monto mayor al saldo disponible.'
+                    'message' => 'Saldo insuficiente. Saldo disponible: $' . number_format($balanceSource, 0, ',', '.')
                 ], 422);
             }
         }
 
         DB::beginTransaction();
         try {
+            // Procesar imagen si se envió
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imagePath = $image->store('expense-images', 'public');
+            }
+
             // Descripción automática según tipo
             $detailParts = array_filter([
                 $request->client,
@@ -376,19 +399,22 @@ class CashManagementController extends Controller
 
             $transaction = CashTransaction::create([
                 'cash_shift_id' => $activeShift->id,
+                'pasillera_id' => $activePasillera ? $activePasillera->id : null,
                 'type' => $request->type,
                 'expense_type' => $request->expense_type,
                 'amount' => $request->amount,
                 'client' => $request->client,
                 'machine' => $request->machine,
                 'description' => $description,
+                'image' => $imagePath,
+                'admin_user_id' => $request->admin_user_id,
             ]);
 
             // Update shift totals
             switch ($request->type) {
                 case 'transfer':
                     $activeShift->total_transfers += $request->amount;
-                    $activeShift->current_balance += $request->amount;
+                    $activeShift->current_balance -= $request->amount;
                     break;
                 case 'giro':
                     $activeShift->total_giros += $request->amount;
@@ -396,12 +422,43 @@ class CashManagementController extends Controller
                     break;
                 case 'payment':
                 case 'other':
+                case 'sorteo':
+                case 'bonus_especial':
+                case 'prestamo':
                     $activeShift->total_payments += $request->amount;
+                    $activeShift->current_balance -= $request->amount;
+                    break;
+                case 'deposit':
+                    $activeShift->current_balance += $request->amount;
+                    break;
+                case 'withdrawal':
                     $activeShift->current_balance -= $request->amount;
                     break;
             }
 
             $activeShift->save();
+
+            // Si es pasillera, también actualizar su saldo personal
+            if ($activePasillera) {
+                switch ($request->type) {
+                    case 'transfer':
+                    case 'giro':
+                    case 'payment':
+                    case 'other':
+                    case 'sorteo':
+                    case 'bonus_especial':
+                    case 'prestamo':
+                    case 'withdrawal':
+                        $activePasillera->total_payments += $request->amount;
+                        $activePasillera->current_balance = $activePasillera->initial_balance - $activePasillera->total_payments;
+                        break;
+                    case 'deposit':
+                        $activePasillera->initial_balance += $request->amount;
+                        $activePasillera->current_balance = $activePasillera->initial_balance - $activePasillera->total_payments;
+                        break;
+                }
+                $activePasillera->save();
+            }
 
             DB::commit();
 
@@ -461,7 +518,7 @@ class CashManagementController extends Controller
             ], 403);
         }
 
-        if (!in_array($transaction->type, ['transfer', 'giro', 'payment', 'other'])) {
+        if (!in_array($transaction->type, ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Este tipo de transacción no se puede editar desde aquí'
@@ -491,9 +548,12 @@ class CashManagementController extends Controller
             // Revert old impact + apply new = net delta
             switch ($transaction->type) {
                 case 'transfer':
-                    // outgoing reversal not needed, just adjust totals
+                    // Transferencia es salida de dinero, debe restar del saldo
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
                     $activeShift->total_transfers += $delta;
-                    $activeShift->current_balance += $delta;
+                    $activeShift->current_balance -= $delta;
                     break;
                 case 'giro':
                     // New balance check: delta > 0 means extra outgoing
@@ -505,10 +565,22 @@ class CashManagementController extends Controller
                     break;
                 case 'payment':
                 case 'other':
+                case 'sorteo':
+                case 'bonus_especial':
+                case 'prestamo':
                     if ($delta > 0 && $activeShift->current_balance < $delta) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_payments += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
+                case 'deposit':
+                    $activeShift->current_balance += $delta;
+                    break;
+                case 'withdrawal':
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
                     $activeShift->current_balance -= $delta;
                     break;
             }
@@ -571,7 +643,7 @@ class CashManagementController extends Controller
             switch ($transaction->type) {
                 case 'transfer':
                     $activeShift->total_transfers -= $amount;
-                    $activeShift->current_balance -= $amount;
+                    $activeShift->current_balance += $amount;
                     break;
                 case 'giro':
                     $activeShift->total_giros -= $amount;
@@ -579,7 +651,16 @@ class CashManagementController extends Controller
                     break;
                 case 'payment':
                 case 'other':
+                case 'sorteo':
+                case 'bonus_especial':
+                case 'prestamo':
                     $activeShift->total_payments -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
+                case 'deposit':
+                    $activeShift->current_balance -= $amount;
+                    break;
+                case 'withdrawal':
                     $activeShift->current_balance += $amount;
                     break;
                 case 'pasillera_payment':
@@ -660,21 +741,36 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        $pasillera = Pasillera::create([
-            'cash_shift_id' => $activeShift->id,
-            'user_id' => $request->user_id,
-            'initial_balance' => $request->initial_balance,
-            'current_balance' => $request->initial_balance,
-        ]);
+        DB::beginTransaction();
+        try {
+            $pasillera = Pasillera::create([
+                'cash_shift_id' => $activeShift->id,
+                'user_id' => $request->user_id,
+                'initial_balance' => $request->initial_balance,
+                'current_balance' => $request->initial_balance,
+            ]);
 
-        // Load user relationship
-        $pasillera->load('user');
+            // Restar el dinero asignado del saldo de caja
+            $activeShift->current_balance -= $request->initial_balance;
+            $activeShift->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pasillera agregada correctamente',
-            'data' => $pasillera
-        ]);
+            DB::commit();
+
+            // Load user relationship
+            $pasillera->load('user');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pasillera agregada correctamente',
+                'data' => $pasillera
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al agregar pasillera: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -739,7 +835,7 @@ class CashManagementController extends Controller
                 'description' => 'Pago Pasillera ' . $pasillera->user->first_name . ' ' . $pasillera->user->first_last_name . ' - Máquina: ' . $request->machine,
             ]);
 
-            // Update shift totals
+            // Update shift totals (solo para estadísticas, no afecta current_balance porque el dinero ya salió al asignar la pasillera)
             $activeShift->total_payments += $request->amount;
             $activeShift->save();
 
@@ -860,12 +956,27 @@ class CashManagementController extends Controller
             ], 404);
         }
 
-        $pasillera->delete();
+        DB::beginTransaction();
+        try {
+            // Devolver el saldo actual de la pasillera a la caja
+            $activeShift->current_balance += $pasillera->current_balance;
+            $activeShift->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pasillera eliminada correctamente'
-        ]);
+            $pasillera->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pasillera eliminada correctamente'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar pasillera: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -875,7 +986,7 @@ class CashManagementController extends Controller
     {
         $user = Auth::user();
         $branch = $user->branch;
-        
+
         if (!$branch) {
             return response()->json([
                 'success' => false,
@@ -899,12 +1010,80 @@ class CashManagementController extends Controller
 
         $transactions = CashTransaction::where('cash_shift_id', $activeShift->id)
             ->with('pasillera')
+            ->with('adminUser:id,first_name,second_name,first_last_name')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Obtener tickets del turno activo
+        $tickets = \App\Models\Ticket::where('cash_shift_id', $activeShift->id)
+            ->with('user:id,first_name,first_last_name')
             ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $transactions
+            'data' => [
+                'transactions' => $transactions,
+                'tickets' => $tickets,
+            ]
+        ]);
+    }
+
+    /**
+     * Validate user credentials for admin operations
+     */
+    public function validateCredentials(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('username', $request->username)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 401);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Contraseña incorrecta'
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name),
+            ]
+        ]);
+    }
+
+    /**
+     * Validate current user password for session unlock
+     */
+    public function validateCurrentPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Contraseña incorrecta'
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
         ]);
     }
 

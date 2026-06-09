@@ -138,7 +138,9 @@ class TicketController extends Controller
             'user_id' => 'required',
             'branch_id' => 'required',
             'total_amount' => 'required|numeric',
-            'active' => 'nullable|boolean'
+            'active' => 'nullable|boolean',
+            'type' => 'nullable|string',
+            'ticket_number' => 'nullable|string',
         ]);
 
         $validated['active'] = $validated['active'] ?? true;

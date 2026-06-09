@@ -39,11 +39,6 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
       );
     }
 
-    // Convertir cargo a JSON si es array
-    if (values.cargo && Array.isArray(values.cargo)) {
-      values.cargo = JSON.stringify(values.cargo);
-    }
-
     values.role = userType;
     try {
       setLoading(true);

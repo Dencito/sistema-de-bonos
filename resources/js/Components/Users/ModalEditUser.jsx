@@ -47,11 +47,6 @@ export default function ModalEditUser({
     try {
       setLoading(true);
 
-      // Convertir cargo a JSON si es array
-      if (values.cargo && Array.isArray(values.cargo)) {
-        values.cargo = JSON.stringify(values.cargo);
-      }
-
       const response = await userService.update(data.id, {
         ...values,
         role_id: values?.role_id === undefined ? data?.role_id : values?.role_id,

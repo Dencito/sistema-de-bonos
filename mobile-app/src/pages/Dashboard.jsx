@@ -246,6 +246,7 @@ export default function Dashboard() {
         }
         if (description) formData.append('description', description);
         if (expenseImage) formData.append('image', expenseImage);
+        formData.append('admin_user_id', user.id);
         response = await pasilleraService.registerTransaction(formData);
       }
 

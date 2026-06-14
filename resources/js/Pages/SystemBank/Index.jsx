@@ -608,6 +608,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         if (record.source === 'ticket') {
           return `Ticket #${record.ticket_number} - ${record.user?.first_name} ${record.user?.first_last_name || ''}`;
         }
+        console.log(record);
         const parts = [];
         if (record.type === 'deposit') parts.push('Agregar Dinero');
         else if (record.type === 'withdrawal') parts.push('Quitar Dinero');
@@ -618,29 +619,18 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           const u = record.admin_user;
           parts.push(`Autorizado por: ${[u.first_name, u.first_last_name].filter(Boolean).join(' ')}`);
         }
-        if (record.pasillera?.user) {
-          const p = record.pasillera.user;
-          parts.push(`Pasillero: ${[p.first_name, p.first_last_name].filter(Boolean).join(' ')}`);
-        }
         return parts.length ? parts.join(' | ') : (desc || '-');
       },
     },
     {
-      title: 'Autorizado por',
+      title: 'Operado por',
       key: 'operator',
       render: (_, record) => {
-        if (record.source === 'ticket') return '-';
-        // Pasillera transaction: show pasillero name
-        if (record.pasillera?.user) {
-          const u = record.pasillera.user;
-          const name = [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
-          return `Pasillera: ${name}`;
-        }
-        // Admin transaction (deposit/withdrawal/etc): show admin name
-        if (record.admin_user) {
-          const u = record.admin_user;
-          const name = [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
-          return `Admin: ${name}`;
+        console.log(record.admin_user)
+        // if (record.source === 'ticket') return '-';
+        if (record?.admin_user) {
+          const u = record?.admin_user;
+          return [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
         }
         return '-';
       },

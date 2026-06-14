@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { pasilleraService } from '../services/api';
 import { ArrowLeft, DollarSign, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 export default function RegisterExpense() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [transactionType, setTransactionType] = useState('payment');
   const [amount, setAmount] = useState('');
   const [machine, setMachine] = useState('');
@@ -126,6 +128,7 @@ export default function RegisterExpense() {
       const finalExpenseType = expenseType === 'Otros' ? otherExpenseCustom : expenseType;
       if (finalExpenseType) formData.append('expense_type', finalExpenseType);
       if (description) formData.append('description', description);
+      if (user?.id) formData.append('admin_user_id', user.id);
 
       const response = await pasilleraService.registerTransaction(formData);
 

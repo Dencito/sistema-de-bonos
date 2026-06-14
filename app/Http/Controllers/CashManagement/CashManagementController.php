@@ -36,7 +36,7 @@ class CashManagementController extends Controller
         $branchId = $branch->id;
 
         // Get active shift if exists
-        $activeShift = CashShift::with(['transactions', 'pasilleras.transactions', 'pasilleras.user'])
+        $activeShift = CashShift::with(['transactions.adminUser', 'pasilleras.transactions', 'pasilleras.user'])
             ->where('user_id', $user->id)
             ->where('branch_id', $branchId)
             ->where('is_active', true)
@@ -454,7 +454,7 @@ class CashManagementController extends Controller
                 'machine' => $request->machine,
                 'description' => $description,
                 'image' => $imagePath,
-                'admin_user_id' => $request->admin_user_id,
+                'admin_user_id' => $request->admin_user_id ?: $user->id,
             ]);
 
             // Update shift totals

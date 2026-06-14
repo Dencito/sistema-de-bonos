@@ -176,7 +176,7 @@ class OrdersController extends Controller
 
             DB::transaction(function () use ($user, $branchId, $request) {
                 $branch = Branch::lockForUpdate()->find($branchId);
-                
+
                 if (!$branch) {
                     throw new \Exception('Sucursal no encontrada.');
                 }
@@ -188,6 +188,20 @@ class OrdersController extends Controller
                     throw new \Exception('No hay dinero disponible para retirar.');
                 }
 
+                // Obtener el monto a retirar (si no se especifica, retirar todo)
+                $withdrawAmount = $request->has('amount') && $request->amount !== null
+                    ? (float) $request->amount
+                    : $availableAmount;
+
+                // Validar que el monto a retirar sea válido
+                if ($withdrawAmount <= 0) {
+                    throw new \Exception('El monto a retirar debe ser mayor a 0.');
+                }
+
+                if ($withdrawAmount > $availableAmount) {
+                    throw new \Exception('El monto a retirar excede el disponible. Disponible: $' . number_format($availableAmount, 2));
+                }
+
                 // Obtener el array de retiros actual o inicializar vacío
                 $withdrawals = $branch->withdrawals ?? [];
 
@@ -196,18 +210,18 @@ class OrdersController extends Controller
                     'date' => now()->toDateTimeString(),
                     'user_id' => $user->id,
                     'user_name' => $user->name,
-                    'amount' => $availableAmount,
+                    'amount' => $withdrawAmount,
                     'description' => $request->description,
                 ];
 
                 // Actualizar la sucursal
                 $branch->withdrawals = $withdrawals;
-                $branch->sales_accumulator = 0;
+                $branch->sales_accumulator = $availableAmount - $withdrawAmount;
                 $branch->save();
             });
 
             return response()->json([
-                'message' => 'Retiro de ventas registrado exitosamente. El acumulador ha sido reseteado a $0.'
+                'message' => 'Retiro de ventas registrado exitosamente.'
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

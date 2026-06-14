@@ -28,13 +28,18 @@ class MobilePasilleraController extends Controller
     public function getMyActivePasillera()
     {
         $user = Auth::user();
-        
-        // Get active pasillera for this user
+
+        // Get active pasillera for this user, or force closed pasillera (withTrashed)
         $pasillera = Pasillera::with(['cashShift', 'transactions' => function($query) {
                 $query->orderBy('created_at', 'desc');
             }])
             ->where('user_id', $user->id)
-            ->where('is_active', true)
+            ->where(function($query) {
+                $query->where('is_active', true)
+                      ->orWhere('force_closed', true);
+            })
+            ->withTrashed()
+            ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$pasillera) {

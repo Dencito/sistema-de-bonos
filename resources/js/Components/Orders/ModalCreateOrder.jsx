@@ -15,6 +15,7 @@ export default function ModalCreateOrder({ products }) {
   const [unitPrice, setUnitPrice] = useState(0);
   const [showSalesWithdrawalModal, setShowSalesWithdrawalModal] = useState(false);
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
+  const [withdrawalType, setWithdrawalType] = useState('total');
 
   const [form] = Form.useForm();
   const [withdrawalForm] = Form.useForm();
@@ -46,6 +47,8 @@ export default function ModalCreateOrder({ products }) {
   };
 
   const showSalesWithdrawalConfirm = () => {
+    setWithdrawalType('total');
+    withdrawalForm.resetFields();
     setShowSalesWithdrawalModal(true);
   };
 
@@ -156,21 +159,57 @@ export default function ModalCreateOrder({ products }) {
         onCancel={() => {
           setShowSalesWithdrawalModal(false);
           withdrawalForm.resetFields();
+          setWithdrawalType('total');
         }}
         footer={null}
         width={500}
       >
-        <div className="mb-4">
-          <Text type="warning" style={{ fontSize: '14px' }}>
-            ⚠️ Se retirará TODO el dinero acumulado de ventas. El acumulador se reseteará a $0.
-          </Text>
-        </div>
         <Form
           form={withdrawalForm}
           layout="vertical"
           onFinish={handleSalesWithdrawal}
           autoComplete="off"
         >
+          <Form.Item label="Tipo de Retiro" name="withdrawalType" initialValue="total">
+            <Select onChange={(value) => setWithdrawalType(value)}>
+              <Option value="total">Retiro Total</Option>
+              <Option value="partial">Retiro Parcial</Option>
+            </Select>
+          </Form.Item>
+
+          {withdrawalType === 'total' && (
+            <div className="mb-4">
+              <Text type="warning" style={{ fontSize: '14px' }}>
+                ⚠️ Se retirará TODO el dinero acumulado de ventas.
+              </Text>
+            </div>
+          )}
+
+          {withdrawalType === 'partial' && (
+            <Form.Item
+              label="Monto a Retirar $"
+              name="amount"
+              rules={[
+                {
+                  required: true,
+                  message: 'Por favor ingrese el monto a retirar.',
+                },
+                {
+                  type: 'number',
+                  min: 0.01,
+                  message: 'El monto debe ser mayor a 0.',
+                },
+              ]}
+            >
+              <InputNumber
+                placeholder="Ingrese el monto a retirar"
+                style={{ width: '100%' }}
+                min={0.01}
+                precision={2}
+              />
+            </Form.Item>
+          )}
+
           <Form.Item label="Descripción (Opcional)" name="description">
             <Input.TextArea
               rows={3}
@@ -184,12 +223,18 @@ export default function ModalCreateOrder({ products }) {
               onClick={() => {
                 setShowSalesWithdrawalModal(false);
                 withdrawalForm.resetFields();
+                setWithdrawalType('total');
               }}
             >
               Cancelar
             </Button>
-            <Button type="primary" danger htmlType="submit" loading={withdrawalLoading}>
-              Confirmar Retiro Total
+            <Button
+              type="primary"
+              danger
+              htmlType="submit"
+              loading={withdrawalLoading}
+            >
+              {withdrawalType === 'total' ? 'Confirmar Retiro Total' : 'Confirmar Retiro Parcial'}
             </Button>
           </div>
         </Form>

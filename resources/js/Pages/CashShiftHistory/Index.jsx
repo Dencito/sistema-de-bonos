@@ -428,40 +428,60 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                         <Descriptions.Item label="Saldo Actual">{formatCurrency(shift.current_balance)}</Descriptions.Item>
                       </Descriptions>
 
-                      <Row gutter={[16, 16]}>
-                        <Col xs={12} md={6}>
-                          <Statistic title="Transferencias" value={shift.total_transfers || 0} prefix="$" precision={0} />
-                        </Col>
-                        <Col xs={12} md={6}>
-                          <Statistic title="Giros" value={shift.total_giros || 0} prefix="$" precision={0} />
-                        </Col>
-                        <Col xs={12} md={6}>
-                          <Statistic title="Pagos/Gastos" value={shift.total_payments || 0} prefix="$" precision={0} />
-                        </Col>
-                        <Col xs={12} md={6}>
-                          <Statistic
-                            title="Diferencia"
-                            value={Math.abs(Number(shift.difference) || 0)}
-                            prefix="$"
-                            precision={0}
-                            valueStyle={{
-                              color:
+                      <Card size="small" title="Totales del Turno">
+                        <Row gutter={[16, 16]}>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Transferencias" value={shift.total_transfers || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Giros" value={shift.total_giros || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Pagos por Caja" value={shift.total_payments || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Otros Gastos" value={shift.total_other || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Sorteos" value={shift.total_sorteo || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Bonus Especial" value={shift.total_bonus_especial || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Préstamos" value={shift.total_prestamo || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Depósitos" value={shift.total_deposit || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic title="Retiros" value={shift.total_withdrawal || 0} prefix="$" precision={0} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic
+                              title="Diferencia"
+                              value={Math.abs(Number(shift.difference) || 0)}
+                              prefix="$"
+                              precision={0}
+                              valueStyle={{
+                                color:
+                                  Number(shift.difference) === 0
+                                    ? undefined
+                                    : Number(shift.difference) > 0
+                                    ? '#13c2c2'
+                                    : '#cf1322',
+                              }}
+                              suffix={
                                 Number(shift.difference) === 0
-                                  ? undefined
+                                  ? null
                                   : Number(shift.difference) > 0
-                                  ? '#13c2c2'
-                                  : '#cf1322',
-                            }}
-                            suffix={
-                              Number(shift.difference) === 0
-                                ? null
-                                : Number(shift.difference) > 0
-                                ? ' (Sobrante)'
-                                : ' (Faltante)'
-                            }
-                          />
-                        </Col>
-                      </Row>
+                                  ? ' (Sobrante)'
+                                  : ' (Faltante)'
+                              }
+                            />
+                          </Col>
+                        </Row>
+                      </Card>
 
                       {shift.closing_notes && (
                         <Card size="small" title="Notas de cierre">

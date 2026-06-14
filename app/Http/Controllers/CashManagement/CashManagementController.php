@@ -42,6 +42,33 @@ class CashManagementController extends Controller
             ->where('is_active', true)
             ->first();
 
+        // Get tickets for the active shift period
+        $tickets = [];
+        if ($activeShift) {
+            $shiftStart = $activeShift->started_at;
+            $shiftEnd = $activeShift->ended_at ?? now();
+
+            $tickets = \App\Models\Ticket::with(['user', 'branch'])
+                ->where('branch_id', $branchId)
+                ->whereBetween('created_at', [$shiftStart, $shiftEnd])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'type' => 'ticket',
+                        'source' => 'ticket',
+                        'amount' => $ticket->total_amount,
+                        'description' => 'Ticket #' . $ticket->ticket_number,
+                        'created_at' => $ticket->created_at,
+                        'user' => [
+                            'first_name' => $ticket->user->first_name,
+                            'first_last_name' => $ticket->user->first_last_name,
+                        ],
+                    ];
+                });
+        }
+
         // Get previous shift balance (from any user in the branch)
         $previousShift = CashShift::where('branch_id', $branchId)
             ->where('is_active', false)
@@ -66,6 +93,7 @@ class CashManagementController extends Controller
             'previousBalance' => $previousShift ? $previousShift->current_balance : 0,
             'availableUsers' => $availableUsers,
             'branch' => ['id' => $branch->id, 'name' => $branch->name],
+            'tickets' => $tickets,
         ]);
     }
 
@@ -149,9 +177,8 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        // Get previous shift balance
-        $previousShift = CashShift::where('user_id', $user->id)
-            ->where('branch_id', $branchId)
+        // Get previous shift balance (from any user in the branch)
+        $previousShift = CashShift::where('branch_id', $branchId)
             ->where('is_active', false)
             ->orderBy('ended_at', 'desc')
             ->first();
@@ -277,6 +304,7 @@ class CashManagementController extends Controller
         $activeShift->update([
             'is_active'             => false,
             'ended_at'              => now(),
+            'current_balance'       => $closingTotalCounted,
             'closing_20000'         => $simpleMode ? 0 : ($request->closing_20000 ?? 0),
             'closing_10000'         => $simpleMode ? 0 : ($request->closing_10000 ?? 0),
             'closing_5000'          => $simpleMode ? 0 : ($request->closing_5000  ?? 0),
@@ -422,17 +450,31 @@ class CashManagementController extends Controller
                     $activeShift->current_balance -= $request->amount;
                     break;
                 case 'payment':
-                case 'other':
-                case 'sorteo':
-                case 'bonus_especial':
-                case 'prestamo':
                     $activeShift->total_payments += $request->amount;
                     $activeShift->current_balance -= $request->amount;
                     break;
+                case 'other':
+                    $activeShift->total_other += $request->amount;
+                    $activeShift->current_balance -= $request->amount;
+                    break;
+                case 'sorteo':
+                    $activeShift->total_sorteo += $request->amount;
+                    $activeShift->current_balance -= $request->amount;
+                    break;
+                case 'bonus_especial':
+                    $activeShift->total_bonus_especial += $request->amount;
+                    $activeShift->current_balance -= $request->amount;
+                    break;
+                case 'prestamo':
+                    $activeShift->total_prestamo += $request->amount;
+                    $activeShift->current_balance -= $request->amount;
+                    break;
                 case 'deposit':
+                    $activeShift->total_deposit += $request->amount;
                     $activeShift->current_balance += $request->amount;
                     break;
                 case 'withdrawal':
+                    $activeShift->total_withdrawal += $request->amount;
                     $activeShift->current_balance -= $request->amount;
                     break;
             }
@@ -565,23 +607,49 @@ class CashManagementController extends Controller
                     $activeShift->current_balance -= $delta;
                     break;
                 case 'payment':
-                case 'other':
-                case 'sorteo':
-                case 'bonus_especial':
-                case 'prestamo':
                     if ($delta > 0 && $activeShift->current_balance < $delta) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_payments += $delta;
                     $activeShift->current_balance -= $delta;
                     break;
+                case 'other':
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
+                    $activeShift->total_other += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
+                case 'sorteo':
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
+                    $activeShift->total_sorteo += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
+                case 'bonus_especial':
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
+                    $activeShift->total_bonus_especial += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
+                case 'prestamo':
+                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                        throw new \Exception('Saldo insuficiente para aumentar el monto');
+                    }
+                    $activeShift->total_prestamo += $delta;
+                    $activeShift->current_balance -= $delta;
+                    break;
                 case 'deposit':
+                    $activeShift->total_deposit += $delta;
                     $activeShift->current_balance += $delta;
                     break;
                 case 'withdrawal':
                     if ($delta > 0 && $activeShift->current_balance < $delta) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
+                    $activeShift->total_withdrawal += $delta;
                     $activeShift->current_balance -= $delta;
                     break;
             }
@@ -651,17 +719,31 @@ class CashManagementController extends Controller
                     $activeShift->current_balance += $amount;
                     break;
                 case 'payment':
-                case 'other':
-                case 'sorteo':
-                case 'bonus_especial':
-                case 'prestamo':
                     $activeShift->total_payments -= $amount;
                     $activeShift->current_balance += $amount;
                     break;
+                case 'other':
+                    $activeShift->total_other -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
+                case 'sorteo':
+                    $activeShift->total_sorteo -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
+                case 'bonus_especial':
+                    $activeShift->total_bonus_especial -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
+                case 'prestamo':
+                    $activeShift->total_prestamo -= $amount;
+                    $activeShift->current_balance += $amount;
+                    break;
                 case 'deposit':
+                    $activeShift->total_deposit -= $amount;
                     $activeShift->current_balance -= $amount;
                     break;
                 case 'withdrawal':
+                    $activeShift->total_withdrawal -= $amount;
                     $activeShift->current_balance += $amount;
                     break;
                 case 'pasillera_payment':
@@ -924,7 +1006,7 @@ class CashManagementController extends Controller
     {
         $user = Auth::user();
         $branch = $user->branch;
-        
+
         if (!$branch) {
             return response()->json([
                 'success' => false,
@@ -946,7 +1028,7 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        $pasillera = Pasillera::where('id', $pasilleraId)
+        $pasillera = Pasillera::with('user')->where('id', $pasilleraId)
             ->where('cash_shift_id', $activeShift->id)
             ->first();
 
@@ -959,17 +1041,36 @@ class CashManagementController extends Controller
 
         DB::beginTransaction();
         try {
-            // Devolver el saldo actual de la pasillera a la caja
-            $activeShift->current_balance += $pasillera->current_balance;
-            $activeShift->save();
+            // Si tiene saldo restante, crear autoreintegro
+            if ($pasillera->current_balance > 0) {
+                $pasilleraName = trim($pasillera->user->first_name . ' ' . $pasillera->user->first_last_name);
+                $transaction = CashTransaction::create([
+                    'cash_shift_id' => $activeShift->id,
+                    'pasillera_id' => $pasillera->id,
+                    'type' => 'pasillera_return',
+                    'amount' => $pasillera->current_balance,
+                    'description' => "Cierre forzado - Autoreintegro - {$pasilleraName}",
+                    'admin_user_id' => $user->id,
+                ]);
 
+                // Devolver el saldo a la caja
+                $activeShift->current_balance += $pasillera->current_balance;
+                $activeShift->save();
+            }
+
+            // Marcar como inactiva y force_closed
+            $pasillera->is_active = false;
+            $pasillera->force_closed = true;
+            $pasillera->save();
+
+            // Soft delete (no borrar físicamente)
             $pasillera->delete();
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pasillera eliminada correctamente'
+                'message' => 'Pasillera cerrada forzosamente con autoreintegro'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

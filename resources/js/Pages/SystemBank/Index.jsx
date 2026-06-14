@@ -27,10 +27,11 @@ import axios from 'axios';
 
 const { Title, Text } = Typography;
 
-export default function SystemBank({ auth, activeShift, previousBalance, availableUsers = [], branch }) {
+export default function SystemBank({ auth, activeShift, previousBalance, availableUsers = [], branch, tickets: initialTickets = [] }) {
   const [shift, setShift] = useState(activeShift);
   const [prevBalance, setPrevBalance] = useState(previousBalance || 0);
   const [initialBalance, setInitialBalance] = useState('');
+  const [initialBalanceMode, setInitialBalanceMode] = useState('total');
   const [amount, setAmount] = useState('');
   const [client, setClient] = useState('');
   const [machine, setMachine] = useState('');
@@ -61,7 +62,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [pasilleraUserId, setPasilleraUserId] = useState(null);
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
   const [transactions, setTransactions] = useState(activeShift?.transactions || []);
-  const [tickets, setTickets] = useState([]);
+  const [tickets, setTickets] = useState(initialTickets);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -174,37 +175,50 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     ...tickets.map(t => ({ ...t, source: 'ticket' }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const handleStartShift = async () => {
-    // In simple mode use the direct total; in denomination mode use the calculated sum
-    const effectiveTotal = openingSimpleMode
-      ? Number(openingSimpleTotal)
-      : calculateOpeningTotal();
+  // Calcular saldo ajustado restando tickets
+  const totalTicketsAmount = tickets.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const adjustedBalance = (shift?.current_balance || 0) - totalTicketsAmount;
 
-    if (!initialBalance || Number(initialBalance) <= 0) {
-      message.error('Ingrese un saldo a agregar válido (mayor a 0)');
+  const handleStartShift = async () => {
+    // Calculate the actual initial_balance to send based on mode
+    let initialBalanceToSend = Number(initialBalance) || 0;
+    if (initialBalanceMode === 'total') {
+      // If total mode, subtract previous balance
+      initialBalanceToSend = initialBalanceToSend - prevBalance;
+    }
+
+    if (initialBalanceToSend < 0) {
+      message.error('El monto total no puede ser menor al saldo anterior');
       return;
     }
+
+    if (initialBalanceToSend <= 0) {
+      message.error('Ingrese un saldo válido (mayor a 0)');
+      return;
+    }
+
+    // In simple mode use the direct total; in denomination mode use the calculated sum
+    const effectiveTotal = openingSimpleMode
+      ? (initialBalanceMode === 'total' ? Number(initialBalance) : prevBalance + Number(initialBalance))
+      : calculateOpeningTotal();
 
     if (!openingSimpleMode && effectiveTotal <= 0) {
       message.error('El conteo de billetes no puede ser 0');
       return;
     }
 
-    if (openingSimpleMode && (!openingSimpleTotal || Number(openingSimpleTotal) <= 0)) {
-      message.error('Ingrese el monto total de la caja (mayor a 0)');
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await axios.post('/cash-management/shift/start', {
-        initial_balance: initialBalance,
-        opening_total: openingSimpleMode ? openingSimpleTotal : calculateOpeningTotal(),
+        initial_balance: initialBalanceToSend,
+        opening_total: openingSimpleMode
+          ? (initialBalanceMode === 'total' ? Number(initialBalance) : prevBalance + Number(initialBalance))
+          : calculateOpeningTotal(),
         opening_20000: openingSimpleMode ? 0 : opening20000,
         opening_10000: openingSimpleMode ? 0 : opening10000,
         opening_5000: openingSimpleMode ? 0 : opening5000,
         opening_2000: openingSimpleMode ? 0 : opening2000,
-        opening_1000: openingSimpleMode ? 0 : opening1000,
+        opening_1000: openingSimpleMode ? 0 : opening10000,
         opening_coins: openingSimpleMode ? 0 : openingCoins,
         simple_mode: openingSimpleMode,
       });
@@ -461,7 +475,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     }).format(amount || 0);
   };
 
-  // Inactivity timer
+  // Inactivity timer - COMENTADO POR AHORA
+  /*
   const INACTIVITY_TIMEOUT = 30 * 1000; // 30 segundos
   let inactivityTimer;
 
@@ -499,6 +514,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       });
     };
   }, [inactivityModalVisible]);
+  */
 
   const handleUnlockSession = async () => {
     if (!unlockPassword) {
@@ -684,8 +700,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       key: 'actions',
       render: (_, record) => {
         if (record.source === 'ticket') return '-';
-        const editable = shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
-        const deletable = shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
+        const isAdmin = ['duenio', 'super-admin'].includes(auth.role);
+        const editable = isAdmin && shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
+        const deletable = isAdmin && shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
         if (!editable && !deletable) return '-';
         return (
           <Space>
@@ -817,12 +834,26 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   <RefreshBtn tooltip="Actualizar saldo anterior" />
                 </div>
                 <div>
-                  <Text strong>Saldo a Agregar</Text>
+                  <Text strong>Modo de Ingreso</Text>
+                  <Select
+                    style={{ width: '100%', marginTop: 8 }}
+                    value={initialBalanceMode}
+                    onChange={setInitialBalanceMode}
+                    disabled={shift?.is_active}
+                  >
+                    <Option value="total">Monto Total (incluye saldo anterior)</Option>
+                    <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                  </Select>
+                </div>
+                <div>
+                  <Text strong>
+                    {initialBalanceMode === 'total' ? 'Monto Total en Caja' : 'Monto a Agregar'}
+                  </Text>
                   <InputNumber
                     style={{ width: '100%', marginTop: 8 }}
                     value={initialBalance}
                     onChange={setInitialBalance}
-                    placeholder="Ingrese saldo a agregar"
+                    placeholder={initialBalanceMode === 'total' ? 'Ingrese el monto total' : 'Ingrese monto a agregar'}
                     disabled={shift?.is_active}
                     min={0}
                     precision={2}
@@ -830,7 +861,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 </div>
                 <Statistic
                   title="Saldo Inicial Total"
-                  value={prevBalance + (Number(initialBalance) || 0)}
+                  value={initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)}
                   precision={2}
                   prefix="$"
                 />
@@ -858,23 +889,38 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
               </Space>
             </Col>
             <Col xs={24} md={12}>
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
                 <div className="flex items-center gap-2">
                   <Statistic
                     title="Saldo Actual"
-                    value={shift?.current_balance || 0}
+                    value={adjustedBalance}
                     precision={2}
                     prefix="$"
                     valueStyle={{
-                      color: Number(shift?.current_balance || 0) < 0
+                      color: adjustedBalance < 0
                         ? '#cf1322'
-                        : Number(shift?.current_balance || 0) === 0
+                        : adjustedBalance === 0
                           ? '#faad14'
                           : '#3f8600',
                     }}
                   />
                   <RefreshBtn tooltip="Actualizar saldo actual" />
                 </div>
+                {totalTicketsAmount > 0 && (
+                  <div
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      background: '#e6f7ff',
+                      border: '1px solid #91d5ff',
+                      color: '#096dd9',
+                      fontWeight: 600,
+                      fontSize: 12,
+                    }}
+                  >
+                    Tickets del turno: ${new Intl.NumberFormat('en-US').format(Math.trunc(totalTicketsAmount))}
+                  </div>
+                )}
                 {Number(shift?.current_balance || 0) < 0 && (
                   <div
                     style={{
@@ -889,18 +935,39 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     ⚠ Saldo negativo. Revise las transacciones registradas.
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Statistic title="Total Transferencias" value={shift?.total_transfers || 0} precision={2} prefix="$" />
-                  <RefreshBtn tooltip="Actualizar transferencias" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Statistic title="Total Giros" value={shift?.total_giros || 0} precision={2} prefix="$" />
-                  <RefreshBtn tooltip="Actualizar giros" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Statistic title="Total Pagos" value={shift?.total_payments || 0} precision={2} prefix="$" />
-                  <RefreshBtn tooltip="Actualizar pagos" />
-                </div>
+
+                <Card size="small" title="Movimientos del Turno">
+                  <Row gutter={[16, 16]}>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Transferencias" value={shift?.total_transfers || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Giros" value={shift?.total_giros || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Pagos por Caja" value={shift?.total_payments || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Otros Gastos" value={shift?.total_other || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Sorteos" value={shift?.total_sorteo || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Bonus Especial" value={shift?.total_bonus_especial || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Préstamos" value={shift?.total_prestamo || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Depósitos" value={shift?.total_deposit || 0} precision={2} prefix="$" />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic title="Retiros" value={shift?.total_withdrawal || 0} precision={2} prefix="$" />
+                    </Col>
+                  </Row>
+                </Card>
+
                 {shift?.difference != null && Number(shift.difference) !== 0 && (
                   <div
                     style={{
@@ -1259,7 +1326,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           </Space>
         </Modal>
 
-        {/* Modal Inactividad - Bloqueo por seguridad */}
+        {/* Modal Inactividad - Bloqueo por seguridad - COMENTADO POR AHORA
         <Modal
           title="Sesión Bloqueada por Inactividad"
           open={inactivityModalVisible}
@@ -1292,6 +1359,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             </div>
           </Space>
         </Modal>
+        */}
 
         {/* Modal Editar Transacción */}
         <Modal
@@ -1433,29 +1501,33 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                         const hasReintegro = pasillera.transactions?.some(t => t.type === 'pasillera_return');
                         const reintegroTx = pasillera.transactions?.find(t => t.type === 'pasillera_return');
                         const isBalanceZero = Number(pasillera.current_balance) === 0 && !hasReintegro;
+                        const isForceClosed = pasillera.force_closed;
 
                         return (
-                          <Col xs={24} md={24} key={pasillera.id}>
+                          <Col xs={24} md={12} key={pasillera.id}>
                             <Card
                               size="small"
                               title={
-                                <span style={{ color: hasReintegro ? '#389e0d' : undefined }}>
-                                  {`Turno #${pasillera.id}`}
-                                  {hasReintegro && (
+                                <span style={{ color: isForceClosed ? '#cf1322' : hasReintegro ? '#389e0d' : undefined }}>
+                                  {`Turno #${pasillera.id} - ${user?.first_name} ${user?.first_last_name}`}
+                                  {isForceClosed && (
+                                    <Tag color="error" style={{ marginLeft: 8, fontSize: 11 }}>⚠ Cierre Forzado</Tag>
+                                  )}
+                                  {hasReintegro && !isForceClosed && (
                                     <Tag color="success" style={{ marginLeft: 8, fontSize: 11 }}>✓ Reintegrado</Tag>
                                   )}
-                                  {isBalanceZero && (
+                                  {isBalanceZero && !isForceClosed && (
                                     <Tag color="warning" style={{ marginLeft: 8, fontSize: 11 }}>Saldo en $0</Tag>
                                   )}
                                 </span>
                               }
                               style={{
-                                borderColor: hasReintegro ? '#b7eb8f' : undefined,
-                                background: hasReintegro ? '#f6ffed' : undefined,
+                                borderColor: isForceClosed ? '#ffccc7' : hasReintegro ? '#b7eb8f' : undefined,
+                                background: isForceClosed ? '#fff1f0' : hasReintegro ? '#f6ffed' : undefined,
                               }}
-                              headStyle={{ background: hasReintegro ? '#d9f7be' : undefined }}
+                              headStyle={{ background: isForceClosed ? '#ffccc7' : hasReintegro ? '#d9f7be' : undefined }}
                               extra={
-                                !hasReintegro && (
+                                !hasReintegro && !isForceClosed && (
                                   <Space size="small">
                                     <RefreshBtn tooltip={`Actualizar datos de ${user?.first_name}`} />
                                     <Popconfirm
@@ -1592,30 +1664,70 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             {openingSimpleMode ? (
               /* SIMPLE MODE */
               <div>
-                <Text strong>Total en caja al abrir *</Text>
+                <div>
+                  <Text strong>Modo de Ingreso</Text>
+                  <Select
+                    style={{ width: '100%', marginTop: 8 }}
+                    value={initialBalanceMode}
+                    onChange={setInitialBalanceMode}
+                  >
+                    <Option value="total">Monto Total (incluye saldo anterior)</Option>
+                    <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                  </Select>
+                </div>
+                <Text strong>
+                  {initialBalanceMode === 'total' ? 'Total en caja al abrir *' : 'Monto a Agregar *'}
+                </Text>
                 <InputNumber
                   style={{ width: '100%', marginTop: 8 }}
-                  value={openingSimpleTotal}
-                  onChange={setOpeningSimpleTotal}
-                  placeholder="Ej: 150000"
+                  value={initialBalance}
+                  onChange={setInitialBalance}
+                  placeholder={initialBalanceMode === 'total' ? 'Ej: 150000' : 'Ej: 100000'}
                   min={1}
                   precision={0}
                   size="large"
                 />
-                {openingSimpleTotal > 0 && (
+                {initialBalance > 0 && (
                   <Text type="secondary" style={{ fontSize: 13 }}>
-                    Monto ingresado: <strong>${new Intl.NumberFormat('es-CL').format(openingSimpleTotal)}</strong>
+                    {initialBalanceMode === 'total'
+                      ? `Total en caja: $${new Intl.NumberFormat('es-CL').format(initialBalance)}`
+                      : `Total en caja: $${new Intl.NumberFormat('es-CL').format(prevBalance + Number(initialBalance))} (Saldo anterior: $${new Intl.NumberFormat('es-CL').format(prevBalance)})`
+                    }
                   </Text>
                 )}
               </div>
             ) : (
               /* DENOMINATION MODE */
               <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                <div>
+                  <Text strong>Modo de Ingreso</Text>
+                  <Select
+                    style={{ width: '100%', marginTop: 8 }}
+                    value={initialBalanceMode}
+                    onChange={setInitialBalanceMode}
+                  >
+                    <Option value="total">Monto Total (incluye saldo anterior)</Option>
+                    <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                  </Select>
+                </div>
+                <div>
+                  <Text strong>
+                    {initialBalanceMode === 'total' ? 'Monto Total en Caja' : 'Monto a Agregar'}
+                  </Text>
+                  <InputNumber
+                    style={{ width: '100%', marginTop: 8 }}
+                    value={initialBalance}
+                    onChange={setInitialBalance}
+                    placeholder={initialBalanceMode === 'total' ? 'Ingrese el monto total' : 'Ingrese monto a agregar'}
+                    min={0}
+                    precision={2}
+                  />
+                </div>
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
                     <Statistic
                       title="Saldo Esperado"
-                      value={prevBalance + (Number(initialBalance) || 0)}
+                      value={initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)}
                       precision={0}
                       prefix="$"
                       valueStyle={{ color: '#3f8600' }}
@@ -1635,21 +1747,21 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 <div>
                   <Statistic
                     title="Diferencia"
-                    value={calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0))}
+                    value={calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0))}
                     precision={0}
                     prefix="$"
                     valueStyle={{
                       color:
-                        calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
+                        calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) === 0
                           ? '#3f8600'
-                          : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
+                          : calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) > 0
                             ? '#1890ff'
                             : '#cf1322',
                     }}
                     suffix={
-                      calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) === 0
+                      calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) === 0
                         ? '(Exacto)'
-                        : calculateOpeningTotal() - (prevBalance + (Number(initialBalance) || 0)) > 0
+                        : calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) > 0
                           ? '(Sobrante)'
                           : '(Faltante)'
                     }

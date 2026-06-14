@@ -429,6 +429,8 @@ class CompanyDatabaseService
                 $table->decimal('total_payments', 15, 2)->default(0);
                 $table->decimal('current_balance', 15, 2);
                 $table->boolean('is_active')->default(true);
+                $table->boolean('force_closed')->default(false);
+                $table->softDeletes();
                 $table->timestamps();
             });
             }

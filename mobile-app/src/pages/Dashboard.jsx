@@ -671,6 +671,12 @@ export default function Dashboard() {
               Ver todos
             </button>
           </div>
+          {pasillera.force_closed && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm font-medium text-red-800">⚠ Turno cerrado forzosamente</p>
+              <p className="text-xs text-red-600 mt-1">El saldo fue reintegrado automáticamente a la caja</p>
+            </div>
+          )}
           <div className="overflow-hidden bg-white rounded-xl shadow divide-y divide-gray-100">
             {pasillera.transactions.slice(0, 5).map((transaction) => {
               const canEdit = ['pasillera_payment', 'transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo'].includes(transaction.type);
@@ -712,7 +718,7 @@ export default function Dashboard() {
                     <p className={`font-semibold whitespace-nowrap ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                       {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </p>
-                    {canEdit && (
+                    {canEdit && !pasillera.force_closed && (
                       <>
                         <button
                           onClick={() => openEditTx(transaction)}

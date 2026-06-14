@@ -115,6 +115,7 @@ class CashShiftHistoryController extends Controller
                     $q->orderBy('created_at', 'asc');
                 },
                 'transactions.pasillera.user:id,username,first_name,first_last_name',
+                'transactions.adminUser:id,username,first_name,first_last_name',
                 'pasilleras.user:id,username,first_name,first_last_name',
                 'pasilleras.transactions' => function ($q) {
                     $q->orderBy('created_at', 'asc');

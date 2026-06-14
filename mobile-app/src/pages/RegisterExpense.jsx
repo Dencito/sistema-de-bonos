@@ -12,6 +12,7 @@ export default function RegisterExpense() {
   const [description, setDescription] = useState('');
   const [client, setClient] = useState('');
   const [expenseType, setExpenseType] = useState('');
+  const [otherExpenseCustom, setOtherExpenseCustom] = useState('');
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMachines, setLoadingMachines] = useState(true);
@@ -20,13 +21,25 @@ export default function RegisterExpense() {
   const [currentTime, setCurrentTime] = useState('');
 
   const transactionTypes = [
-    { value: 'transfer', label: 'Transferencia', requiresMachine: true },
-    { value: 'giro', label: 'Giro', requiresMachine: true },
+    { value: 'transfer', label: 'Transferencia', requiresMachine: false },
+    { value: 'giro', label: 'Giro', requiresMachine: false },
     { value: 'payment', label: 'Pago por Caja', requiresMachine: true },
     { value: 'other', label: 'Otro Gasto', requiresMachine: false, requiresExpenseType: true },
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
     { value: 'prestamo', label: 'Préstamo', requiresClient: true },
+  ];
+
+  const commonExpenses = [
+    'Limpieza',
+    'Insumos',
+    'Reparación',
+    'Mantenimiento',
+    'Servicios',
+    'Alimentos',
+    'Transporte',
+    'Publicidad',
+    'Otros',
   ];
 
   useEffect(() => {
@@ -99,13 +112,19 @@ export default function RegisterExpense() {
         setLoading(false);
         return;
       }
+      if (expenseType === 'Otros' && !otherExpenseCustom) {
+        setError('Debe especificar el tipo de gasto');
+        setLoading(false);
+        return;
+      }
 
       const formData = new FormData();
       formData.append('type', transactionType);
       formData.append('amount', realAmount);
       if (machine) formData.append('machine', machine);
       if (client) formData.append('client', client);
-      if (expenseType) formData.append('expense_type', expenseType);
+      const finalExpenseType = expenseType === 'Otros' ? otherExpenseCustom : expenseType;
+      if (finalExpenseType) formData.append('expense_type', finalExpenseType);
       if (description) formData.append('description', description);
 
       const response = await pasilleraService.registerTransaction(formData);
@@ -200,7 +219,15 @@ export default function RegisterExpense() {
             </label>
             <select
               value={transactionType}
-              onChange={(e) => setTransactionType(e.target.value)}
+              onChange={(e) => {
+                setTransactionType(e.target.value);
+                // Limpiar campos que no aplican al cambiar de tipo
+                setClient('');
+                setMachine('');
+                setExpenseType('');
+                setOtherExpenseCustom('');
+                setDescription('');
+              }}
               className="px-3 py-3 w-full bg-white rounded-lg border border-gray-300 transition appearance-none outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
               required
               disabled={loading}
@@ -294,22 +321,38 @@ export default function RegisterExpense() {
               </label>
               <select
                 value={expenseType}
-                onChange={(e) => setExpenseType(e.target.value)}
+                onChange={(e) => {
+                  setExpenseType(e.target.value);
+                  if (e.target.value !== 'Otros') {
+                    setOtherExpenseCustom('');
+                  }
+                }}
                 className="px-3 py-3 w-full bg-white rounded-lg border border-gray-300 transition appearance-none outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                 required
                 disabled={loading}
               >
                 <option value="">Seleccionar tipo</option>
-                <option value="Limpieza">Limpieza</option>
-                <option value="Insumos">Insumos</option>
-                <option value="Reparación">Reparación</option>
-                <option value="Mantenimiento">Mantenimiento</option>
-                <option value="Servicios">Servicios</option>
-                <option value="Alimentos">Alimentos</option>
-                <option value="Transporte">Transporte</option>
-                <option value="Publicidad">Publicidad</option>
-                <option value="Otros">Otros</option>
+                {commonExpenses.map((exp) => (
+                  <option key={exp} value={exp}>{exp}</option>
+                ))}
               </select>
+
+              {expenseType === 'Otros' && (
+                <div className="mt-3">
+                  <label className="block mb-1.5 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Especifique el gasto *
+                  </label>
+                  <input
+                    type="text"
+                    value={otherExpenseCustom}
+                    onChange={(e) => setOtherExpenseCustom(e.target.value)}
+                    className="px-3 py-3 w-full bg-white rounded-lg border border-gray-300 transition outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    placeholder="Ej: Compras, Viáticos, etc."
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              )}
             </div>
           )}
 

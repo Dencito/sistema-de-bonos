@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { pasilleraService } from '../services/api';
+import { pasilleraService, getBaseUrl } from '../services/api';
 import {
   Wallet,
   TrendingDown,
@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
   Clock,
+  Image,
 } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
@@ -36,6 +37,8 @@ export default function Dashboard() {
   const [transactionType, setTransactionType] = useState('pasillera_payment');
   const [client, setClient] = useState('');
   const [expenseType, setExpenseType] = useState('');
+  const [otherExpenseCustom, setOtherExpenseCustom] = useState('');
+  const [expenseImage, setExpenseImage] = useState(null);
   const [currentTime, setCurrentTime] = useState('');
   const [editingTx, setEditingTx] = useState(null);
   const [editAmount, setEditAmount] = useState('');
@@ -45,6 +48,7 @@ export default function Dashboard() {
   const [editError, setEditError] = useState('');
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [viewImageUrl, setViewImageUrl] = useState(null);
   const [machines, setMachines] = useState([]);
   const [loadingMachines, setLoadingMachines] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -53,11 +57,23 @@ export default function Dashboard() {
 
   const transactionTypes = [
     { value: 'pasillera_payment', label: 'Pago Pasillera', requiresMachine: true },
-    { value: 'transfer', label: 'Transferencia', requiresMachine: true },
-    { value: 'giro', label: 'Giro', requiresMachine: true },
+    { value: 'transfer', label: 'Transferencia', requiresMachine: false },
+    { value: 'giro', label: 'Giro', requiresMachine: false },
     { value: 'other', label: 'Otro Gasto', requiresMachine: false, requiresExpenseType: true },
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
+  ];
+
+  const commonExpenses = [
+    'Limpieza',
+    'Insumos',
+    'Reparación',
+    'Mantenimiento',
+    'Servicios',
+    'Alimentos',
+    'Transporte',
+    'Publicidad',
+    'Otros',
   ];
 
   useEffect(() => {
@@ -205,6 +221,11 @@ export default function Dashboard() {
         setRegistering(false);
         return;
       }
+      if (expenseType === 'Otros' && !otherExpenseCustom) {
+        setFormError('Debe especificar el tipo de gasto');
+        setRegistering(false);
+        return;
+      }
 
       let response;
 
@@ -217,8 +238,14 @@ export default function Dashboard() {
         formData.append('amount', realAmount);
         if (machine) formData.append('machine', machine);
         if (client) formData.append('client', client);
-        if (expenseType) formData.append('expense_type', expenseType);
+        const finalExpenseType = expenseType === 'Otros' ? otherExpenseCustom : expenseType;
+        if (finalExpenseType) {
+          formData.append('expense_type', finalExpenseType);
+        } else if (transactionType === 'other') {
+          formData.append('expense_type', 'Otros');
+        }
         if (description) formData.append('description', description);
+        if (expenseImage) formData.append('image', expenseImage);
         response = await pasilleraService.registerTransaction(formData);
       }
 
@@ -232,7 +259,11 @@ export default function Dashboard() {
 
         setAmount('');
         setMachine('');
+        setClient('');
+        setExpenseType('');
+        setOtherExpenseCustom('');
         setDescription('');
+        setExpenseImage(null);
         await loadPasillera(); // Reload dashboard data
 
         setTimeout(() => {
@@ -262,13 +293,15 @@ export default function Dashboard() {
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch {}
     setEditingTx(tx);
     setEditAmount(String(tx.amount));
-    // Strip "Maquina " prefix when showing
-    const rawMachine = tx.machine || '';
-    setEditMachine(rawMachine.replace(/^maquina\s*/i, ''));
-    // Extract description portion after " - " from description
-    const desc = tx.description || '';
-    const parts = desc.split(' - ');
-    setEditDescription(parts.length > 2 ? parts.slice(2).join(' - ') : '');
+    setEditMachine(tx.machine || '');
+    // Use description directly; for pasillera_payment keep existing parsing for compatibility
+    if (tx.type === 'pasillera_payment') {
+      const desc = tx.description || '';
+      const parts = desc.split(' - ');
+      setEditDescription(parts.length > 2 ? parts.slice(2).join(' - ') : '');
+    } else {
+      setEditDescription(tx.description || '');
+    }
     setEditError('');
   };
 
@@ -285,20 +318,29 @@ export default function Dashboard() {
         setEditSaving(false);
         return;
       }
-      if (!editMachine) {
-        setEditError('Ingrese el número de máquina');
-        setEditSaving(false);
-        return;
+      let response;
+      if (editingTx.type === 'pasillera_payment') {
+        if (!editMachine) {
+          setEditError('Ingrese el número de máquina');
+          setEditSaving(false);
+          return;
+        }
+        const formattedMachine = editMachine.toLowerCase().startsWith('maquina')
+          ? editMachine
+          : `Maquina ${editMachine}`;
+        response = await pasilleraService.updateExpense(
+          editingTx.id,
+          newAmount,
+          formattedMachine,
+          editDescription
+        );
+      } else {
+        response = await pasilleraService.updateTransaction(editingTx.id, {
+          amount: newAmount,
+          machine: editMachine || null,
+          description: editDescription || null,
+        });
       }
-      const formattedMachine = editMachine.toLowerCase().startsWith('maquina')
-        ? editMachine
-        : `Maquina ${editMachine}`;
-      const response = await pasilleraService.updateExpense(
-        editingTx.id,
-        newAmount,
-        formattedMachine,
-        editDescription
-      );
       if (response.success) {
         try { await Haptics.notification({ type: 'success' }); } catch {}
         setEditingTx(null);
@@ -314,11 +356,16 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteTx = async (id) => {
-    setDeletingId(id);
+  const handleDeleteTx = async (tx) => {
+    setDeletingId(tx.id);
     try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
     try {
-      const response = await pasilleraService.deleteExpense(id);
+      let response;
+      if (tx.type === 'pasillera_payment') {
+        response = await pasilleraService.deleteExpense(tx.id);
+      } else {
+        response = await pasilleraService.deleteTransaction(tx.id);
+      }
       if (response.success) {
         try { await Haptics.notification({ type: 'success' }); } catch {}
         setConfirmDelete(null);
@@ -473,7 +520,16 @@ export default function Dashboard() {
                   </label>
                   <select
                     value={transactionType}
-                    onChange={(e) => setTransactionType(e.target.value)}
+                    onChange={(e) => {
+                      setTransactionType(e.target.value);
+                      // Limpiar campos que no aplican al cambiar de tipo
+                      setClient('');
+                      setMachine('');
+                      setExpenseType('');
+                      setOtherExpenseCustom('');
+                      setDescription('');
+                      setExpenseImage(null);
+                    }}
                     className="px-3 py-3 w-full bg-white rounded-lg border border-zinc-200 transition appearance-none outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
                     required
                     disabled={registering}
@@ -575,22 +631,38 @@ export default function Dashboard() {
                     </label>
                     <select
                       value={expenseType}
-                      onChange={(e) => setExpenseType(e.target.value)}
+                      onChange={(e) => {
+                        setExpenseType(e.target.value);
+                        if (e.target.value !== 'Otros') {
+                          setOtherExpenseCustom('');
+                        }
+                      }}
                       className="px-3 py-3 w-full bg-white rounded-lg border border-zinc-200 transition appearance-none outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
                       required
                       disabled={registering}
                     >
                       <option value="">Seleccionar tipo</option>
-                      <option value="Limpieza">Limpieza</option>
-                      <option value="Insumos">Insumos</option>
-                      <option value="Reparación">Reparación</option>
-                      <option value="Mantenimiento">Mantenimiento</option>
-                      <option value="Servicios">Servicios</option>
-                      <option value="Alimentos">Alimentos</option>
-                      <option value="Transporte">Transporte</option>
-                      <option value="Publicidad">Publicidad</option>
-                      <option value="Otros">Otros</option>
+                      {commonExpenses.map((exp) => (
+                        <option key={exp} value={exp}>{exp}</option>
+                      ))}
                     </select>
+
+                    {expenseType === 'Otros' && (
+                      <div className="mt-3">
+                        <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                          Especifique el gasto *
+                        </label>
+                        <input
+                          type="text"
+                          value={otherExpenseCustom}
+                          onChange={(e) => setOtherExpenseCustom(e.target.value)}
+                          className="px-3 py-3 w-full bg-white rounded-lg border border-zinc-200 transition outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm"
+                          placeholder="Ej: Compras, Viáticos, etc."
+                          required
+                          disabled={registering}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -608,6 +680,27 @@ export default function Dashboard() {
                     disabled={registering}
                   />
                 </div>
+
+                {/* Image Upload - only for Otro Gasto */}
+                {transactionType === 'other' && (
+                  <div>
+                    <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                      Imagen (Opcional)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setExpenseImage(e.target.files[0] || null)}
+                        className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200"
+                        disabled={registering}
+                      />
+                      {expenseImage && (
+                        <p className="mt-1 text-xs text-zinc-500">{expenseImage.name}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {amount && (
                   <p className="text-sm font-semibold text-zinc-600 bg-zinc-50 p-3 rounded-xl border border-zinc-100">
@@ -679,7 +772,6 @@ export default function Dashboard() {
           )}
           <div className="overflow-hidden bg-white rounded-xl shadow divide-y divide-gray-100">
             {pasillera.transactions.slice(0, 5).map((transaction) => {
-              const canEdit = ['pasillera_payment', 'transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo'].includes(transaction.type);
               const typeLabels = {
                 transfer: 'Transferencia',
                 giro: 'Giro',
@@ -707,35 +799,31 @@ export default function Dashboard() {
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900 truncate">{typeLabel}</p>
                       <p className="text-xs text-gray-500 truncate">
-                        {transaction.client || transaction.machine || transaction.expense_type || '-'}
+                        {transaction.description || transaction.client || transaction.machine || transaction.expense_type || '-'}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(transaction.created_at).toLocaleString('es-CL')}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-400">
+                          {new Date(transaction.created_at).toLocaleString('es-CL')}
+                        </p>
+                        {transaction.image && (
+                          <button
+                            onClick={async () => {
+                              const base = await getBaseUrl();
+                              setViewImageUrl(`${base}/storage/${transaction.image}`);
+                            }}
+                            className="inline-flex items-center text-xs font-medium text-blue-600"
+                          >
+                            <Image className="w-3 h-3 mr-0.5" />
+                            Ver imagen
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
                     <p className={`font-semibold whitespace-nowrap ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                       {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </p>
-                    {canEdit && !pasillera.force_closed && (
-                      <>
-                        <button
-                          onClick={() => openEditTx(transaction)}
-                          className="p-2 text-zinc-600 rounded-lg hover:bg-zinc-100 active:bg-zinc-200"
-                          aria-label="Editar"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setConfirmDelete(transaction)}
-                          className="p-2 text-red-600 rounded-lg hover:bg-red-50 active:bg-red-100"
-                          aria-label="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
                   </div>
                 </div>
               );
@@ -777,14 +865,16 @@ export default function Dashboard() {
                 </div>
               </div>
               <div>
-                <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">N° Máquina *</label>
+                <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  N° Máquina {editingTx?.type === 'pasillera_payment' ? '*' : ''}
+                </label>
                 <input
                   type="text"
                   value={editMachine}
                   onChange={(e) => setEditMachine(e.target.value.toUpperCase())}
                   className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                   disabled={editSaving}
-                  required
+                  required={editingTx?.type === 'pasillera_payment'}
                 />
               </div>
               <div>
@@ -834,7 +924,7 @@ export default function Dashboard() {
               </div>
               <h3 className="mb-2 text-xl font-bold text-zinc-900">Eliminar movimiento</h3>
               <p className="text-sm text-zinc-600">
-                {confirmDelete.machine} · {formatCurrency(confirmDelete.amount)}
+                {confirmDelete.machine || confirmDelete.client || confirmDelete.expense_type || confirmDelete.type} · {formatCurrency(confirmDelete.amount)}
               </p>
               <p className="mt-2 text-xs text-zinc-500">
                 Se devolverá el monto a tu saldo disponible.
@@ -908,6 +998,29 @@ export default function Dashboard() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Image Modal */}
+      {viewImageUrl && (
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-80">
+          <div className="relative w-full max-w-lg">
+            <button
+              onClick={() => setViewImageUrl(null)}
+              className="absolute -top-10 right-0 p-2 text-white rounded-full hover:bg-white/20"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={viewImageUrl}
+              alt="Comprobante"
+              className="w-full rounded-xl shadow-2xl"
+              onError={() => {
+                setViewImageUrl(null);
+                alert('No se pudo cargar la imagen');
+              }}
+            />
           </div>
         </div>
       )}

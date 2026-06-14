@@ -423,7 +423,25 @@ class CashManagementController extends Controller
                 $request->client,
                 $request->machine ? 'Máquina: ' . $request->machine : null,
                 $request->expense_type,
+                $request->description,
             ]);
+
+            // Etiqueta legible para depósitos/retiros
+            if ($request->type === 'deposit') {
+                $detailParts[] = 'Agregar Dinero';
+            } elseif ($request->type === 'withdrawal') {
+                $detailParts[] = 'Quitar Dinero';
+            }
+
+            // Incluir admin que autorizó
+            if ($request->admin_user_id) {
+                $adminUser = User::find($request->admin_user_id);
+                if ($adminUser) {
+                    $adminName = trim($adminUser->first_name . ' ' . $adminUser->first_last_name);
+                    $detailParts[] = 'Autorizado por: ' . $adminName;
+                }
+            }
+
             $description = $request->type . ' - ' . (count($detailParts) ? implode(' | ', $detailParts) : 'Sin detalle');
 
             $transaction = CashTransaction::create([
@@ -1111,7 +1129,7 @@ class CashManagementController extends Controller
         }
 
         $transactions = CashTransaction::where('cash_shift_id', $activeShift->id)
-            ->with('pasillera')
+            ->with('pasillera.user:id,first_name,first_last_name')
             ->with('adminUser:id,first_name,second_name,first_last_name')
             ->orderBy('created_at', 'desc')
             ->get();

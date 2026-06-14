@@ -608,16 +608,39 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         if (record.source === 'ticket') {
           return `Ticket #${record.ticket_number} - ${record.user?.first_name} ${record.user?.first_last_name || ''}`;
         }
-        return desc;
+        const parts = [];
+        if (record.type === 'deposit') parts.push('Agregar Dinero');
+        else if (record.type === 'withdrawal') parts.push('Quitar Dinero');
+        if (record.client) parts.push(record.client);
+        if (record.machine) parts.push(`Máquina: ${record.machine}`);
+        if (record.expense_type) parts.push(record.expense_type);
+        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
+          const u = record.admin_user;
+          parts.push(`Autorizado por: ${[u.first_name, u.first_last_name].filter(Boolean).join(' ')}`);
+        }
+        if (record.pasillera?.user) {
+          const p = record.pasillera.user;
+          parts.push(`Pasillero: ${[p.first_name, p.first_last_name].filter(Boolean).join(' ')}`);
+        }
+        return parts.length ? parts.join(' | ') : (desc || '-');
       },
     },
     {
-      title: 'Operado por',
-      key: 'admin_user',
+      title: 'Autorizado por',
+      key: 'operator',
       render: (_, record) => {
         if (record.source === 'ticket') return '-';
-        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
-          return record.admin_user.name || '-';
+        // Pasillera transaction: show pasillero name
+        if (record.pasillera?.user) {
+          const u = record.pasillera.user;
+          const name = [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
+          return `Pasillera: ${name}`;
+        }
+        // Admin transaction (deposit/withdrawal/etc): show admin name
+        if (record.admin_user) {
+          const u = record.admin_user;
+          const name = [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
+          return `Admin: ${name}`;
         }
         return '-';
       },
@@ -1584,18 +1607,62 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                               {pasillera.transactions && pasillera.transactions.length > 0 && (
                                 <div style={{ marginTop: 12 }}>
                                   <Text strong style={{ fontSize: 12 }}>Registros:</Text>
-                                  <div style={{ maxHeight: 150, overflowY: 'auto', marginTop: 6 }}>
-                                    {pasillera.transactions.map((registro, index) => (
-                                      <div key={index} style={{
-                                        fontSize: 12, marginBottom: 4,
-                                        color: registro.type === 'pasillera_return' ? '#52c41a' : undefined
-                                      }}>
-                                        {registro.type === 'pasillera_return' ? '↩ Reintegro ' : ''}
-                                        {formatCurrency(registro.amount)}{' '}
-                                        {registro.type === 'pasillera_payment' ? `- Máquina: ${registro.machine} - ` : ''}
-                                        {new Date(registro.created_at).toLocaleString('es-AR')}
-                                      </div>
-                                    ))}
+                                  <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6 }}>
+                                    {pasillera.transactions.map((registro, index) => {
+                                      const typeLabels = {
+                                        pasillera_payment: 'Pago Máquina',
+                                        pasillera_return: 'Reintegro',
+                                        transfer: 'Transferencia',
+                                        giro: 'Giro',
+                                        payment: 'Pago por Caja',
+                                        other: 'Otro Gasto',
+                                        sorteo: 'Sorteo',
+                                        bonus_especial: 'Bono Especial',
+                                        prestamo: 'Préstamo',
+                                        deposit: 'Agregar Dinero',
+                                        withdrawal: 'Quitar Dinero',
+                                      };
+                                      const label = typeLabels[registro.type] || registro.type;
+                                      const isPositive = ['deposit', 'pasillera_return'].includes(registro.type);
+                                      const isNegative = ['pasillera_payment', 'transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'withdrawal'].includes(registro.type);
+                                      const color = registro.type === 'pasillera_return' ? '#52c41a'
+                                        : isNegative ? '#cf1322'
+                                        : isPositive ? '#13c2c2'
+                                        : undefined;
+
+                                      const details = [];
+                                      if (registro.client) details.push(`Cliente: ${registro.client}`);
+                                      if (registro.machine) details.push(`Máquina: ${registro.machine}`);
+                                      if (registro.expense_type) details.push(registro.expense_type);
+                                      if (registro.description) details.push(registro.description);
+
+                                      return (
+                                        <div key={index} style={{
+                                          fontSize: 12,
+                                          marginBottom: 6,
+                                          padding: '4px 6px',
+                                          borderRadius: 4,
+                                          background: registro.type === 'pasillera_return' ? '#f6ffed' : '#f5f5f5',
+                                          borderLeft: `3px solid ${color || '#d9d9d9'}`,
+                                        }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span>
+                                              <span style={{ fontWeight: 600, color }}>{label}</span>
+                                              {' · '}
+                                              <span style={{ fontWeight: 700 }}>{formatCurrency(registro.amount)}</span>
+                                            </span>
+                                            <span style={{ color: '#8c8c8c', fontSize: 11 }}>
+                                              {new Date(registro.created_at).toLocaleString('es-AR')}
+                                            </span>
+                                          </div>
+                                          {details.length > 0 && (
+                                            <div style={{ color: '#595959', fontSize: 11, marginTop: 2 }}>
+                                              {details.join(' · ')}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}

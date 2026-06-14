@@ -258,9 +258,29 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
       render: (p) => (p?.user ? getUserName(p.user) : '-'),
     },
     {
+      title: 'Operado por',
+      key: 'admin_user',
+      render: (_, record) => {
+        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
+          const u = record.admin_user;
+          return [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
+        }
+        return '-';
+      },
+    },
+    {
       title: 'Descripción',
       dataIndex: 'description',
       key: 'description',
+      render: (desc, record) => {
+        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
+          const label = record.type === 'deposit' ? 'Agregar Dinero' : 'Quitar Dinero';
+          const u = record.admin_user;
+          const adminName = [u.first_name, u.first_last_name].filter(Boolean).join(' ');
+          return `${record.type} - ${label} | Autorizado por: ${adminName}`;
+        }
+        return desc;
+      },
     },
   ];
 

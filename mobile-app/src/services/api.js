@@ -17,6 +17,11 @@ const getApiUrl = async () => {
   return import.meta.env.VITE_API_URL || 'http://localhost:8000/api/mobile';
 };
 
+export const getBaseUrl = async () => {
+  const apiUrl = await getApiUrl();
+  return apiUrl.replace(/\/api\/mobile$/, '');
+};
+
 const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
@@ -134,8 +139,18 @@ export const pasilleraService = {
     return response.data;
   },
 
+  updateTransaction: async (id, data) => {
+    const response = await api.put(`/cash-management/transaction/${id}`, data);
+    return response.data;
+  },
+
   deleteExpense: async (id) => {
     const response = await api.delete(`/pasillera/expense/${id}`);
+    return response.data;
+  },
+
+  deleteTransaction: async (id) => {
+    const response = await api.delete(`/cash-management/transaction/${id}`);
     return response.data;
   },
 

@@ -114,7 +114,7 @@ class CashManagementController extends Controller
 
         $branchId = $branch->id;
 
-        $activeShift = CashShift::with(['transactions', 'pasilleras.transactions', 'pasilleras.user'])
+        $activeShift = CashShift::with(['transactions.adminUser:id,first_name,second_name,first_last_name', 'pasilleras.transactions', 'pasilleras.user:id,first_name,first_last_name'])
             ->where('user_id', $user->id)
             ->where('branch_id', $branchId)
             ->where('is_active', true)
@@ -1134,8 +1134,9 @@ class CashManagementController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Obtener tickets del turno activo
-        $tickets = \App\Models\Ticket::where('cash_shift_id', $activeShift->id)
+        // Obtener tickets del día/branch actual
+        $tickets = \App\Models\Ticket::where('branch_id', $branchId)
+            ->createdToday()
             ->with('user:id,first_name,first_last_name')
             ->orderBy('created_at', 'desc')
             ->get();

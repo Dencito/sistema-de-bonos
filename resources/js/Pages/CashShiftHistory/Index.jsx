@@ -18,6 +18,7 @@ import {
   Tabs,
   Empty,
   message,
+  Divider,
 } from 'antd';
 import { ReloadOutlined, EyeOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -510,30 +511,131 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                       )}
 
                       {(shift.opening_total_counted || shift.closing_total_counted) && (
-                        <Descriptions bordered column={{ xs: 1, md: 2 }} size="small" title="Conteo físico">
-                          <Descriptions.Item label="Apertura $20.000">{shift.opening_20000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Cierre $20.000">{shift.closing_20000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Apertura $10.000">{shift.opening_10000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Cierre $10.000">{shift.closing_10000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Apertura $5.000">{shift.opening_5000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Cierre $5.000">{shift.closing_5000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Apertura $2.000">{shift.opening_2000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Cierre $2.000">{shift.closing_2000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Apertura $1.000">{shift.opening_1000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Cierre $1.000">{shift.closing_1000 || 0}</Descriptions.Item>
-                          <Descriptions.Item label="Apertura Monedas">
-                            {formatCurrency(shift.opening_coins)}
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Cierre Monedas">
-                            {formatCurrency(shift.closing_coins)}
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Total Contado Apertura">
-                            {formatCurrency(shift.opening_total_counted)}
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Total Contado Cierre">
-                            {formatCurrency(shift.closing_total_counted)}
-                          </Descriptions.Item>
-                        </Descriptions>
+                        <Card size="small" title="Conteo físico" style={{ marginTop: 12 }}>
+                          {/* Apertura */}
+                          <div style={{ marginBottom: 16 }}>
+                            <Text strong style={{ fontSize: 14 }}>Apertura</Text>
+                            <Row gutter={[8, 8]} style={{ marginTop: 8 }}>
+                              {[
+                                { label: '$20.000', qty: shift.opening_20000, val: 20000 },
+                                { label: '$10.000', qty: shift.opening_10000, val: 10000 },
+                                { label: '$5.000',  qty: shift.opening_5000,  val: 5000 },
+                                { label: '$2.000',  qty: shift.opening_2000,  val: 2000 },
+                                { label: '$1.000',  qty: shift.opening_1000,  val: 1000 },
+                              ].map((d) => (
+                                <Col span={8} key={`o-${d.label}`}>
+                                  <div style={{
+                                    background: '#f6ffed',
+                                    borderRadius: 8,
+                                    padding: '8px 10px',
+                                    border: '1px solid #b7eb8f',
+                                  }}>
+                                    <div style={{ fontSize: 12, color: '#595959' }}>Billetes {d.label}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#389e0d' }}>
+                                      {d.qty || 0}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+                                      = {formatCurrency((d.qty || 0) * d.val)}
+                                    </div>
+                                  </div>
+                                </Col>
+                              ))}
+                              <Col span={8}>
+                                <div style={{
+                                  background: '#fff7e6',
+                                  borderRadius: 8,
+                                  padding: '8px 10px',
+                                  border: '1px solid #ffd591',
+                                }}>
+                                  <div style={{ fontSize: 12, color: '#595959' }}>Monedas</div>
+                                  <div style={{ fontSize: 16, fontWeight: 700, color: '#d46b08' }}>
+                                    {formatCurrency(shift.opening_coins || 0)}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>&nbsp;</div>
+                                </div>
+                              </Col>
+                            </Row>
+                            <div style={{
+                              marginTop: 10,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              background: '#f0f0f0',
+                              borderRadius: 8,
+                              padding: '8px 12px',
+                            }}>
+                              <span style={{ fontSize: 13, color: '#595959' }}>
+                                Total Contado Apertura
+                              </span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: '#262626' }}>
+                                {formatCurrency(shift.opening_total_counted || 0)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <Divider style={{ margin: '12px 0' }} />
+
+                          {/* Cierre */}
+                          <div>
+                            <Text strong style={{ fontSize: 14 }}>Cierre</Text>
+                            <Row gutter={[8, 8]} style={{ marginTop: 8 }}>
+                              {[
+                                { label: '$20.000', qty: shift.closing_20000, val: 20000 },
+                                { label: '$10.000', qty: shift.closing_10000, val: 10000 },
+                                { label: '$5.000',  qty: shift.closing_5000,  val: 5000 },
+                                { label: '$2.000',  qty: shift.closing_2000,  val: 2000 },
+                                { label: '$1.000',  qty: shift.closing_1000,  val: 1000 },
+                              ].map((d) => (
+                                <Col span={8} key={`c-${d.label}`}>
+                                  <div style={{
+                                    background: '#e6f7ff',
+                                    borderRadius: 8,
+                                    padding: '8px 10px',
+                                    border: '1px solid #91d5ff',
+                                  }}>
+                                    <div style={{ fontSize: 12, color: '#595959' }}>Billetes {d.label}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#096dd9' }}>
+                                      {d.qty || 0}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+                                      = {formatCurrency((d.qty || 0) * d.val)}
+                                    </div>
+                                  </div>
+                                </Col>
+                              ))}
+                              <Col span={8}>
+                                <div style={{
+                                  background: '#fff7e6',
+                                  borderRadius: 8,
+                                  padding: '8px 10px',
+                                  border: '1px solid #ffd591',
+                                }}>
+                                  <div style={{ fontSize: 12, color: '#595959' }}>Monedas</div>
+                                  <div style={{ fontSize: 16, fontWeight: 700, color: '#d46b08' }}>
+                                    {formatCurrency(shift.closing_coins || 0)}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>&nbsp;</div>
+                                </div>
+                              </Col>
+                            </Row>
+                            <div style={{
+                              marginTop: 10,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              background: '#f0f0f0',
+                              borderRadius: 8,
+                              padding: '8px 12px',
+                            }}>
+                              <span style={{ fontSize: 13, color: '#595959' }}>
+                                Total Contado Cierre
+                              </span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: '#262626' }}>
+                                {formatCurrency(shift.closing_total_counted || 0)}
+                              </span>
+                            </div>
+                          </div>
+                        </Card>
                       )}
                     </Space>
                   ),

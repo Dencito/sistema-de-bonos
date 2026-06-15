@@ -516,6 +516,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   }, [inactivityModalVisible]);
   */
 
+  console.log(transactions)
+
   const handleUnlockSession = async () => {
     if (!unlockPassword) {
       message.error('Ingrese su contraseña');

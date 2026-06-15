@@ -626,9 +626,19 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     {
       title: 'Operado por',
       key: 'operator',
-      width: 140,
+      width: 160,
       render: (_, record) => {
         if (record.source === 'ticket') return <span>-</span>;
+        // Transacciones de pasillera
+        if (record.pasillera_id && record.pasillera?.user) {
+          const pu = record.pasillera.user;
+          return (
+            <span>
+              {[pu.first_name, pu.first_last_name].filter(Boolean).join(' ') || '-'} <Tag size="small" color="blue">Pasillera</Tag>
+            </span>
+          );
+        }
+        // Transacciones normales (admin)
         const u = record?.admin_user || (record?.first_name ? record : null);
         if (u) {
           return <span>{[u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-'}</span>;

@@ -114,7 +114,7 @@ class CashManagementController extends Controller
 
         $branchId = $branch->id;
 
-        $activeShift = CashShift::with(['transactions.adminUser:id,first_name,second_name,first_last_name', 'pasilleras.transactions', 'pasilleras.user:id,first_name,first_last_name'])
+        $activeShift = CashShift::with(['transactions.adminUser:id,first_name,second_name,first_last_name', 'transactions.pasillera.user:id,first_name,first_last_name', 'pasilleras.transactions', 'pasilleras.user:id,first_name,first_last_name'])
             ->where('user_id', $user->id)
             ->where('branch_id', $branchId)
             ->where('is_active', true)

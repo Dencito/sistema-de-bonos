@@ -608,7 +608,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         if (record.source === 'ticket') {
           return `Ticket #${record.ticket_number} - ${record.user?.first_name} ${record.user?.first_last_name || ''}`;
         }
-        console.log(record);
         const parts = [];
         if (record.type === 'deposit') parts.push('Agregar Dinero');
         else if (record.type === 'withdrawal') parts.push('Quitar Dinero');
@@ -625,14 +624,14 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     {
       title: 'Operado por',
       key: 'operator',
+      width: 140,
       render: (_, record) => {
-        console.log(record.admin_user)
-        // if (record.source === 'ticket') return '-';
-        if (record?.admin_user) {
-          const u = record?.admin_user;
-          return [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
+        if (record.source === 'ticket') return <span>-</span>;
+        const u = record?.admin_user || (record?.first_name ? record : null);
+        if (u) {
+          return <span>{[u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-'}</span>;
         }
-        return '-';
+        return <span>-</span>;
       },
     },
     {

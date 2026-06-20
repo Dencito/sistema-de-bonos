@@ -19,6 +19,7 @@ import {
   Empty,
   message,
   Divider,
+  Input,
 } from 'antd';
 import { ReloadOutlined, EyeOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -42,6 +43,11 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState(null);
+
+  // Detail transaction filters
+  const [txTypeFilter, setTxTypeFilter] = useState('all');
+  const [txMachineFilter, setTxMachineFilter] = useState('all');
+  const [txSearch, setTxSearch] = useState('');
 
   useEffect(() => {
     fetchShifts();
@@ -87,6 +93,9 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
     setDetailVisible(true);
     setDetailLoading(true);
     setDetailData(null);
+    setTxTypeFilter('all');
+    setTxMachineFilter('all');
+    setTxSearch('');
     try {
       const response = await axios.get(`/cash-shift-history/${shiftId}`);
       if (response.data.success) {
@@ -260,11 +269,19 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
     },
     {
       title: 'Operado por',
-      key: 'admin_user',
+      key: 'operator',
+      width: 160,
       render: (_, record) => {
-        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
-          const u = record.admin_user;
-          return [u.first_name, u.first_last_name].filter(Boolean).join(' ') || '-';
+        if (record.pasillera_id && record.pasillera?.user) {
+          const pu = record.pasillera.user;
+          return (
+            <span>
+              {getUserName(pu)} <Tag size="small" color="blue">Pasillera</Tag>
+            </span>
+          );
+        }
+        if (record.admin_user) {
+          return <span>{getUserName(record.admin_user)}</span>;
         }
         return '-';
       },
@@ -274,13 +291,16 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
       dataIndex: 'description',
       key: 'description',
       render: (desc, record) => {
-        if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
-          const label = record.type === 'deposit' ? 'Agregar Dinero' : 'Quitar Dinero';
-          const u = record.admin_user;
-          const adminName = [u.first_name, u.first_last_name].filter(Boolean).join(' ');
-          return `${record.type} - ${label} | Autorizado por: ${adminName}`;
+        const parts = [];
+        if (record.type === 'deposit') parts.push('Agregar Dinero');
+        else if (record.type === 'withdrawal') parts.push('Quitar Dinero');
+        if (record.client) parts.push(record.client);
+        if (record.machine) parts.push(`Máquina: ${record.machine}`);
+        if (record.expense_type) parts.push(record.expense_type);
+        if (record.type === 'pasillera_payment' && record.machine) {
+          parts.push(`Pago Pasillera - Máquina: ${record.machine}`);
         }
-        return desc;
+        return parts.length ? parts.join(' | ') : (desc || '-');
       },
     },
   ];
@@ -325,6 +345,32 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
   ];
 
   const shift = detailData?.shift;
+
+  // Computed values for detail transaction filters
+  const allTransactions = shift?.transactions || [];
+  const machineOptions = Array.from(
+    new Set(allTransactions.filter((t) => t.machine).map((t) => t.machine))
+  ).sort((a, b) => Number(a) - Number(b));
+
+  const filteredTransactions = allTransactions.filter((t) => {
+    if (txTypeFilter !== 'all' && t.type !== txTypeFilter) return false;
+    if (txMachineFilter !== 'all' && t.machine !== txMachineFilter) return false;
+    if (txSearch) {
+      const q = txSearch.toLowerCase();
+      const text = [
+        t.description,
+        t.client,
+        t.machine,
+        t.expense_type,
+        typeLabels[t.type],
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
@@ -642,16 +688,71 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                 },
                 {
                   key: 'transactions',
-                  label: `Transacciones (${shift.transactions?.length || 0})`,
+                  label: `Transacciones (${filteredTransactions.length}/${shift.transactions?.length || 0})`,
                   children: (
-                    <Table
-                      rowKey="id"
-                      columns={transactionColumns}
-                      dataSource={shift.transactions || []}
-                      pagination={{ pageSize: 20 }}
-                      scroll={{ x: 1000 }}
-                      size="small"
-                    />
+                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                      <Row gutter={[12, 12]} align="middle">
+                        <Col xs={24} sm={8} md={6}>
+                          <Select
+                            style={{ width: '100%' }}
+                            placeholder="Filtrar por tipo"
+                            value={txTypeFilter}
+                            onChange={setTxTypeFilter}
+                            allowClear
+                            onClear={() => setTxTypeFilter('all')}
+                            options={[
+                              { value: 'all', label: 'Todos los tipos' },
+                              ...Object.entries(typeLabels).map(([value, label]) => ({ value, label })),
+                            ]}
+                          />
+                        </Col>
+                        <Col xs={24} sm={8} md={6}>
+                          <Select
+                            style={{ width: '100%' }}
+                            placeholder="Filtrar por máquina"
+                            value={txMachineFilter}
+                            onChange={setTxMachineFilter}
+                            allowClear
+                            onClear={() => setTxMachineFilter('all')}
+                            disabled={machineOptions.length === 0}
+                            options={[
+                              { value: 'all', label: 'Todas las máquinas' },
+                              ...machineOptions.map((m) => ({ value: m, label: `Máquina ${m}` })),
+                            ]}
+                          />
+                        </Col>
+                        <Col xs={24} sm={8} md={8}>
+                          <Input.Search
+                            placeholder="Buscar cliente, descripción, gasto..."
+                            value={txSearch}
+                            onChange={(e) => setTxSearch(e.target.value)}
+                            allowClear
+                            onSearch={setTxSearch}
+                          />
+                        </Col>
+                        <Col xs={24} sm={24} md={4} style={{ textAlign: 'right' }}>
+                          <Button
+                            size="small"
+                            icon={<ClearOutlined />}
+                            onClick={() => {
+                              setTxTypeFilter('all');
+                              setTxMachineFilter('all');
+                              setTxSearch('');
+                            }}
+                          >
+                            Limpiar
+                          </Button>
+                        </Col>
+                      </Row>
+                      <Table
+                        rowKey="id"
+                        columns={transactionColumns}
+                        dataSource={filteredTransactions}
+                        pagination={{ pageSize: 20 }}
+                        scroll={{ x: 1000 }}
+                        size="small"
+                      />
+                    </Space>
                   ),
                 },
                 {

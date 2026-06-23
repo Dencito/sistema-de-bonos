@@ -1134,9 +1134,14 @@ class CashManagementController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Obtener tickets del día/branch actual
+        // Obtener tickets del turno activo (entre apertura y cierre)
         $tickets = \App\Models\Ticket::where('branch_id', $branchId)
-            ->createdToday()
+            ->where('created_at', '>=', $activeShift->started_at)
+            ->where(function ($query) use ($activeShift) {
+                if ($activeShift->ended_at) {
+                    $query->where('created_at', '<=', $activeShift->ended_at);
+                }
+            })
             ->with('user:id,first_name,first_last_name')
             ->orderBy('created_at', 'desc')
             ->get();

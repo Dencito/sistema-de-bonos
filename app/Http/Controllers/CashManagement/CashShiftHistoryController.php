@@ -158,10 +158,19 @@ class CashShiftHistoryController extends Controller
                 ];
             })->values();
 
+        // Obtener tickets del turno (entre apertura y cierre)
+        $tickets = \App\Models\Ticket::where('branch_id', $shift->branch_id)
+            ->where('created_at', '>=', $shift->started_at)
+            ->where('created_at', '<=', $shift->ended_at)
+            ->with('user:id,first_name,first_last_name')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return response()->json([
             'success' => true,
             'data' => [
                 'shift' => $shift,
+                'tickets' => $tickets,
                 'type_breakdown' => $typeBreakdown,
                 'expense_breakdown' => $expenseBreakdown,
             ],

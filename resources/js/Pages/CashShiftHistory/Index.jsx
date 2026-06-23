@@ -780,6 +780,44 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                   ),
                 },
                 {
+                  key: 'tickets',
+                  label: `Tickets (${detailData.tickets?.length || 0})`,
+                  children: (
+                    <Table
+                      rowKey="id"
+                      size="small"
+                      dataSource={detailData.tickets || []}
+                      pagination={{ pageSize: 20 }}
+                      columns={[
+                        {
+                          title: 'Fecha',
+                          dataIndex: 'created_at',
+                          render: (d) => formatDate(d),
+                        },
+                        {
+                          title: 'Tipo',
+                          dataIndex: 'type',
+                          render: (t) => <Tag color={t === 'sale' ? 'green' : 'orange'}>{t === 'sale' ? 'Venta' : 'Anulación'}</Tag>,
+                        },
+                        {
+                          title: 'N° Ticket',
+                          dataIndex: 'ticket_number',
+                        },
+                        {
+                          title: 'Monto',
+                          dataIndex: 'total_amount',
+                          render: (v) => formatCurrency(v),
+                        },
+                        {
+                          title: 'Usuario',
+                          dataIndex: 'user',
+                          render: (u) => getUserName(u),
+                        },
+                      ]}
+                    />
+                  ),
+                },
+                {
                   key: 'breakdown',
                   label: 'Resumen',
                   children: (

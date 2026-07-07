@@ -12,17 +12,6 @@ const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
 const columns = [
   {
-    title: 'Fecha',
-    key: 'created_at',
-    render: (_, order) => {
-      if (!order.created_at) return 'N/A';
-      return new Date(order.created_at).toLocaleString('es-CL', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      });
-    },
-  },
-  {
     title: 'Productos',
     key: 'products',
     render: (_, order) => {
@@ -55,6 +44,17 @@ const columns = [
     title: 'Total $',
     key: 'total',
     render: (_, order) => new Intl.NumberFormat('en-US').format(Math.trunc(order.total)) || 'N/A',
+  },
+  {
+    title: 'Fecha',
+    key: 'created_at',
+    render: (_, order) => {
+      if (!order.created_at) return 'N/A';
+      return new Date(order.created_at).toLocaleString('es-CL', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      });
+    },
   },
   {
     title: 'Acciones',

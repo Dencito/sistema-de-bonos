@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
-import { Select } from 'antd';
+import { Select, Input, Button } from 'antd';
 
 const LazyModalCreateOrder = lazy(() => import('@/Components/Orders/ModalCreateOrder'));
 const LazyModalDeleteOrder = lazy(() => import('@/Components/Orders/ModalDeleteOrder'));
@@ -11,6 +11,17 @@ const LazyModalDeleteOrder = lazy(() => import('@/Components/Orders/ModalDeleteO
 const LoadingFallback = () => <div className="p-2">Cargando...</div>;
 
 const columns = [
+  {
+    title: 'Fecha',
+    key: 'created_at',
+    render: (_, order) => {
+      if (!order.created_at) return 'N/A';
+      return new Date(order.created_at).toLocaleString('es-CL', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      });
+    },
+  },
   {
     title: 'Productos',
     key: 'products',
@@ -59,15 +70,50 @@ const columns = [
 ];
 
 export default function OrderPage({ auth, orders, products, branches, salesAccumulator = 0 }) {
-  const [selectedBranch, setSelectedBranch] = useState('');
+  const [filters, setFilters] = useState({
+    branch_id: '',
+    quantity: '',
+    payment_method: '',
+    paid_amount_min: '',
+    paid_amount_max: '',
+    total_min: '',
+    total_max: '',
+  });
   const userHasBranch = auth.user?.branch_id;
 
-  const handleBranchChange = (value) => {
-    setSelectedBranch(value);
-    router.get(route('orders.index'), value ? { branch_id: value } : {}, {
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const applyFilters = () => {
+    const params = {};
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) params[key] = filters[key];
+    });
+    router.get(route('orders.index'), params, {
       preserveState: true,
       preserveScroll: true,
     });
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      branch_id: '',
+      quantity: '',
+      payment_method: '',
+      paid_amount_min: '',
+      paid_amount_max: '',
+      total_min: '',
+      total_max: '',
+    });
+    router.get(
+      route('orders.index'),
+      {},
+      {
+        preserveState: true,
+        preserveScroll: true,
+      },
+    );
   };
 
   const formattedTotal = useMemo(() => {
@@ -97,26 +143,85 @@ export default function OrderPage({ auth, orders, products, branches, salesAccum
       <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">
           <div className="bg-white shadow-sm sm:rounded-lg">
-            <div className="flex gap-3 justify-between items-center my-3 text-gray-900">
-              {!userHasBranch && branches && branches.length > 0 && (
-                <Select
-                  className="w-64"
-                  placeholder="Filtrar por sucursal"
-                  value={selectedBranch || undefined}
-                  onChange={handleBranchChange}
+            <div className="flex flex-col gap-3 my-3 text-gray-900">
+              <div className="flex flex-wrap gap-3 items-center">
+                {!userHasBranch && branches && branches.length > 0 && (
+                  <Select
+                    className="w-48"
+                    placeholder="Sucursal"
+                    value={filters.branch_id || undefined}
+                    onChange={(value) => handleFilterChange('branch_id', value)}
+                    allowClear
+                    style={{ color: '#333' }}
+                  >
+                    {branches.map((branch) => (
+                      <Select.Option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                )}
+                <Input
+                  className="w-28"
+                  placeholder="Cantidad"
+                  value={filters.quantity}
+                  onChange={(e) => handleFilterChange('quantity', e.target.value)}
                   allowClear
+                  style={{ color: '#333' }}
+                />
+                <Select
+                  className="w-36"
+                  placeholder="Método pago"
+                  value={filters.payment_method || undefined}
+                  onChange={(value) => handleFilterChange('payment_method', value)}
+                  allowClear
+                  style={{ color: '#333' }}
                 >
-                  {branches.map((branch) => (
-                    <Select.Option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </Select.Option>
-                  ))}
+                  <Select.Option value="efectivo">Efectivo</Select.Option>
+                  <Select.Option value="tarjeta">Tarjeta</Select.Option>
+                  <Select.Option value="transferencia">Transferencia</Select.Option>
                 </Select>
-              )}
-              <div className="ml-auto">
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyModalCreateOrder products={products} />
-                </Suspense>
+                <Input
+                  className="w-28"
+                  placeholder="Monto min"
+                  value={filters.paid_amount_min}
+                  onChange={(e) => handleFilterChange('paid_amount_min', e.target.value)}
+                  allowClear
+                  style={{ color: '#333' }}
+                />
+                <Input
+                  className="w-28"
+                  placeholder="Monto max"
+                  value={filters.paid_amount_max}
+                  onChange={(e) => handleFilterChange('paid_amount_max', e.target.value)}
+                  allowClear
+                  style={{ color: '#333' }}
+                />
+                <Input
+                  className="w-28"
+                  placeholder="Total min"
+                  value={filters.total_min}
+                  onChange={(e) => handleFilterChange('total_min', e.target.value)}
+                  allowClear
+                  style={{ color: '#333' }}
+                />
+                <Input
+                  className="w-28"
+                  placeholder="Total max"
+                  value={filters.total_max}
+                  onChange={(e) => handleFilterChange('total_max', e.target.value)}
+                  allowClear
+                  style={{ color: '#333' }}
+                />
+                <Button type="primary" onClick={applyFilters}>
+                  Filtrar
+                </Button>
+                <Button onClick={clearFilters}>Limpiar</Button>
+                <div className="ml-auto">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LazyModalCreateOrder products={products} />
+                  </Suspense>
+                </div>
               </div>
             </div>
             <CustomTable

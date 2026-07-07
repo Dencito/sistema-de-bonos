@@ -59,6 +59,7 @@ class CashManagementController extends Controller
                         'type' => 'ticket',
                         'source' => 'ticket',
                         'amount' => $ticket->total_amount,
+                        'ticket_number' => $ticket->ticket_number,
                         'description' => 'Ticket #' . $ticket->ticket_number,
                         'created_at' => $ticket->created_at,
                         'user' => [
@@ -126,11 +127,23 @@ class CashManagementController extends Controller
             ->orderBy('ended_at', 'desc')
             ->first();
 
+        // Calculate total tickets for the active shift
+        $totalTickets = 0;
+        if ($activeShift) {
+            $shiftStart = $activeShift->started_at;
+            $shiftEnd = $activeShift->ended_at ?? now();
+
+            $totalTickets = \App\Models\Ticket::where('branch_id', $branchId)
+                ->whereBetween('created_at', [$shiftStart, $shiftEnd])
+                ->sum('total_amount');
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
                 'activeShift' => $activeShift,
                 'previousBalance' => $previousShift ? $previousShift->current_balance : 0,
+                'totalTickets' => $totalTickets,
             ]
         ]);
     }
@@ -461,11 +474,17 @@ class CashManagementController extends Controller
             switch ($request->type) {
                 case 'transfer':
                     $activeShift->total_transfers += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'giro':
                     $activeShift->total_giros += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'payment':
                     $activeShift->total_payments += $request->amount;
@@ -504,6 +523,9 @@ class CashManagementController extends Controller
                 switch ($request->type) {
                     case 'transfer':
                     case 'giro':
+                        // Restar del saldo pero NO sumar a total_payments
+                        $activePasillera->current_balance -= $request->amount;
+                        break;
                     case 'payment':
                     case 'other':
                     case 'sorteo':
@@ -610,19 +632,25 @@ class CashManagementController extends Controller
             switch ($transaction->type) {
                 case 'transfer':
                     // Transferencia es salida de dinero, debe restar del saldo
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_transfers += $delta;
-                    $activeShift->current_balance -= $delta;
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'giro':
                     // New balance check: delta > 0 means extra outgoing
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_giros += $delta;
-                    $activeShift->current_balance -= $delta;
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'payment':
                     if ($delta > 0 && $activeShift->current_balance < $delta) {
@@ -672,6 +700,34 @@ class CashManagementController extends Controller
                     break;
             }
             $activeShift->save();
+
+            // Si es pasillera, actualizar su saldo personal
+            if ($transaction->pasillera_id) {
+                $pasillera = Pasillera::find($transaction->pasillera_id);
+                if ($pasillera) {
+                    switch ($transaction->type) {
+                        case 'transfer':
+                        case 'giro':
+                            // Restar la diferencia del saldo
+                            $pasillera->current_balance -= $delta;
+                            break;
+                        case 'payment':
+                        case 'other':
+                        case 'sorteo':
+                        case 'bonus_especial':
+                        case 'prestamo':
+                        case 'withdrawal':
+                            $pasillera->total_payments += $delta;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            break;
+                        case 'deposit':
+                            $pasillera->initial_balance += $delta;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            break;
+                    }
+                    $pasillera->save();
+                }
+            }
 
             $transaction->update([
                 'amount' => $newAmount,
@@ -730,11 +786,33 @@ class CashManagementController extends Controller
             switch ($transaction->type) {
                 case 'transfer':
                     $activeShift->total_transfers -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo de la caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->current_balance += $amount;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'giro':
                     $activeShift->total_giros -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo de la caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->current_balance += $amount;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'payment':
                     $activeShift->total_payments -= $amount;
@@ -1144,7 +1222,22 @@ class CashManagementController extends Controller
             })
             ->with('user:id,first_name,first_last_name')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function($ticket) {
+                return [
+                    'id' => $ticket->id,
+                    'type' => 'ticket',
+                    'source' => 'ticket',
+                    'amount' => $ticket->total_amount,
+                    'ticket_number' => $ticket->ticket_number,
+                    'description' => 'Ticket #' . $ticket->ticket_number,
+                    'created_at' => $ticket->created_at,
+                    'user' => [
+                        'first_name' => $ticket->user->first_name,
+                        'first_last_name' => $ticket->user->first_last_name,
+                    ],
+                ];
+            });
 
         return response()->json([
             'success' => true,

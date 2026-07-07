@@ -26,6 +26,25 @@ class OrdersController extends Controller
             ->when(!$branchId && $filterBranchId, function ($query) use ($filterBranchId) {
                 $query->where('branch_id', $filterBranchId);
             })
+            ->when($request->filled('quantity'), function ($query) use ($request) {
+                $query->where('quantity', $request->input('quantity'));
+            })
+            ->when($request->filled('payment_method'), function ($query) use ($request) {
+                $query->where('payment_method', $request->input('payment_method'));
+            })
+            ->when($request->filled('paid_amount_min'), function ($query) use ($request) {
+                $query->where('paid_amount', '>=', (float) $request->input('paid_amount_min'));
+            })
+            ->when($request->filled('paid_amount_max'), function ($query) use ($request) {
+                $query->where('paid_amount', '<=', (float) $request->input('paid_amount_max'));
+            })
+            ->when($request->filled('total_min'), function ($query) use ($request) {
+                $query->where('total', '>=', (float) $request->input('total_min'));
+            })
+            ->when($request->filled('total_max'), function ($query) use ($request) {
+                $query->where('total', '<=', (float) $request->input('total_max'));
+            })
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $products = Product::query()

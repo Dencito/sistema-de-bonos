@@ -12,7 +12,7 @@ use App\Traits\CompanyScope;
 class Ticket extends Model
 {
     use HasFactory, CompanyScope;
-    
+
     protected $fillable = [
         'user_id',
         'branch_id',
@@ -20,13 +20,55 @@ class Ticket extends Model
         'total_amount',
         'ticket_number',
     ];
-    
+
     protected $casts = [
         'total_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
-    
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Al crear un ticket, reducir el saldo del turno activo
+        static::created(function ($ticket) {
+            $activeShift = CashShift::where('branch_id', $ticket->branch_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($activeShift) {
+                $activeShift->current_balance -= $ticket->total_amount;
+                $activeShift->save();
+            }
+        });
+
+        // Al actualizar un ticket, ajustar el saldo del turno activo
+        static::updated(function ($ticket) {
+            $activeShift = CashShift::where('branch_id', $ticket->branch_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($activeShift && $ticket->isDirty('total_amount')) {
+                $delta = $ticket->total_amount - $ticket->getOriginal('total_amount');
+                $activeShift->current_balance -= $delta;
+                $activeShift->save();
+            }
+        });
+
+        // Al eliminar un ticket, devolver el monto al saldo del turno activo
+        static::deleted(function ($ticket) {
+            $activeShift = CashShift::where('branch_id', $ticket->branch_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($activeShift) {
+                $activeShift->current_balance += $ticket->total_amount;
+                $activeShift->save();
+            }
+        });
+    }
+
     /**
      * Get the user that owns the ticket.
      */
@@ -34,7 +76,7 @@ class Ticket extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Get the branch that owns the ticket.
      */
@@ -42,7 +84,7 @@ class Ticket extends Model
     {
         return $this->belongsTo(Branch::class);
     }
-    
+
     /**
      * Scope a query to only include tickets created today.
      */

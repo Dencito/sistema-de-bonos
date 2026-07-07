@@ -110,7 +110,11 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
   };
 
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount || 0);
+    new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      maximumFractionDigits: 0,
+    }).format(amount || 0);
 
   const formatDate = (date) =>
     date ? new Date(date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '-';
@@ -276,7 +280,10 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
           const pu = record.pasillera.user;
           return (
             <span>
-              {getUserName(pu)} <Tag size="small" color="blue">Pasillera</Tag>
+              {getUserName(pu)}{' '}
+              <Tag size="small" color="blue">
+                Pasillera
+              </Tag>
             </span>
           );
         }
@@ -300,7 +307,7 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
         if (record.type === 'pasillera_payment' && record.machine) {
           parts.push(`Pago Pasillera - Máquina: ${record.machine}`);
         }
-        return parts.length ? parts.join(' | ') : (desc || '-');
+        return parts.length ? parts.join(' | ') : desc || '-';
       },
     },
   ];
@@ -345,11 +352,12 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
   ];
 
   const shift = detailData?.shift;
+  const totalTickets = detailData?.total_tickets || 0;
 
   // Computed values for detail transaction filters
   const allTransactions = shift?.transactions || [];
   const machineOptions = Array.from(
-    new Set(allTransactions.filter((t) => t.machine).map((t) => t.machine))
+    new Set(allTransactions.filter((t) => t.machine).map((t) => t.machine)),
   ).sort((a, b) => Number(a) - Number(b));
 
   const filteredTransactions = allTransactions.filter((t) => {
@@ -357,13 +365,7 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
     if (txMachineFilter !== 'all' && t.machine !== txMachineFilter) return false;
     if (txSearch) {
       const q = txSearch.toLowerCase();
-      const text = [
-        t.description,
-        t.client,
-        t.machine,
-        t.expense_type,
-        typeLabels[t.type],
-      ]
+      const text = [t.description, t.client, t.machine, t.expense_type, typeLabels[t.type]]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
@@ -421,7 +423,12 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
             </Col>
             <Col xs={24} md={5}>
               <Space>
-                <Button type="primary" icon={<SearchOutlined />} onClick={() => fetchShifts(1)} loading={loading}>
+                <Button
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  onClick={() => fetchShifts(1)}
+                  loading={loading}
+                >
                   Buscar
                 </Button>
                 <Button icon={<ClearOutlined />} onClick={handleClearFilters}>
@@ -436,7 +443,11 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
         <Card
           title="Turnos"
           extra={
-            <Button icon={<ReloadOutlined />} onClick={() => fetchShifts(pagination.current)} loading={loading}>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => fetchShifts(pagination.current)}
+              loading={loading}
+            >
               Actualizar
             </Button>
           }
@@ -480,49 +491,117 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                   children: (
                     <Space direction="vertical" size="large" style={{ width: '100%' }}>
                       <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }} size="small">
-                        <Descriptions.Item label="Sucursal">{shift.branch?.name || '-'}</Descriptions.Item>
-                        <Descriptions.Item label="Cajero/a">{getUserName(shift.user)}</Descriptions.Item>
+                        <Descriptions.Item label="Sucursal">
+                          {shift.branch?.name || '-'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Cajero/a">
+                          {getUserName(shift.user)}
+                        </Descriptions.Item>
                         <Descriptions.Item label="Estado">
                           {shift.is_active ? <Tag color="green">Abierto</Tag> : <Tag>Cerrado</Tag>}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Apertura">{formatDate(shift.started_at)}</Descriptions.Item>
-                        <Descriptions.Item label="Cierre">{formatDate(shift.ended_at)}</Descriptions.Item>
-                        <Descriptions.Item label="Saldo Anterior">{formatCurrency(shift.previous_balance)}</Descriptions.Item>
-                        <Descriptions.Item label="Saldo Agregado">{formatCurrency(shift.initial_balance)}</Descriptions.Item>
+                        <Descriptions.Item label="Apertura">
+                          {formatDate(shift.started_at)}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Cierre">
+                          {formatDate(shift.ended_at)}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Saldo Anterior">
+                          {formatCurrency(shift.previous_balance)}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Saldo Agregado">
+                          {formatCurrency(shift.initial_balance)}
+                        </Descriptions.Item>
                         <Descriptions.Item label="Saldo Inicial Total">
                           {formatCurrency(shift.total_initial_balance)}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Saldo Actual">{formatCurrency(shift.current_balance)}</Descriptions.Item>
+                        <Descriptions.Item label="Saldo Actual">
+                          {formatCurrency(shift.current_balance)}
+                        </Descriptions.Item>
                       </Descriptions>
 
                       <Card size="small" title="Totales del Turno">
                         <Row gutter={[16, 16]}>
                           <Col xs={12} md={6}>
-                            <Statistic title="Transferencias" value={shift.total_transfers || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Transferencias"
+                              value={shift.total_transfers || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Giros" value={shift.total_giros || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Giros"
+                              value={shift.total_giros || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Pagos por Caja" value={shift.total_payments || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Pagos por Caja"
+                              value={shift.total_payments || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Otros Gastos" value={shift.total_other || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Otros Gastos"
+                              value={shift.total_other || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Sorteos" value={shift.total_sorteo || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Sorteos"
+                              value={shift.total_sorteo || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Bonus Especial" value={shift.total_bonus_especial || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Bonus Especial"
+                              value={shift.total_bonus_especial || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Préstamos" value={shift.total_prestamo || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Préstamos"
+                              value={shift.total_prestamo || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Depósitos" value={shift.total_deposit || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Depósitos"
+                              value={shift.total_deposit || 0}
+                              prefix="$"
+                              precision={0}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
-                            <Statistic title="Retiros" value={shift.total_withdrawal || 0} prefix="$" precision={0} />
+                            <Statistic
+                              title="Retiros"
+                              value={shift.total_withdrawal || 0}
+                              prefix="$"
+                              precision={0}
+                            />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Statistic
+                              title="Tickets"
+                              value={totalTickets || 0}
+                              prefix="$"
+                              precision={0}
+                              valueStyle={{ color: '#52c41a' }}
+                            />
                           </Col>
                           <Col xs={12} md={6}>
                             <Statistic
@@ -535,15 +614,15 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                                   Number(shift.difference) === 0
                                     ? undefined
                                     : Number(shift.difference) > 0
-                                    ? '#13c2c2'
-                                    : '#cf1322',
+                                      ? '#13c2c2'
+                                      : '#cf1322',
                               }}
                               suffix={
                                 Number(shift.difference) === 0
                                   ? null
                                   : Number(shift.difference) > 0
-                                  ? ' (Sobrante)'
-                                  : ' (Faltante)'
+                                    ? ' (Sobrante)'
+                                    : ' (Faltante)'
                               }
                             />
                           </Col>
@@ -560,24 +639,32 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                         <Card size="small" title="Conteo físico" style={{ marginTop: 12 }}>
                           {/* Apertura */}
                           <div style={{ marginBottom: 16 }}>
-                            <Text strong style={{ fontSize: 14 }}>Apertura</Text>
+                            <Text strong style={{ fontSize: 14 }}>
+                              Apertura
+                            </Text>
                             <Row gutter={[8, 8]} style={{ marginTop: 8 }}>
                               {[
                                 { label: '$20.000', qty: shift.opening_20000, val: 20000 },
                                 { label: '$10.000', qty: shift.opening_10000, val: 10000 },
-                                { label: '$5.000',  qty: shift.opening_5000,  val: 5000 },
-                                { label: '$2.000',  qty: shift.opening_2000,  val: 2000 },
-                                { label: '$1.000',  qty: shift.opening_1000,  val: 1000 },
+                                { label: '$5.000', qty: shift.opening_5000, val: 5000 },
+                                { label: '$2.000', qty: shift.opening_2000, val: 2000 },
+                                { label: '$1.000', qty: shift.opening_1000, val: 1000 },
                               ].map((d) => (
                                 <Col span={8} key={`o-${d.label}`}>
-                                  <div style={{
-                                    background: '#f6ffed',
-                                    borderRadius: 8,
-                                    padding: '8px 10px',
-                                    border: '1px solid #b7eb8f',
-                                  }}>
-                                    <div style={{ fontSize: 12, color: '#595959' }}>Billetes {d.label}</div>
-                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#389e0d' }}>
+                                  <div
+                                    style={{
+                                      background: '#f6ffed',
+                                      borderRadius: 8,
+                                      padding: '8px 10px',
+                                      border: '1px solid #b7eb8f',
+                                    }}
+                                  >
+                                    <div style={{ fontSize: 12, color: '#595959' }}>
+                                      Billetes {d.label}
+                                    </div>
+                                    <div
+                                      style={{ fontSize: 16, fontWeight: 700, color: '#389e0d' }}
+                                    >
                                       {d.qty || 0}
                                     </div>
                                     <div style={{ fontSize: 11, color: '#8c8c8c' }}>
@@ -587,12 +674,14 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                                 </Col>
                               ))}
                               <Col span={8}>
-                                <div style={{
-                                  background: '#fff7e6',
-                                  borderRadius: 8,
-                                  padding: '8px 10px',
-                                  border: '1px solid #ffd591',
-                                }}>
+                                <div
+                                  style={{
+                                    background: '#fff7e6',
+                                    borderRadius: 8,
+                                    padding: '8px 10px',
+                                    border: '1px solid #ffd591',
+                                  }}
+                                >
                                   <div style={{ fontSize: 12, color: '#595959' }}>Monedas</div>
                                   <div style={{ fontSize: 16, fontWeight: 700, color: '#d46b08' }}>
                                     {formatCurrency(shift.opening_coins || 0)}
@@ -601,15 +690,17 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                                 </div>
                               </Col>
                             </Row>
-                            <div style={{
-                              marginTop: 10,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              background: '#f0f0f0',
-                              borderRadius: 8,
-                              padding: '8px 12px',
-                            }}>
+                            <div
+                              style={{
+                                marginTop: 10,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                background: '#f0f0f0',
+                                borderRadius: 8,
+                                padding: '8px 12px',
+                              }}
+                            >
                               <span style={{ fontSize: 13, color: '#595959' }}>
                                 Total Contado Apertura
                               </span>
@@ -623,24 +714,32 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
 
                           {/* Cierre */}
                           <div>
-                            <Text strong style={{ fontSize: 14 }}>Cierre</Text>
+                            <Text strong style={{ fontSize: 14 }}>
+                              Cierre
+                            </Text>
                             <Row gutter={[8, 8]} style={{ marginTop: 8 }}>
                               {[
                                 { label: '$20.000', qty: shift.closing_20000, val: 20000 },
                                 { label: '$10.000', qty: shift.closing_10000, val: 10000 },
-                                { label: '$5.000',  qty: shift.closing_5000,  val: 5000 },
-                                { label: '$2.000',  qty: shift.closing_2000,  val: 2000 },
-                                { label: '$1.000',  qty: shift.closing_1000,  val: 1000 },
+                                { label: '$5.000', qty: shift.closing_5000, val: 5000 },
+                                { label: '$2.000', qty: shift.closing_2000, val: 2000 },
+                                { label: '$1.000', qty: shift.closing_1000, val: 1000 },
                               ].map((d) => (
                                 <Col span={8} key={`c-${d.label}`}>
-                                  <div style={{
-                                    background: '#e6f7ff',
-                                    borderRadius: 8,
-                                    padding: '8px 10px',
-                                    border: '1px solid #91d5ff',
-                                  }}>
-                                    <div style={{ fontSize: 12, color: '#595959' }}>Billetes {d.label}</div>
-                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#096dd9' }}>
+                                  <div
+                                    style={{
+                                      background: '#e6f7ff',
+                                      borderRadius: 8,
+                                      padding: '8px 10px',
+                                      border: '1px solid #91d5ff',
+                                    }}
+                                  >
+                                    <div style={{ fontSize: 12, color: '#595959' }}>
+                                      Billetes {d.label}
+                                    </div>
+                                    <div
+                                      style={{ fontSize: 16, fontWeight: 700, color: '#096dd9' }}
+                                    >
                                       {d.qty || 0}
                                     </div>
                                     <div style={{ fontSize: 11, color: '#8c8c8c' }}>
@@ -650,12 +749,14 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                                 </Col>
                               ))}
                               <Col span={8}>
-                                <div style={{
-                                  background: '#fff7e6',
-                                  borderRadius: 8,
-                                  padding: '8px 10px',
-                                  border: '1px solid #ffd591',
-                                }}>
+                                <div
+                                  style={{
+                                    background: '#fff7e6',
+                                    borderRadius: 8,
+                                    padding: '8px 10px',
+                                    border: '1px solid #ffd591',
+                                  }}
+                                >
                                   <div style={{ fontSize: 12, color: '#595959' }}>Monedas</div>
                                   <div style={{ fontSize: 16, fontWeight: 700, color: '#d46b08' }}>
                                     {formatCurrency(shift.closing_coins || 0)}
@@ -664,15 +765,17 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                                 </div>
                               </Col>
                             </Row>
-                            <div style={{
-                              marginTop: 10,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              background: '#f0f0f0',
-                              borderRadius: 8,
-                              padding: '8px 12px',
-                            }}>
+                            <div
+                              style={{
+                                marginTop: 10,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                background: '#f0f0f0',
+                                borderRadius: 8,
+                                padding: '8px 12px',
+                              }}
+                            >
                               <span style={{ fontSize: 13, color: '#595959' }}>
                                 Total Contado Cierre
                               </span>
@@ -702,7 +805,10 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                             onClear={() => setTxTypeFilter('all')}
                             options={[
                               { value: 'all', label: 'Todos los tipos' },
-                              ...Object.entries(typeLabels).map(([value, label]) => ({ value, label })),
+                              ...Object.entries(typeLabels).map(([value, label]) => ({
+                                value,
+                                label,
+                              })),
                             ]}
                           />
                         </Col>
@@ -797,7 +903,11 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
                         {
                           title: 'Tipo',
                           dataIndex: 'type',
-                          render: (t) => <Tag color={t === 'sale' ? 'green' : 'orange'}>{t === 'sale' ? 'Venta' : 'Anulación'}</Tag>,
+                          render: (t) => (
+                            <Tag color={t === 'sale' ? 'green' : 'orange'}>
+                              {t === 'sale' ? 'Venta' : 'Anulación'}
+                            </Tag>
+                          ),
                         },
                         {
                           title: 'N° Ticket',

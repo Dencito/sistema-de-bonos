@@ -21,13 +21,27 @@ import {
   Upload,
   Alert,
 } from 'antd';
-import { DeleteOutlined, ReloadOutlined, PlusOutlined, SwapOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+  SwapOutlined,
+  EditOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { Switch } from 'antd';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
 
-export default function SystemBank({ auth, activeShift, previousBalance, availableUsers = [], branch, tickets: initialTickets = [] }) {
+export default function SystemBank({
+  auth,
+  activeShift,
+  previousBalance,
+  availableUsers = [],
+  branch,
+  tickets: initialTickets = [],
+}) {
   const [shift, setShift] = useState(activeShift);
   const [prevBalance, setPrevBalance] = useState(previousBalance || 0);
   const [initialBalance, setInitialBalance] = useState('');
@@ -63,6 +77,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
   const [transactions, setTransactions] = useState(activeShift?.transactions || []);
   const [tickets, setTickets] = useState(initialTickets);
+  const [totalTickets, setTotalTickets] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -116,6 +131,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       if (response.data.success) {
         setShift(response.data.data.activeShift);
         setPrevBalance(response.data.data.previousBalance);
+        setTotalTickets(response.data.data.totalTickets || 0);
         setPasilleras(response.data.data.activeShift?.pasilleras || []);
         setTransactions(response.data.data.activeShift?.transactions || []);
       }
@@ -171,13 +187,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
   // Combinar transacciones y tickets en un solo array ordenado por fecha
   const combinedHistory = [
-    ...transactions.map(t => ({ ...t, source: 'transaction' })),
-    ...tickets.map(t => ({ ...t, source: 'ticket' }))
+    ...transactions.map((t) => ({ ...t, source: 'transaction' })),
+    ...tickets.map((t) => ({ ...t, source: 'ticket' })),
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-  // Calcular saldo ajustado restando tickets
-  const totalTicketsAmount = tickets.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-  const adjustedBalance = (shift?.current_balance || 0) - totalTicketsAmount;
 
   const handleStartShift = async () => {
     // Calculate the actual initial_balance to send based on mode
@@ -199,7 +211,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
     // In simple mode use the direct total; in denomination mode use the calculated sum
     const effectiveTotal = openingSimpleMode
-      ? (initialBalanceMode === 'total' ? Number(initialBalance) : prevBalance + Number(initialBalance))
+      ? initialBalanceMode === 'total'
+        ? Number(initialBalance)
+        : prevBalance + Number(initialBalance)
       : calculateOpeningTotal();
 
     if (!openingSimpleMode && effectiveTotal <= 0) {
@@ -212,13 +226,15 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       const response = await axios.post('/cash-management/shift/start', {
         initial_balance: initialBalanceToSend,
         opening_total: openingSimpleMode
-          ? (initialBalanceMode === 'total' ? Number(initialBalance) : prevBalance + Number(initialBalance))
+          ? initialBalanceMode === 'total'
+            ? Number(initialBalance)
+            : prevBalance + Number(initialBalance)
           : calculateOpeningTotal(),
         opening_20000: openingSimpleMode ? 0 : opening20000,
         opening_10000: openingSimpleMode ? 0 : opening10000,
         opening_5000: openingSimpleMode ? 0 : opening5000,
         opening_2000: openingSimpleMode ? 0 : opening2000,
-        opening_1000: openingSimpleMode ? 0 : opening10000,
+        opening_1000: openingSimpleMode ? 0 : opening1000,
         opening_coins: openingSimpleMode ? 0 : openingCoins,
         simple_mode: openingSimpleMode,
       });
@@ -516,7 +532,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
   }, [inactivityModalVisible]);
   */
 
-  console.log(transactions)
+  console.log(transactions);
 
   const handleUnlockSession = async () => {
     if (!unlockPassword) {
@@ -618,9 +634,11 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
         if (record.expense_type) parts.push(record.expense_type);
         if (['deposit', 'withdrawal'].includes(record.type) && record.admin_user) {
           const u = record.admin_user;
-          parts.push(`Autorizado por: ${[u.first_name, u.first_last_name].filter(Boolean).join(' ')}`);
+          parts.push(
+            `Autorizado por: ${[u.first_name, u.first_last_name].filter(Boolean).join(' ')}`,
+          );
         }
-        return parts.length ? parts.join(' | ') : (desc || '-');
+        return parts.length ? parts.join(' | ') : desc || '-';
       },
     },
     {
@@ -634,7 +652,10 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           const pu = record.pasillera.user;
           return (
             <span>
-              {[pu.first_name, pu.first_last_name].filter(Boolean).join(' ') || '-'} <Tag size="small" color="blue">Pasillera</Tag>
+              {[pu.first_name, pu.first_last_name].filter(Boolean).join(' ') || '-'}{' '}
+              <Tag size="small" color="blue">
+                Pasillera
+              </Tag>
             </span>
           );
         }
@@ -664,29 +685,79 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   <div>
                     <h4>Apertura</h4>
                     <div style={{ marginBottom: 16 }}>
-                      <div>$20.000: {shiftData.opening_20000 || 0} x 20.000 = {formatCurrency((shiftData.opening_20000 || 0) * 20000)}</div>
-                      <div>$10.000: {shiftData.opening_10000 || 0} x 10.000 = {formatCurrency((shiftData.opening_10000 || 0) * 10000)}</div>
-                      <div>$5.000: {shiftData.opening_5000 || 0} x 5.000 = {formatCurrency((shiftData.opening_5000 || 0) * 5000)}</div>
-                      <div>$2.000: {shiftData.opening_2000 || 0} x 2.000 = {formatCurrency((shiftData.opening_2000 || 0) * 2000)}</div>
-                      <div>$1.000: {shiftData.opening_1000 || 0} x 1.000 = {formatCurrency((shiftData.opening_1000 || 0) * 1000)}</div>
+                      <div>
+                        $20.000: {shiftData.opening_20000 || 0} x 20.000 ={' '}
+                        {formatCurrency((shiftData.opening_20000 || 0) * 20000)}
+                      </div>
+                      <div>
+                        $10.000: {shiftData.opening_10000 || 0} x 10.000 ={' '}
+                        {formatCurrency((shiftData.opening_10000 || 0) * 10000)}
+                      </div>
+                      <div>
+                        $5.000: {shiftData.opening_5000 || 0} x 5.000 ={' '}
+                        {formatCurrency((shiftData.opening_5000 || 0) * 5000)}
+                      </div>
+                      <div>
+                        $2.000: {shiftData.opening_2000 || 0} x 2.000 ={' '}
+                        {formatCurrency((shiftData.opening_2000 || 0) * 2000)}
+                      </div>
+                      <div>
+                        $1.000: {shiftData.opening_1000 || 0} x 1.000 ={' '}
+                        {formatCurrency((shiftData.opening_1000 || 0) * 1000)}
+                      </div>
                       <div>Monedas: {formatCurrency(shiftData.opening_coins || 0)}</div>
                       <Divider />
-                      <div style={{ fontWeight: 'bold' }}>Total Apertura: {formatCurrency(shiftData.opening_total_counted || 0)}</div>
+                      <div style={{ fontWeight: 'bold' }}>
+                        Total Apertura: {formatCurrency(shiftData.opening_total_counted || 0)}
+                      </div>
                     </div>
                     {!shiftData.is_active && (
                       <>
                         <h4>Cierre</h4>
                         <div>
-                          <div>$20.000: {shiftData.closing_20000 || 0} x 20.000 = {formatCurrency((shiftData.closing_20000 || 0) * 20000)}</div>
-                          <div>$10.000: {shiftData.closing_10000 || 0} x 10.000 = {formatCurrency((shiftData.closing_10000 || 0) * 10000)}</div>
-                          <div>$5.000: {shiftData.closing_5000 || 0} x 5.000 = {formatCurrency((shiftData.closing_5000 || 0) * 5000)}</div>
-                          <div>$2.000: {shiftData.closing_2000 || 0} x 2.000 = {formatCurrency((shiftData.closing_2000 || 0) * 2000)}</div>
-                          <div>$1.000: {shiftData.closing_1000 || 0} x 1.000 = {formatCurrency((shiftData.closing_1000 || 0) * 1000)}</div>
+                          <div>
+                            $20.000: {shiftData.closing_20000 || 0} x 20.000 ={' '}
+                            {formatCurrency((shiftData.closing_20000 || 0) * 20000)}
+                          </div>
+                          <div>
+                            $10.000: {shiftData.closing_10000 || 0} x 10.000 ={' '}
+                            {formatCurrency((shiftData.closing_10000 || 0) * 10000)}
+                          </div>
+                          <div>
+                            $5.000: {shiftData.closing_5000 || 0} x 5.000 ={' '}
+                            {formatCurrency((shiftData.closing_5000 || 0) * 5000)}
+                          </div>
+                          <div>
+                            $2.000: {shiftData.closing_2000 || 0} x 2.000 ={' '}
+                            {formatCurrency((shiftData.closing_2000 || 0) * 2000)}
+                          </div>
+                          <div>
+                            $1.000: {shiftData.closing_1000 || 0} x 1.000 ={' '}
+                            {formatCurrency((shiftData.closing_1000 || 0) * 1000)}
+                          </div>
                           <div>Monedas: {formatCurrency(shiftData.closing_coins || 0)}</div>
                           <Divider />
-                          <div style={{ fontWeight: 'bold' }}>Total Cierre: {formatCurrency(shiftData.closing_total_counted || 0)}</div>
-                          <div style={{ fontWeight: 'bold', color: shiftData.difference !== 0 ? (shiftData.difference > 0 ? '#52c41a' : '#ff4d4f') : undefined }}>
-                            Diferencia: {shiftData.difference !== 0 ? (shiftData.difference > 0 ? '+' : '') : ''}{formatCurrency(shiftData.difference || 0)}
+                          <div style={{ fontWeight: 'bold' }}>
+                            Total Cierre: {formatCurrency(shiftData.closing_total_counted || 0)}
+                          </div>
+                          <div
+                            style={{
+                              fontWeight: 'bold',
+                              color:
+                                shiftData.difference !== 0
+                                  ? shiftData.difference > 0
+                                    ? '#52c41a'
+                                    : '#ff4d4f'
+                                  : undefined,
+                            }}
+                          >
+                            Diferencia:{' '}
+                            {shiftData.difference !== 0
+                              ? shiftData.difference > 0
+                                ? '+'
+                                : ''
+                              : ''}
+                            {formatCurrency(shiftData.difference || 0)}
                           </div>
                         </div>
                       </>
@@ -725,8 +796,34 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       render: (_, record) => {
         if (record.source === 'ticket') return '-';
         const isAdmin = ['duenio', 'super-admin'].includes(auth.role);
-        const editable = isAdmin && shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
-        const deletable = isAdmin && shift?.is_active && ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'].includes(record.type);
+        const editable =
+          isAdmin &&
+          shift?.is_active &&
+          [
+            'transfer',
+            'giro',
+            'payment',
+            'other',
+            'sorteo',
+            'bonus_especial',
+            'prestamo',
+            'deposit',
+            'withdrawal',
+          ].includes(record.type);
+        const deletable =
+          isAdmin &&
+          shift?.is_active &&
+          [
+            'transfer',
+            'giro',
+            'payment',
+            'other',
+            'sorteo',
+            'bonus_especial',
+            'prestamo',
+            'deposit',
+            'withdrawal',
+          ].includes(record.type);
         if (!editable && !deletable) return '-';
         return (
           <Space>
@@ -818,7 +915,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
     }
   };
 
-
   return (
     <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
       <Head title="Sistema de Caja" />
@@ -826,7 +922,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
       <div className="container p-4 mx-auto space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <Title level={2} style={{ margin: 0 }}>Sistema de Gestión de Caja</Title>
+            <Title level={2} style={{ margin: 0 }}>
+              Sistema de Gestión de Caja
+            </Title>
             <Button
               icon={<ReloadOutlined spin={refreshing} />}
               onClick={handleRefresh}
@@ -839,17 +937,18 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           {branch?.name && (
             <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <Text type="secondary" style={{ fontSize: 13 }}>Sucursal:</Text>
-              <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>{branch.name}</Text>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                Sucursal:
+              </Text>
+              <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>
+                {branch.name}
+              </Text>
             </div>
           )}
         </div>
 
         {/* Control de Caja */}
-        <Card
-          title="Control de Caja"
-          extra={<RefreshBtn tooltip="Actualizar saldos de caja" />}
-        >
+        <Card title="Control de Caja" extra={<RefreshBtn tooltip="Actualizar saldos de caja" />}>
           <Row gutter={[16, 16]}>
             <Col xs={24} md={12}>
               <Space direction="vertical" style={{ width: '100%' }} size="large">
@@ -877,7 +976,11 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     style={{ width: '100%', marginTop: 8 }}
                     value={initialBalance}
                     onChange={setInitialBalance}
-                    placeholder={initialBalanceMode === 'total' ? 'Ingrese el monto total' : 'Ingrese monto a agregar'}
+                    placeholder={
+                      initialBalanceMode === 'total'
+                        ? 'Ingrese el monto total'
+                        : 'Ingrese monto a agregar'
+                    }
                     disabled={shift?.is_active}
                     min={0}
                     precision={2}
@@ -885,7 +988,11 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 </div>
                 <Statistic
                   title="Saldo Inicial Total"
-                  value={initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)}
+                  value={
+                    initialBalanceMode === 'total'
+                      ? Number(initialBalance) || 0
+                      : prevBalance + (Number(initialBalance) || 0)
+                  }
                   precision={2}
                   prefix="$"
                 />
@@ -917,34 +1024,20 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 <div className="flex items-center gap-2">
                   <Statistic
                     title="Saldo Actual"
-                    value={adjustedBalance}
+                    value={shift?.current_balance || 0}
                     precision={2}
                     prefix="$"
                     valueStyle={{
-                      color: adjustedBalance < 0
-                        ? '#cf1322'
-                        : adjustedBalance === 0
-                          ? '#faad14'
-                          : '#3f8600',
+                      color:
+                        (shift?.current_balance || 0) < 0
+                          ? '#cf1322'
+                          : (shift?.current_balance || 0) === 0
+                            ? '#faad14'
+                            : '#3f8600',
                     }}
                   />
                   <RefreshBtn tooltip="Actualizar saldo actual" />
                 </div>
-                {totalTicketsAmount > 0 && (
-                  <div
-                    style={{
-                      padding: 8,
-                      borderRadius: 6,
-                      background: '#e6f7ff',
-                      border: '1px solid #91d5ff',
-                      color: '#096dd9',
-                      fontWeight: 600,
-                      fontSize: 12,
-                    }}
-                  >
-                    Tickets del turno: ${new Intl.NumberFormat('en-US').format(Math.trunc(totalTicketsAmount))}
-                  </div>
-                )}
                 {Number(shift?.current_balance || 0) < 0 && (
                   <div
                     style={{
@@ -963,31 +1056,85 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 <Card size="small" title="Movimientos del Turno">
                   <Row gutter={[16, 16]}>
                     <Col xs={12} md={8}>
-                      <Statistic title="Transferencias" value={shift?.total_transfers || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Transferencias"
+                        value={shift?.total_transfers || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Giros" value={shift?.total_giros || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Giros"
+                        value={shift?.total_giros || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Pagos por Caja" value={shift?.total_payments || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Pagos por Caja"
+                        value={shift?.total_payments || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Otros Gastos" value={shift?.total_other || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Otros Gastos"
+                        value={shift?.total_other || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Sorteos" value={shift?.total_sorteo || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Sorteos"
+                        value={shift?.total_sorteo || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Bonus Especial" value={shift?.total_bonus_especial || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Tickets"
+                        value={totalTickets || 0}
+                        precision={2}
+                        prefix="$"
+                        valueStyle={{ color: '#52c41a' }}
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Préstamos" value={shift?.total_prestamo || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Bonus Especial"
+                        value={shift?.total_bonus_especial || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Depósitos" value={shift?.total_deposit || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Préstamos"
+                        value={shift?.total_prestamo || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                     <Col xs={12} md={8}>
-                      <Statistic title="Retiros" value={shift?.total_withdrawal || 0} precision={2} prefix="$" />
+                      <Statistic
+                        title="Depósitos"
+                        value={shift?.total_deposit || 0}
+                        precision={2}
+                        prefix="$"
+                      />
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Statistic
+                        title="Retiros"
+                        value={shift?.total_withdrawal || 0}
+                        precision={2}
+                        prefix="$"
+                      />
                     </Col>
                   </Row>
                 </Card>
@@ -1001,7 +1148,10 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                       border: `1px solid ${Number(shift.difference) > 0 ? '#87e8de' : '#ffa39e'}`,
                     }}
                   >
-                    <Text strong style={{ color: Number(shift.difference) > 0 ? '#13c2c2' : '#cf1322' }}>
+                    <Text
+                      strong
+                      style={{ color: Number(shift.difference) > 0 ? '#13c2c2' : '#cf1322' }}
+                    >
                       {Number(shift.difference) > 0 ? '⬆ SOBRANTE' : '⬇ FALTANTE'} de apertura:{' '}
                       {formatCurrency(Math.abs(Number(shift.difference)))}
                     </Text>
@@ -1027,11 +1177,13 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 precision={2}
                 status={Number(amount || 0) > Number(shift?.current_balance || 0) ? 'warning' : ''}
               />
-              {Number(amount || 0) > 0 && Number(amount || 0) > Number(shift?.current_balance || 0) && (
-                <div style={{ color: '#faad14', marginTop: 4, fontSize: 12 }}>
-                  ⚠ El monto excede el saldo actual ({formatCurrency(shift?.current_balance || 0)}). No se podrá registrar como Giro / Pago / Otro Gasto.
-                </div>
-              )}
+              {Number(amount || 0) > 0 &&
+                Number(amount || 0) > Number(shift?.current_balance || 0) && (
+                  <div style={{ color: '#faad14', marginTop: 4, fontSize: 12 }}>
+                    ⚠ El monto excede el saldo actual ({formatCurrency(shift?.current_balance || 0)}
+                    ). No se podrá registrar como Giro / Pago / Otro Gasto.
+                  </div>
+                )}
             </div>
             <div>
               <Text strong>Cliente</Text>
@@ -1186,7 +1338,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
             setExpenseImage(null);
           }}
           onOk={() => {
-            const finalExpenseType = otherExpenseType === 'Otros' ? otherExpenseCustom : otherExpenseType;
+            const finalExpenseType =
+              otherExpenseType === 'Otros' ? otherExpenseCustom : otherExpenseType;
             setExpenseType(finalExpenseType);
             handleTransaction('other', null, finalExpenseType);
           }}
@@ -1276,7 +1429,13 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
         {/* Modal Cliente - para Sorteo, Bono Especial, Préstamo */}
         <Modal
-          title={clientTransactionType === 'sorteo' ? 'Sorteo' : clientTransactionType === 'bonus_especial' ? 'Bono Especial' : 'Préstamo'}
+          title={
+            clientTransactionType === 'sorteo'
+              ? 'Sorteo'
+              : clientTransactionType === 'bonus_especial'
+                ? 'Bono Especial'
+                : 'Préstamo'
+          }
           open={clientModalVisible}
           onCancel={() => {
             setClientModalVisible(false);
@@ -1308,7 +1467,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
         {/* Modal Autenticación - para Agregar/Quitar Dinero */}
         <Modal
-          title={authTransactionType === 'deposit' ? 'Agregar Dinero a Caja' : 'Quitar Dinero de Caja'}
+          title={
+            authTransactionType === 'deposit' ? 'Agregar Dinero a Caja' : 'Quitar Dinero de Caja'
+          }
           open={authModalVisible}
           onCancel={() => {
             setAuthModalVisible(false);
@@ -1387,12 +1548,17 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
 
         {/* Modal Editar Transacción */}
         <Modal
-          title={`Editar Transacción${editingTx ? ' · ' + ({
-            transfer: 'Transferencia',
-            giro: 'Giro',
-            payment: 'Pago por Caja',
-            other: 'Otro Gasto',
-          }[editingTx.type] || editingTx.type) : ''}`}
+          title={`Editar Transacción${
+            editingTx
+              ? ' · ' +
+                ({
+                  transfer: 'Transferencia',
+                  giro: 'Giro',
+                  payment: 'Pago por Caja',
+                  other: 'Otro Gasto',
+                }[editingTx.type] || editingTx.type)
+              : ''
+          }`}
           open={editModalVisible}
           onCancel={() => {
             setEditModalVisible(false);
@@ -1497,192 +1663,294 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
               </Col>
             </Row>
 
-{(() => {
-                const fmtTs = (ts) => ts ? new Date(ts).toLocaleString('es-AR', {
-                  day: '2-digit', month: '2-digit', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit'
-                }) : '-';
+            {(() => {
+              const fmtTs = (ts) =>
+                ts
+                  ? new Date(ts).toLocaleString('es-AR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : '-';
 
-                const grouped = {};
-                pasilleras.forEach(p => {
-                  const uid = p.user?.id ?? 'unknown';
-                  if (!grouped[uid]) grouped[uid] = { user: p.user, items: [] };
-                  grouped[uid].items.push(p);
-                });
+              const grouped = {};
+              pasilleras.forEach((p) => {
+                const uid = p.user?.id ?? 'unknown';
+                if (!grouped[uid]) grouped[uid] = { user: p.user, items: [] };
+                grouped[uid].items.push(p);
+              });
 
-                const groupList = Object.values(grouped);
-                return groupList.map(({ user, items }, groupIdx) => (
-                  <div key={user?.id ?? 'unknown'} style={{ marginBottom: 24 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                      <Text strong style={{ fontSize: 14 }}>
-                        👤 {user?.first_name} {user?.first_last_name}
-                      </Text>
-                      <Tag color="blue">{items.length} turno{items.length !== 1 ? 's' : ''}</Tag>
-                    </div>
+              const groupList = Object.values(grouped);
+              return groupList.map(({ user, items }, groupIdx) => (
+                <div key={user?.id ?? 'unknown'} style={{ marginBottom: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <Text strong style={{ fontSize: 14 }}>
+                      👤 {user?.first_name} {user?.first_last_name}
+                    </Text>
+                    <Tag color="blue">
+                      {items.length} turno{items.length !== 1 ? 's' : ''}
+                    </Tag>
+                  </div>
 
-                    <Row gutter={[16, 16]}>
-                      {items.map((pasillera) => {
-                        const hasReintegro = pasillera.transactions?.some(t => t.type === 'pasillera_return');
-                        const reintegroTx = pasillera.transactions?.find(t => t.type === 'pasillera_return');
-                        const isBalanceZero = Number(pasillera.current_balance) === 0 && !hasReintegro;
-                        const isForceClosed = pasillera.force_closed;
+                  <Row gutter={[16, 16]}>
+                    {items.map((pasillera) => {
+                      const hasReintegro = pasillera.transactions?.some(
+                        (t) => t.type === 'pasillera_return',
+                      );
+                      const reintegroTx = pasillera.transactions?.find(
+                        (t) => t.type === 'pasillera_return',
+                      );
+                      const isBalanceZero =
+                        Number(pasillera.current_balance) === 0 && !hasReintegro;
+                      const isForceClosed = pasillera.force_closed;
 
-                        return (
-                          <Col xs={24} md={12} key={pasillera.id}>
-                            <Card
-                              size="small"
-                              title={
-                                <span style={{ color: isForceClosed ? '#cf1322' : hasReintegro ? '#389e0d' : undefined }}>
-                                  {`Turno #${pasillera.id} - ${user?.first_name} ${user?.first_last_name}`}
-                                  {isForceClosed && (
-                                    <Tag color="error" style={{ marginLeft: 8, fontSize: 11 }}>⚠ Cierre Forzado</Tag>
-                                  )}
-                                  {hasReintegro && !isForceClosed && (
-                                    <Tag color="success" style={{ marginLeft: 8, fontSize: 11 }}>✓ Reintegrado</Tag>
-                                  )}
-                                  {isBalanceZero && !isForceClosed && (
-                                    <Tag color="warning" style={{ marginLeft: 8, fontSize: 11 }}>Saldo en $0</Tag>
-                                  )}
-                                </span>
-                              }
-                              style={{
-                                borderColor: isForceClosed ? '#ffccc7' : hasReintegro ? '#b7eb8f' : undefined,
-                                background: isForceClosed ? '#fff1f0' : hasReintegro ? '#f6ffed' : undefined,
-                              }}
-                              headStyle={{ background: isForceClosed ? '#ffccc7' : hasReintegro ? '#d9f7be' : undefined }}
-                              extra={
-                                !hasReintegro && !isForceClosed && (
-                                  <Space size="small">
-                                    <RefreshBtn tooltip={`Actualizar datos de ${user?.first_name}`} />
-                                    <Popconfirm
-                                      title="¿Eliminar esta pasillera?"
-                                      onConfirm={() => handleDeletePasillera(pasillera.id)}
-                                      okText="Sí"
-                                      cancelText="No"
-                                    >
-                                      <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                                    </Popconfirm>
-                                  </Space>
-                                )
-                              }
-                            >
-                              <Row gutter={[8, 8]}>
-                                <Col span={12}>
-                                  <Text type="secondary">Saldo Inicial:</Text>
-                                  <br />
-                                  <Text strong>{formatCurrency(pasillera.initial_balance)}</Text>
-                                </Col>
-                                <Col span={12}>
-                                  <Text type="secondary">Pagos:</Text>
-                                  <br />
-                                  <Text strong>{formatCurrency(pasillera.total_payments)}</Text>
-                                </Col>
-                                <Col span={12}>
-                                  <Text type="secondary">Saldo Actual:</Text>
-                                  <br />
-                                  <Text strong style={{ color: hasReintegro ? '#52c41a' : isBalanceZero ? '#fa8c16' : undefined }}>
-                                    {formatCurrency(pasillera.current_balance)}
-                                  </Text>
-                                </Col>
-                              </Row>
-
-                              <Divider style={{ margin: '10px 0' }} />
-
-                              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                                <div>🕐 <Text type="secondary" style={{ fontSize: 12 }}>Asignado:</Text>{' '}
-                                  <Text style={{ fontSize: 12 }}>{fmtTs(pasillera.created_at)}</Text>
-                                </div>
-                                {hasReintegro && reintegroTx && (
-                                  <div style={{ marginTop: 4 }}>
-                                    ✅ <Text style={{ fontSize: 12, color: '#52c41a' }}>Reintegrado:</Text>{' '}
-                                    <Text style={{ fontSize: 12 }}>{fmtTs(reintegroTx.created_at)}</Text>
-                                  </div>
+                      return (
+                        <Col xs={24} md={12} key={pasillera.id}>
+                          <Card
+                            size="small"
+                            title={
+                              <span
+                                style={{
+                                  color: isForceClosed
+                                    ? '#cf1322'
+                                    : hasReintegro
+                                      ? '#389e0d'
+                                      : undefined,
+                                }}
+                              >
+                                {`Turno #${pasillera.id} - ${user?.first_name} ${user?.first_last_name}`}
+                                {isForceClosed && (
+                                  <Tag color="error" style={{ marginLeft: 8, fontSize: 11 }}>
+                                    ⚠ Cierre Forzado
+                                  </Tag>
                                 )}
-                                {isBalanceZero && (
-                                  <div style={{ marginTop: 4, color: '#fa8c16' }}>
-                                    ⚠ Saldo llegó a $0
-                                  </div>
+                                {hasReintegro && !isForceClosed && (
+                                  <Tag color="success" style={{ marginLeft: 8, fontSize: 11 }}>
+                                    ✓ Reintegrado
+                                  </Tag>
                                 )}
+                                {isBalanceZero && !isForceClosed && (
+                                  <Tag color="warning" style={{ marginLeft: 8, fontSize: 11 }}>
+                                    Saldo en $0
+                                  </Tag>
+                                )}
+                              </span>
+                            }
+                            style={{
+                              borderColor: isForceClosed
+                                ? '#ffccc7'
+                                : hasReintegro
+                                  ? '#b7eb8f'
+                                  : undefined,
+                              background: isForceClosed
+                                ? '#fff1f0'
+                                : hasReintegro
+                                  ? '#f6ffed'
+                                  : undefined,
+                            }}
+                            headStyle={{
+                              background: isForceClosed
+                                ? '#ffccc7'
+                                : hasReintegro
+                                  ? '#d9f7be'
+                                  : undefined,
+                            }}
+                            extra={
+                              !hasReintegro &&
+                              !isForceClosed && (
+                                <Space size="small">
+                                  <RefreshBtn tooltip={`Actualizar datos de ${user?.first_name}`} />
+                                  <Popconfirm
+                                    title="¿Eliminar esta pasillera?"
+                                    onConfirm={() => handleDeletePasillera(pasillera.id)}
+                                    okText="Sí"
+                                    cancelText="No"
+                                  >
+                                    <Button
+                                      type="text"
+                                      danger
+                                      icon={<DeleteOutlined />}
+                                      size="small"
+                                    />
+                                  </Popconfirm>
+                                </Space>
+                              )
+                            }
+                          >
+                            <Row gutter={[8, 8]}>
+                              <Col span={12}>
+                                <Text type="secondary">Saldo Inicial:</Text>
+                                <br />
+                                <Text strong>{formatCurrency(pasillera.initial_balance)}</Text>
+                              </Col>
+                              <Col span={12}>
+                                <Text type="secondary">Pagos:</Text>
+                                <br />
+                                <Text strong>{formatCurrency(pasillera.total_payments)}</Text>
+                              </Col>
+                              <Col span={12}>
+                                <Text type="secondary">Saldo Actual:</Text>
+                                <br />
+                                <Text
+                                  strong
+                                  style={{
+                                    color: hasReintegro
+                                      ? '#52c41a'
+                                      : isBalanceZero
+                                        ? '#fa8c16'
+                                        : undefined,
+                                  }}
+                                >
+                                  {formatCurrency(pasillera.current_balance)}
+                                </Text>
+                              </Col>
+                            </Row>
+
+                            <Divider style={{ margin: '10px 0' }} />
+
+                            <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                              <div>
+                                🕐{' '}
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  Asignado:
+                                </Text>{' '}
+                                <Text style={{ fontSize: 12 }}>{fmtTs(pasillera.created_at)}</Text>
                               </div>
+                              {hasReintegro && reintegroTx && (
+                                <div style={{ marginTop: 4 }}>
+                                  ✅{' '}
+                                  <Text style={{ fontSize: 12, color: '#52c41a' }}>
+                                    Reintegrado:
+                                  </Text>{' '}
+                                  <Text style={{ fontSize: 12 }}>
+                                    {fmtTs(reintegroTx.created_at)}
+                                  </Text>
+                                </div>
+                              )}
+                              {isBalanceZero && (
+                                <div style={{ marginTop: 4, color: '#fa8c16' }}>
+                                  ⚠ Saldo llegó a $0
+                                </div>
+                              )}
+                            </div>
 
-                              {pasillera.transactions && pasillera.transactions.length > 0 && (
-                                <div style={{ marginTop: 12 }}>
-                                  <Text strong style={{ fontSize: 12 }}>Registros:</Text>
-                                  <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6 }}>
-                                    {pasillera.transactions.map((registro, index) => {
-                                      const typeLabels = {
-                                        pasillera_payment: 'Pago Máquina',
-                                        pasillera_return: 'Reintegro',
-                                        transfer: 'Transferencia',
-                                        giro: 'Giro',
-                                        payment: 'Pago por Caja',
-                                        other: 'Otro Gasto',
-                                        sorteo: 'Sorteo',
-                                        bonus_especial: 'Bono Especial',
-                                        prestamo: 'Préstamo',
-                                        deposit: 'Agregar Dinero',
-                                        withdrawal: 'Quitar Dinero',
-                                      };
-                                      const label = typeLabels[registro.type] || registro.type;
-                                      const isPositive = ['deposit', 'pasillera_return'].includes(registro.type);
-                                      const isNegative = ['pasillera_payment', 'transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'withdrawal'].includes(registro.type);
-                                      const color = registro.type === 'pasillera_return' ? '#52c41a'
-                                        : isNegative ? '#cf1322'
-                                        : isPositive ? '#13c2c2'
-                                        : undefined;
+                            {pasillera.transactions && pasillera.transactions.length > 0 && (
+                              <div style={{ marginTop: 12 }}>
+                                <Text strong style={{ fontSize: 12 }}>
+                                  Registros:
+                                </Text>
+                                <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6 }}>
+                                  {pasillera.transactions.map((registro, index) => {
+                                    const typeLabels = {
+                                      pasillera_payment: 'Pago Máquina',
+                                      pasillera_return: 'Reintegro',
+                                      transfer: 'Transferencia',
+                                      giro: 'Giro',
+                                      payment: 'Pago por Caja',
+                                      other: 'Otro Gasto',
+                                      sorteo: 'Sorteo',
+                                      bonus_especial: 'Bono Especial',
+                                      prestamo: 'Préstamo',
+                                      deposit: 'Agregar Dinero',
+                                      withdrawal: 'Quitar Dinero',
+                                    };
+                                    const label = typeLabels[registro.type] || registro.type;
+                                    const isPositive = ['deposit', 'pasillera_return'].includes(
+                                      registro.type,
+                                    );
+                                    const isNegative = [
+                                      'pasillera_payment',
+                                      'transfer',
+                                      'giro',
+                                      'payment',
+                                      'other',
+                                      'sorteo',
+                                      'bonus_especial',
+                                      'prestamo',
+                                      'withdrawal',
+                                    ].includes(registro.type);
+                                    const color =
+                                      registro.type === 'pasillera_return'
+                                        ? '#52c41a'
+                                        : isNegative
+                                          ? '#cf1322'
+                                          : isPositive
+                                            ? '#13c2c2'
+                                            : undefined;
 
-                                      const details = [];
-                                      if (registro.client) details.push(`Cliente: ${registro.client}`);
-                                      if (registro.machine) details.push(`Máquina: ${registro.machine}`);
-                                      if (registro.expense_type) details.push(registro.expense_type);
-                                      if (registro.description) details.push(registro.description);
+                                    const details = [];
+                                    if (registro.client)
+                                      details.push(`Cliente: ${registro.client}`);
+                                    if (registro.machine)
+                                      details.push(`Máquina: ${registro.machine}`);
+                                    if (registro.expense_type) details.push(registro.expense_type);
+                                    if (registro.description) details.push(registro.description);
 
-                                      return (
-                                        <div key={index} style={{
+                                    return (
+                                      <div
+                                        key={index}
+                                        style={{
                                           fontSize: 12,
                                           marginBottom: 6,
                                           padding: '4px 6px',
                                           borderRadius: 4,
-                                          background: registro.type === 'pasillera_return' ? '#f6ffed' : '#f5f5f5',
+                                          background:
+                                            registro.type === 'pasillera_return'
+                                              ? '#f6ffed'
+                                              : '#f5f5f5',
                                           borderLeft: `3px solid ${color || '#d9d9d9'}`,
-                                        }}>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span>
-                                              <span style={{ fontWeight: 600, color }}>{label}</span>
-                                              {' · '}
-                                              <span style={{ fontWeight: 700 }}>{formatCurrency(registro.amount)}</span>
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                          }}
+                                        >
+                                          <span>
+                                            <span style={{ fontWeight: 600, color }}>{label}</span>
+                                            {' · '}
+                                            <span style={{ fontWeight: 700 }}>
+                                              {formatCurrency(registro.amount)}
                                             </span>
-                                            <span style={{ color: '#8c8c8c', fontSize: 11 }}>
-                                              {new Date(registro.created_at).toLocaleString('es-AR')}
-                                            </span>
-                                          </div>
-                                          {details.length > 0 && (
-                                            <div style={{ color: '#595959', fontSize: 11, marginTop: 2 }}>
-                                              {details.join(' · ')}
-                                            </div>
-                                          )}
+                                          </span>
+                                          <span style={{ color: '#8c8c8c', fontSize: 11 }}>
+                                            {new Date(registro.created_at).toLocaleString('es-AR')}
+                                          </span>
                                         </div>
-                                      );
-                                    })}
-                                  </div>
+                                        {details.length > 0 && (
+                                          <div
+                                            style={{ color: '#595959', fontSize: 11, marginTop: 2 }}
+                                          >
+                                            {details.join(' · ')}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              )}
-                            </Card>
-                          </Col>
-                        );
-                      })}
-                    </Row>
-                    {groupIdx < groupList.length - 1 && (
-                      <Divider style={{ margin: '16px 0' }} />
-                    )}
-                  </div>
-                ));
-              })()}
+                              </div>
+                            )}
+                          </Card>
+                        </Col>
+                      );
+                    })}
+                  </Row>
+                  {groupIdx < groupList.length - 1 && <Divider style={{ margin: '16px 0' }} />}
+                </div>
+              ));
+            })()}
           </Space>
         </Card>
 
         {/* Historial de Transacciones */}
-        <Card title="Historial de Transacciones" extra={<RefreshBtn tooltip="Actualizar historial" />}>
+        <Card
+          title="Historial de Transacciones"
+          extra={<RefreshBtn tooltip="Actualizar historial" />}
+        >
           <Table
             columns={transactionColumns}
             dataSource={combinedHistory}
@@ -1704,13 +1972,16 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           confirmLoading={loading}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="large">
-
             {/* Branch info */}
             {branch?.name && (
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                <Text type="secondary" style={{ fontSize: 13 }}>Sucursal:</Text>
-                <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>{branch.name}</Text>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  Sucursal:
+                </Text>
+                <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>
+                  {branch.name}
+                </Text>
               </div>
             )}
 
@@ -1744,7 +2015,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   </Select>
                 </div>
                 <Text strong>
-                  {initialBalanceMode === 'total' ? 'Total en caja al abrir *' : 'Monto a Agregar *'}
+                  {initialBalanceMode === 'total'
+                    ? 'Total en caja al abrir *'
+                    : 'Monto a Agregar *'}
                 </Text>
                 <InputNumber
                   style={{ width: '100%', marginTop: 8 }}
@@ -1759,8 +2032,7 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   <Text type="secondary" style={{ fontSize: 13 }}>
                     {initialBalanceMode === 'total'
                       ? `Total en caja: $${new Intl.NumberFormat('es-CL').format(initialBalance)}`
-                      : `Total en caja: $${new Intl.NumberFormat('es-CL').format(prevBalance + Number(initialBalance))} (Saldo anterior: $${new Intl.NumberFormat('es-CL').format(prevBalance)})`
-                    }
+                      : `Total en caja: $${new Intl.NumberFormat('es-CL').format(prevBalance + Number(initialBalance))} (Saldo anterior: $${new Intl.NumberFormat('es-CL').format(prevBalance)})`}
                   </Text>
                 )}
               </div>
@@ -1786,7 +2058,11 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     style={{ width: '100%', marginTop: 8 }}
                     value={initialBalance}
                     onChange={setInitialBalance}
-                    placeholder={initialBalanceMode === 'total' ? 'Ingrese el monto total' : 'Ingrese monto a agregar'}
+                    placeholder={
+                      initialBalanceMode === 'total'
+                        ? 'Ingrese el monto total'
+                        : 'Ingrese monto a agregar'
+                    }
                     min={0}
                     precision={2}
                   />
@@ -1795,7 +2071,11 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   <Col span={12}>
                     <Statistic
                       title="Saldo Esperado"
-                      value={initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)}
+                      value={
+                        initialBalanceMode === 'total'
+                          ? Number(initialBalance) || 0
+                          : prevBalance + (Number(initialBalance) || 0)
+                      }
                       precision={0}
                       prefix="$"
                       valueStyle={{ color: '#3f8600' }}
@@ -1815,32 +2095,54 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 <div>
                   <Statistic
                     title="Diferencia"
-                    value={calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0))}
+                    value={
+                      calculateOpeningTotal() -
+                      (initialBalanceMode === 'total'
+                        ? Number(initialBalance) || 0
+                        : prevBalance + (Number(initialBalance) || 0))
+                    }
                     precision={0}
                     prefix="$"
                     valueStyle={{
                       color:
-                        calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) === 0
+                        calculateOpeningTotal() -
+                          (initialBalanceMode === 'total'
+                            ? Number(initialBalance) || 0
+                            : prevBalance + (Number(initialBalance) || 0)) ===
+                        0
                           ? '#3f8600'
-                          : calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) > 0
+                          : calculateOpeningTotal() -
+                                (initialBalanceMode === 'total'
+                                  ? Number(initialBalance) || 0
+                                  : prevBalance + (Number(initialBalance) || 0)) >
+                              0
                             ? '#1890ff'
                             : '#cf1322',
                     }}
                     suffix={
-                      calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) === 0
+                      calculateOpeningTotal() -
+                        (initialBalanceMode === 'total'
+                          ? Number(initialBalance) || 0
+                          : prevBalance + (Number(initialBalance) || 0)) ===
+                      0
                         ? '(Exacto)'
-                        : calculateOpeningTotal() - (initialBalanceMode === 'total' ? Number(initialBalance) || 0 : prevBalance + (Number(initialBalance) || 0)) > 0
+                        : calculateOpeningTotal() -
+                              (initialBalanceMode === 'total'
+                                ? Number(initialBalance) || 0
+                                : prevBalance + (Number(initialBalance) || 0)) >
+                            0
                           ? '(Sobrante)'
                           : '(Faltante)'
                     }
                   />
                 </div>
 
-                {[{ label: '$20.000', state: opening20000, setter: setOpening20000, val: 20000 },
-                { label: '$10.000', state: opening10000, setter: setOpening10000, val: 10000 },
-                { label: '$5.000', state: opening5000, setter: setOpening5000, val: 5000 },
-                { label: '$2.000', state: opening2000, setter: setOpening2000, val: 2000 },
-                { label: '$1.000', state: opening1000, setter: setOpening1000, val: 1000 },
+                {[
+                  { label: '$20.000', state: opening20000, setter: setOpening20000, val: 20000 },
+                  { label: '$10.000', state: opening10000, setter: setOpening10000, val: 10000 },
+                  { label: '$5.000', state: opening5000, setter: setOpening5000, val: 5000 },
+                  { label: '$2.000', state: opening2000, setter: setOpening2000, val: 2000 },
+                  { label: '$1.000', state: opening1000, setter: setOpening1000, val: 1000 },
                 ].map(({ label, state, setter, val }) => (
                   <Row key={label} gutter={[16, 8]} align="middle">
                     <Col span={12}>
@@ -1854,7 +2156,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                       />
                     </Col>
                     <Col span={12}>
-                      <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(state * val)}</Text>
+                      <Text type="secondary">
+                        Total: ${new Intl.NumberFormat('es-CL').format(state * val)}
+                      </Text>
                     </Col>
                   </Row>
                 ))}
@@ -1872,7 +2176,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     />
                   </Col>
                   <Col span={12}>
-                    <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(openingCoins)}</Text>
+                    <Text type="secondary">
+                      Total: ${new Intl.NumberFormat('es-CL').format(openingCoins)}
+                    </Text>
                   </Col>
                 </Row>
               </Space>
@@ -1892,7 +2198,6 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
           confirmLoading={loading}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="large">
-
             {/* Mode toggle */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <Switch
@@ -1923,7 +2228,8 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                 />
                 {closingSimpleTotal > 0 && (
                   <Text type="secondary" style={{ fontSize: 13 }}>
-                    Monto ingresado: <strong>${new Intl.NumberFormat('es-CL').format(closingSimpleTotal)}</strong>
+                    Monto ingresado:{' '}
+                    <strong>${new Intl.NumberFormat('es-CL').format(closingSimpleTotal)}</strong>
                   </Text>
                 )}
               </div>
@@ -1975,11 +2281,12 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                   />
                 </div>
 
-                {[{ label: '$20.000', state: closing20000, setter: setClosing20000, val: 20000 },
+                {[
+                  { label: '$20.000', state: closing20000, setter: setClosing20000, val: 20000 },
                   { label: '$10.000', state: closing10000, setter: setClosing10000, val: 10000 },
-                  { label: '$5.000',  state: closing5000,  setter: setClosing5000,  val: 5000  },
-                  { label: '$2.000',  state: closing2000,  setter: setClosing2000,  val: 2000  },
-                  { label: '$1.000',  state: closing1000,  setter: setClosing1000,  val: 1000  },
+                  { label: '$5.000', state: closing5000, setter: setClosing5000, val: 5000 },
+                  { label: '$2.000', state: closing2000, setter: setClosing2000, val: 2000 },
+                  { label: '$1.000', state: closing1000, setter: setClosing1000, val: 1000 },
                 ].map(({ label, state, setter, val }) => (
                   <Row key={label} gutter={[16, 8]} align="middle">
                     <Col span={12}>
@@ -1993,7 +2300,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                       />
                     </Col>
                     <Col span={12}>
-                      <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(state * val)}</Text>
+                      <Text type="secondary">
+                        Total: ${new Intl.NumberFormat('es-CL').format(state * val)}
+                      </Text>
                     </Col>
                   </Row>
                 ))}
@@ -2011,7 +2320,9 @@ export default function SystemBank({ auth, activeShift, previousBalance, availab
                     />
                   </Col>
                   <Col span={12}>
-                    <Text type="secondary">Total: ${new Intl.NumberFormat('es-CL').format(closingCoins)}</Text>
+                    <Text type="secondary">
+                      Total: ${new Intl.NumberFormat('es-CL').format(closingCoins)}
+                    </Text>
                   </Col>
                 </Row>
               </Space>

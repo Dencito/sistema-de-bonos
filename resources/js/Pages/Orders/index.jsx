@@ -46,6 +46,14 @@ const columns = [
     render: (_, order) => new Intl.NumberFormat('en-US').format(Math.trunc(order.total)) || 'N/A',
   },
   {
+    title: 'Usuario',
+    key: 'user',
+    render: (_, order) => {
+      if (!order.user) return 'N/A';
+      return `${order.user.first_name} ${order.user.first_last_name}`.trim() || 'N/A';
+    },
+  },
+  {
     title: 'Fecha',
     key: 'created_at',
     render: (_, order) => {

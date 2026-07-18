@@ -488,23 +488,38 @@ class CashManagementController extends Controller
                     break;
                 case 'payment':
                     $activeShift->total_payments += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'other':
                     $activeShift->total_other += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'sorteo':
                     $activeShift->total_sorteo += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'bonus_especial':
                     $activeShift->total_bonus_especial += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'prestamo':
                     $activeShift->total_prestamo += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
                 case 'deposit':
                     $activeShift->total_deposit += $request->amount;
@@ -512,7 +527,10 @@ class CashManagementController extends Controller
                     break;
                 case 'withdrawal':
                     $activeShift->total_withdrawal += $request->amount;
-                    $activeShift->current_balance -= $request->amount;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$activePasillera) {
+                        $activeShift->current_balance -= $request->amount;
+                    }
                     break;
             }
 
@@ -653,50 +671,68 @@ class CashManagementController extends Controller
                     }
                     break;
                 case 'payment':
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_payments += $delta;
-                    $activeShift->current_balance -= $delta;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'other':
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_other += $delta;
-                    $activeShift->current_balance -= $delta;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'sorteo':
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_sorteo += $delta;
-                    $activeShift->current_balance -= $delta;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'bonus_especial':
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_bonus_especial += $delta;
-                    $activeShift->current_balance -= $delta;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'prestamo':
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_prestamo += $delta;
-                    $activeShift->current_balance -= $delta;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
                 case 'deposit':
                     $activeShift->total_deposit += $delta;
                     $activeShift->current_balance += $delta;
                     break;
                 case 'withdrawal':
-                    if ($delta > 0 && $activeShift->current_balance < $delta) {
+                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
                         throw new \Exception('Saldo insuficiente para aumentar el monto');
                     }
                     $activeShift->total_withdrawal += $delta;
-                    $activeShift->current_balance -= $delta;
+                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance -= $delta;
+                    }
                     break;
             }
             $activeShift->save();
@@ -816,23 +852,83 @@ class CashManagementController extends Controller
                     break;
                 case 'payment':
                     $activeShift->total_payments -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'other':
                     $activeShift->total_other -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'sorteo':
                     $activeShift->total_sorteo -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'bonus_especial':
                     $activeShift->total_bonus_especial -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'prestamo':
                     $activeShift->total_prestamo -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'deposit':
                     $activeShift->total_deposit -= $amount;
@@ -840,7 +936,19 @@ class CashManagementController extends Controller
                     break;
                 case 'withdrawal':
                     $activeShift->total_withdrawal -= $amount;
-                    $activeShift->current_balance += $amount;
+                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
+                    if (!$transaction->pasillera_id) {
+                        $activeShift->current_balance += $amount;
+                    }
+                    // Revertir saldo de pasillera si aplica
+                    if ($transaction->pasillera_id) {
+                        $pasillera = Pasillera::find($transaction->pasillera_id);
+                        if ($pasillera) {
+                            $pasillera->total_payments -= $amount;
+                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                            $pasillera->save();
+                        }
+                    }
                     break;
                 case 'pasillera_payment':
                     // Revert pasillera balance too

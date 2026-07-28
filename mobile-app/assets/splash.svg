@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732" viewBox="0 0 2732 2732">
+  <rect width="2732" height="2732" fill="#18181b"/>
+  <!-- Logo centrado, ~30% del lienzo -->
+  <g transform="translate(1366 1366) scale(0.8) translate(-512 -512)">
+    <rect x="252" y="362" width="520" height="300" rx="36"
+          fill="#a1a1aa" transform="rotate(-16 512 512)"/>
+    <rect x="252" y="362" width="520" height="300" rx="36" fill="#fafafa"/>
+    <g fill="none" stroke="#18181b" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 578 462 C 578 434, 548 422, 512 422 C 476 422, 448 438, 448 468 C 448 498, 480 506, 512 514 C 544 522, 578 532, 578 564 C 578 592, 548 604, 512 604 C 476 604, 446 590, 446 562"/>
+      <path d="M 512 396 L 512 630"/>
+    </g>
+  </g>
+</svg>

@@ -47,6 +47,22 @@ class TransactionType
         self::PASILLERA_RETURN,
     ];
 
+    /**
+     * Tipos que una pasillera puede registrar desde la app mobile.
+     * No incluye deposit/withdrawal: agregar o quitar dinero de la pasillera
+     * siempre lo hace la cajera desde el panel de caja.
+     */
+    const PASILLERA_CREABLE = [
+        self::PASILLERA_PAYMENT,
+        self::TRANSFER,
+        self::GIRO,
+        self::PAYMENT,
+        self::OTHER,
+        self::SORTEO,
+        self::BONUS_ESPECIAL,
+        self::PRESTAMO,
+    ];
+
     const TYPES_THAT_REDUCE_BALANCE = [
         self::TRANSFER,
         self::PAYMENT,
@@ -56,6 +72,7 @@ class TransactionType
         self::BONUS_ESPECIAL,
         self::PRESTAMO,
         self::WITHDRAWAL,
+        self::PASILLERA_PAYMENT,
     ];
 
     const LABELS = [
@@ -72,7 +89,9 @@ class TransactionType
         self::PASILLERA_RETURN => 'Reintegro Pasillera',
     ];
 
+    // El pago de pasillera es un pago por caja más: cuenta dentro de total_payments
     const TOTAL_COLUMNS = [
+        self::PASILLERA_PAYMENT => 'total_payments',
         self::TRANSFER => 'total_transfers',
         self::GIRO => 'total_giros',
         self::PAYMENT => 'total_payments',
@@ -85,6 +104,7 @@ class TransactionType
     ];
 
     const PASILLERA_TOTAL_COLUMNS = [
+        self::PASILLERA_PAYMENT => 'total_payments_pasillera',
         self::TRANSFER => 'total_transfers_pasillera',
         self::GIRO => 'total_giros_pasillera',
         self::PAYMENT => 'total_payments_pasillera',

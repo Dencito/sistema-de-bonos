@@ -21,6 +21,10 @@ import {
 } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
+// Editar/eliminar transacciones desde la app está oculto. La lógica sigue
+// implementada (acá y en /pasillera/transaction): cambiar a true para reactivarlo.
+const ALLOW_EDIT_TRANSACTIONS = false;
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +47,8 @@ export default function Dashboard() {
   const [editingTx, setEditingTx] = useState(null);
   const [editAmount, setEditAmount] = useState('');
   const [editMachine, setEditMachine] = useState('');
+  const [editClient, setEditClient] = useState('');
+  const [editExpenseType, setEditExpenseType] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState('');
@@ -56,13 +62,33 @@ export default function Dashboard() {
   const [formSuccess, setFormSuccess] = useState(false);
 
   const transactionTypes = [
-    { value: 'pasillera_payment', label: 'Pago Pasillera', requiresMachine: true },
+    { value: 'pasillera_payment', label: 'Pago de Máquina', requiresMachine: true },
     { value: 'transfer', label: 'Transferencia', requiresMachine: false },
     { value: 'giro', label: 'Giro', requiresMachine: false },
     { value: 'other', label: 'Otro Gasto', requiresMachine: false, requiresExpenseType: true },
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
+    { value: 'prestamo', label: 'Préstamo', requiresClient: true },
   ];
+
+  // Reconstruye el prefijo que arma el backend en buildDescription() para poder
+  // recuperar la nota que escribió la pasillera cuando edita una transacción.
+  const extractNote = (tx) => {
+    const description = tx.description || '';
+
+    if (tx.type === 'pasillera_payment') {
+      const prefix = `Pago Pasillera - Máquina: ${tx.machine || ''}`;
+      return description.startsWith(prefix) ? description.slice(prefix.length).replace(/^ - /, '') : '';
+    }
+
+    const knownParts = [tx.client, tx.machine ? `Máquina: ${tx.machine}` : null, tx.expense_type].filter(Boolean);
+    const prefix = `${tx.type} - ${knownParts.join(' | ')}`;
+
+    if (!description.startsWith(prefix)) return '';
+
+    const rest = description.slice(prefix.length).replace(/^ \| /, '');
+    return rest === 'Sin detalle' ? '' : rest;
+  };
 
   const commonExpenses = [
     'Limpieza',
@@ -227,28 +253,21 @@ export default function Dashboard() {
         return;
       }
 
-      let response;
-
-      if (transactionType === 'pasillera_payment') {
-        // Pago Pasillera usa el endpoint dedicado de pasillera
-        response = await pasilleraService.registerExpense(realAmount, machine, description);
-      } else {
-        const formData = new FormData();
-        formData.append('type', transactionType);
-        formData.append('amount', realAmount);
-        if (machine) formData.append('machine', machine);
-        if (client) formData.append('client', client);
-        const finalExpenseType = expenseType === 'Otros' ? otherExpenseCustom : expenseType;
-        if (finalExpenseType) {
-          formData.append('expense_type', finalExpenseType);
-        } else if (transactionType === 'other') {
-          formData.append('expense_type', 'Otros');
-        }
-        if (description) formData.append('description', description);
-        if (expenseImage) formData.append('image', expenseImage);
-        formData.append('admin_user_id', user.id);
-        response = await pasilleraService.registerTransaction(formData);
+      const formData = new FormData();
+      formData.append('type', transactionType);
+      formData.append('amount', realAmount);
+      if (machine) formData.append('machine', machine);
+      if (client) formData.append('client', client);
+      const finalExpenseType = expenseType === 'Otros' ? otherExpenseCustom : expenseType;
+      if (finalExpenseType) {
+        formData.append('expense_type', finalExpenseType);
+      } else if (transactionType === 'other') {
+        formData.append('expense_type', 'Otros');
       }
+      if (description) formData.append('description', description);
+      if (expenseImage) formData.append('image', expenseImage);
+
+      const response = await pasilleraService.registerTransaction(formData);
 
       if (response.success) {
         setFormSuccess(true);
@@ -295,14 +314,9 @@ export default function Dashboard() {
     setEditingTx(tx);
     setEditAmount(String(tx.amount));
     setEditMachine(tx.machine || '');
-    // Use description directly; for pasillera_payment keep existing parsing for compatibility
-    if (tx.type === 'pasillera_payment') {
-      const desc = tx.description || '';
-      const parts = desc.split(' - ');
-      setEditDescription(parts.length > 2 ? parts.slice(2).join(' - ') : '');
-    } else {
-      setEditDescription(tx.description || '');
-    }
+    setEditClient(tx.client || '');
+    setEditExpenseType(tx.expense_type || '');
+    setEditDescription(extractNote(tx));
     setEditError('');
   };
 
@@ -319,29 +333,32 @@ export default function Dashboard() {
         setEditSaving(false);
         return;
       }
-      let response;
-      if (editingTx.type === 'pasillera_payment') {
-        if (!editMachine) {
-          setEditError('Ingrese el número de máquina');
-          setEditSaving(false);
-          return;
-        }
-        const formattedMachine = editMachine.toLowerCase().startsWith('maquina')
-          ? editMachine
-          : `Maquina ${editMachine}`;
-        response = await pasilleraService.updateExpense(
-          editingTx.id,
-          newAmount,
-          formattedMachine,
-          editDescription
-        );
-      } else {
-        response = await pasilleraService.updateTransaction(editingTx.id, {
-          amount: newAmount,
-          machine: editMachine || null,
-          description: editDescription || null,
-        });
+      const editingType = transactionTypes.find(t => t.value === editingTx.type);
+
+      if (editingType?.requiresMachine && !editMachine) {
+        setEditError('Ingrese el número de máquina');
+        setEditSaving(false);
+        return;
       }
+      if (editingType?.requiresClient && !editClient) {
+        setEditError('Ingrese el nombre del cliente');
+        setEditSaving(false);
+        return;
+      }
+      if (editingType?.requiresExpenseType && !editExpenseType) {
+        setEditError('Ingrese el tipo de gasto');
+        setEditSaving(false);
+        return;
+      }
+
+      const response = await pasilleraService.updateTransaction(editingTx.id, {
+        amount: newAmount,
+        client: editClient || null,
+        machine: editMachine || null,
+        expense_type: editExpenseType || null,
+        description: editDescription || null,
+      });
+
       if (response.success) {
         try { await Haptics.notification({ type: 'success' }); } catch {}
         setEditingTx(null);
@@ -361,12 +378,7 @@ export default function Dashboard() {
     setDeletingId(tx.id);
     try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
     try {
-      let response;
-      if (tx.type === 'pasillera_payment') {
-        response = await pasilleraService.deleteExpense(tx.id);
-      } else {
-        response = await pasilleraService.deleteTransaction(tx.id);
-      }
+      const response = await pasilleraService.deleteTransaction(tx.id);
       if (response.success) {
         try { await Haptics.notification({ type: 'success' }); } catch {}
         setConfirmDelete(null);
@@ -788,6 +800,12 @@ export default function Dashboard() {
               };
               const typeLabel = typeLabels[transaction.type] || transaction.type;
               const isPositive = ['deposit', 'pasillera_return'].includes(transaction.type);
+              // Solo se puede tocar lo que registró la propia pasillera: los reintegros
+              // y el saldo que le agrega la cajera los maneja la caja.
+              // Poner ALLOW_EDIT_TRANSACTIONS en true para volver a mostrar los botones.
+              const isEditable = ALLOW_EDIT_TRANSACTIONS
+                && transaction.source === 'pasillera'
+                && transactionTypes.some(t => t.value === transaction.type);
               return (
                 <div
                   key={transaction.id}
@@ -825,6 +843,24 @@ export default function Dashboard() {
                     <p className={`font-semibold whitespace-nowrap ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                       {isPositive ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </p>
+                    {isEditable && (
+                      <>
+                        <button
+                          onClick={() => openEditTx(transaction)}
+                          className="p-2 rounded-full text-zinc-500 hover:bg-zinc-100"
+                          aria-label="Editar"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(transaction)}
+                          className="p-2 text-red-500 rounded-full hover:bg-red-50"
+                          aria-label="Eliminar"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -838,7 +874,9 @@ export default function Dashboard() {
         <div className="flex fixed inset-0 z-50 justify-center items-end sm:items-center p-0 sm:p-4 bg-black bg-opacity-50">
           <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-zinc-100">
-              <h3 className="text-lg font-bold text-zinc-900">Editar Gasto</h3>
+              <h3 className="text-lg font-bold text-zinc-900">
+                Editar {transactionTypes.find(t => t.value === editingTx.type)?.label || 'Transacción'}
+              </h3>
               <button
                 onClick={() => setEditingTx(null)}
                 className="p-2 rounded-full hover:bg-zinc-100"
@@ -865,19 +903,51 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                  N° Máquina {editingTx?.type === 'pasillera_payment' ? '*' : ''}
-                </label>
-                <input
-                  type="text"
-                  value={editMachine}
-                  onChange={(e) => setEditMachine(e.target.value.toUpperCase())}
-                  className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
-                  disabled={editSaving}
-                  required={editingTx?.type === 'pasillera_payment'}
-                />
-              </div>
+              {transactionTypes.find(t => t.value === editingTx.type)?.requiresMachine && (
+                <div>
+                  <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                    N° Máquina *
+                  </label>
+                  <input
+                    type="text"
+                    value={editMachine}
+                    onChange={(e) => setEditMachine(e.target.value.toUpperCase())}
+                    className="py-3.5 px-4 w-full text-lg font-bold bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    disabled={editSaving}
+                    required
+                  />
+                </div>
+              )}
+              {transactionTypes.find(t => t.value === editingTx.type)?.requiresClient && (
+                <div>
+                  <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                    Cliente *
+                  </label>
+                  <input
+                    type="text"
+                    value={editClient}
+                    onChange={(e) => setEditClient(e.target.value)}
+                    className="py-3.5 px-4 w-full text-sm font-medium bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    disabled={editSaving}
+                    required
+                  />
+                </div>
+              )}
+              {transactionTypes.find(t => t.value === editingTx.type)?.requiresExpenseType && (
+                <div>
+                  <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                    Tipo de Gasto *
+                  </label>
+                  <input
+                    type="text"
+                    value={editExpenseType}
+                    onChange={(e) => setEditExpenseType(e.target.value)}
+                    className="py-3.5 px-4 w-full text-sm font-medium bg-zinc-50 rounded-2xl border border-zinc-200 outline-none focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    disabled={editSaving}
+                    required
+                  />
+                </div>
+              )}
               <div>
                 <label className="block mb-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Descripción</label>
                 <input
@@ -940,7 +1010,7 @@ export default function Dashboard() {
                 Cancelar
               </button>
               <button
-                onClick={() => handleDeleteTx(confirmDelete.id)}
+                onClick={() => handleDeleteTx(confirmDelete)}
                 disabled={deletingId === confirmDelete.id}
                 className="flex flex-1 justify-center items-center py-3 font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50"
               >

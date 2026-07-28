@@ -65,7 +65,342 @@ class MobilePasilleraController extends Controller
     }
 
     /**
-     * Register expense/payment on machine
+     * Pasillera activa del usuario autenticado, junto a su turno de caja activo.
+     * Devuelve [$pasillera, $cashShift] o [null, null] si algo falta.
+     */
+    private function resolveActiveContext(): array
+    {
+        $pasillera = Pasillera::where('user_id', Auth::id())
+            ->where('is_active', true)
+            ->first();
+
+        if (!$pasillera) {
+            return [null, null];
+        }
+
+        $cashShift = CashShift::where('id', $pasillera->cash_shift_id)
+            ->where('is_active', true)
+            ->first();
+
+        return [$pasillera, $cashShift];
+    }
+
+    /**
+     * Campos obligatorios según el tipo. Devuelve el mensaje de error o null.
+     */
+    private function checkTypeRequirements(string $type, Request $request): ?string
+    {
+        if (in_array($type, [TransactionType::PASILLERA_PAYMENT, TransactionType::PAYMENT]) && empty($request->machine)) {
+            return 'Debe indicar el número de máquina para el pago';
+        }
+
+        if ($type === TransactionType::OTHER && empty($request->expense_type)) {
+            return 'Debe indicar el tipo de gasto';
+        }
+
+        return null;
+    }
+
+    /**
+     * Arma la descripción legible de una transacción de pasillera.
+     */
+    private function buildDescription(string $type, Request $request): string
+    {
+        // Formato histórico del pago de pasillera, se mantiene por compatibilidad
+        if ($type === TransactionType::PASILLERA_PAYMENT) {
+            $description = 'Pago Pasillera - Máquina: ' . $request->machine;
+            if ($request->description) {
+                $description .= ' - ' . $request->description;
+            }
+            return $description;
+        }
+
+        $detailParts = array_filter([
+            $request->client,
+            $request->machine ? 'Máquina: ' . $request->machine : null,
+            $request->expense_type,
+            $request->description,
+        ]);
+
+        return $type . ' - ' . (count($detailParts) ? implode(' | ', $detailParts) : 'Sin detalle');
+    }
+
+    /**
+     * Aplica un monto a los totales del turno y al saldo propio de la pasillera.
+     * $delta positivo suma gasto, negativo lo revierte.
+     *
+     * NUNCA toca current_balance del turno: ese dinero ya salió de la caja cuando
+     * la cajera le asignó el saldo a la pasillera. Descontarlo acá sería contarlo dos veces.
+     */
+    private function applyAmount(CashShift $cashShift, Pasillera $pasillera, string $type, float $delta): void
+    {
+        $totalCol = TransactionType::TOTAL_COLUMNS[$type] ?? null;
+        $pasilleraCol = TransactionType::PASILLERA_TOTAL_COLUMNS[$type] ?? null;
+
+        if ($totalCol) {
+            $cashShift->{$totalCol} += $delta;
+        }
+        if ($pasilleraCol) {
+            $cashShift->{$pasilleraCol} += $delta;
+        }
+        $cashShift->save();
+
+        $pasillera->total_payments += $delta;
+        $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+        $pasillera->save();
+    }
+
+    private function broadcastUpdate(Pasillera $pasillera, ?CashTransaction $transaction): void
+    {
+        $user = Auth::user();
+
+        broadcast(new PasilleraDataUpdated([
+            'pasillera' => $pasillera,
+            'transaction' => $transaction,
+            'user' => [
+                'id' => $user->id,
+                'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name)
+            ]
+        ]))->toOthers();
+    }
+
+    /**
+     * Registra cualquier tipo de transacción hecha por la pasillera.
+     *
+     * Siempre source='pasillera': suma a total_X y a total_X_pasillera del turno,
+     * y descuenta del saldo propio de la pasillera. El saldo de caja no se toca.
+     */
+    public function registerTransaction(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:' . implode(',', TransactionType::PASILLERA_CREABLE),
+            'amount' => 'required|numeric|min:0.01',
+            'client' => 'nullable|string|max:255',
+            'machine' => 'nullable|string|max:255',
+            'expense_type' => 'nullable|string|max:150',
+            'description' => 'nullable|string|max:500',
+            'image' => 'nullable|image|max:5120',
+        ]);
+
+        [$pasillera, $cashShift] = $this->resolveActiveContext();
+
+        if (!$pasillera) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una pasillera activa'
+            ], 400);
+        }
+
+        if (!$cashShift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay turno activo para esta pasillera'
+            ], 400);
+        }
+
+        $type = $request->type;
+
+        if ($error = $this->checkTypeRequirements($type, $request)) {
+            return response()->json(['success' => false, 'message' => $error], 422);
+        }
+
+        $amount = (float) $request->amount;
+
+        if ($amount > (float) $pasillera->current_balance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo insuficiente en pasillera. Disponible: $' . number_format($pasillera->current_balance, 0, ',', '.')
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $imagePath = $request->hasFile('image')
+                ? $request->file('image')->store('expense-images', 'public')
+                : null;
+
+            $transaction = CashTransaction::create([
+                'cash_shift_id' => $cashShift->id,
+                'pasillera_id' => $pasillera->id,
+                'type' => $type,
+                'source' => TransactionSource::PASILLERA,
+                'amount' => $amount,
+                'client' => $request->client,
+                'machine' => $request->machine,
+                'expense_type' => $request->expense_type,
+                'description' => $this->buildDescription($type, $request),
+                'image' => $imagePath,
+                'admin_user_id' => Auth::id(),
+            ]);
+
+            $this->applyAmount($cashShift, $pasillera, $type, $amount);
+
+            DB::commit();
+
+            $pasillera->load(['transactions' => function($query) {
+                $query->orderBy('created_at', 'desc');
+            }]);
+
+            $this->broadcastUpdate($pasillera, $transaction);
+
+            return response()->json([
+                'success' => true,
+                'message' => (TransactionType::LABELS[$type] ?? 'Transacción') . ' registrado correctamente',
+                'data' => [
+                    'pasillera' => $pasillera,
+                    'transaction' => $transaction,
+                    'shift' => $cashShift,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar la transacción: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Edita una transacción propia de la pasillera (turno activo, sin cambiar el tipo).
+     */
+    public function updateTransaction(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'client' => 'nullable|string|max:255',
+            'machine' => 'nullable|string|max:255',
+            'expense_type' => 'nullable|string|max:150',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        [$pasillera, $cashShift] = $this->resolveActiveContext();
+
+        if (!$pasillera) {
+            return response()->json(['success' => false, 'message' => 'No tienes una pasillera activa'], 400);
+        }
+
+        $transaction = CashTransaction::find($id);
+
+        if (!$transaction || $transaction->pasillera_id != $pasillera->id) {
+            return response()->json(['success' => false, 'message' => 'Transacción no encontrada en tu pasillera'], 404);
+        }
+
+        // pasillera_return y los movimientos de saldo los maneja la caja, no la pasillera
+        if ($transaction->source !== TransactionSource::PASILLERA
+            || !in_array($transaction->type, TransactionType::PASILLERA_CREABLE)) {
+            return response()->json(['success' => false, 'message' => 'Esta transacción no se puede editar desde la app'], 400);
+        }
+
+        if (!$cashShift || $cashShift->id != $transaction->cash_shift_id) {
+            return response()->json(['success' => false, 'message' => 'Solo se puede editar mientras el turno esté activo'], 400);
+        }
+
+        if ($error = $this->checkTypeRequirements($transaction->type, $request)) {
+            return response()->json(['success' => false, 'message' => $error], 422);
+        }
+
+        $delta = (float) $request->amount - (float) $transaction->amount;
+
+        if ($delta > (float) $pasillera->current_balance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo insuficiente en la pasillera. Disponible: $' . number_format($pasillera->current_balance, 0, ',', '.')
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $this->applyAmount($cashShift, $pasillera, $transaction->type, $delta);
+
+            $transaction->update([
+                'amount' => (float) $request->amount,
+                'client' => $request->client,
+                'machine' => $request->machine,
+                'expense_type' => $request->expense_type,
+                'description' => $this->buildDescription($transaction->type, $request),
+            ]);
+
+            DB::commit();
+
+            $pasillera->load(['transactions' => function($query) {
+                $query->orderBy('created_at', 'desc');
+            }]);
+
+            $this->broadcastUpdate($pasillera, $transaction);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transacción actualizada correctamente',
+                'data' => [
+                    'pasillera' => $pasillera,
+                    'transaction' => $transaction,
+                    'shift' => $cashShift,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error al actualizar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Elimina una transacción propia de la pasillera (turno activo).
+     */
+    public function deleteTransaction($id)
+    {
+        [$pasillera, $cashShift] = $this->resolveActiveContext();
+
+        if (!$pasillera) {
+            return response()->json(['success' => false, 'message' => 'No tienes una pasillera activa'], 400);
+        }
+
+        $transaction = CashTransaction::find($id);
+
+        if (!$transaction || $transaction->pasillera_id != $pasillera->id) {
+            return response()->json(['success' => false, 'message' => 'Transacción no encontrada en tu pasillera'], 404);
+        }
+
+        if ($transaction->source !== TransactionSource::PASILLERA
+            || !in_array($transaction->type, TransactionType::PASILLERA_CREABLE)) {
+            return response()->json(['success' => false, 'message' => 'Esta transacción no se puede eliminar desde la app'], 400);
+        }
+
+        if (!$cashShift || $cashShift->id != $transaction->cash_shift_id) {
+            return response()->json(['success' => false, 'message' => 'Solo se puede eliminar mientras el turno esté activo'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $this->applyAmount($cashShift, $pasillera, $transaction->type, -1 * (float) $transaction->amount);
+
+            $transaction->delete();
+
+            DB::commit();
+
+            $pasillera->load(['transactions' => function($query) {
+                $query->orderBy('created_at', 'desc');
+            }]);
+
+            $this->broadcastUpdate($pasillera, null);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transacción eliminada correctamente',
+                'data' => [
+                    'pasillera' => $pasillera,
+                    'shift' => $cashShift,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error al eliminar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Registro de pago de máquina. Alias legacy de registerTransaction para las
+     * versiones de la app que todavía apuntan a /pasillera/expense.
      */
     public function registerExpense(Request $request)
     {
@@ -75,240 +410,25 @@ class MobilePasilleraController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
-        $user = Auth::user();
+        $request->merge(['type' => TransactionType::PASILLERA_PAYMENT]);
 
-        // Get active pasillera
-        $pasillera = Pasillera::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$pasillera) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No tienes una pasillera activa'
-            ], 400);
-        }
-
-        // Check if has enough balance
-        if ($pasillera->current_balance < $request->amount) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Saldo insuficiente. Saldo disponible: $' . number_format($pasillera->current_balance, 0, ',', '.')
-            ], 400);
-        }
-
-        DB::beginTransaction();
-        try {
-            // Update pasillera
-            $pasillera->total_payments += $request->amount;
-            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-            $pasillera->save();
-
-            // Create transaction
-            $description = 'Pago Pasillera - Máquina: ' . $request->machine;
-            if ($request->description) {
-                $description .= ' - ' . $request->description;
-            }
-
-            $transaction = CashTransaction::create([
-                'cash_shift_id' => $pasillera->cash_shift_id,
-                'pasillera_id' => $pasillera->id,
-                'type' => TransactionType::PASILLERA_PAYMENT,
-                'source' => TransactionSource::PASILLERA,
-                'amount' => $request->amount,
-                'machine' => $request->machine,
-                'description' => $description,
-            ]);
-
-            // Update shift totals
-            $cashShift = CashShift::find($pasillera->cash_shift_id);
-            if ($cashShift) {
-                $cashShift->total_payments += $request->amount;
-                $cashShift->total_payments_pasillera += $request->amount;
-                $cashShift->save();
-            }
-
-            DB::commit();
-
-            // Reload pasillera with transactions
-            $pasillera->load(['transactions' => function($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
-
-            // Dispatch broadcasting event
-            \Log::info('Disparando evento PasilleraDataUpdated', [
-                'user_id' => $user->id,
-                'pasillera_id' => $pasillera->id,
-                'transaction_id' => $transaction->id
-            ]);
-            
-            broadcast(new PasilleraDataUpdated([
-                'pasillera' => $pasillera,
-                'transaction' => $transaction,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name)
-                ]
-            ]))->toOthers();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Gasto registrado correctamente',
-                'data' => [
-                    'pasillera' => $pasillera,
-                    'transaction' => $transaction
-                ]
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al registrar el gasto: ' . $e->getMessage()
-            ], 500);
-        }
+        return $this->registerTransaction($request);
     }
 
     /**
-     * Update a pasillera expense (only own pasillera & active shift)
+     * Alias legacy de updateTransaction.
      */
     public function updateExpense(Request $request, $id)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0.01',
-            'machine' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-        ]);
-
-        $user = Auth::user();
-
-        // Buscar la pasillera activa del usuario (misma lógica que registerExpense)
-        $pasillera = Pasillera::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$pasillera) {
-            return response()->json(['success' => false, 'message' => 'No tienes una pasillera activa'], 400);
-        }
-
-        $transaction = CashTransaction::with('cashShift')->find($id);
-        if (!$transaction || $transaction->pasillera_id != $pasillera->id) {
-            return response()->json(['success' => false, 'message' => 'Transacción no encontrada en tu pasillera'], 404);
-        }
-        if ($transaction->type !== 'pasillera_payment') {
-            return response()->json(['success' => false, 'message' => 'Solo se pueden editar pagos de pasillera'], 400);
-        }
-
-        $cashShift = $transaction->cashShift ?: CashShift::find($transaction->cash_shift_id);
-        if (!$cashShift || !$cashShift->is_active) {
-            return response()->json(['success' => false, 'message' => 'Solo se puede editar mientras el turno esté activo'], 400);
-        }
-
-        $oldAmount = (float) $transaction->amount;
-        $newAmount = (float) $request->amount;
-        $delta = $newAmount - $oldAmount;
-
-        if ($delta > 0 && $pasillera->current_balance < $delta) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Saldo insuficiente en la pasillera. Disponible: $' . number_format($pasillera->current_balance, 0, ',', '.')
-            ], 400);
-        }
-
-        DB::beginTransaction();
-        try {
-            $pasillera->total_payments += $delta;
-            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-            $pasillera->save();
-
-            $cashShift->total_payments += $delta;
-            $cashShift->save();
-
-            $description = 'Pago Pasillera - Máquina: ' . $request->machine;
-            if ($request->description) $description .= ' - ' . $request->description;
-
-            $transaction->update([
-                'amount' => $newAmount,
-                'machine' => $request->machine,
-                'description' => $description,
-            ]);
-
-            DB::commit();
-
-            broadcast(new PasilleraDataUpdated([
-                'pasillera' => $pasillera->fresh(),
-                'transaction' => $transaction->fresh(),
-                'user' => ['id' => $user->id, 'name' => trim($user->first_name . ' ' . $user->first_last_name)],
-            ]))->toOthers();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Gasto actualizado correctamente',
-                'data' => ['pasillera' => $pasillera->fresh(), 'transaction' => $transaction->fresh()]
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
-        }
+        return $this->updateTransaction($request, $id);
     }
 
     /**
-     * Delete a pasillera expense (only own pasillera & active shift)
+     * Alias legacy de deleteTransaction.
      */
     public function deleteExpense($id)
     {
-        $user = Auth::user();
-
-        $pasillera = Pasillera::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$pasillera) {
-            return response()->json(['success' => false, 'message' => 'No tienes una pasillera activa'], 400);
-        }
-
-        $transaction = CashTransaction::with('cashShift')->find($id);
-        if (!$transaction || $transaction->pasillera_id != $pasillera->id) {
-            return response()->json(['success' => false, 'message' => 'Transacción no encontrada en tu pasillera'], 404);
-        }
-        if ($transaction->type !== 'pasillera_payment') {
-            return response()->json(['success' => false, 'message' => 'Solo se pueden eliminar pagos de pasillera'], 400);
-        }
-
-        $cashShift = $transaction->cashShift ?: CashShift::find($transaction->cash_shift_id);
-        if (!$cashShift || !$cashShift->is_active) {
-            return response()->json(['success' => false, 'message' => 'Solo se puede eliminar mientras el turno esté activo'], 400);
-        }
-
-        $amount = (float) $transaction->amount;
-
-        DB::beginTransaction();
-        try {
-            $pasillera->total_payments -= $amount;
-            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-            $pasillera->save();
-
-            $cashShift->total_payments -= $amount;
-            $cashShift->save();
-
-            $transaction->delete();
-
-            DB::commit();
-
-            broadcast(new PasilleraDataUpdated([
-                'pasillera' => $pasillera->fresh(),
-                'transaction' => null,
-                'user' => ['id' => $user->id, 'name' => trim($user->first_name . ' ' . $user->first_last_name)],
-            ]))->toOthers();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Gasto eliminado correctamente',
-                'data' => ['pasillera' => $pasillera->fresh()]
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
-        }
+        return $this->deleteTransaction($id);
     }
 
     /**
@@ -431,7 +551,9 @@ class MobilePasilleraController extends Controller
                 }
             }
 
-            // Deactivate pasillera
+            // El saldo volvió a la caja: la pasillera queda en cero.
+            // initial_balance y total_payments se conservan como historial de lo asignado y gastado.
+            $pasillera->current_balance = 0;
             $pasillera->is_active = false;
             $pasillera->save();
 

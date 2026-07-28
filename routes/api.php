@@ -95,6 +95,9 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     // Pasillera routes
     Route::prefix('pasillera')->group(function () {
         Route::get('/my-active', [MobilePasilleraController::class, 'getMyActivePasillera']);
+        Route::post('/transaction', [MobilePasilleraController::class, 'registerTransaction']);
+        Route::put('/transaction/{id}', [MobilePasilleraController::class, 'updateTransaction']);
+        Route::delete('/transaction/{id}', [MobilePasilleraController::class, 'deleteTransaction']);
         Route::post('/expense', [MobilePasilleraController::class, 'registerExpense']);
         Route::put('/expense/{id}', [MobilePasilleraController::class, 'updateExpense']);
         Route::delete('/expense/{id}', [MobilePasilleraController::class, 'deleteExpense']);

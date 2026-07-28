@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 // Function to get dynamic API URL based on company configuration
 const getApiUrl = async () => {
   //remove later
-  //return "http://127.0.0.1:8000/api/mobile";
+  return "http://127.0.0.1:8000/api/mobile";
   try {
     const { value: companyName } = await Preferences.get({ key: 'company_name' });
     if (companyName) {
@@ -112,17 +112,10 @@ export const pasilleraService = {
     return response.data;
   },
 
-  registerExpense: async (amount, machine, description = '') => {
-    const response = await api.post('/pasillera/expense', {
-      amount,
-      machine,
-      description,
-    });
-    return response.data;
-  },
-
+  // Todas las transacciones de la pasillera van por la API de pasillera:
+  // suman a los totales del turno y descuentan de su propio saldo, sin tocar la caja.
   registerTransaction: async (formData) => {
-    const response = await api.post('/cash-management/transaction', formData, {
+    const response = await api.post('/pasillera/transaction', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -130,27 +123,13 @@ export const pasilleraService = {
     return response.data;
   },
 
-  updateExpense: async (id, amount, machine, description = '') => {
-    const response = await api.put(`/pasillera/expense/${id}`, {
-      amount,
-      machine,
-      description,
-    });
-    return response.data;
-  },
-
   updateTransaction: async (id, data) => {
-    const response = await api.put(`/cash-management/transaction/${id}`, data);
-    return response.data;
-  },
-
-  deleteExpense: async (id) => {
-    const response = await api.delete(`/pasillera/expense/${id}`);
+    const response = await api.put(`/pasillera/transaction/${id}`, data);
     return response.data;
   },
 
   deleteTransaction: async (id) => {
-    const response = await api.delete(`/cash-management/transaction/${id}`);
+    const response = await api.delete(`/pasillera/transaction/${id}`);
     return response.data;
   },
 

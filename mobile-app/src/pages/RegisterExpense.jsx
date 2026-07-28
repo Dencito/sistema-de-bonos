@@ -8,7 +8,7 @@ import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 export default function RegisterExpense() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [transactionType, setTransactionType] = useState('payment');
+  const [transactionType, setTransactionType] = useState('pasillera_payment');
   const [amount, setAmount] = useState('');
   const [machine, setMachine] = useState('');
   const [description, setDescription] = useState('');
@@ -23,9 +23,9 @@ export default function RegisterExpense() {
   const [currentTime, setCurrentTime] = useState('');
 
   const transactionTypes = [
+    { value: 'pasillera_payment', label: 'Pago de Máquina', requiresMachine: true },
     { value: 'transfer', label: 'Transferencia', requiresMachine: false },
     { value: 'giro', label: 'Giro', requiresMachine: false },
-    { value: 'payment', label: 'Pago por Caja', requiresMachine: true },
     { value: 'other', label: 'Otro Gasto', requiresMachine: false, requiresExpenseType: true },
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
@@ -128,7 +128,6 @@ export default function RegisterExpense() {
       const finalExpenseType = expenseType === 'Otros' ? otherExpenseCustom : expenseType;
       if (finalExpenseType) formData.append('expense_type', finalExpenseType);
       if (description) formData.append('description', description);
-      if (user?.id) formData.append('admin_user_id', user.id);
 
       const response = await pasilleraService.registerTransaction(formData);
 

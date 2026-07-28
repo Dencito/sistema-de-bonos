@@ -838,6 +838,9 @@ export default function SystemBank({
       key: 'actions',
       render: (_, record) => {
         if (record.source === 'ticket') return '-';
+        // Las transacciones de pasillera se editan/eliminan desde su propia app,
+        // donde se ajusta su saldo sin tocar el de la caja.
+        if (record.source === 'pasillera') return '-';
         const isAdmin = ['duenio', 'super-admin'].includes(auth.role);
         const editable =
           isAdmin &&

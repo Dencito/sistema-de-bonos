@@ -34,8 +34,15 @@ const getStatusBadge = (statusName) => {
   );
 };
 
-export const TableDataBranches = ({ auth, branches, statuses, companies, filters }) => {
+export const TableDataBranches = ({
+  auth,
+  branches: initialBranches,
+  statuses,
+  companies,
+  filters,
+}) => {
   const [loadingToggle, setLoadingToggle] = useState({});
+  const [localBranches, setLocalBranches] = useState(initialBranches);
 
   const handleToggleTickets = async (branchId, checked) => {
     setLoadingToggle((prev) => ({ ...prev, [branchId]: true }));
@@ -43,6 +50,9 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
       const response = await branchService.toggleTicketsEnabled(branchId, checked);
       if (response.success) {
         message.success(response.message);
+        setLocalBranches((prev) =>
+          prev.map((b) => (b.id === branchId ? { ...b, tickets_enabled: checked } : b)),
+        );
       } else {
         message.error(response.message);
       }
@@ -58,7 +68,7 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <FilterModal filters={filters} statuses={statuses} />
-          {branches?.length < auth?.create_more_branches?.max_branches ? (
+          {localBranches?.length < auth?.create_more_branches?.max_branches ? (
             <ModalCreateBranch companies={companies} />
           ) : (
             <ModalRequestMoreBranches />
@@ -67,7 +77,7 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
       </div>
       <Table
         className="overflow-auto"
-        dataSource={branches.map((branch) => ({
+        dataSource={localBranches.map((branch) => ({
           ...branch,
           key: branch.id,
         }))}

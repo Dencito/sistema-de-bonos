@@ -199,6 +199,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/transactions', [CashManagementController::class, 'getTransactions'])->name('cash-management.transactions');
         Route::post('/pasillera', [CashManagementController::class, 'addPasillera'])->name('cash-management.pasillera');
         Route::post('/pasillera/{pasilleraId}/payment', [CashManagementController::class, 'addPasilleraPayment'])->name('cash-management.pasillera.payment');
+        Route::post('/pasillera/{pasilleraId}/add-balance', [CashManagementController::class, 'addBalanceToPasillera'])->name('cash-management.pasillera.add-balance');
         Route::put('/pasillera/{pasilleraId}/reset', [CashManagementController::class, 'resetPasillera'])->name('cash-management.pasillera.reset');
         Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
     });

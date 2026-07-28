@@ -119,6 +119,12 @@ export default function SystemBank({
   const [closingSimpleMode, setClosingSimpleMode] = useState(true);
   const [closingSimpleTotal, setClosingSimpleTotal] = useState('');
 
+  // Modal para agregar saldo a pasillera
+  const [addBalanceModalVisible, setAddBalanceModalVisible] = useState(false);
+  const [addBalanceAmount, setAddBalanceAmount] = useState('');
+  const [addBalancePasilleraId, setAddBalancePasilleraId] = useState(null);
+  const [addBalancePasilleraName, setAddBalancePasilleraName] = useState('');
+
   useEffect(() => {
     if (activeShift) {
       fetchShiftStatus();
@@ -484,6 +490,41 @@ export default function SystemBank({
     }
   };
 
+  const handleAddBalance = async () => {
+    if (!addBalanceAmount || Number(addBalanceAmount) <= 0) {
+      message.error('Ingrese un monto válido');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `/cash-management/pasillera/${addBalancePasilleraId}/add-balance`,
+        { amount: Number(addBalanceAmount) },
+      );
+
+      if (response.data.success) {
+        message.success('Saldo agregado correctamente');
+        setAddBalanceModalVisible(false);
+        setAddBalanceAmount('');
+        setAddBalancePasilleraId(null);
+        setAddBalancePasilleraName('');
+        fetchShiftStatus();
+      }
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Error al agregar saldo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openAddBalanceModal = (pasillera) => {
+    setAddBalancePasilleraId(pasillera.id);
+    setAddBalancePasilleraName(`${pasillera.user?.first_name} ${pasillera.user?.first_last_name}`);
+    setAddBalanceAmount('');
+    setAddBalanceModalVisible(true);
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -588,7 +629,9 @@ export default function SystemBank({
           deposit: 'Agregar Dinero',
           withdrawal: 'Quitar Dinero',
         };
-        return types[type] || type;
+        const label = types[type] || type;
+        const sourceLabel = record.source === 'pasillera' ? ' (Pasillera)' : '';
+        return label + sourceLabel;
       },
     },
     {
@@ -1055,46 +1098,85 @@ export default function SystemBank({
 
                 <Card size="small" title="Movimientos del Turno">
                   <Row gutter={[16, 16]}>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Transferencias"
-                        value={shift?.total_transfers || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Giros"
-                        value={shift?.total_giros || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Pagos por Caja"
-                        value={shift?.total_payments || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Otros Gastos"
-                        value={shift?.total_other || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Sorteos"
-                        value={shift?.total_sorteo || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
+                    {[
+                      {
+                        title: 'Transferencias',
+                        total: shift?.total_transfers,
+                        caja: shift?.total_transfers_caja,
+                        pasillera: shift?.total_transfers_pasillera,
+                      },
+                      {
+                        title: 'Giros',
+                        total: shift?.total_giros,
+                        caja: shift?.total_giros_caja,
+                        pasillera: shift?.total_giros_pasillera,
+                      },
+                      {
+                        title: 'Pagos por Caja',
+                        total: shift?.total_payments,
+                        caja: shift?.total_payments_caja,
+                        pasillera: shift?.total_payments_pasillera,
+                      },
+                      {
+                        title: 'Otros Gastos',
+                        total: shift?.total_other,
+                        caja: shift?.total_other_caja,
+                        pasillera: shift?.total_other_pasillera,
+                      },
+                      {
+                        title: 'Sorteos',
+                        total: shift?.total_sorteo,
+                        caja: shift?.total_sorteo_caja,
+                        pasillera: shift?.total_sorteo_pasillera,
+                      },
+                      {
+                        title: 'Bonus Especial',
+                        total: shift?.total_bonus_especial,
+                        caja: shift?.total_bonus_especial_caja,
+                        pasillera: shift?.total_bonus_especial_pasillera,
+                      },
+                      {
+                        title: 'Préstamos',
+                        total: shift?.total_prestamo,
+                        caja: shift?.total_prestamo_caja,
+                        pasillera: shift?.total_prestamo_pasillera,
+                      },
+                      {
+                        title: 'Depósitos',
+                        total: shift?.total_deposit,
+                        caja: shift?.total_deposit_caja,
+                        pasillera: shift?.total_deposit_pasillera,
+                      },
+                      {
+                        title: 'Retiros',
+                        total: shift?.total_withdrawal,
+                        caja: shift?.total_withdrawal_caja,
+                        pasillera: shift?.total_withdrawal_pasillera,
+                      },
+                    ].map((item, idx) => (
+                      <Col xs={12} md={8} key={idx}>
+                        <div style={{ marginBottom: 4 }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            {item.title}
+                          </Text>
+                        </div>
+                        <Statistic
+                          title=""
+                          value={item.total || 0}
+                          precision={2}
+                          prefix="$"
+                          valueStyle={{ fontSize: 18, fontWeight: 600 }}
+                        />
+                        <div style={{ fontSize: 11, color: '#888', marginTop: -4 }}>
+                          Caja: $
+                          {(item.caja || 0).toLocaleString('es-CL', { minimumFractionDigits: 2 })} |
+                          Pasillera: $
+                          {(item.pasillera || 0).toLocaleString('es-CL', {
+                            minimumFractionDigits: 2,
+                          })}
+                        </div>
+                      </Col>
+                    ))}
                     <Col xs={12} md={8}>
                       <Statistic
                         title="Tickets"
@@ -1102,38 +1184,6 @@ export default function SystemBank({
                         precision={2}
                         prefix="$"
                         valueStyle={{ color: '#52c41a' }}
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Bonus Especial"
-                        value={shift?.total_bonus_especial || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Préstamos"
-                        value={shift?.total_prestamo || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Depósitos"
-                        value={shift?.total_deposit || 0}
-                        precision={2}
-                        prefix="$"
-                      />
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Retiros"
-                        value={shift?.total_withdrawal || 0}
-                        precision={2}
-                        prefix="$"
                       />
                     </Col>
                   </Row>
@@ -1762,6 +1812,13 @@ export default function SystemBank({
                               !isForceClosed && (
                                 <Space size="small">
                                   <RefreshBtn tooltip={`Actualizar datos de ${user?.first_name}`} />
+                                  <Button
+                                    type="text"
+                                    icon={<PlusOutlined />}
+                                    size="small"
+                                    onClick={() => openAddBalanceModal(pasillera)}
+                                    title="Agregar saldo"
+                                  />
                                   <Popconfirm
                                     title="¿Eliminar esta pasillera?"
                                     onConfirm={() => handleDeletePasillera(pasillera.id)}
@@ -2338,6 +2395,45 @@ export default function SystemBank({
                 rows={3}
               />
             </div>
+          </Space>
+        </Modal>
+
+        {/* Modal Agregar Saldo a Pasillera */}
+        <Modal
+          title="Agregar Saldo a Pasillera"
+          open={addBalanceModalVisible}
+          onOk={handleAddBalance}
+          onCancel={() => {
+            setAddBalanceModalVisible(false);
+            setAddBalanceAmount('');
+            setAddBalancePasilleraId(null);
+            setAddBalancePasilleraName('');
+          }}
+          okText="Agregar"
+          cancelText="Cancelar"
+          confirmLoading={loading}
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <Text strong>Pasillera:</Text>
+              <br />
+              <Text>{addBalancePasilleraName}</Text>
+            </div>
+            <div>
+              <Text strong>Monto a agregar *</Text>
+              <InputNumber
+                style={{ width: '100%', marginTop: 4 }}
+                value={addBalanceAmount}
+                onChange={setAddBalanceAmount}
+                min={0.01}
+                precision={2}
+                placeholder="Ingrese el monto"
+                prefix="$"
+              />
+            </div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Este monto se descontará de la caja y se sumará al saldo de la pasillera.
+            </Text>
           </Space>
         </Modal>
       </div>

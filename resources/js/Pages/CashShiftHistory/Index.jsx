@@ -131,6 +131,11 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
     other: 'Otro Gasto',
     pasillera_payment: 'Pago Pasillera',
     pasillera_return: 'Reintegro Pasillera',
+    sorteo: 'Sorteo',
+    bonus_especial: 'Bono Especial',
+    prestamo: 'Préstamo',
+    deposit: 'Agregar Dinero',
+    withdrawal: 'Quitar Dinero',
   };
 
   const typeColors = {
@@ -140,6 +145,11 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
     other: 'gold',
     pasillera_payment: 'geekblue',
     pasillera_return: 'green',
+    sorteo: 'cyan',
+    bonus_especial: 'magenta',
+    prestamo: 'volcano',
+    deposit: 'lime',
+    withdrawal: 'red',
   };
 
   const columns = [
@@ -239,7 +249,16 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
       title: 'Tipo',
       dataIndex: 'type',
       key: 'type',
-      render: (t) => <Tag color={typeColors[t] || 'default'}>{typeLabels[t] || t}</Tag>,
+      render: (t, record) => {
+        const label = typeLabels[t] || t;
+        const sourceLabel = record.source === 'pasillera' ? ' (Pasillera)' : '';
+        return (
+          <Tag color={typeColors[t] || 'default'}>
+            {label}
+            {sourceLabel}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Monto',
@@ -522,78 +541,87 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
 
                       <Card size="small" title="Totales del Turno">
                         <Row gutter={[16, 16]}>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Transferencias"
-                              value={shift.total_transfers || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Giros"
-                              value={shift.total_giros || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Pagos por Caja"
-                              value={shift.total_payments || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Otros Gastos"
-                              value={shift.total_other || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Sorteos"
-                              value={shift.total_sorteo || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Bonus Especial"
-                              value={shift.total_bonus_especial || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Préstamos"
-                              value={shift.total_prestamo || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Depósitos"
-                              value={shift.total_deposit || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
-                          <Col xs={12} md={6}>
-                            <Statistic
-                              title="Retiros"
-                              value={shift.total_withdrawal || 0}
-                              prefix="$"
-                              precision={0}
-                            />
-                          </Col>
+                          {[
+                            {
+                              title: 'Transferencias',
+                              total: shift.total_transfers,
+                              caja: shift.total_transfers_caja,
+                              pasillera: shift.total_transfers_pasillera,
+                            },
+                            {
+                              title: 'Giros',
+                              total: shift.total_giros,
+                              caja: shift.total_giros_caja,
+                              pasillera: shift.total_giros_pasillera,
+                            },
+                            {
+                              title: 'Pagos por Caja',
+                              total: shift.total_payments,
+                              caja: shift.total_payments_caja,
+                              pasillera: shift.total_payments_pasillera,
+                            },
+                            {
+                              title: 'Otros Gastos',
+                              total: shift.total_other,
+                              caja: shift.total_other_caja,
+                              pasillera: shift.total_other_pasillera,
+                            },
+                            {
+                              title: 'Sorteos',
+                              total: shift.total_sorteo,
+                              caja: shift.total_sorteo_caja,
+                              pasillera: shift.total_sorteo_pasillera,
+                            },
+                            {
+                              title: 'Bonus Especial',
+                              total: shift.total_bonus_especial,
+                              caja: shift.total_bonus_especial_caja,
+                              pasillera: shift.total_bonus_especial_pasillera,
+                            },
+                            {
+                              title: 'Préstamos',
+                              total: shift.total_prestamo,
+                              caja: shift.total_prestamo_caja,
+                              pasillera: shift.total_prestamo_pasillera,
+                            },
+                            {
+                              title: 'Depósitos',
+                              total: shift.total_deposit,
+                              caja: shift.total_deposit_caja,
+                              pasillera: shift.total_deposit_pasillera,
+                            },
+                            {
+                              title: 'Retiros',
+                              total: shift.total_withdrawal,
+                              caja: shift.total_withdrawal_caja,
+                              pasillera: shift.total_withdrawal_pasillera,
+                            },
+                          ].map((item, idx) => (
+                            <Col xs={12} md={6} key={idx}>
+                              <div style={{ marginBottom: 4 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  {item.title}
+                                </Text>
+                              </div>
+                              <Statistic
+                                title=""
+                                value={item.total || 0}
+                                prefix="$"
+                                precision={0}
+                                valueStyle={{ fontSize: 16, fontWeight: 600 }}
+                              />
+                              <div style={{ fontSize: 11, color: '#888', marginTop: -4 }}>
+                                Caja: $
+                                {(item.caja || 0).toLocaleString('es-CL', {
+                                  minimumFractionDigits: 0,
+                                })}{' '}
+                                | Pasillera: $
+                                {(item.pasillera || 0).toLocaleString('es-CL', {
+                                  minimumFractionDigits: 0,
+                                })}
+                              </div>
+                            </Col>
+                          ))}
                           <Col xs={12} md={6}>
                             <Statistic
                               title="Tickets"

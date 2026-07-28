@@ -8,6 +8,8 @@ use App\Models\CashTransaction;
 use App\Models\Pasillera;
 use App\Models\User;
 use App\Events\CashTransactionAdded;
+use App\Constants\TransactionType;
+use App\Constants\TransactionSource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -350,7 +352,7 @@ class CashManagementController extends Controller
     public function addTransaction(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:transfer,payment,giro,other,sorteo,bonus_especial,prestamo,deposit,withdrawal',
+            'type' => 'required|in:' . implode(',', TransactionType::USER_CREABLE),
             'amount' => 'required|numeric|min:0',
             'client' => 'nullable|string',
             'machine' => 'nullable|string|max:100',
@@ -360,7 +362,7 @@ class CashManagementController extends Controller
         ]);
 
         // Para 'payment' requerimos máquina
-        if ($request->type === 'payment' && empty($request->machine)) {
+        if ($request->type === TransactionType::PAYMENT && empty($request->machine)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Debe indicar el número de máquina para el pago por caja'
@@ -368,7 +370,7 @@ class CashManagementController extends Controller
         }
 
         // Para 'other' requerimos tipo de gasto
-        if ($request->type === 'other' && empty($request->expense_type)) {
+        if ($request->type === TransactionType::OTHER && empty($request->expense_type)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Debe indicar el tipo de gasto'
@@ -392,6 +394,12 @@ class CashManagementController extends Controller
             ->where('is_active', true)
             ->first();
 
+        // Determinar source
+        // deposit y withdrawal SIEMPRE son operaciones de caja, sin importar si el usuario es pasillera
+        $source = ($activePasillera && !in_array($request->type, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL]))
+            ? TransactionSource::PASILLERA
+            : TransactionSource::CAJA;
+
         if ($activePasillera) {
             // Usar el CashShift asociado a la pasillera
             $activeShift = CashShift::where('id', $activePasillera->cash_shift_id)
@@ -411,9 +419,14 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        // Validar saldo: si es pasillera, validar contra su propio saldo
-        $balanceSource = $activePasillera ? $activePasillera->current_balance : $activeShift->current_balance;
-        if (in_array($request->type, ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'withdrawal'])) {
+        // Validar saldo
+        // deposit/withdrawal siempre validan contra caja; otros tipos validan contra pasillera si aplica
+        if (in_array($request->type, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) {
+            $balanceSource = $activeShift->current_balance;
+        } else {
+            $balanceSource = $activePasillera ? $activePasillera->current_balance : $activeShift->current_balance;
+        }
+        if (in_array($request->type, TransactionType::TYPES_THAT_REDUCE_BALANCE)) {
             if ($request->amount > $balanceSource) {
                 return response()->json([
                     'success' => false,
@@ -440,9 +453,9 @@ class CashManagementController extends Controller
             ]);
 
             // Etiqueta legible para depósitos/retiros
-            if ($request->type === 'deposit') {
+            if ($request->type === TransactionType::DEPOSIT) {
                 $detailParts[] = 'Agregar Dinero';
-            } elseif ($request->type === 'withdrawal') {
+            } elseif ($request->type === TransactionType::WITHDRAWAL) {
                 $detailParts[] = 'Quitar Dinero';
             }
 
@@ -459,8 +472,9 @@ class CashManagementController extends Controller
 
             $transaction = CashTransaction::create([
                 'cash_shift_id' => $activeShift->id,
-                'pasillera_id' => $activePasillera ? $activePasillera->id : null,
+                'pasillera_id' => ($activePasillera && !in_array($request->type, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) ? $activePasillera->id : null,
                 'type' => $request->type,
+                'source' => $source,
                 'expense_type' => $request->expense_type,
                 'amount' => $request->amount,
                 'client' => $request->client,
@@ -471,73 +485,32 @@ class CashManagementController extends Controller
             ]);
 
             // Update shift totals
-            switch ($request->type) {
-                case 'transfer':
-                    $activeShift->total_transfers += $request->amount;
-                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'giro':
-                    $activeShift->total_giros += $request->amount;
-                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'payment':
-                    $activeShift->total_payments += $request->amount;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'other':
-                    $activeShift->total_other += $request->amount;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'sorteo':
-                    $activeShift->total_sorteo += $request->amount;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'bonus_especial':
-                    $activeShift->total_bonus_especial += $request->amount;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'prestamo':
-                    $activeShift->total_prestamo += $request->amount;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
-                case 'deposit':
-                    $activeShift->total_deposit += $request->amount;
-                    $activeShift->current_balance += $request->amount;
-                    break;
-                case 'withdrawal':
-                    $activeShift->total_withdrawal += $request->amount;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$activePasillera) {
-                        $activeShift->current_balance -= $request->amount;
-                    }
-                    break;
+            $totalCol = TransactionType::TOTAL_COLUMNS[$request->type] ?? null;
+            $pasilleraCol = TransactionType::PASILLERA_TOTAL_COLUMNS[$request->type] ?? null;
+
+            if ($totalCol) {
+                $activeShift->{$totalCol} += $request->amount;
+            }
+
+            // Si es pasillera, actualizar también la columna _pasillera
+            if ($source === TransactionSource::PASILLERA && $pasilleraCol) {
+                $activeShift->{$pasilleraCol} += $request->amount;
+            }
+
+            // Afectar saldo del turno
+            if (in_array($request->type, TransactionType::TYPES_THAT_REDUCE_BALANCE)) {
+                if ($source === TransactionSource::CAJA) {
+                    $activeShift->current_balance -= $request->amount;
+                }
+            } elseif ($request->type === TransactionType::DEPOSIT) {
+                $activeShift->current_balance += $request->amount;
             }
 
             $activeShift->save();
 
             // Si es pasillera, también actualizar su saldo personal
-            if ($activePasillera) {
+            // Pero NO para deposit/withdrawal (esas siempre son operaciones de caja)
+            if ($activePasillera && !in_array($request->type, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) {
                 switch ($request->type) {
                     case 'transfer':
                     case 'giro':
@@ -619,21 +592,21 @@ class CashManagementController extends Controller
             ], 403);
         }
 
-        if (!in_array($transaction->type, ['transfer', 'giro', 'payment', 'other', 'sorteo', 'bonus_especial', 'prestamo', 'deposit', 'withdrawal'])) {
+        if (!in_array($transaction->type, TransactionType::USER_CREABLE)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Este tipo de transacción no se puede editar desde aquí'
             ], 400);
         }
 
-        if ($transaction->type === 'payment' && empty($request->machine)) {
+        if ($transaction->type === TransactionType::PAYMENT && empty($request->machine)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Debe indicar el número de máquina'
             ], 422);
         }
 
-        if ($transaction->type === 'other' && empty($request->expense_type)) {
+        if ($transaction->type === TransactionType::OTHER && empty($request->expense_type)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Debe indicar el tipo de gasto'
@@ -643,123 +616,50 @@ class CashManagementController extends Controller
         $oldAmount = (float) $transaction->amount;
         $newAmount = (float) $request->amount;
         $delta = $newAmount - $oldAmount;
+        $isPasillera = $transaction->source === TransactionSource::PASILLERA;
 
         DB::beginTransaction();
         try {
-            // Revert old impact + apply new = net delta
-            switch ($transaction->type) {
-                case 'transfer':
-                    // Transferencia es salida de dinero, debe restar del saldo
-                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_transfers += $delta;
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'giro':
-                    // New balance check: delta > 0 means extra outgoing
-                    // Si es pasillera, NO restar del saldo de la caja (el dinero ya salió al asignar la pasillera)
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_giros += $delta;
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'payment':
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_payments += $delta;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'other':
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_other += $delta;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'sorteo':
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_sorteo += $delta;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'bonus_especial':
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_bonus_especial += $delta;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'prestamo':
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_prestamo += $delta;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
-                case 'deposit':
-                    $activeShift->total_deposit += $delta;
-                    $activeShift->current_balance += $delta;
-                    break;
-                case 'withdrawal':
-                    if ($delta > 0 && $activeShift->current_balance < $delta && !$transaction->pasillera_id) {
-                        throw new \Exception('Saldo insuficiente para aumentar el monto');
-                    }
-                    $activeShift->total_withdrawal += $delta;
-                    // Si es pasillera, NO restar del saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance -= $delta;
-                    }
-                    break;
+            // Actualizar total general
+            $totalCol = TransactionType::TOTAL_COLUMNS[$transaction->type] ?? null;
+            if ($totalCol) {
+                $activeShift->{$totalCol} += $delta;
             }
+
+            // Actualizar total _pasillera si aplica
+            if ($isPasillera) {
+                $pasilleraCol = TransactionType::PASILLERA_TOTAL_COLUMNS[$transaction->type] ?? null;
+                if ($pasilleraCol) {
+                    $activeShift->{$pasilleraCol} += $delta;
+                }
+            }
+
+            // Validar saldo y afectar balance del turno
+            if (in_array($transaction->type, TransactionType::TYPES_THAT_REDUCE_BALANCE)) {
+                if ($delta > 0 && $activeShift->current_balance < $delta && !$isPasillera) {
+                    throw new \Exception('Saldo insuficiente para aumentar el monto');
+                }
+                if (!$isPasillera) {
+                    $activeShift->current_balance -= $delta;
+                }
+            } elseif ($transaction->type === TransactionType::DEPOSIT) {
+                $activeShift->current_balance += $delta;
+            }
+
             $activeShift->save();
 
             // Si es pasillera, actualizar su saldo personal
-            if ($transaction->pasillera_id) {
+            if ($isPasillera && $transaction->pasillera_id) {
                 $pasillera = Pasillera::find($transaction->pasillera_id);
                 if ($pasillera) {
-                    switch ($transaction->type) {
-                        case 'transfer':
-                        case 'giro':
-                            // Restar la diferencia del saldo
-                            $pasillera->current_balance -= $delta;
-                            break;
-                        case 'payment':
-                        case 'other':
-                        case 'sorteo':
-                        case 'bonus_especial':
-                        case 'prestamo':
-                        case 'withdrawal':
-                            $pasillera->total_payments += $delta;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            break;
-                        case 'deposit':
-                            $pasillera->initial_balance += $delta;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            break;
+                    if (in_array($transaction->type, [TransactionType::TRANSFER, TransactionType::GIRO])) {
+                        $pasillera->current_balance -= $delta;
+                    } elseif ($transaction->type === TransactionType::DEPOSIT) {
+                        $pasillera->initial_balance += $delta;
+                        $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                    } else {
+                        $pasillera->total_payments += $delta;
+                        $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
                     }
                     $pasillera->save();
                 }
@@ -816,165 +716,52 @@ class CashManagementController extends Controller
         }
 
         $amount = (float) $transaction->amount;
+        $isPasillera = $transaction->source === TransactionSource::PASILLERA;
 
         DB::beginTransaction();
         try {
-            switch ($transaction->type) {
-                case 'transfer':
-                    $activeShift->total_transfers -= $amount;
-                    // Si es pasillera, NO sumar al saldo de la caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->current_balance += $amount;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'giro':
-                    $activeShift->total_giros -= $amount;
-                    // Si es pasillera, NO sumar al saldo de la caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->current_balance += $amount;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'payment':
-                    $activeShift->total_payments -= $amount;
-                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'other':
-                    $activeShift->total_other -= $amount;
-                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'sorteo':
-                    $activeShift->total_sorteo -= $amount;
-                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'bonus_especial':
-                    $activeShift->total_bonus_especial -= $amount;
-                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'prestamo':
-                    $activeShift->total_prestamo -= $amount;
-                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'deposit':
-                    $activeShift->total_deposit -= $amount;
-                    $activeShift->current_balance -= $amount;
-                    break;
-                case 'withdrawal':
-                    $activeShift->total_withdrawal -= $amount;
-                    // Si es pasillera, NO sumar al saldo della caja (el dinero ya salió al asignar la pasillera)
-                    if (!$transaction->pasillera_id) {
-                        $activeShift->current_balance += $amount;
-                    }
-                    // Revertir saldo de pasillera si aplica
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    break;
-                case 'pasillera_payment':
-                    // Revert pasillera balance too
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->total_payments -= $amount;
-                            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
-                            $pasillera->save();
-                        }
-                    }
-                    $activeShift->total_payments -= $amount;
-                    break;
-                case 'pasillera_return':
-                    // reverse return: pasillera takes back balance
-                    if ($transaction->pasillera_id) {
-                        $pasillera = Pasillera::find($transaction->pasillera_id);
-                        if ($pasillera) {
-                            $pasillera->current_balance += $amount;
-                            $pasillera->is_active = true;
-                            $pasillera->save();
-                        }
-                    }
-                    $activeShift->current_balance -= $amount;
-                    break;
+            // Revertir total general
+            $totalCol = TransactionType::TOTAL_COLUMNS[$transaction->type] ?? null;
+            if ($totalCol) {
+                $activeShift->{$totalCol} -= $amount;
             }
+
+            // Revertir total _pasillera si aplica
+            if ($isPasillera) {
+                $pasilleraCol = TransactionType::PASILLERA_TOTAL_COLUMNS[$transaction->type] ?? null;
+                if ($pasilleraCol) {
+                    $activeShift->{$pasilleraCol} -= $amount;
+                }
+            }
+
+            // Revertir saldo del turno (solo si es caja)
+            if (in_array($transaction->type, TransactionType::TYPES_THAT_REDUCE_BALANCE)) {
+                if (!$isPasillera) {
+                    $activeShift->current_balance += $amount;
+                }
+            } elseif ($transaction->type === TransactionType::DEPOSIT) {
+                $activeShift->current_balance -= $amount;
+            } elseif ($transaction->type === TransactionType::PASILLERA_RETURN) {
+                $activeShift->current_balance -= $amount;
+            }
+
+            // Revertir saldo de pasillera si aplica
+            if ($isPasillera && $transaction->pasillera_id) {
+                $pasillera = Pasillera::find($transaction->pasillera_id);
+                if ($pasillera) {
+                    if (in_array($transaction->type, [TransactionType::TRANSFER, TransactionType::GIRO])) {
+                        $pasillera->current_balance += $amount;
+                    } elseif ($transaction->type === TransactionType::PASILLERA_RETURN) {
+                        $pasillera->current_balance += $amount;
+                        $pasillera->is_active = true;
+                    } else {
+                        $pasillera->total_payments -= $amount;
+                        $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+                    }
+                    $pasillera->save();
+                }
+            }
+
             $activeShift->save();
             $transaction->delete();
 
@@ -1116,7 +903,8 @@ class CashManagementController extends Controller
             $transaction = CashTransaction::create([
                 'cash_shift_id' => $activeShift->id,
                 'pasillera_id' => $pasillera->id,
-                'type' => 'pasillera_payment',
+                'type' => TransactionType::PASILLERA_PAYMENT,
+                'source' => TransactionSource::PASILLERA,
                 'amount' => $request->amount,
                 'machine' => $request->machine,
                 'description' => 'Pago Pasillera ' . $pasillera->user->first_name . ' ' . $pasillera->user->first_last_name . ' - Máquina: ' . $request->machine,
@@ -1124,6 +912,7 @@ class CashManagementController extends Controller
 
             // Update shift totals (solo para estadísticas, no afecta current_balance porque el dinero ya salió al asignar la pasillera)
             $activeShift->total_payments += $request->amount;
+            $activeShift->total_payments_pasillera += $request->amount;
             $activeShift->save();
 
             DB::commit();
@@ -1142,6 +931,103 @@ class CashManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al registrar el pago: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Add balance to pasillera (adds money from caja to pasillera)
+     */
+    public function addBalanceToPasillera(Request $request, $pasilleraId)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $user = Auth::user();
+        $branch = $user->branch;
+        
+        if (!$branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes una sucursal asignada'
+            ], 400);
+        }
+
+        $branchId = $branch->id;
+
+        $activeShift = CashShift::where('user_id', $user->id)
+            ->where('branch_id', $branchId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$activeShift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay turno activo'
+            ], 400);
+        }
+
+        // Validar saldo de caja
+        if ($request->amount > $activeShift->current_balance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo insuficiente en caja. Saldo disponible: $' . number_format($activeShift->current_balance, 0, ',', '.')
+            ], 422);
+        }
+
+        $pasillera = Pasillera::where('id', $pasilleraId)
+            ->where('cash_shift_id', $activeShift->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$pasillera) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pasillera no encontrada o inactiva'
+            ], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Actualizar saldo de pasillera
+            $pasillera->initial_balance += $request->amount;
+            $pasillera->current_balance = $pasillera->initial_balance - $pasillera->total_payments;
+            $pasillera->save();
+
+            // Restar de la caja
+            $activeShift->current_balance -= $request->amount;
+            // No incrementa total_deposit porque es un movimiento interno, no un depósito real
+            $activeShift->save();
+
+            // Registrar transacción
+            $pasilleraName = trim($pasillera->user->first_name . ' ' . $pasillera->user->first_last_name);
+            $transaction = CashTransaction::create([
+                'cash_shift_id' => $activeShift->id,
+                'pasillera_id' => $pasillera->id,
+                'type' => TransactionType::DEPOSIT,
+                'source' => TransactionSource::CAJA,
+                'amount' => $request->amount,
+                'description' => "Agregar saldo a Pasillera - {$pasilleraName}",
+                'admin_user_id' => $user->id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Saldo agregado correctamente a la pasillera',
+                'data' => [
+                    'pasillera' => $pasillera->fresh(),
+                    'transaction' => $transaction,
+                    'shift' => $activeShift->fresh(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al agregar saldo: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1251,7 +1137,8 @@ class CashManagementController extends Controller
                 $transaction = CashTransaction::create([
                     'cash_shift_id' => $activeShift->id,
                     'pasillera_id' => $pasillera->id,
-                    'type' => 'pasillera_return',
+                    'type' => TransactionType::PASILLERA_RETURN,
+                    'source' => TransactionSource::PASILLERA,
                     'amount' => $pasillera->current_balance,
                     'description' => "Cierre forzado - Autoreintegro - {$pasilleraName}",
                     'admin_user_id' => $user->id,

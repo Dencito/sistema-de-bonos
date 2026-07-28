@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\CompanyScope;
+use App\Constants\TransactionType;
+use App\Constants\TransactionSource;
 
 class CashTransaction extends Model
 {
@@ -14,6 +16,7 @@ class CashTransaction extends Model
         'cash_shift_id',
         'pasillera_id',
         'type',
+        'source',
         'expense_type',
         'amount',
         'client',
@@ -40,5 +43,20 @@ class CashTransaction extends Model
     public function adminUser()
     {
         return $this->belongsTo(User::class, 'admin_user_id');
+    }
+
+    public function isFromPasillera(): bool
+    {
+        return $this->source === TransactionSource::PASILLERA;
+    }
+
+    public function getSourceLabel(): string
+    {
+        return TransactionSource::LABELS[$this->source] ?? $this->source;
+    }
+
+    public function getTypeLabel(): string
+    {
+        return TransactionType::LABELS[$this->type] ?? $this->type;
     }
 }

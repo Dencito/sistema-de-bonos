@@ -26,6 +26,15 @@ class CashShift extends Model
         'total_prestamo',
         'total_deposit',
         'total_withdrawal',
+        'total_transfers_pasillera',
+        'total_giros_pasillera',
+        'total_payments_pasillera',
+        'total_other_pasillera',
+        'total_sorteo_pasillera',
+        'total_bonus_especial_pasillera',
+        'total_prestamo_pasillera',
+        'total_deposit_pasillera',
+        'total_withdrawal_pasillera',
         'is_active',
         'started_at',
         'ended_at',
@@ -64,6 +73,15 @@ class CashShift extends Model
         'total_prestamo' => 'decimal:2',
         'total_deposit' => 'decimal:2',
         'total_withdrawal' => 'decimal:2',
+        'total_transfers_pasillera' => 'decimal:2',
+        'total_giros_pasillera' => 'decimal:2',
+        'total_payments_pasillera' => 'decimal:2',
+        'total_other_pasillera' => 'decimal:2',
+        'total_sorteo_pasillera' => 'decimal:2',
+        'total_bonus_especial_pasillera' => 'decimal:2',
+        'total_prestamo_pasillera' => 'decimal:2',
+        'total_deposit_pasillera' => 'decimal:2',
+        'total_withdrawal_pasillera' => 'decimal:2',
         'is_active' => 'boolean',
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
@@ -109,5 +127,63 @@ class CashShift extends Model
     public function adminUser()
     {
         return $this->belongsTo(User::class, 'admin_user_id');
+    }
+
+    protected $appends = [
+        'total_transfers_caja',
+        'total_giros_caja',
+        'total_payments_caja',
+        'total_other_caja',
+        'total_sorteo_caja',
+        'total_bonus_especial_caja',
+        'total_prestamo_caja',
+        'total_deposit_caja',
+        'total_withdrawal_caja',
+    ];
+
+    // Computed attributes: Caja = total - pasillera
+    public function getTotalTransfersCajaAttribute(): float
+    {
+        return (float) $this->total_transfers - (float) $this->total_transfers_pasillera;
+    }
+
+    public function getTotalGirosCajaAttribute(): float
+    {
+        return (float) $this->total_giros - (float) $this->total_giros_pasillera;
+    }
+
+    public function getTotalPaymentsCajaAttribute(): float
+    {
+        return (float) $this->total_payments - (float) $this->total_payments_pasillera;
+    }
+
+    public function getTotalOtherCajaAttribute(): float
+    {
+        return (float) $this->total_other - (float) $this->total_other_pasillera;
+    }
+
+    public function getTotalSorteoCajaAttribute(): float
+    {
+        return (float) $this->total_sorteo - (float) $this->total_sorteo_pasillera;
+    }
+
+    public function getTotalBonusEspecialCajaAttribute(): float
+    {
+        return (float) $this->total_bonus_especial - (float) $this->total_bonus_especial_pasillera;
+    }
+
+    public function getTotalPrestamoCajaAttribute(): float
+    {
+        return (float) $this->total_prestamo - (float) $this->total_prestamo_pasillera;
+    }
+
+    public function getTotalDepositCajaAttribute(): float
+    {
+        return (float) $this->total_deposit - (float) $this->total_deposit_pasillera;
+    }
+
+    public function getTotalWithdrawalCajaAttribute(): float
+    {
+        return (float) $this->total_withdrawal - (float) $this->total_withdrawal_pasillera;
     }
 }

@@ -384,6 +384,22 @@ class CompanyDatabaseService
                     $table->decimal('total_transfers', 15, 2)->default(0);
                     $table->decimal('total_giros', 15, 2)->default(0);
                     $table->decimal('total_payments', 15, 2)->default(0);
+                    $table->decimal('total_other', 15, 2)->default(0);
+                    $table->decimal('total_sorteo', 15, 2)->default(0);
+                    $table->decimal('total_bonus_especial', 15, 2)->default(0);
+                    $table->decimal('total_prestamo', 15, 2)->default(0);
+                    $table->decimal('total_deposit', 15, 2)->default(0);
+                    $table->decimal('total_withdrawal', 15, 2)->default(0);
+                    // Totales separados por Pasillera
+                    $table->decimal('total_transfers_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_giros_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_payments_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_other_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_sorteo_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_bonus_especial_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_prestamo_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_deposit_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_withdrawal_pasillera', 15, 2)->default(0);
                     $table->boolean('is_active')->default(true);
                     $table->timestamp('started_at');
                     $table->timestamp('ended_at')->nullable();
@@ -441,10 +457,12 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('cash_shift_id')->nullable()->constrained($cashShiftsTable)->onDelete('set null');
                     $table->foreignId('pasillera_id')->nullable()->constrained($pasillerasTable)->onDelete('set null');
-                    $table->enum('type', ['transfer', 'payment', 'giro', 'pasillera_payment', 'pasillera_return', 'deposit', 'withdrawal', 'other', 'sorteo', 'bonus_especial', 'prestamo']);
+                    $table->string('type', 50);
+                    $table->string('source', 20)->default('caja');
                     $table->decimal('amount', 15, 2);
                     $table->string('client')->nullable();
                     $table->string('machine')->nullable();
+                    $table->string('expense_type')->nullable();
                     $table->text('description')->nullable();
                     $table->string('image')->nullable();
                     $table->foreignId('admin_user_id')->nullable()->constrained($usersTable)->onDelete('set null');

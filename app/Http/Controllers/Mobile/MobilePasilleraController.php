@@ -7,6 +7,8 @@ use App\Events\PasilleraDataUpdated;
 use App\Models\CashShift;
 use App\Models\CashTransaction;
 use App\Models\Pasillera;
+use App\Constants\TransactionType;
+use App\Constants\TransactionSource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -111,7 +113,8 @@ class MobilePasilleraController extends Controller
             $transaction = CashTransaction::create([
                 'cash_shift_id' => $pasillera->cash_shift_id,
                 'pasillera_id' => $pasillera->id,
-                'type' => 'pasillera_payment',
+                'type' => TransactionType::PASILLERA_PAYMENT,
+                'source' => TransactionSource::PASILLERA,
                 'amount' => $request->amount,
                 'machine' => $request->machine,
                 'description' => $description,
@@ -121,6 +124,7 @@ class MobilePasilleraController extends Controller
             $cashShift = CashShift::find($pasillera->cash_shift_id);
             if ($cashShift) {
                 $cashShift->total_payments += $request->amount;
+                $cashShift->total_payments_pasillera += $request->amount;
                 $cashShift->save();
             }
 
@@ -413,7 +417,8 @@ class MobilePasilleraController extends Controller
                 $transaction = CashTransaction::create([
                     'cash_shift_id' => $pasillera->cash_shift_id,
                     'pasillera_id' => $pasillera->id,
-                    'type' => 'pasillera_return',
+                    'type' => TransactionType::PASILLERA_RETURN,
+                    'source' => TransactionSource::PASILLERA,
                     'amount' => $remainingBalance,
                     'description' => 'Devolución de saldo al finalizar turno - Pasillera: ' . $user->first_name . ' ' . $user->first_last_name,
                 ]);

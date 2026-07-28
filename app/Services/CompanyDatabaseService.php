@@ -176,6 +176,7 @@ class CompanyDatabaseService
                     $table->boolean('bonus_attendance_enabled')->default(false);
                     $table->json('bonus_attendance_days')->nullable();
                     $table->string('bonus_category_payout_day')->nullable();
+                    $table->boolean('tickets_enabled')->default(true);
                     $table->foreignId('status_id')->nullable()->constrained($statusesTable)->onDelete('set null');
                     $table->foreignId('company_id')->nullable()->constrained($companiesTable)->onDelete('set null');
                     $table->timestamps();

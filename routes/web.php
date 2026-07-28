@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('branches')->group(function () {
         Route::get('/', [BranchController::class, 'index'])->name('branches.index');
         Route::post('/', [BranchController::class, 'create'])->name('branches.create');
+        Route::put('/toggle-tickets', [BranchController::class, 'toggleTicketsEnabled'])->name('branches.toggleTicketsEnabled');
         Route::put('/{id}', [BranchController::class, 'update'])->name('branches.update');
         Route::delete('/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
 

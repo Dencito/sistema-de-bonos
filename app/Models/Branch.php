@@ -39,7 +39,8 @@ class Branch extends Model
         'ticketNumber',
         'bonus_attendance_enabled',
         'bonus_attendance_days',
-        'bonus_category_payout_day'
+        'bonus_category_payout_day',
+        'tickets_enabled'
     ];
 
     /**
@@ -53,6 +54,7 @@ class Branch extends Model
         'withdrawals' => 'array',
         'bonus_attendance_enabled' => 'boolean',
         'bonus_attendance_days' => 'array',
+        'tickets_enabled' => 'boolean',
     ];
 
     public function shifts()

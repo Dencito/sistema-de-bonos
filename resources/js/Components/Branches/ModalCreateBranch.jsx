@@ -20,6 +20,7 @@ export default function ModalCreateBranch({ companies }) {
   const [attendanceEnabled, setAttendanceEnabled] = useState(false);
   const [attendanceDays, setAttendanceDays] = useState([]);
   const [categoryPayoutDay, setCategoryPayoutDay] = useState(null);
+  const [ticketsEnabled, setTicketsEnabled] = useState(true);
 
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
@@ -65,6 +66,7 @@ export default function ModalCreateBranch({ companies }) {
         bonus_attendance_enabled: attendanceEnabled,
         bonus_attendance_days: JSON.stringify(attendanceDays || []),
         bonus_category_payout_day: categoryPayoutDay,
+        tickets_enabled: ticketsEnabled,
       });
       if (!success) {
         errorMsg(message);
@@ -90,6 +92,7 @@ export default function ModalCreateBranch({ companies }) {
     setAttendanceEnabled(false);
     setAttendanceDays([]);
     setCategoryPayoutDay(null);
+    setTicketsEnabled(true);
     form.resetFields();
     setLoading(false);
     setShowModal(false);
@@ -133,7 +136,7 @@ export default function ModalCreateBranch({ companies }) {
         <div className="max-h-[70vh] overflow-y-auto pr-2">
           <Form form={form} onFinish={onCreate} layout="vertical" className="space-y-6">
             {/* Información General */}
-            <Card 
+            <Card
               title={
                 <div className="flex items-center space-x-2">
                   <span className="text-base font-semibold">Información General</span>
@@ -174,7 +177,13 @@ export default function ModalCreateBranch({ companies }) {
                     },
                   ]}
                 >
-                  <Input name="numberOfEmployees" onChange={onlyNumberInput} showCount maxLength={4} placeholder="0" />
+                  <Input
+                    name="numberOfEmployees"
+                    onChange={onlyNumberInput}
+                    showCount
+                    maxLength={4}
+                    placeholder="0"
+                  />
                 </Form.Item>
                 <Form.Item
                   name="birthday_amount"
@@ -186,13 +195,19 @@ export default function ModalCreateBranch({ companies }) {
                     },
                   ]}
                 >
-                  <Input name="birthday_amount" onChange={onlyNumberInput} showCount maxLength={15} placeholder="0" />
+                  <Input
+                    name="birthday_amount"
+                    onChange={onlyNumberInput}
+                    showCount
+                    maxLength={15}
+                    placeholder="0"
+                  />
                 </Form.Item>
               </div>
             </Card>
 
             {/* Dirección */}
-            <Card 
+            <Card
               title={
                 <div className="flex items-center space-x-2">
                   <span className="text-base font-semibold">Dirección</span>
@@ -222,7 +237,11 @@ export default function ModalCreateBranch({ companies }) {
                     optionLabelProp="label"
                   >
                     {countries?.map((country) => (
-                      <Select.Option key={country?.name} value={country?.name} label={country?.name}>
+                      <Select.Option
+                        key={country?.name}
+                        value={country?.name}
+                        label={country?.name}
+                      >
                         {country?.name}
                       </Select.Option>
                     ))}
@@ -333,7 +352,7 @@ export default function ModalCreateBranch({ companies }) {
             </Card>
 
             {/* Horarios */}
-            <Card 
+            <Card
               title={
                 <div className="flex items-center space-x-2">
                   <span className="text-base font-semibold">Horarios</span>
@@ -349,8 +368,8 @@ export default function ModalCreateBranch({ companies }) {
                       <p className="font-medium text-blue-900">Horarios Disponibles</p>
                       <p className="text-sm text-blue-700">Configura los turnos de trabajo</p>
                     </div>
-                    <Button 
-                      onClick={() => setAvailableScheduleModalVisible(true)} 
+                    <Button
+                      onClick={() => setAvailableScheduleModalVisible(true)}
                       type="primary"
                       className="bg-blue-600"
                     >
@@ -364,7 +383,9 @@ export default function ModalCreateBranch({ companies }) {
                         {availableSchedules.length === 1 ? 'turno creado' : 'turnos creados'}
                       </Tag>
                       {availableSchedules.length === 3 && (
-                        <Tag color="orange" className="m-0">Límite máximo alcanzado</Tag>
+                        <Tag color="orange" className="m-0">
+                          Límite máximo alcanzado
+                        </Tag>
                       )}
                     </div>
                   )}
@@ -376,8 +397,8 @@ export default function ModalCreateBranch({ companies }) {
                       <p className="font-medium text-purple-900">Horarios de Bonos</p>
                       <p className="text-sm text-purple-700">Configura cuándo se pagan los bonos</p>
                     </div>
-                    <Button 
-                      onClick={() => setBonusScheduleModalVisible(true)} 
+                    <Button
+                      onClick={() => setBonusScheduleModalVisible(true)}
                       type="primary"
                       className="bg-purple-600"
                     >
@@ -386,7 +407,9 @@ export default function ModalCreateBranch({ companies }) {
                   </div>
                   {bonusSchedules.length > 0 && (
                     <div className="mt-3">
-                      <Tag color="purple" className="m-0">{bonusSchedules.length} horarios configurados</Tag>
+                      <Tag color="purple" className="m-0">
+                        {bonusSchedules.length} horarios configurados
+                      </Tag>
                     </div>
                   )}
                 </div>
@@ -394,7 +417,7 @@ export default function ModalCreateBranch({ companies }) {
             </Card>
 
             {/* Asistencia para Bonos Diarios */}
-            <Card 
+            <Card
               title={
                 <div className="flex items-center space-x-2">
                   <span className="text-base font-semibold">Asistencia para Bonos Diarios</span>
@@ -416,7 +439,10 @@ export default function ModalCreateBranch({ companies }) {
 
                 {attendanceEnabled && (
                   <div className="space-y-4 pl-4 border-l-2 border-blue-200">
-                    <Form.Item label="Días sin bono" extra="Selecciona los días donde no se paga bono (ej: domingo a jueves)">
+                    <Form.Item
+                      label="Días sin bono"
+                      extra="Selecciona los días donde no se paga bono (ej: domingo a jueves)"
+                    >
                       <Select
                         mode="multiple"
                         placeholder="Selecciona días sin bono"
@@ -434,7 +460,10 @@ export default function ModalCreateBranch({ companies }) {
                       </Select>
                     </Form.Item>
 
-                    <Form.Item label="Día de cobro del bono" extra="Día donde se verifica asistencia y se paga bono acumulado">
+                    <Form.Item
+                      label="Día de cobro del bono"
+                      extra="Día donde se verifica asistencia y se paga bono acumulado"
+                    >
                       <Select
                         placeholder="Selecciona día de cobro"
                         value={categoryPayoutDay}
@@ -452,10 +481,43 @@ export default function ModalCreateBranch({ companies }) {
                     </Form.Item>
 
                     <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
-                      <p><strong>Nota:</strong> El viernes siempre se da bono diario normal. El día de cobro verifica si asistió todos los días configurados + viernes usando registros de huella.</p>
+                      <p>
+                        <strong>Nota:</strong> El viernes siempre se da bono diario normal. El día
+                        de cobro verifica si asistió todos los días configurados + viernes usando
+                        registros de huella.
+                      </p>
                     </div>
                   </div>
                 )}
+              </div>
+            </Card>
+
+            {/* Configuracion de Tickets */}
+            <Card
+              title={
+                <div className="flex items-center space-x-2">
+                  <span className="text-base font-semibold">Configuracion de Tickets</span>
+                </div>
+              }
+              className="shadow-sm border-gray-200"
+              size="small"
+            >
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                  <Checkbox
+                    checked={ticketsEnabled}
+                    onChange={(e) => setTicketsEnabled(e.target.checked)}
+                    className="mt-1"
+                  >
+                    <span className="font-medium">Habilitar tickets de bonos</span>
+                  </Checkbox>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                  <p>
+                    <strong>Nota:</strong> Si los tickets estan desactivados, al marcar la huella
+                    solo se registrara la asistencia sin generar tickets de bonos.
+                  </p>
+                </div>
               </div>
             </Card>
 
@@ -471,9 +533,9 @@ export default function ModalCreateBranch({ companies }) {
               <Button onClick={handleCloseModal} size="large">
                 Cancelar
               </Button>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
+              <Button
+                type="primary"
+                htmlType="submit"
                 loading={loading}
                 size="large"
                 className="bg-gradient-to-r from-blue-500 to-cyan-500 border-0 hover:from-blue-600 hover:to-cyan-600"

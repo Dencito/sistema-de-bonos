@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ModalCreateBranch from './ModalCreateBranch';
-import { Table } from 'antd';
+import { Table, Switch, message } from 'antd';
 import ModalViewBranch from './ModalViewBranch';
 import ModalEditBranch from './ModalEditBranch';
 import ModalDeleteBranch from './ModalDeleteBranch';
@@ -9,22 +9,25 @@ import { formatDate } from '@utils/date';
 import FilterModal from './FilterModal';
 import ModalRequestMoreBranches from './ModalRequestMoreBranches';
 import { CheckCircle, XCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { branchService } from '@services/api';
 
 const { Column } = Table;
 
 const getStatusBadge = (statusName) => {
   const statusConfig = {
-    'Activo': { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle },
-    'Inactivo': { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
+    Activo: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle },
+    Inactivo: { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle },
     'En revisión': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertCircle },
-    'Borrado': { bg: 'bg-gray-100', text: 'text-gray-700', icon: Trash2 },
+    Borrado: { bg: 'bg-gray-100', text: 'text-gray-700', icon: Trash2 },
   };
 
   const config = statusConfig[statusName] || statusConfig['Inactivo'];
   const Icon = config.icon;
 
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+    >
       <Icon className="w-3 h-3 mr-1" />
       {statusName}
     </span>
@@ -32,6 +35,24 @@ const getStatusBadge = (statusName) => {
 };
 
 export const TableDataBranches = ({ auth, branches, statuses, companies, filters }) => {
+  const [loadingToggle, setLoadingToggle] = useState({});
+
+  const handleToggleTickets = async (branchId, checked) => {
+    setLoadingToggle((prev) => ({ ...prev, [branchId]: true }));
+    try {
+      const response = await branchService.toggleTicketsEnabled(branchId, checked);
+      if (response.success) {
+        message.success(response.message);
+      } else {
+        message.error(response.message);
+      }
+    } catch {
+      message.error('Error al actualizar la configuracion de tickets');
+    } finally {
+      setLoadingToggle((prev) => ({ ...prev, [branchId]: false }));
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="p-6 border-b border-gray-100">
@@ -57,12 +78,7 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
         }}
         rowClassName="hover:bg-gray-50 transition-colors"
       >
-        <Column
-          title="Nombre"
-          dataIndex="name"
-          key="id"
-          className="font-medium text-gray-900"
-        />
+        <Column title="Nombre" dataIndex="name" key="id" className="font-medium text-gray-900" />
         <Column
           title="Empleados"
           key="employs"
@@ -94,14 +110,24 @@ export const TableDataBranches = ({ auth, branches, statuses, companies, filters
           render={(_, branch) => getStatusBadge(branch?.status?.name)}
         />
         <Column
+          title="Tickets"
+          key="tickets_enabled"
+          render={(_, branch) => (
+            <Switch
+              checkedChildren="Si"
+              unCheckedChildren="No"
+              checked={branch.tickets_enabled !== false}
+              loading={loadingToggle[branch.id]}
+              onChange={(checked) => handleToggleTickets(branch.id, checked)}
+            />
+          )}
+        />
+        <Column
           title="Acciones"
           key="actions"
           render={(_, branch) => (
             <div className="flex items-center gap-2">
-              <ModalSetInitialCash
-                key={`cash_${branch.id}`}
-                branch={branch}
-              />
+              <ModalSetInitialCash key={`cash_${branch.id}`} branch={branch} />
               <ModalViewBranch
                 key={`view_${branch.id}`}
                 data={branch}

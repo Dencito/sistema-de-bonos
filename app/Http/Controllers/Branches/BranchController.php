@@ -117,7 +117,8 @@ class BranchController extends Controller
                 'birthday_amount' => $request->birthday_amount,
                 'bonus_attendance_enabled' => $request->bonus_attendance_enabled ?? false,
                 'bonus_attendance_days' => $request->bonus_attendance_days,
-                'bonus_category_payout_day' => $request->bonus_category_payout_day
+                'bonus_category_payout_day' => $request->bonus_category_payout_day,
+                'tickets_enabled' => $request->tickets_enabled ?? true
             ]);
 
             return response()->json([
@@ -237,7 +238,8 @@ class BranchController extends Controller
             'birthday_amount' => 'nullable|numeric',
             'bonus_attendance_enabled' => 'nullable',
             'bonus_attendance_days' => 'nullable',
-            'bonus_category_payout_day' => 'nullable'
+            'bonus_category_payout_day' => 'nullable',
+            'tickets_enabled' => 'nullable'
         ]);
 
         if ($validator->fails()) {
@@ -293,7 +295,8 @@ class BranchController extends Controller
             'birthday_amount',
             'bonus_attendance_enabled',
             'bonus_attendance_days',
-            'bonus_category_payout_day'
+            'bonus_category_payout_day',
+            'tickets_enabled'
         ]);
 
         // Detectar cambios
@@ -419,6 +422,25 @@ class BranchController extends Controller
                     ];
                 }),
             ]
+        ]);
+    }
+
+    public function toggleTicketsEnabled(Request $request)
+    {
+        $branch = Branch::find($request->id);
+
+        if (!$branch) {
+            return response()->json(['message' => 'Sucursal no encontrada', 'error' => true], 404);
+        }
+
+        $branch->update([
+            'tickets_enabled' => $request->tickets_enabled
+        ]);
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Tickets ' . ($request->tickets_enabled ? 'habilitados' : 'deshabilitados') . ' exitosamente',
+            'tickets_enabled' => $branch->tickets_enabled
         ]);
     }
 }

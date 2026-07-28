@@ -20,6 +20,7 @@ export default function ModalEditBranch({ data, statuses }) {
   const [attendanceEnabled, setAttendanceEnabled] = useState(false);
   const [attendanceDays, setAttendanceDays] = useState([]);
   const [categoryPayoutDay, setCategoryPayoutDay] = useState(null);
+  const [ticketsEnabled, setTicketsEnabled] = useState(true);
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
 
@@ -54,6 +55,7 @@ export default function ModalEditBranch({ data, statuses }) {
       setAttendanceEnabled(data.bonus_attendance_enabled || false);
       setAttendanceDays(parseSchedules(data.bonus_attendance_days) || []);
       setCategoryPayoutDay(data.bonus_category_payout_day || null);
+      setTicketsEnabled(data.tickets_enabled !== false);
     }
   }, [data, showModal]);
 
@@ -84,6 +86,7 @@ export default function ModalEditBranch({ data, statuses }) {
         bonus_attendance_enabled: attendanceEnabled,
         bonus_attendance_days: JSON.stringify(attendanceDays || []),
         bonus_category_payout_day: categoryPayoutDay,
+        tickets_enabled: ticketsEnabled,
       });
 
       if (response.success) {
@@ -423,10 +426,32 @@ export default function ModalEditBranch({ data, statuses }) {
                 </Form.Item>
 
                 <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                  <p><strong>Nota:</strong> El viernes siempre se da bono diario normal. El día de cobro verifica si asistió todos los días configurados + viernes usando fingerprint logs.</p>
+                  <p>
+                    <strong>Nota:</strong> El viernes siempre se da bono diario normal. El día de
+                    cobro verifica si asistió todos los días configurados + viernes usando
+                    fingerprint logs.
+                  </p>
                 </div>
               </>
             )}
+          </Card>
+
+          <Divider orientation="left">Configuracion de Tickets</Divider>
+          <Card size="small">
+            <Form.Item label="Habilitar tickets de bonos">
+              <Checkbox
+                checked={ticketsEnabled}
+                onChange={(e) => setTicketsEnabled(e.target.checked)}
+              >
+                Habilitar generacion de tickets
+              </Checkbox>
+            </Form.Item>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+              <p>
+                <strong>Nota:</strong> Si los tickets estan desactivados, al marcar la huella solo
+                se registrara la asistencia sin generar tickets de bonos.
+              </p>
+            </div>
           </Card>
 
           <Form.Item>

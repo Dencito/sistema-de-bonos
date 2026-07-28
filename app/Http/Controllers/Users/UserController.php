@@ -829,12 +829,37 @@ class UserController extends Controller
         $bonusesAvailable = [];
         $tickets = [];
 
+        $ticketsEnabled = $branch->tickets_enabled ?? true;
+
         $now = now();
         
         DB::beginTransaction();
         
         try {
-        
+
+        // Si los tickets estan desactivados para esta sucursal, solo marcar asistencia
+        if (!$ticketsEnabled) {
+            Log::info('Tickets desactivados para esta sucursal, solo marcando asistencia', [
+                'user_id' => $user->id,
+                'branch_id' => $branch->id,
+            ]);
+
+            $fingerprintResult = $this->markFingerprint(new Request([
+                'user_id' => $user->id,
+                'branch_id' => $branch->id,
+            ]), true);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Asistencia registrada. Los tickets no estan habilitados para esta sucursal.',
+                'data' => [
+                    'tickets' => [],
+                    'attendance_marked' => true,
+                ],
+            ]);
+        }
+
         $bonusesAvailableAdditionals = $user->bonuses->filter(function($bonus) use ($now) {
             // Check if bonus is active
             if (!$bonus->active) {

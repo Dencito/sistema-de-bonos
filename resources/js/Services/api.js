@@ -43,6 +43,8 @@ export const branchService = {
   update: (id, values) => handleResponse(axios.put(`/branches/${id}`, values)),
   delete: (id) => handleResponse(axios.delete(`/branches/${id}`)),
   requestMore: (values) => handleResponse(axios.post('/branches/request_more_branches', values)),
+  toggleTicketsEnabled: (id, ticketsEnabled) =>
+    handleResponse(axios.put('/branches/toggle-tickets', { id, tickets_enabled: ticketsEnabled })),
 };
 
 export const categoryBonusService = {

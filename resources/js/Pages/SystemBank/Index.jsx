@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
 import {
   Card,
   Input,
@@ -28,11 +29,16 @@ import {
   SwapOutlined,
   EditOutlined,
   UploadOutlined,
+  ShopOutlined,
+  BankOutlined,
 } from '@ant-design/icons';
 import { Switch } from 'antd';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
+
+const BRANCH_STORAGE_KEY = 'systembank:branch_id';
 
 export default function SystemBank({
   auth,
@@ -40,8 +46,51 @@ export default function SystemBank({
   previousBalance,
   availableUsers = [],
   branch,
+  branches = [],
+  canSelectBranch = false,
+  error: serverError = null,
   tickets: initialTickets = [],
 }) {
+  // Los roles superiores no tienen sucursal asignada: eligen sobre cual operar y
+  // ese id viaja en todas las peticiones.
+  const [branchId, setBranchId] = useState(branch?.id ?? null);
+
+  // Cada request lleva la sucursal como query param, asi sirve igual para
+  // GET, POST multipart, PUT y DELETE.
+  const withBranch = (config = {}) => ({
+    ...config,
+    params: { ...(config.params || {}), ...(branchId ? { branch_id: branchId } : {}) },
+  });
+
+  const api = {
+    get: (url, config) => axios.get(url, withBranch(config)),
+    post: (url, data, config) => axios.post(url, data, withBranch(config)),
+    put: (url, data, config) => axios.put(url, data, withBranch(config)),
+    delete: (url, config) => axios.delete(url, withBranch(config)),
+  };
+
+  const handleBranchChange = (value) => {
+    setBranchId(value);
+    if (value) {
+      localStorage.setItem(BRANCH_STORAGE_KEY, String(value));
+    } else {
+      localStorage.removeItem(BRANCH_STORAGE_KEY);
+    }
+    router.get('/cash-management', value ? { branch_id: value } : {}, {
+      preserveState: false,
+    });
+  };
+
+  // Al entrar sin sucursal en la URL, recupera la ultima elegida
+  useEffect(() => {
+    if (!canSelectBranch || branchId) return;
+
+    const stored = localStorage.getItem(BRANCH_STORAGE_KEY);
+    if (stored && branches.some((b) => String(b.id) === stored)) {
+      router.get('/cash-management', { branch_id: stored }, { preserveState: false });
+    }
+  }, []);
+
   const [shift, setShift] = useState(activeShift);
   const [prevBalance, setPrevBalance] = useState(previousBalance || 0);
   const [initialBalance, setInitialBalance] = useState('');
@@ -133,7 +182,7 @@ export default function SystemBank({
 
   const fetchShiftStatus = async () => {
     try {
-      const response = await axios.get('/cash-management/shift-status');
+      const response = await api.get('/cash-management/shift-status');
       if (response.data.success) {
         setShift(response.data.data.activeShift);
         setPrevBalance(response.data.data.previousBalance);
@@ -142,7 +191,7 @@ export default function SystemBank({
         setTransactions(response.data.data.activeShift?.transactions || []);
       }
       // Cargar transacciones y tickets del turno activo
-      const txResponse = await axios.get('/cash-management/transactions');
+      const txResponse = await api.get('/cash-management/transactions');
       if (txResponse.data.success) {
         setTransactions(txResponse.data.data.transactions || []);
         setTickets(txResponse.data.data.tickets || []);
@@ -229,7 +278,7 @@ export default function SystemBank({
 
     setLoading(true);
     try {
-      const response = await axios.post('/cash-management/shift/start', {
+      const response = await api.post('/cash-management/shift/start', {
         initial_balance: initialBalanceToSend,
         opening_total: openingSimpleMode
           ? initialBalanceMode === 'total'
@@ -282,7 +331,7 @@ export default function SystemBank({
     }
     setLoading(true);
     try {
-      const response = await axios.post('/cash-management/shift/end', {
+      const response = await api.post('/cash-management/shift/end', {
         simple_mode: closingSimpleMode,
         closing_total: closingSimpleMode ? closingSimpleTotal : undefined,
         closing_20000: closingSimpleMode ? 0 : closing20000,
@@ -356,7 +405,7 @@ export default function SystemBank({
       if (expenseImage) formData.append('image', expenseImage);
       if (adminUserId) formData.append('admin_user_id', adminUserId);
 
-      const response = await axios.post('/cash-management/transaction', formData, {
+      const response = await api.post('/cash-management/transaction', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -397,7 +446,7 @@ export default function SystemBank({
 
     setLoading(true);
     try {
-      const response = await axios.post('/cash-management/admin/validate-credentials', {
+      const response = await api.post('/cash-management/admin/validate-credentials', {
         username: authUsername,
         password: authPassword,
       });
@@ -421,7 +470,7 @@ export default function SystemBank({
 
     setLoading(true);
     try {
-      const response = await axios.post('/cash-management/pasillera', {
+      const response = await api.post('/cash-management/pasillera', {
         user_id: pasilleraUserId,
         initial_balance: pasilleraInitialBalance,
       });
@@ -459,7 +508,7 @@ export default function SystemBank({
         }
 
         try {
-          const response = await axios.put(`/cash-management/pasillera/${pasilleraId}/reset`, {
+          const response = await api.put(`/cash-management/pasillera/${pasilleraId}/reset`, {
             new_balance: newBalance,
           });
 
@@ -477,7 +526,7 @@ export default function SystemBank({
   const handleDeletePasillera = async (pasilleraId) => {
     setLoading(true);
     try {
-      const response = await axios.delete(`/cash-management/pasillera/${pasilleraId}`);
+      const response = await api.delete(`/cash-management/pasillera/${pasilleraId}`);
 
       if (response.data.success) {
         message.success('Pasillera eliminada correctamente');
@@ -498,7 +547,7 @@ export default function SystemBank({
 
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `/cash-management/pasillera/${addBalancePasilleraId}/add-balance`,
         { amount: Number(addBalanceAmount) },
       );
@@ -525,11 +574,13 @@ export default function SystemBank({
     setAddBalanceModalVisible(true);
   };
 
+  // Mismo formato que el historial de cajas y la app de pasillera
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: 'ARS',
-    }).format(amount || 0);
+      currency: 'CLP',
+      maximumFractionDigits: 0,
+    }).format(Number(amount) || 0);
   };
 
   // Inactivity timer - COMENTADO POR AHORA
@@ -573,8 +624,6 @@ export default function SystemBank({
   }, [inactivityModalVisible]);
   */
 
-  console.log(transactions);
-
   const handleUnlockSession = async () => {
     if (!unlockPassword) {
       message.error('Ingrese su contraseña');
@@ -583,7 +632,7 @@ export default function SystemBank({
 
     setLoading(true);
     try {
-      const response = await axios.post('/cash-management/admin/validate-current-password', {
+      const response = await api.post('/cash-management/admin/validate-current-password', {
         password: unlockPassword,
       });
 
@@ -923,7 +972,7 @@ export default function SystemBank({
     }
     try {
       setLoading(true);
-      const res = await axios.put(`/cash-management/transaction/${editingTx.id}`, {
+      const res = await api.put(`/cash-management/transaction/${editingTx.id}`, {
         amount: editAmount,
         client: editClient,
         machine: editMachine,
@@ -947,7 +996,7 @@ export default function SystemBank({
   const handleDeleteTransaction = async (id) => {
     try {
       setLoading(true);
-      const res = await axios.delete(`/cash-management/transaction/${id}`);
+      const res = await api.delete(`/cash-management/transaction/${id}`);
       if (res.data.success) {
         message.success('Transacción eliminada');
         fetchShiftStatus();
@@ -961,37 +1010,110 @@ export default function SystemBank({
     }
   };
 
+  const branchSelector = (
+    <Select
+      style={{ minWidth: 240 }}
+      placeholder="Seleccionar sucursal"
+      value={branchId}
+      onChange={handleBranchChange}
+      showSearch
+      optionFilterProp="children"
+      size="large"
+    >
+      {branches.map((b) => (
+        <Option key={b.id} value={b.id}>
+          {b.name}
+        </Option>
+      ))}
+    </Select>
+  );
+
+  // Un rol superior todavía no eligió sucursal: no hay nada que mostrar
+  if (canSelectBranch && !branchId) {
+    return (
+      <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
+        <Head title="Sistema de Caja" />
+
+        <div className="p-4 mx-auto max-w-[1600px] sm:p-6">
+          <PageHeader title="Sistema de Gestión de Caja" icon={BankOutlined} />
+          <Card>
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+              <ShopOutlined style={{ fontSize: 48, color: '#94a3b8' }} />
+              <div>
+                <Title level={4} style={{ margin: 0 }}>
+                  Elegí una sucursal
+                </Title>
+                <Text type="secondary">
+                  Tu rol no tiene sucursal asignada. Seleccioná sobre cuál querés operar.
+                </Text>
+              </div>
+              {branchSelector}
+            </div>
+          </Card>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  if (serverError) {
+    return (
+      <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
+        <Head title="Sistema de Caja" />
+        <div className="p-4 mx-auto max-w-[1600px] sm:p-6">
+          <PageHeader title="Sistema de Gestión de Caja" icon={BankOutlined} />
+          <Alert type="warning" showIcon message={serverError} />
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  // Un superior mirando el turno que abrió otra persona
+  const shiftOwner = shift?.user;
+  const isForeignShift = shiftOwner && shiftOwner.id !== auth.user?.id;
+
   return (
     <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
       <Head title="Sistema de Caja" />
 
-      <div className="container p-4 mx-auto space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <Title level={2} style={{ margin: 0 }}>
-              Sistema de Gestión de Caja
-            </Title>
-            <Button
-              icon={<ReloadOutlined spin={refreshing} />}
-              onClick={handleRefresh}
-              loading={refreshing}
-              title="Actualizar toda la página"
-            >
-              Actualizar
-            </Button>
-          </div>
-          {branch?.name && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                Sucursal:
-              </Text>
-              <Text strong style={{ fontSize: 14, color: '#1d4ed8' }}>
-                {branch.name}
-              </Text>
-            </div>
-          )}
-        </div>
+      <div className="p-4 mx-auto space-y-4 max-w-[1600px] sm:p-6">
+        <PageHeader
+          title="Sistema de Gestión de Caja"
+          icon={BankOutlined}
+          subtitle={
+            shift?.is_active
+              ? `Turno abierto${shift.started_at ? ` · ${new Date(shift.started_at).toLocaleString('es-CL')}` : ''}`
+              : 'Sin turno abierto'
+          }
+          actions={
+            <>
+              {canSelectBranch
+                ? branchSelector
+                : branch?.name && (
+                    <Tag color="blue" style={{ padding: '6px 12px', fontSize: 13, margin: 0 }}>
+                      {branch.name}
+                    </Tag>
+                  )}
+              <Button
+                icon={<ReloadOutlined spin={refreshing} />}
+                onClick={handleRefresh}
+                loading={refreshing}
+                size="large"
+                title="Actualizar toda la página"
+              >
+                Actualizar
+              </Button>
+            </>
+          }
+        />
+
+        {isForeignShift && (
+          <Alert
+            type="info"
+            showIcon
+            message={`Estás operando sobre el turno de ${[shiftOwner.first_name, shiftOwner.first_last_name].filter(Boolean).join(' ')}`}
+            description="Cada movimiento que registres queda a tu nombre."
+          />
+        )}
 
         {/* Control de Caja */}
         <Card title="Control de Caja" extra={<RefreshBtn tooltip="Actualizar saldos de caja" />}>
@@ -1156,38 +1278,58 @@ export default function SystemBank({
                         caja: shift?.total_withdrawal_caja,
                         pasillera: shift?.total_withdrawal_pasillera,
                       },
-                    ].map((item, idx) => (
-                      <Col xs={12} md={8} key={idx}>
-                        <div style={{ marginBottom: 4 }}>
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {item.title}
-                          </Text>
-                        </div>
-                        <Statistic
-                          title=""
-                          value={item.total || 0}
-                          precision={2}
-                          prefix="$"
-                          valueStyle={{ fontSize: 18, fontWeight: 600 }}
-                        />
-                        <div style={{ fontSize: 11, color: '#888', marginTop: -4 }}>
-                          Caja: $
-                          {(item.caja || 0).toLocaleString('es-CL', { minimumFractionDigits: 2 })} |
-                          Pasillera: $
-                          {(item.pasillera || 0).toLocaleString('es-CL', {
-                            minimumFractionDigits: 2,
-                          })}
-                        </div>
-                      </Col>
-                    ))}
-                    <Col xs={12} md={8}>
-                      <Statistic
-                        title="Tickets"
-                        value={totalTickets || 0}
-                        precision={2}
-                        prefix="$"
-                        valueStyle={{ color: '#52c41a' }}
-                      />
+                    ].map((item, idx) => {
+                      const total = Number(item.total) || 0;
+                      const caja = Number(item.caja) || 0;
+                      const pasillera = Number(item.pasillera) || 0;
+                      const empty = total === 0;
+
+                      return (
+                        <Col xs={12} sm={8} xl={6} key={idx}>
+                          <div
+                            className={`h-full px-3 py-2.5 rounded-lg border ${
+                              empty ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-300'
+                            }`}
+                          >
+                            <p className="text-xs font-medium truncate text-slate-500">
+                              {item.title}
+                            </p>
+                            <p
+                              className={`mt-0.5 text-lg font-bold tabular-nums ${
+                                empty ? 'text-slate-400' : 'text-slate-900'
+                              }`}
+                            >
+                              {formatCurrency(total)}
+                            </p>
+                            <div className="grid grid-cols-2 gap-1 pt-2 mt-2 border-t border-slate-200">
+                              <div className="min-w-0">
+                                <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                  Caja
+                                </p>
+                                <p className="text-xs font-semibold truncate text-slate-700 tabular-nums">
+                                  {formatCurrency(caja)}
+                                </p>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                  Pasillera
+                                </p>
+                                <p className="text-xs font-semibold truncate text-slate-700 tabular-nums">
+                                  {formatCurrency(pasillera)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </Col>
+                      );
+                    })}
+                    <Col xs={12} sm={8} xl={6}>
+                      <div className="h-full px-3 py-2.5 rounded-lg border bg-emerald-50 border-emerald-200">
+                        <p className="text-xs font-medium text-emerald-700">Tickets</p>
+                        <p className="mt-0.5 text-lg font-bold text-emerald-700 tabular-nums">
+                          {formatCurrency(Number(totalTickets) || 0)}
+                        </p>
+                      </div>
                     </Col>
                   </Row>
                 </Card>

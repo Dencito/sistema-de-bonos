@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\CashManagement;
 
 use App\Http\Controllers\Controller;
+use App\Constants\RoleId;
 use App\Models\CashShift;
 use App\Models\Branch;
 use Illuminate\Http\Request;
@@ -14,18 +15,17 @@ class CashShiftHistoryController extends Controller
 {
     /**
      * Display shift history page.
-     * - role_id 1: sees all shifts, can filter by branch
-     * - other roles: only shifts from their own branch
+     * - Roles superiores (dueño, super-admin, admin): ven todas las sucursales y filtran.
+     * - El resto: solo los turnos de su propia sucursal.
      */
     public function index(Request $request)
     {
         $user = Auth::user();
+        $canSelectBranch = RoleId::canSelectBranch($user->role_id);
 
-        // Branches available for filter dropdown
-        if ($user->role_id == 1) {
+        if ($canSelectBranch) {
             $branches = Branch::select('id', 'name')->orderBy('name')->get();
         } else {
-            // Others only see their branch
             $branches = $user->branch
                 ? collect([['id' => $user->branch->id, 'name' => $user->branch->name]])
                 : collect([]);
@@ -35,6 +35,7 @@ class CashShiftHistoryController extends Controller
             'branches' => $branches,
             'userRole' => $user->role_id,
             'userBranchId' => $user->branch_id,
+            'canSelectBranch' => $canSelectBranch,
         ]);
     }
 
@@ -58,8 +59,8 @@ class CashShiftHistoryController extends Controller
             ->withCount('pasilleras');
 
         // Role-based branch filter
-        if ($user->role_id != 1) {
-            // Non-role-1 users only see their branch
+        if (!RoleId::canSelectBranch($user->role_id)) {
+            // El resto solo ve su sucursal
             if (!$user->branch_id) {
                 return response()->json([
                     'success' => true,
@@ -73,7 +74,7 @@ class CashShiftHistoryController extends Controller
             }
             $query->where('branch_id', $user->branch_id);
         } else {
-            // Role 1 can filter by branch
+            // Los roles superiores pueden filtrar por sucursal
             if ($request->filled('branch_id')) {
                 $query->where('branch_id', $request->branch_id);
             }
@@ -128,8 +129,8 @@ class CashShiftHistoryController extends Controller
             return response()->json(['success' => false, 'message' => 'Turno no encontrado'], 404);
         }
 
-        // Permission check: role != 1 can only see own branch
-        if ($user->role_id != 1 && $shift->branch_id != $user->branch_id) {
+        // Permission check: quien no puede elegir sucursal solo ve la suya
+        if (!RoleId::canSelectBranch($user->role_id) && $shift->branch_id != $user->branch_id) {
             Log::warning('Unauthorized shift access attempt', [
                 'user_id' => $user->id,
                 'shift_id' => $shiftId,

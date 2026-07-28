@@ -63,6 +63,15 @@ export function AppSidebar({ role, roles, user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
+  // Marca activo también las subrutas, p. ej. /users/3 dentro de /users
+  const isActive = (link) => (link === '/' ? path === '/' : path.startsWith(link));
+
+  const initials = (user?.username || '?')
+    .split(/[\s._-]+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
   // Menú de navegación agrupado por categorías
   const menuGroups = [
     {
@@ -175,7 +184,7 @@ export function AppSidebar({ role, roles, user }) {
           icon: LayoutGrid,
           label: 'Historial Cajas',
           link: '/cash-shift-history',
-          autorized: allowedRoles.systemBank.includes(role) || role === 1,
+          autorized: allowedRoles.systemBank.includes(role),
         },
       ],
     },
@@ -183,120 +192,122 @@ export function AppSidebar({ role, roles, user }) {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white">
-        <div className="px-4 py-4">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Empresa</p>
-              <p className="text-sm font-bold text-gray-900 uppercase">{getSubdomain()}</p>
-            </div>
+      <SidebarHeader className="border-b border-slate-200 bg-white">
+        <Link href="/" className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-slate-50">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-900 shrink-0">
+            <Banknote className="w-5 h-5 text-white" />
           </div>
-          {user && (
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">Usuario</p>
-                  <p className="text-sm font-semibold text-gray-900">{user.username}</p>
-                </div>
-              </div>
-              <div className="pl-10">
-                <p className="text-xs text-gray-500">Rol: <span className="font-semibold text-gray-900">{roleDisplayNames[role]}</span></p>
-              </div>
-            </div>
-          )}
-        </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium tracking-wide uppercase text-slate-400">
+              Empresa
+            </p>
+            <p className="text-sm font-bold uppercase truncate text-slate-900">{getSubdomain()}</p>
+          </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
-        {menuGroups.map((group, groupIndex) => (
-          <SidebarGroup key={groupIndex}>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <div className="px-4 py-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    {group.title}
-                  </p>
-                </div>
-                {group.items.map(
-                  (item) =>
-                    item.autorized && (
-                      <SidebarMenuItem key={item.key}>
-                        {item.link !== '/users' ? (
-                          <SidebarMenuItem key={item.label}>
-                            <SidebarMenuButton
-                              asChild
-                              className={`${path === item.link ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-                            >
-                              <Link href={item.link}>
-                                <item.icon className="w-4 h-4" />
-                                <span>{item.label}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ) : (
-                          <div className="w-full">
-                            <SidebarMenuButton
-                              onClick={() => setIsOpen(!isOpen)}
-                              className={`${path === item.link ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-                            >
-                              <item.icon className="w-4 h-4" />
-                              <span>{item.label}</span>
-                              {isOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            </SidebarMenuButton>
+        {menuGroups.map((group, groupIndex) => {
+          const visibleItems = group.items.filter((item) => item.autorized);
+          if (!visibleItems.length) return null;
 
-                            <SidebarMenuSub
-                              className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                                }`}
-                            >
-                              {item.children &&
-                                item.children.map((subItem) => (
-                                  <SidebarMenuSubItem key={subItem.name}>
-                                    <SidebarMenuButton
-                                      asChild
-                                      className="pl-8 text-gray-600 hover:bg-gray-50"
-                                    >
-                                      <Link href={`${item.link}?role=${subItem.name}`}>
-                                        <span className="text-sm">{subItem.displayName}</span>
-                                      </Link>
-                                    </SidebarMenuButton>
-                                  </SidebarMenuSubItem>
-                                ))}
-                            </SidebarMenuSub>
-                          </div>
+          return (
+            <SidebarGroup key={groupIndex}>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <div className="px-3 pt-3 pb-1">
+                    <p className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                      {group.title}
+                    </p>
+                  </div>
+                  {visibleItems.map((item) => {
+                    const active = isActive(item.link);
+                    const itemClass = active
+                      ? 'bg-slate-900 text-white font-medium hover:bg-slate-900 hover:text-white'
+                      : 'text-slate-700 hover:bg-slate-100';
+
+                    if (item.link !== '/users') {
+                      return (
+                        <SidebarMenuItem key={item.key}>
+                          <SidebarMenuButton asChild tooltip={item.label} className={itemClass}>
+                            <Link href={item.link}>
+                              <item.icon className="w-4 h-4 shrink-0" />
+                              <span>{item.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    }
+
+                    return (
+                      <SidebarMenuItem key={item.key}>
+                        <SidebarMenuButton
+                          onClick={() => setIsOpen(!isOpen)}
+                          tooltip={item.label}
+                          className={itemClass}
+                        >
+                          <item.icon className="w-4 h-4 shrink-0" />
+                          <span className="flex-1 text-left">{item.label}</span>
+                          {isOpen ? (
+                            <ChevronDown className="w-4 h-4 shrink-0" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 shrink-0" />
+                          )}
+                        </SidebarMenuButton>
+
+                        {isOpen && item.children?.length > 0 && (
+                          <SidebarMenuSub>
+                            {item.children.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.name}>
+                                <SidebarMenuButton
+                                  asChild
+                                  className="text-slate-600 hover:bg-slate-100"
+                                >
+                                  <Link href={`${item.link}?role=${subItem.name}`}>
+                                    <span className="text-sm">{subItem.displayName}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
                         )}
                       </SidebarMenuItem>
-                    ),
-                )}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-200 bg-gray-50">
+      <SidebarFooter className="border-t border-slate-200 bg-slate-50">
+        {user && (
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex items-center justify-center w-9 h-9 text-xs font-bold text-white rounded-full bg-slate-700 shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate text-slate-900">{user.username}</p>
+              <p className="text-xs truncate text-slate-500">{roleDisplayNames[role] || role}</p>
+            </div>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => setShowPasswordModal(true)}
-              className="text-gray-700 hover:bg-gray-100"
+              tooltip="Cambiar Contraseña"
+              className="text-slate-700 hover:bg-slate-200"
             >
-              <Lock className="w-4 h-4" />
+              <Lock className="w-4 h-4 shrink-0" />
               <span>Cambiar Contraseña</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="text-red-600 hover:bg-red-50"
-            >
+            <SidebarMenuButton asChild tooltip="Salir" className="text-red-600 hover:bg-red-50">
               <Link as="button" href={route('logout')} method="post">
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4 shrink-0" />
                 <span>Salir</span>
               </Link>
             </SidebarMenuButton>
@@ -304,10 +315,7 @@ export function AppSidebar({ role, roles, user }) {
         </SidebarMenu>
       </SidebarFooter>
 
-      <ChangePasswordModal
-        open={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-      />
+      <ChangePasswordModal open={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
     </Sidebar>
   );
 }

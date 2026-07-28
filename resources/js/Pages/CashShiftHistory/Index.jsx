@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
 import {
   Card,
   Table,
@@ -21,14 +22,27 @@ import {
   Divider,
   Input,
 } from 'antd';
-import { ReloadOutlined, EyeOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
+import {
+  ReloadOutlined,
+  EyeOutlined,
+  SearchOutlined,
+  ClearOutlined,
+  HistoryOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
-export default function CashShiftHistoryIndex({ auth, branches = [], userRole, userBranchId }) {
-  const isAdmin = userRole === 1;
+export default function CashShiftHistoryIndex({
+  auth,
+  branches = [],
+  userRole,
+  userBranchId,
+  canSelectBranch = false,
+}) {
+  // Los roles superiores ven todas las sucursales y pueden filtrar
+  const isAdmin = canSelectBranch || userRole === 1;
 
   const [loading, setLoading] = useState(false);
   const [shifts, setShifts] = useState([]);
@@ -397,10 +411,16 @@ export default function CashShiftHistoryIndex({ auth, branches = [], userRole, u
     <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
       <Head title="Historial de Cajas" />
 
-      <div className="container p-4 mx-auto space-y-4">
-        <Title level={2} style={{ margin: 0 }}>
-          Historial de Turnos de Caja {isAdmin && <Tag color="red">ADMIN</Tag>}
-        </Title>
+      <div className="p-4 mx-auto space-y-4 max-w-[1600px] sm:p-6">
+        <PageHeader
+          title="Historial de Turnos de Caja"
+          icon={HistoryOutlined}
+          subtitle={
+            isAdmin
+              ? 'Todas las sucursales. Usá los filtros para acotar la búsqueda.'
+              : 'Turnos de tu sucursal'
+          }
+        />
 
         {/* Filters */}
         <Card title="Filtros">

@@ -8,19 +8,21 @@ export const roleDisplayNames = {
 };
 
 export const allowedRoles = {
-    companies: ['duenio'],
-    branches: ['duenio', 'super-admin', 'admin'],
-    roles: ['duenio', 'super-admin'],
-    status: ['duenio', 'super-admin'],
-    createBonusCategory: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
-    allowedDuringWorkHours: ['trabajador', 'supervisor'],
-    totems: ['duenio', 'super-admin', 'admin'],
-    tickets: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
-    fingerprintLogs: ['duenio', 'super-admin', 'admin', 'supervisor'],
-    shiftControl: ['trabajador'],
-    shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
-    createBonus: ['duenio', 'super-admin', 'admin', 'supervisor'],
-    systemBank: [/* 'duenio', 'super-admin', 'admin', */ 'supervisor', 'trabajador'],
+  companies: ['duenio'],
+  branches: ['duenio', 'super-admin', 'admin'],
+  roles: ['duenio', 'super-admin'],
+  status: ['duenio', 'super-admin'],
+  createBonusCategory: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+  allowedDuringWorkHours: ['trabajador', 'supervisor'],
+  totems: ['duenio', 'super-admin', 'admin'],
+  tickets: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+  fingerprintLogs: ['duenio', 'super-admin', 'admin', 'supervisor'],
+  shiftControl: ['trabajador'],
+  shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+  createBonus: ['duenio', 'super-admin', 'admin', 'supervisor'],
+  systemBank: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+  // Roles sin sucursal asignada: eligen una para operar
+  branchSelectors: ['duenio', 'super-admin', 'admin'],
 };
 
 export const roleNames = {

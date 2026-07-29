@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useForm, Head, router } from '@inertiajs/react';
-import { format } from 'date-fns';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ModalCreateUser from '@/Components/Users/ModalCreateUser';
 import ModalDeleteUser from '@/Components/Users/ModalDeleteUser';
@@ -18,7 +17,7 @@ import { SelectAssignCategories } from '@/Components/CategoriesBonus/SelectAssig
 import { SelectAssignBonuses } from '@/Components/Bonus/SelectAssignBonuses';
 import { allowedRoles, roleDisplayNames } from '@/Utils/constants';
 import { getBgStatus } from '@/Utils/getBgStatus';
-import { formatDateTime } from '@/Utils/date';
+import { formatDateTime, formatDateCL, formatDateLongCL } from '@/Utils/date';
 import { DownloadOutlined } from '@ant-design/icons';
 import { Button, message, Input, Select } from 'antd';
 import * as XLSX from 'xlsx';
@@ -96,12 +95,8 @@ export default function UserPage({
           Teléfono: `${user.prefix || ''} ${user.phone || ''}`.trim(),
           Estado: user.status?.name || '',
           Rol: roleDisplayNames[user.role?.name] || user.role?.name || '',
-          'Fecha de creación': user.created_at
-            ? new Date(user.created_at).toLocaleDateString('es-CL')
-            : '',
-          'Fecha de ingreso': user.entry_date
-            ? new Date(user.entry_date).toLocaleDateString('es-CL')
-            : '',
+          'Fecha de creación': user.created_at ? formatDateCL(user.created_at) : '',
+          'Fecha de ingreso': user.entry_date ? formatDateCL(user.entry_date) : '',
         };
 
         // Datos específicos según el rol
@@ -115,7 +110,7 @@ export default function UserPage({
             'Categoria de bonos': user.category_bonus?.name || '',
             'Monto Categoria': user.category_bonus?.base_amount || '',
             'Última marca': user.fingerprint_logs?.[0]?.created_at
-              ? format(new Date(user.fingerprint_logs[0].created_at), 'dd/MM/yyyy HH:mm')
+              ? formatDateTimeCL(user.fingerprint_logs[0].created_at)
               : '',
             'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
           };
@@ -126,7 +121,7 @@ export default function UserPage({
             RUT: user.rutNumbers && user.rutDv ? `${user.rutNumbers}-${user.rutDv}` : '',
             Sucursal: user.branch?.name || '',
             'Última marca': user.fingerprint_logs?.[0]?.created_at
-              ? format(new Date(user.fingerprint_logs[0].created_at), 'dd/MM/yyyy HH:mm')
+              ? formatDateTimeCL(user.fingerprint_logs[0].created_at)
               : '',
             'Tipo última marca': user.fingerprint_logs?.[0]?.type || '',
             'Huella registrada': user.has_fingerprint ? 'Sí' : 'No',
@@ -352,9 +347,7 @@ export default function UserPage({
       {
         title: 'Fecha de Ingreso',
         key: 'entry_date',
-        render: (_, user) => (
-          <span>{user.entry_date ? format(new Date(user.entry_date), 'dd/MM/yyyy') : '-'}</span>
-        ),
+        render: (_, user) => <span>{user.entry_date ? formatDateCL(user.entry_date) : '-'}</span>,
       },
       {
         title: 'Correo',
@@ -460,9 +453,7 @@ export default function UserPage({
       {
         title: 'Fecha de Ingreso',
         key: 'entry_date',
-        render: (_, user) => (
-          <span>{user.entry_date ? format(new Date(user.entry_date), 'dd/MM/yyyy') : '-'}</span>
-        ),
+        render: (_, user) => <span>{user.entry_date ? formatDateCL(user.entry_date) : '-'}</span>,
       },
       {
         title: 'Correo',
@@ -527,7 +518,7 @@ export default function UserPage({
         key: 'lastFingerprint',
         render: (_, user) => (
           <p className="p-1 rounded-lg">
-            {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
+            {formatDateTime(user?.fingerprint_logs?.[0]?.created_at)}
           </p>
         ),
       },
@@ -694,7 +685,7 @@ export default function UserPage({
         key: 'lastFingerprint',
         render: (_, user) => (
           <p className="p-1 rounded-lg">
-            {formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}
+            {formatDateTime(user?.fingerprint_logs?.[0]?.created_at)}
           </p>
         ),
       },
@@ -866,26 +857,12 @@ export default function UserPage({
                   <div className="space-y-1 text-sm">
                     <div className="flex items-center text-gray-600">
                       <span className="w-16 font-medium">Creado:</span>
-                      <span>
-                        {new Date(bonus.created_at).toLocaleDateString('es-CL', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
+                      <span>{formatDateLongCL(bonus.created_at)}</span>
                     </div>
                     {bonus.start_datetime ? (
                       <div className="flex items-center text-gray-600">
                         <span className="w-16 font-medium">Inicio:</span>
-                        <span>
-                          {new Date(bonus.start_datetime).toLocaleDateString('es-CL', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                        <span>{formatDateLongCL(bonus.start_datetime, { time: true })}</span>
                       </div>
                     ) : (
                       <div className="flex items-center text-gray-600">
@@ -896,15 +873,7 @@ export default function UserPage({
                     {bonus.end_datetime ? (
                       <div className="flex items-center text-gray-600">
                         <span className="w-16 font-medium">Fin:</span>
-                        <span>
-                          {new Date(bonus.end_datetime).toLocaleDateString('es-CL', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                        <span>{formatDateLongCL(bonus.end_datetime, { time: true })}</span>
                       </div>
                     ) : (
                       <div className="flex items-center text-gray-600">

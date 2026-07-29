@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Select } from 'antd';
+import { formatDateCL } from '@/Utils/date';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -95,7 +96,7 @@ export default function LineChart({ info }) {
         min: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
         max: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
         ticks: {
-          callback: (value) => new Date(value).toLocaleDateString(),
+          callback: (value) => formatDateCL(value),
         },
       },
     },

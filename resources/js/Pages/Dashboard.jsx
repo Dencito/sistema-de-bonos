@@ -7,7 +7,17 @@ import { companyService } from '@services/api';
 import { shiftService } from '@/Services/shiftService';
 import { Button } from '@/Components/ui/button';
 import { toast } from 'sonner';
-import { Clock, LogIn, LogOut, User, Building2, Ticket, DollarSign, TrendingUp } from 'lucide-react';
+import { formatDateTimeCL } from '@/Utils/date';
+import {
+  Clock,
+  LogIn,
+  LogOut,
+  User,
+  Building2,
+  Ticket,
+  DollarSign,
+  TrendingUp,
+} from 'lucide-react';
 
 export default function Dashboard({ auth }) {
   const [shiftStatus, setShiftStatus] = useState({
@@ -75,10 +85,7 @@ export default function Dashboard({ auth }) {
     getShiftStatus();
   }, []);
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-  };
+  const formatDateTime = (dateString) => formatDateTimeCL(dateString, { seconds: true });
 
   return (
     <AuthenticatedLayout
@@ -226,9 +233,7 @@ export default function Dashboard({ auth }) {
                         <Clock className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-yellow-800 mb-1">
-                          No hay turno activo
-                        </p>
+                        <p className="font-semibold text-yellow-800 mb-1">No hay turno activo</p>
                         <p className="text-sm text-yellow-700">
                           Inicie un nuevo turno para comenzar a registrar actividad.
                         </p>

@@ -9,6 +9,7 @@ import {
   WalletOutlined,
 } from '@ant-design/icons';
 import MobileButton from '@/Components/MobileButton';
+import { formatDateTimeCL } from '@/Utils/date';
 
 export default function SalesTotalPage({ auth, salesData, branches, userHasBranch }) {
   const [selectedBranch, setSelectedBranch] = useState('');
@@ -26,7 +27,7 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
       title: 'Fecha',
       dataIndex: 'date',
       key: 'date',
-      render: (date) => new Date(date).toLocaleString('es-CL'),
+      render: (date) => formatDateTimeCL(date, { seconds: true }),
     },
     {
       title: 'Usuario',

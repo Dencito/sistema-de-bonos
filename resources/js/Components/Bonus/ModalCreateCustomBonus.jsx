@@ -48,9 +48,7 @@ export default function ModalCreateCustomBonus() {
     {
       title: 'Última Marca',
       key: 'last_fingerprint',
-      render: (_, user) => (
-        <span>{formatDateTime(user?.fingerprint_logs?.[0]?.created_at, 'dd/MM/yyyy HH:mm')}</span>
-      ),
+      render: (_, user) => <span>{formatDateTime(user?.fingerprint_logs?.[0]?.created_at)}</span>,
     },
   ];
 
@@ -107,7 +105,12 @@ export default function ModalCreateCustomBonus() {
 
     try {
       setLoading(true);
-      const values = await form.validateFields(['amount', 'start_datetime', 'end_datetime', 'replicate_daily']);
+      const values = await form.validateFields([
+        'amount',
+        'start_datetime',
+        'end_datetime',
+        'replicate_daily',
+      ]);
 
       const startDateTime = values.start_datetime?.format('YYYY-MM-DD HH:mm:ss');
       const endDateTime = values.end_datetime?.format('YYYY-MM-DD HH:mm:ss');
@@ -147,8 +150,12 @@ export default function ModalCreateCustomBonus() {
       // Esperar a que todas las promesas se resuelvan
       const results = await Promise.allSettled(createPromises);
 
-      const hasSuccess = results.some((result) => result.status === 'fulfilled' && result.value.success);
-      const hasError = results.some((result) => result.status === 'rejected' || !result.value.success);
+      const hasSuccess = results.some(
+        (result) => result.status === 'fulfilled' && result.value.success,
+      );
+      const hasError = results.some(
+        (result) => result.status === 'rejected' || !result.value.success,
+      );
 
       // Mostrar alertas
       if (hasSuccess && !hasError) {

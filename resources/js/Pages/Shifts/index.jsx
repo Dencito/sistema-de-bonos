@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
+import { formatDateTimeCL } from '@/Utils/date';
 
 const columns = [
   {
@@ -39,21 +40,13 @@ const columns = [
     title: 'Hora de apertura',
     dataIndex: 'opening_time',
     key: 'opening_time',
-    render: (date) => {
-      if (!date) return 'N/A';
-      const dateObj = new Date(date);
-      return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-    },
+    render: (date) => (date ? formatDateTimeCL(date, { seconds: true }) : 'N/A'),
   },
   {
     title: 'Hora de cierre',
     dataIndex: 'closing_time',
     key: 'closing_time',
-    render: (date) => {
-      if (!date) return 'No cerrado';
-      const dateObj = new Date(date);
-      return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-    },
+    render: (date) => (date ? formatDateTimeCL(date, { seconds: true }) : 'No cerrado'),
   },
   {
     title: 'Estado',

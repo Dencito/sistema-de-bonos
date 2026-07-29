@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/react';
 import { CustomTable } from '@components-v2/CustomTable';
 import MobileButton from '@/Components/MobileButton';
 import { Select, Input, Button } from 'antd';
+import { formatDateTimeCL } from '@/Utils/date';
 
 const LazyModalCreateOrder = lazy(() => import('@/Components/Orders/ModalCreateOrder'));
 const LazyModalDeleteOrder = lazy(() => import('@/Components/Orders/ModalDeleteOrder'));
@@ -56,13 +57,7 @@ const columns = [
   {
     title: 'Fecha',
     key: 'created_at',
-    render: (_, order) => {
-      if (!order.created_at) return 'N/A';
-      return new Date(order.created_at).toLocaleString('es-CL', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      });
-    },
+    render: (_, order) => (order.created_at ? formatDateTimeCL(order.created_at) : 'N/A'),
   },
   {
     title: 'Acciones',

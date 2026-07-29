@@ -30,6 +30,7 @@ import {
   HistoryOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
+import { formatDateTimeCL } from '@/Utils/date';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -130,8 +131,7 @@ export default function CashShiftHistoryIndex({
       maximumFractionDigits: 0,
     }).format(amount || 0);
 
-  const formatDate = (date) =>
-    date ? new Date(date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+  const formatDate = (date) => (date ? formatDateTimeCL(date) : '-');
 
   const getUserName = (user) => {
     if (!user) return '-';

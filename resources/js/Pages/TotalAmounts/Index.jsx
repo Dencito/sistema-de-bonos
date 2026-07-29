@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@layouts/AuthenticatedLayout';
+import MobileButton from '@/Components/MobileButton';
 import { Table } from 'antd';
 
 import { parse, isAfter, isBefore, isValid } from 'date-fns';
@@ -80,8 +81,13 @@ export default function TotalAmountPage({ auth, bonuses, categoryBonus }) {
       header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Panel</h2>}
     >
       <Head title="Montos totales" />
-      <h1 className="text-3xl font-bold">Fecha y hora actual: {getCurrentDateTime()}</h1>
-      <div>
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
+        <MobileButton role={auth.role} roles={auth.roles} />
+        <h1 className="min-w-0 text-xl font-bold sm:text-2xl lg:text-3xl">
+          Fecha y hora actual: {getCurrentDateTime()}
+        </h1>
+      </header>
+      <div className="flex-1 p-4 overflow-auto">
         <h3 className="text-2xl font-bold text-green-500">Bonos Válidos</h3>
         <Table dataSource={validBonuses} rowKey="id">
           <Column title="Nombre" dataIndex="name" key="name" />

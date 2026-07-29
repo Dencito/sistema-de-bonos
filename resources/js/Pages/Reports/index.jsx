@@ -7,6 +7,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Download, Printer } from 'lucide-react';
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
+import { formatDateTimeCL } from '@/Utils/date';
 
 export default function Reports({ auth, branches, shifts, filters }) {
   const [reportType, setReportType] = useState(filters.type || 'all');
@@ -209,7 +210,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
           Jugador: `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
           Tipo: log.is_player ? 'Jugador' : 'Trabajador',
           Sucursal: log.totem?.branch?.name || 'N/A',
-          'Fecha/Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
+          'Fecha/Hora': formatDateTimeCL(log.created_at, { seconds: true }),
           'Tipo Ticket': log.ticket.type,
           Valor: Math.floor(log.ticket.total_amount),
         }));
@@ -222,7 +223,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
       const shiftData = reportData.logs.map((log) => ({
         Jugador: `${log.user.first_name || ''} ${log.user.second_name || ''} ${log.user.first_last_name || ''} ${log.user.second_last_name || ''}`,
         Tipo: log.is_player ? 'Jugador' : 'Trabajador',
-        'Fecha/Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
+        'Fecha/Hora': formatDateTimeCL(log.created_at, { seconds: true }),
         Ticket: log.ticket ? 'Sí' : 'No',
         'Tipo Ticket': log.ticket ? log.ticket.type : 'N/A',
         Valor: log.ticket ? Math.floor(log.ticket.total_amount) : 0,
@@ -274,7 +275,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
           'N/A',
         Tipo: log.is_worker ? 'Trabajador' : log.is_player ? 'Jugador' : 'N/A',
         Sucursal: log.totem?.branch?.name || 'N/A',
-        'Fecha/Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
+        'Fecha/Hora': formatDateTimeCL(log.created_at, { seconds: true }),
       }));
 
       // Crear hoja de registros
@@ -362,9 +363,9 @@ export default function Reports({ auth, branches, shifts, filters }) {
             {shifts.map((shift) => (
               <option key={shift.id} value={shift.id}>
                 Turno #{shift.id} - {shift.branch.name} -{' '}
-                {format(new Date(shift.opening_time), 'dd/MM/yyyy HH:mm:ss')} -{' '}
+                {formatDateTimeCL(shift.opening_time, { seconds: true })} -{' '}
                 {shift.closing_time
-                  ? format(new Date(shift.closing_time), 'dd/MM/yyyy HH:mm:ss')
+                  ? formatDateTimeCL(shift.closing_time, { seconds: true })
                   : 'En curso'}
               </option>
             ))}
@@ -511,9 +512,9 @@ export default function Reports({ auth, branches, shifts, filters }) {
             {shifts.map((shift) => (
               <option key={shift.id} value={shift.id}>
                 Turno #{shift.id} - {shift.branch.name} -{' '}
-                {format(new Date(shift.opening_time), 'dd/MM/yyyy HH:mm:ss')} -{' '}
+                {formatDateTimeCL(shift.opening_time, { seconds: true })} -{' '}
                 {shift.closing_time
-                  ? format(new Date(shift.closing_time), 'dd/MM/yyyy HH:mm:ss')
+                  ? formatDateTimeCL(shift.closing_time, { seconds: true })
                   : 'En curso'}
               </option>
             ))}
@@ -583,9 +584,9 @@ export default function Reports({ auth, branches, shifts, filters }) {
               {shifts.map((shift) => (
                 <option key={shift.id} value={shift.id}>
                   Turno #{shift.id} - {shift.branch.name} -{' '}
-                  {format(new Date(shift.opening_time), 'dd/MM/yyyy HH:mm:ss')} -{' '}
+                  {formatDateTimeCL(shift.opening_time, { seconds: true })} -{' '}
                   {shift.closing_time
-                    ? format(new Date(shift.closing_time), 'dd/MM/yyyy HH:mm:ss')
+                    ? formatDateTimeCL(shift.closing_time, { seconds: true })
                     : 'En curso'}
                 </option>
               ))}
@@ -643,9 +644,9 @@ export default function Reports({ auth, branches, shifts, filters }) {
             {shifts.map((shift) => (
               <option key={shift.id} value={shift.id}>
                 Turno #{shift.id} - {shift.branch.name} -{' '}
-                {format(new Date(shift.opening_time), 'dd/MM/yyyy HH:mm:ss')} -{' '}
+                {formatDateTimeCL(shift.opening_time, { seconds: true })} -{' '}
                 {shift.closing_time
-                  ? format(new Date(shift.closing_time), 'dd/MM/yyyy HH:mm:ss')
+                  ? formatDateTimeCL(shift.closing_time, { seconds: true })
                   : 'En curso'}
               </option>
             ))}
@@ -833,7 +834,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
                           {log.totem?.branch?.name || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}
+                          {formatDateTimeCL(log.created_at, { seconds: true })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-medium">{log.ticket.type}</span>
@@ -989,7 +990,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
                       {log.totem?.branch?.name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}
+                      {formatDateTimeCL(log.created_at, { seconds: true })}
                     </td>
                   </tr>
                 ))}
@@ -1136,7 +1137,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
                       {log.totem?.branch?.name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}
+                      {formatDateTimeCL(log.created_at, { seconds: true })}
                     </td>
                   </tr>
                 ))}
@@ -1188,14 +1189,14 @@ export default function Reports({ auth, branches, shifts, filters }) {
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Fecha/Hora apertura</p>
                 <p className="text-lg font-medium">
-                  {format(new Date(shift?.opening_time), 'dd/MM/yyyy HH:mm:ss')}
+                  {formatDateTimeCL(shift?.opening_time, { seconds: true })}
                 </p>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Fecha/Hora cierre</p>
                 <p className="text-lg font-medium">
                   {shift?.closing_time
-                    ? format(new Date(shift?.closing_time), 'dd/MM/yyyy HH:mm:ss')
+                    ? formatDateTimeCL(shift?.closing_time, { seconds: true })
                     : 'Turno activo'}
                 </p>
               </div>
@@ -1290,7 +1291,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}
+                      {formatDateTimeCL(log.created_at, { seconds: true })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {log.ticket ? (

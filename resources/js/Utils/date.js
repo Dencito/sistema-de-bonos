@@ -59,82 +59,77 @@ export const formatDateCL = (date) => {
 /**
  * Format a date in Chilean time as "HH:mm".
  * @param {Date | string} date - The date to format.
+ * @param {{ seconds?: boolean }} [options] - Include seconds in the output.
  * @returns {string} The formatted time string, or "—" if the date is invalid.
  */
-export const formatTimeCL = (date) => {
+export const formatTimeCL = (date, { seconds = false } = {}) => {
   const d = parseDate(date);
   if (!d) return '—';
 
-  return chileFormatter({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+  return chileFormatter({
+    hour: '2-digit',
+    minute: '2-digit',
+    ...(seconds ? { second: '2-digit' } : {}),
+    hourCycle: 'h23',
+  }).format(d);
 };
 
 /**
- * Format a date as "DD-MM-YYYY"
+ * Format a date in Chilean time as "28 jul 2026" or "28 jul 2026 19:42".
+ * Para listados donde el mes escrito se lee mejor que el numerico.
+ * @param {Date | string} date - The date to format.
+ * @param {{ time?: boolean }} [options] - Append the time.
+ * @returns {string} The formatted date string, or "—" if the date is invalid.
+ */
+export const formatDateLongCL = (date, { time = false } = {}) => {
+  const d = parseDate(date);
+  if (!d) return '—';
+
+  return chileFormatter({
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    ...(time ? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } : {}),
+  })
+    .format(d)
+    .replace(',', '');
+};
+
+/**
+ * Estos cuatro helpers son los originales del proyecto. Armaban la fecha a
+ * mano con getDate/getHours, o sea en la zona del navegador, y cada uno con un
+ * formato distinto. Ahora delegan en los helpers *CL para que toda la app
+ * muestre lo mismo: DD/MM/YYYY en horario de Chile.
+ */
+
+/**
+ * Format a date as "DD/MM/YYYY" in Chilean time.
  * @param {Date | string} date - The date to format.
  * @returns {string} The formatted date string.
  */
-
-export const formatDate = (date) => {
-  const d = new Date(date);
-  const day = String(d.getDate());
-  const month = String(d.getMonth() + 1);
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`;
-};
+export const formatDate = (date) => formatDateCL(date);
 
 /**
- * Format a date as "DD-MM-YYYY HH:mm:ss"
+ * Format a date as "DD/MM/YYYY HH:mm" in Chilean time.
  * @param {Date | string} date - The date to format.
  * @returns {string} The formatted date string with time.
  */
-export const formatDateTime = (date) => {
-  // Return a placeholder if date is undefined or null
-  if (!date) {
-    return 'N/A';
-  }
-
-  const d = new Date(date);
-
-  // Check if date is valid
-  if (isNaN(d.getTime())) {
-    return 'Invalid Date';
-  }
-
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const seconds = String(d.getSeconds()).padStart(2, '0');
-
-  // Format the date using the constructed values instead of relying on toString()
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
+export const formatDateTime = (date) => formatDateTimeCL(date);
 
 /**
- * Get the current date and time in "DD-MM-YYYY HH:mm:ss" format.
+ * Get the current date and time in "DD/MM/YYYY HH:mm:ss" format, Chilean time.
  * @returns {string} The current formatted date and time string.
  */
-export const getCurrentDateTime = () => {
-  return formatDateTime(new Date());
-};
+export const getCurrentDateTime = () => formatDateTimeCL(new Date(), { seconds: true });
 
 /**
- * Get the current date in "DD-MM-YYYY" format.
+ * Get the current date in "DD/MM/YYYY" format, Chilean time.
  * @returns {string} The current formatted date string.
  */
-export const getCurrentDate = () => {
-  return formatDate(new Date());
-};
+export const getCurrentDate = () => formatDateCL(new Date());
 
 /**
- * Get the current time in "HH:mm:ss" format.
+ * Get the current time in "HH:mm:ss" format, Chilean time.
  * @returns {string} The current formatted time string.
  */
-export const getCurrentTime = () => {
-  const d = new Date();
-  const hours = String(d.getHours());
-  const minutes = String(d.getMinutes());
-  const seconds = String(d.getSeconds());
-  return `${hours}:${minutes}:${seconds}`;
-};
+export const getCurrentTime = () => formatTimeCL(new Date(), { seconds: true });

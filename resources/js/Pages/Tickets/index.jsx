@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { formatDateTimeCL } from '@/Utils/date';
 
 const columns = [
   {
@@ -42,10 +43,7 @@ const columns = [
     title: 'Fecha de Creación',
     dataIndex: 'created_at',
     key: 'ticket_created',
-    render: (date) => {
-      const dateObj = new Date(date);
-      return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-    },
+    render: (date) => formatDateTimeCL(date, { seconds: true }),
   },
 ];
 
@@ -206,7 +204,7 @@ export default function TicketPage({ auth, tickets, users, branches, filters }) 
         Sucursal: ticket.branch?.name || 'N/A',
         Tipo: ticket.type,
         'Monto Total': Math.floor(ticket.total_amount),
-        'Fecha de Creación': format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm:ss'),
+        'Fecha de Creación': formatDateTimeCL(ticket.created_at, { seconds: true }),
       }));
 
       // Crear hoja de tickets

@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { formatDateTimeCL } from '@/Utils/date';
 
 const columns = [
   {
@@ -44,10 +45,7 @@ const columns = [
     title: 'Fecha y Hora',
     dataIndex: 'created_at',
     key: 'fingerprint_created',
-    render: (date) => {
-      const dateObj = new Date(date);
-      return `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-    },
+    render: (date) => formatDateTimeCL(date, { seconds: true }),
   },
 ];
 
@@ -179,7 +177,7 @@ export default function FingerprintLogPage({
         Tipo: log.type || 'N/A',
         Tótem: log.totem?.name || 'N/A',
         Sucursal: log?.branch?.name || 'N/A',
-        'Fecha y Hora': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss'),
+        'Fecha y Hora': formatDateTimeCL(log.created_at, { seconds: true }),
       }));
 
       // Crear hoja de registros

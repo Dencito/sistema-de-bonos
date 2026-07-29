@@ -18,6 +18,7 @@ import {
   ShoppingBasket,
   Settings,
   LayoutGrid,
+  UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
@@ -294,6 +295,18 @@ export function AppSidebar({ role, roles, user }) {
           </div>
         )}
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Mi Perfil"
+              className="text-slate-700 hover:bg-slate-200"
+            >
+              <Link href={route('profile.edit')}>
+                <UserRound className="w-4 h-4 shrink-0" />
+                <span>Mi Perfil</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => setShowPasswordModal(true)}

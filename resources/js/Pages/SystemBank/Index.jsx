@@ -574,6 +574,9 @@ export default function SystemBank({
     setAddBalanceModalVisible(true);
   };
 
+  const getUserLabel = (u) =>
+    u ? [u.first_name, u.first_last_name].filter(Boolean).join(' ') || u.username : '';
+
   // Mismo formato que el historial de cajas y la app de pasillera
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-CL', {
@@ -655,7 +658,7 @@ export default function SystemBank({
       title: 'Fecha',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (date) => new Date(date).toLocaleString('es-AR'),
+      render: (date) => new Date(date).toLocaleString('es-CL'),
     },
     {
       title: 'Tipo',
@@ -1070,6 +1073,27 @@ export default function SystemBank({
   // Un superior mirando el turno que abrió otra persona
   const shiftOwner = shift?.user;
   const isForeignShift = shiftOwner && shiftOwner.id !== auth.user?.id;
+  const currentBalance = Number(shift?.current_balance) || 0;
+  const exceedsBalance = Number(amount || 0) > 0 && Number(amount) > currentBalance;
+
+  // Las acciones que abren un modal comparten la misma validación de monto
+  const withAmount = (fn) => {
+    if (!amount || amount <= 0) {
+      message.error('Ingrese un monto válido');
+      return;
+    }
+    fn();
+  };
+
+  const openClientModal = (type) => {
+    setClientTransactionType(type);
+    setClientModalVisible(true);
+  };
+
+  const openAuthModal = (type) => {
+    setAuthTransactionType(type);
+    setAuthModalVisible(true);
+  };
 
   return (
     <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
@@ -1115,376 +1139,383 @@ export default function SystemBank({
           />
         )}
 
-        {/* Control de Caja */}
-        <Card title="Control de Caja" extra={<RefreshBtn tooltip="Actualizar saldos de caja" />}>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={12}>
-              <Space direction="vertical" style={{ width: '100%' }} size="large">
-                <div className="flex items-center gap-2">
-                  <Statistic title="Saldo Anterior" value={prevBalance} precision={2} prefix="$" />
-                  <RefreshBtn tooltip="Actualizar saldo anterior" />
-                </div>
-                <div>
-                  <Text strong>Modo de Ingreso</Text>
-                  <Select
-                    style={{ width: '100%', marginTop: 8 }}
-                    value={initialBalanceMode}
-                    onChange={setInitialBalanceMode}
-                    disabled={shift?.is_active}
-                  >
-                    <Option value="total">Monto Total (incluye saldo anterior)</Option>
-                    <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
-                  </Select>
-                </div>
-                <div>
-                  <Text strong>
-                    {initialBalanceMode === 'total' ? 'Monto Total en Caja' : 'Monto a Agregar'}
-                  </Text>
-                  <InputNumber
-                    style={{ width: '100%', marginTop: 8 }}
-                    value={initialBalance}
-                    onChange={setInitialBalance}
-                    placeholder={
-                      initialBalanceMode === 'total'
-                        ? 'Ingrese el monto total'
-                        : 'Ingrese monto a agregar'
-                    }
-                    disabled={shift?.is_active}
-                    min={0}
-                    precision={2}
-                  />
-                </div>
-                <Statistic
-                  title="Saldo Inicial Total"
-                  value={
+        {/* Resumen de saldos: siempre visible, el saldo actual manda */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={8}>
+            <div
+              className={`h-full p-5 rounded-xl border-2 ${
+                currentBalance < 0
+                  ? 'bg-red-50 border-red-300'
+                  : currentBalance === 0
+                    ? 'bg-amber-50 border-amber-300'
+                    : 'bg-emerald-50 border-emerald-300'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold tracking-wider uppercase text-slate-500">
+                  Saldo Actual en Caja
+                </p>
+                <RefreshBtn tooltip="Actualizar saldo actual" />
+              </div>
+              <p
+                className={`mt-1 text-3xl font-bold sm:text-4xl tabular-nums ${
+                  currentBalance < 0
+                    ? 'text-red-700'
+                    : currentBalance === 0
+                      ? 'text-amber-700'
+                      : 'text-emerald-700'
+                }`}
+              >
+                {formatCurrency(currentBalance)}
+              </p>
+              {currentBalance < 0 && (
+                <p className="mt-2 text-sm font-semibold text-red-700">
+                  ⚠ Saldo negativo. Revisá las transacciones registradas.
+                </p>
+              )}
+              {shift?.is_active && (
+                <Button
+                  danger
+                  type="primary"
+                  size="large"
+                  block
+                  loading={loading}
+                  className="mt-4"
+                  onClick={() => setClosingModalVisible(true)}
+                >
+                  Cerrar Caja
+                </Button>
+              )}
+            </div>
+          </Col>
+
+          <Col xs={12} lg={4}>
+            <div className="h-full p-4 bg-white border rounded-xl border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Saldo Anterior</p>
+              <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
+                {formatCurrency(prevBalance)}
+              </p>
+            </div>
+          </Col>
+
+          <Col xs={12} lg={4}>
+            <div className="h-full p-4 bg-white border rounded-xl border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Saldo Inicial del Turno</p>
+              <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
+                {formatCurrency(shift?.total_initial_balance ?? 0)}
+              </p>
+            </div>
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <div className="h-full p-4 bg-white border rounded-xl border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Turno</p>
+              {shift?.is_active ? (
+                <>
+                  <p className="mt-1 text-base font-semibold text-slate-900">
+                    Abierto por {getUserLabel(shift.user) || 'usuario'}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    Desde{' '}
+                    {shift.started_at ? new Date(shift.started_at).toLocaleString('es-CL') : '-'}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-base font-semibold text-slate-500">Sin turno abierto</p>
+              )}
+              {shift?.difference != null && Number(shift.difference) !== 0 && (
+                <p
+                  className={`mt-2 text-sm font-semibold ${
+                    Number(shift.difference) > 0 ? 'text-cyan-700' : 'text-red-700'
+                  }`}
+                >
+                  {Number(shift.difference) > 0 ? '⬆ Sobrante' : '⬇ Faltante'} de apertura:{' '}
+                  {formatCurrency(Math.abs(Number(shift.difference)))}
+                </p>
+              )}
+            </div>
+          </Col>
+        </Row>
+
+        {/* Apertura: solo tiene sentido mostrarla cuando no hay turno abierto */}
+        {!shift?.is_active && (
+          <Card title="Abrir Caja">
+            <Row gutter={[16, 16]} align="bottom">
+              <Col xs={24} md={9}>
+                <Text strong>Modo de Ingreso</Text>
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  value={initialBalanceMode}
+                  onChange={setInitialBalanceMode}
+                  size="large"
+                >
+                  <Option value="total">Monto Total (incluye saldo anterior)</Option>
+                  <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                </Select>
+              </Col>
+              <Col xs={24} md={7}>
+                <Text strong>
+                  {initialBalanceMode === 'total' ? 'Monto Total en Caja' : 'Monto a Agregar'}
+                </Text>
+                <InputNumber
+                  style={{ width: '100%', marginTop: 8 }}
+                  value={initialBalance}
+                  onChange={setInitialBalance}
+                  size="large"
+                  placeholder={
+                    initialBalanceMode === 'total'
+                      ? 'Ingrese el monto total'
+                      : 'Ingrese monto a agregar'
+                  }
+                  min={0}
+                  precision={2}
+                />
+              </Col>
+              <Col xs={24} md={4}>
+                <p className="text-xs font-medium text-slate-500">Saldo Inicial Total</p>
+                <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
+                  {formatCurrency(
                     initialBalanceMode === 'total'
                       ? Number(initialBalance) || 0
-                      : prevBalance + (Number(initialBalance) || 0)
-                  }
-                  precision={2}
-                  prefix="$"
-                />
-                {!shift?.is_active ? (
-                  <Button
-                    type="primary"
-                    onClick={() => setOpeningModalVisible(true)}
-                    disabled={!initialBalance}
-                    loading={loading}
-                    block
-                  >
-                    Abrir Caja
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    danger
-                    loading={loading}
-                    block
-                    onClick={() => setClosingModalVisible(true)}
-                  >
-                    Cerrar Caja
-                  </Button>
-                )}
-              </Space>
-            </Col>
-            <Col xs={24} md={12}>
-              <Space direction="vertical" style={{ width: '100%' }} size="large">
-                <div className="flex items-center gap-2">
-                  <Statistic
-                    title="Saldo Actual"
-                    value={shift?.current_balance || 0}
-                    precision={2}
-                    prefix="$"
-                    valueStyle={{
-                      color:
-                        (shift?.current_balance || 0) < 0
-                          ? '#cf1322'
-                          : (shift?.current_balance || 0) === 0
-                            ? '#faad14'
-                            : '#3f8600',
-                    }}
-                  />
-                  <RefreshBtn tooltip="Actualizar saldo actual" />
-                </div>
-                {Number(shift?.current_balance || 0) < 0 && (
-                  <div
-                    style={{
-                      padding: 8,
-                      borderRadius: 6,
-                      background: '#fff1f0',
-                      border: '1px solid #ffa39e',
-                      color: '#cf1322',
-                      fontWeight: 600,
-                    }}
-                  >
-                    ⚠ Saldo negativo. Revise las transacciones registradas.
-                  </div>
-                )}
+                      : prevBalance + (Number(initialBalance) || 0),
+                  )}
+                </p>
+              </Col>
+              <Col xs={24} md={4}>
+                <Button
+                  type="primary"
+                  size="large"
+                  block
+                  onClick={() => setOpeningModalVisible(true)}
+                  disabled={!initialBalance}
+                  loading={loading}
+                >
+                  Abrir Caja
+                </Button>
+              </Col>
+            </Row>
+          </Card>
+        )}
 
-                <Card size="small" title="Movimientos del Turno">
-                  <Row gutter={[16, 16]}>
-                    {[
-                      {
-                        title: 'Transferencias',
-                        total: shift?.total_transfers,
-                        caja: shift?.total_transfers_caja,
-                        pasillera: shift?.total_transfers_pasillera,
-                      },
-                      {
-                        title: 'Giros',
-                        total: shift?.total_giros,
-                        caja: shift?.total_giros_caja,
-                        pasillera: shift?.total_giros_pasillera,
-                      },
-                      {
-                        title: 'Pagos por Caja',
-                        total: shift?.total_payments,
-                        caja: shift?.total_payments_caja,
-                        pasillera: shift?.total_payments_pasillera,
-                      },
-                      {
-                        title: 'Otros Gastos',
-                        total: shift?.total_other,
-                        caja: shift?.total_other_caja,
-                        pasillera: shift?.total_other_pasillera,
-                      },
-                      {
-                        title: 'Sorteos',
-                        total: shift?.total_sorteo,
-                        caja: shift?.total_sorteo_caja,
-                        pasillera: shift?.total_sorteo_pasillera,
-                      },
-                      {
-                        title: 'Bonus Especial',
-                        total: shift?.total_bonus_especial,
-                        caja: shift?.total_bonus_especial_caja,
-                        pasillera: shift?.total_bonus_especial_pasillera,
-                      },
-                      {
-                        title: 'Préstamos',
-                        total: shift?.total_prestamo,
-                        caja: shift?.total_prestamo_caja,
-                        pasillera: shift?.total_prestamo_pasillera,
-                      },
-                      {
-                        title: 'Depósitos',
-                        total: shift?.total_deposit,
-                        caja: shift?.total_deposit_caja,
-                        pasillera: shift?.total_deposit_pasillera,
-                      },
-                      {
-                        title: 'Retiros',
-                        total: shift?.total_withdrawal,
-                        caja: shift?.total_withdrawal_caja,
-                        pasillera: shift?.total_withdrawal_pasillera,
-                      },
-                    ].map((item, idx) => {
-                      const total = Number(item.total) || 0;
-                      const caja = Number(item.caja) || 0;
-                      const pasillera = Number(item.pasillera) || 0;
-                      const empty = total === 0;
+        {shift?.is_active && (
+          <Card
+            title="Movimientos del Turno"
+            extra={<RefreshBtn tooltip="Actualizar movimientos" />}
+          >
+            <Row gutter={[16, 16]}>
+              {[
+                {
+                  title: 'Transferencias',
+                  total: shift?.total_transfers,
+                  caja: shift?.total_transfers_caja,
+                  pasillera: shift?.total_transfers_pasillera,
+                },
+                {
+                  title: 'Giros',
+                  total: shift?.total_giros,
+                  caja: shift?.total_giros_caja,
+                  pasillera: shift?.total_giros_pasillera,
+                },
+                {
+                  title: 'Pagos por Caja',
+                  total: shift?.total_payments,
+                  caja: shift?.total_payments_caja,
+                  pasillera: shift?.total_payments_pasillera,
+                },
+                {
+                  title: 'Otros Gastos',
+                  total: shift?.total_other,
+                  caja: shift?.total_other_caja,
+                  pasillera: shift?.total_other_pasillera,
+                },
+                {
+                  title: 'Sorteos',
+                  total: shift?.total_sorteo,
+                  caja: shift?.total_sorteo_caja,
+                  pasillera: shift?.total_sorteo_pasillera,
+                },
+                {
+                  title: 'Bonus Especial',
+                  total: shift?.total_bonus_especial,
+                  caja: shift?.total_bonus_especial_caja,
+                  pasillera: shift?.total_bonus_especial_pasillera,
+                },
+                {
+                  title: 'Préstamos',
+                  total: shift?.total_prestamo,
+                  caja: shift?.total_prestamo_caja,
+                  pasillera: shift?.total_prestamo_pasillera,
+                },
+                {
+                  title: 'Depósitos',
+                  total: shift?.total_deposit,
+                  caja: shift?.total_deposit_caja,
+                  pasillera: shift?.total_deposit_pasillera,
+                },
+                {
+                  title: 'Retiros',
+                  total: shift?.total_withdrawal,
+                  caja: shift?.total_withdrawal_caja,
+                  pasillera: shift?.total_withdrawal_pasillera,
+                },
+              ].map((item, idx) => {
+                const total = Number(item.total) || 0;
+                const caja = Number(item.caja) || 0;
+                const pasillera = Number(item.pasillera) || 0;
+                const empty = total === 0;
 
-                      return (
-                        <Col xs={12} sm={8} xl={6} key={idx}>
-                          <div
-                            className={`h-full px-3 py-2.5 rounded-lg border ${
-                              empty ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-300'
-                            }`}
-                          >
-                            <p className="text-xs font-medium truncate text-slate-500">
-                              {item.title}
-                            </p>
-                            <p
-                              className={`mt-0.5 text-lg font-bold tabular-nums ${
-                                empty ? 'text-slate-400' : 'text-slate-900'
-                              }`}
-                            >
-                              {formatCurrency(total)}
-                            </p>
-                            <div className="grid grid-cols-2 gap-1 pt-2 mt-2 border-t border-slate-200">
-                              <div className="min-w-0">
-                                <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                                  Caja
-                                </p>
-                                <p className="text-xs font-semibold truncate text-slate-700 tabular-nums">
-                                  {formatCurrency(caja)}
-                                </p>
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                                  Pasillera
-                                </p>
-                                <p className="text-xs font-semibold truncate text-slate-700 tabular-nums">
-                                  {formatCurrency(pasillera)}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </Col>
-                      );
-                    })}
-                    <Col xs={12} sm={8} xl={6}>
-                      <div className="h-full px-3 py-2.5 rounded-lg border bg-emerald-50 border-emerald-200">
-                        <p className="text-xs font-medium text-emerald-700">Tickets</p>
-                        <p className="mt-0.5 text-lg font-bold text-emerald-700 tabular-nums">
-                          {formatCurrency(Number(totalTickets) || 0)}
-                        </p>
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
-
-                {shift?.difference != null && Number(shift.difference) !== 0 && (
-                  <div
-                    style={{
-                      padding: 12,
-                      borderRadius: 8,
-                      background: Number(shift.difference) > 0 ? '#e6fffb' : '#fff1f0',
-                      border: `1px solid ${Number(shift.difference) > 0 ? '#87e8de' : '#ffa39e'}`,
-                    }}
-                  >
-                    <Text
-                      strong
-                      style={{ color: Number(shift.difference) > 0 ? '#13c2c2' : '#cf1322' }}
+                return (
+                  <Col xs={12} sm={8} xl={6} key={idx}>
+                    <div
+                      className={`h-full px-3 py-2.5 rounded-lg border ${
+                        empty ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-300'
+                      }`}
                     >
-                      {Number(shift.difference) > 0 ? '⬆ SOBRANTE' : '⬇ FALTANTE'} de apertura:{' '}
-                      {formatCurrency(Math.abs(Number(shift.difference)))}
-                    </Text>
-                  </div>
-                )}
-              </Space>
-            </Col>
-          </Row>
-        </Card>
+                      <p className="text-xs font-medium truncate text-slate-500">{item.title}</p>
+                      <p
+                        className={`mt-0.5 text-lg font-bold tabular-nums ${
+                          empty ? 'text-slate-400' : 'text-slate-900'
+                        }`}
+                      >
+                        {formatCurrency(total)}
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 pt-2 mt-2 border-t border-slate-200">
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide text-slate-400">Caja</p>
+                          <p className="text-xs font-semibold truncate text-slate-700 tabular-nums">
+                            {formatCurrency(caja)}
+                          </p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                            Pasillera
+                          </p>
+                          <p className="text-xs font-semibold truncate text-slate-700 tabular-nums">
+                            {formatCurrency(pasillera)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </Col>
+                );
+              })}
+              <Col xs={12} sm={8} xl={6}>
+                <div className="h-full px-3 py-2.5 rounded-lg border bg-emerald-50 border-emerald-200">
+                  <p className="text-xs font-medium text-emerald-700">Tickets</p>
+                  <p className="mt-0.5 text-lg font-bold text-emerald-700 tabular-nums">
+                    {formatCurrency(Number(totalTickets) || 0)}
+                  </p>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+        )}
 
         {/* Nueva Transacción */}
         <Card title="Nueva Transacción" extra={<RefreshBtn tooltip="Actualizar transacciones" />}>
-          <Space direction="vertical" style={{ width: '100%' }} size="middle">
-            <div>
-              <Text strong>Monto</Text>
-              <InputNumber
-                style={{ width: '100%', marginTop: 8 }}
-                value={amount}
-                onChange={setAmount}
-                placeholder="Ingrese monto"
-                disabled={!shift?.is_active}
-                min={0}
-                precision={2}
-                status={Number(amount || 0) > Number(shift?.current_balance || 0) ? 'warning' : ''}
-              />
-              {Number(amount || 0) > 0 &&
-                Number(amount || 0) > Number(shift?.current_balance || 0) && (
-                  <div style={{ color: '#faad14', marginTop: 4, fontSize: 12 }}>
-                    ⚠ El monto excede el saldo actual ({formatCurrency(shift?.current_balance || 0)}
-                    ). No se podrá registrar como Giro / Pago / Otro Gasto.
-                  </div>
-                )}
-            </div>
-            <div>
-              <Text strong>Cliente</Text>
-              <Input
-                style={{ marginTop: 8 }}
-                value={client}
-                onChange={(e) => setClient(e.target.value)}
-                placeholder="Nombre del cliente"
-                disabled={!shift?.is_active}
-              />
-            </div>
-            <Space style={{ width: '100%' }} wrap>
-              <Button
-                onClick={() => handleTransaction('transfer')}
-                disabled={!shift?.is_active}
-                loading={loading}
-              >
-                Transferencia
-              </Button>
-              <Button
-                onClick={() => handleTransaction('giro')}
-                disabled={!shift?.is_active}
-                loading={loading}
-              >
-                Giro
-              </Button>
-              <Button
-                onClick={() => {
-                  if (!amount || amount <= 0) {
-                    message.error('Ingrese un monto válido');
-                    return;
-                  }
-                  setPaymentModalVisible(true);
-                }}
-                disabled={!shift?.is_active}
-              >
-                Pago por Caja
-              </Button>
-              <Button
-                onClick={() => {
-                  if (!amount || amount <= 0) {
-                    message.error('Ingrese un monto válido');
-                    return;
-                  }
-                  setOtherModalVisible(true);
-                }}
-                disabled={!shift?.is_active}
-              >
-                Otro Gasto
-              </Button>
-              <Button
-                onClick={() => {
-                  if (!amount || amount <= 0) {
-                    message.error('Ingrese un monto válido');
-                    return;
-                  }
-                  setClientTransactionType('sorteo');
-                  setClientModalVisible(true);
-                }}
-                disabled={!shift?.is_active}
-              >
-                Sorteo
-              </Button>
-              <Button
-                onClick={() => {
-                  if (!amount || amount <= 0) {
-                    message.error('Ingrese un monto válido');
-                    return;
-                  }
-                  setClientTransactionType('bonus_especial');
-                  setClientModalVisible(true);
-                }}
-                disabled={!shift?.is_active}
-              >
-                Bono Especial
-              </Button>
-              <Button
-                onClick={() => {
-                  if (!amount || amount <= 0) {
-                    message.error('Ingrese un monto válido');
-                    return;
-                  }
-                  setAuthTransactionType('deposit');
-                  setAuthModalVisible(true);
-                }}
-                disabled={!shift?.is_active}
-                type="primary"
-              >
-                Agregar Dinero
-              </Button>
-              <Button
-                onClick={() => {
-                  if (!amount || amount <= 0) {
-                    message.error('Ingrese un monto válido');
-                    return;
-                  }
-                  setAuthTransactionType('withdrawal');
-                  setAuthModalVisible(true);
-                }}
-                disabled={!shift?.is_active}
-                danger
-              >
-                Quitar Dinero
-              </Button>
+          {!shift?.is_active ? (
+            <Alert type="info" showIcon message="Abrí la caja para poder registrar transacciones" />
+          ) : (
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={10}>
+                  <Text strong>Monto *</Text>
+                  <InputNumber
+                    style={{ width: '100%', marginTop: 8 }}
+                    value={amount}
+                    onChange={setAmount}
+                    size="large"
+                    placeholder="Ingrese monto"
+                    min={0}
+                    precision={2}
+                    status={exceedsBalance ? 'warning' : ''}
+                  />
+                </Col>
+                <Col xs={24} md={14}>
+                  <Text strong>Cliente</Text>
+                  <Input
+                    style={{ marginTop: 8 }}
+                    size="large"
+                    value={client}
+                    onChange={(e) => setClient(e.target.value)}
+                    placeholder="Nombre del cliente (obligatorio en Sorteo, Bono Especial y Préstamo)"
+                  />
+                </Col>
+              </Row>
+
+              {exceedsBalance && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={`El monto excede el saldo actual (${formatCurrency(currentBalance)}). No se podrá registrar como Giro, Pago u Otro Gasto.`}
+                />
+              )}
+
+              <div>
+                <p className="mb-2 text-xs font-semibold tracking-wider uppercase text-slate-500">
+                  Gastos y pagos
+                </p>
+                <Space wrap>
+                  <Button
+                    size="large"
+                    onClick={() => handleTransaction('transfer')}
+                    loading={loading}
+                  >
+                    Transferencia
+                  </Button>
+                  <Button size="large" onClick={() => handleTransaction('giro')} loading={loading}>
+                    Giro
+                  </Button>
+                  <Button
+                    size="large"
+                    onClick={() => withAmount(() => setPaymentModalVisible(true))}
+                  >
+                    Pago por Caja
+                  </Button>
+                  <Button size="large" onClick={() => withAmount(() => setOtherModalVisible(true))}>
+                    Otro Gasto
+                  </Button>
+                  <Button size="large" onClick={() => withAmount(() => openClientModal('sorteo'))}>
+                    Sorteo
+                  </Button>
+                  <Button
+                    size="large"
+                    onClick={() => withAmount(() => openClientModal('bonus_especial'))}
+                  >
+                    Bono Especial
+                  </Button>
+                  <Button
+                    size="large"
+                    onClick={() => withAmount(() => openClientModal('prestamo'))}
+                  >
+                    Préstamo
+                  </Button>
+                </Space>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-semibold tracking-wider uppercase text-slate-500">
+                  Movimientos de caja · requieren autorización
+                </p>
+                <Space wrap>
+                  <Button
+                    size="large"
+                    type="primary"
+                    onClick={() => withAmount(() => openAuthModal('deposit'))}
+                  >
+                    Agregar Dinero
+                  </Button>
+                  <Button
+                    size="large"
+                    danger
+                    onClick={() => withAmount(() => openAuthModal('withdrawal'))}
+                  >
+                    Quitar Dinero
+                  </Button>
+                </Space>
+              </div>
             </Space>
-          </Space>
+          )}
         </Card>
 
         {/* Modal Pago por Caja - pedir máquina */}
@@ -1812,56 +1843,68 @@ export default function SystemBank({
         {/* Control de Pasilleras */}
         <Card title="Control de Pasilleras" extra={<RefreshBtn tooltip="Actualizar pasilleras" />}>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
-            <Row gutter={16}>
-              <Col xs={24} sm={10}>
-                <Text strong>Seleccionar Pasillera</Text>
-                <Select
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={pasilleraUserId}
-                  onChange={setPasilleraUserId}
-                  placeholder="Seleccione un usuario"
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                >
-                  {availableUsers.map((user) => (
-                    <Select.Option key={user.id} value={user.id}>
-                      {user.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Col>
-              <Col xs={24} sm={10}>
-                <Text strong>Saldo Inicial</Text>
-                <InputNumber
-                  style={{ width: '100%', marginTop: 8 }}
-                  value={pasilleraInitialBalance}
-                  onChange={setPasilleraInitialBalance}
-                  placeholder="Saldo inicial"
-                  min={0}
-                  precision={2}
-                />
-              </Col>
-              <Col xs={24} sm={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleAddPasillera}
-                  disabled={!pasilleraInitialBalance || !pasilleraUserId}
-                  loading={loading}
-                  block
-                >
-                  Agregar
-                </Button>
-              </Col>
-            </Row>
+            {!shift?.is_active ? (
+              <Alert
+                type="info"
+                showIcon
+                message="Abrí la caja para poder asignar saldo a una pasillera"
+              />
+            ) : (
+              <Row gutter={[16, 16]} align="bottom">
+                <Col xs={24} sm={10}>
+                  <Text strong>Seleccionar Pasillera</Text>
+                  <Select
+                    style={{ width: '100%', marginTop: 8 }}
+                    size="large"
+                    value={pasilleraUserId}
+                    onChange={setPasilleraUserId}
+                    placeholder="Seleccione un usuario"
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().includes(input.toLowerCase())
+                    }
+                    notFoundContent="No hay usuarios con cargo PASILLER@ en esta sucursal"
+                  >
+                    {availableUsers.map((user) => (
+                      <Select.Option key={user.id} value={user.id}>
+                        {user.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col xs={24} sm={10}>
+                  <Text strong>Saldo Inicial</Text>
+                  <InputNumber
+                    style={{ width: '100%', marginTop: 8 }}
+                    size="large"
+                    value={pasilleraInitialBalance}
+                    onChange={setPasilleraInitialBalance}
+                    placeholder="Saldo inicial"
+                    min={0}
+                    precision={2}
+                  />
+                </Col>
+                <Col xs={24} sm={4}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddPasillera}
+                    disabled={!pasilleraInitialBalance || !pasilleraUserId}
+                    loading={loading}
+                    block
+                  >
+                    Agregar
+                  </Button>
+                </Col>
+              </Row>
+            )}
 
             {(() => {
               const fmtTs = (ts) =>
                 ts
-                  ? new Date(ts).toLocaleString('es-AR', {
+                  ? new Date(ts).toLocaleString('es-CL', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
@@ -1878,6 +1921,15 @@ export default function SystemBank({
               });
 
               const groupList = Object.values(grouped);
+
+              if (!groupList.length) {
+                return (
+                  <div className="py-8 text-center text-slate-500">
+                    <p className="text-sm">Todavía no hay pasilleras en este turno.</p>
+                  </div>
+                );
+              }
+
               return groupList.map(({ user, items }, groupIdx) => (
                 <div key={user?.id ?? 'unknown'} style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -2120,7 +2172,7 @@ export default function SystemBank({
                                             </span>
                                           </span>
                                           <span style={{ color: '#8c8c8c', fontSize: 11 }}>
-                                            {new Date(registro.created_at).toLocaleString('es-AR')}
+                                            {new Date(registro.created_at).toLocaleString('es-CL')}
                                           </span>
                                         </div>
                                         {details.length > 0 && (
@@ -2150,15 +2202,33 @@ export default function SystemBank({
 
         {/* Historial de Transacciones */}
         <Card
-          title="Historial de Transacciones"
+          title={
+            <span>
+              Historial de Transacciones{' '}
+              <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}>
+                ({combinedHistory.length})
+              </Text>
+            </span>
+          }
           extra={<RefreshBtn tooltip="Actualizar historial" />}
         >
           <Table
             columns={transactionColumns}
             dataSource={combinedHistory}
             rowKey={(record) => `${record.source}-${record.id}`}
-            pagination={{ pageSize: 10 }}
+            size="middle"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '25', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} de ${total}`,
+            }}
             scroll={{ x: 800 }}
+            locale={{
+              emptyText: shift?.is_active
+                ? 'Todavía no hay movimientos en este turno'
+                : 'Abrí la caja para registrar movimientos',
+            }}
           />
         </Card>
 

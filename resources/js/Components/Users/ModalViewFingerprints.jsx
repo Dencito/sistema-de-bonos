@@ -18,7 +18,7 @@ const fingerNames = {
 const FingerIcon = ({ finger, registered }) => {
   const isLeft = finger.startsWith('L_');
   const fingerType = finger.split('_')[1];
-  
+
   return (
     <div className="flex flex-col items-center gap-1">
       <div
@@ -38,15 +38,6 @@ const FingerIcon = ({ finger, registered }) => {
 export default function ModalViewFingerprints({ data }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Debug: SIEMPRE mostrar qué llega
-  console.log('ModalViewFingerprints render:', {
-    username: data?.username,
-    has_fingerprint: data?.has_fingerprint,
-    fingerprints: data?.fingerprints,
-    fingerprintsType: typeof data?.fingerprints,
-    fingerprintsLength: data?.fingerprints?.length
-  });
-
   let fingerprintsData = [];
   let totalCount = 0;
 
@@ -57,7 +48,7 @@ export default function ModalViewFingerprints({ data }) {
         // Si es string, parsearlo
         const parsed = JSON.parse(data.fingerprints);
         // Puede ser { fingerprints: [...] } o directamente [...]
-        fingerprintsData = Array.isArray(parsed) ? parsed : (parsed?.fingerprints || []);
+        fingerprintsData = Array.isArray(parsed) ? parsed : parsed?.fingerprints || [];
       } else if (Array.isArray(data.fingerprints)) {
         // Si ya es array, usarlo directamente
         fingerprintsData = data.fingerprints;
@@ -65,7 +56,7 @@ export default function ModalViewFingerprints({ data }) {
         // Si es objeto, buscar la propiedad fingerprints
         fingerprintsData = data.fingerprints?.fingerprints || [];
       }
-      
+
       totalCount = fingerprintsData.length;
     } catch (error) {
       console.error('Error parsing fingerprints:', error, data.fingerprints);

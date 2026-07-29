@@ -29,6 +29,11 @@ export default function ResetPassword({ token, email }) {
     <GuestLayout>
       <Head title="Restablecer Contraseña" />
 
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold sm:text-3xl text-slate-900">Nueva contraseña</h1>
+        <p className="mt-2 text-slate-500">Elegí una contraseña de al menos 8 caracteres.</p>
+      </div>
+
       <Form name="reset-password" onFinish={onFinish} layout="vertical" initialValues={{ email }}>
         <Form.Item
           label="Email"
@@ -87,8 +92,15 @@ export default function ResetPassword({ token, email }) {
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={processing} size="large" block>
-            Restablecer Contraseña
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={processing}
+            size="large"
+            block
+            className="h-12 font-semibold border-0 rounded-lg bg-slate-900 hover:!bg-slate-700"
+          >
+            Restablecer contraseña
           </Button>
         </Form.Item>
       </Form>

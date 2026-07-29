@@ -24,7 +24,6 @@ export default function ModalCreateUser({ userType, branches, categories = [], r
   });
 
   const userCargo = userAuth.cargo;
-  console.log(userCargo)
 
   const onCreate = async (values) => {
     const { rutNumbers, rutDv } = form.getFieldsValue(['rutNumbers', 'rutDv']);

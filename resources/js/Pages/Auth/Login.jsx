@@ -64,17 +64,14 @@ export default function Login({ status, auth }) {
     <GuestLayout>
       <Head title="Inicio de sesión" />
 
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl mb-4 shadow-lg">
-          <Lock className="w-8 h-8 text-white" />
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {auth?.users === 0 ? 'Crear Cuenta' : 'Bienvenido de nuevo'}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold sm:text-3xl text-slate-900">
+          {auth?.users === 0 ? 'Crear cuenta' : 'Iniciar sesión'}
         </h1>
-        <p className="text-gray-600">
+        <p className="mt-2 text-slate-500">
           {auth?.users === 0
-            ? 'Registra el primer usuario del sistema'
-            : 'Ingresa tus credenciales para acceder'}
+            ? 'Registrá el primer usuario del sistema.'
+            : 'Ingresá tus credenciales para continuar.'}
         </p>
       </div>
 
@@ -94,8 +91,8 @@ export default function Login({ status, auth }) {
             autoComplete="login"
             autoFocus
             size="large"
-            prefix={<User className="w-4 h-4 text-gray-400" />}
-            placeholder={auth?.users === 0 ? 'Ingresa tu nombre de usuario' : 'Ingresa tu usuario, email o teléfono'}
+            prefix={<User className="w-4 h-4 text-slate-400" />}
+            placeholder={auth?.users === 0 ? 'Nombre de usuario' : 'Usuario, email o teléfono'}
             className="rounded-lg"
           />
         </Form.Item>
@@ -112,8 +109,8 @@ export default function Login({ status, auth }) {
             onChange={(e) => setData('password', e.target.value)}
             autoComplete="current-password"
             size="large"
-            prefix={<Lock className="w-4 h-4 text-gray-400" />}
-            placeholder="Ingresa tu contraseña"
+            prefix={<Lock className="w-4 h-4 text-slate-400" />}
+            placeholder="Contraseña"
             className="rounded-lg"
           />
         </Form.Item>
@@ -124,14 +121,14 @@ export default function Login({ status, auth }) {
               name="remember"
               checked={data.remember}
               onChange={(e) => setData('remember', e.target.checked)}
-              className="text-gray-600"
+              className="text-slate-600"
             >
               Recordarme
             </Checkbox>
           </Form.Item>
           <Link
             href={route('password.request')}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline"
           >
             ¿Olvidaste tu contraseña?
           </Link>
@@ -143,10 +140,10 @@ export default function Login({ status, auth }) {
             htmlType="submit"
             loading={processing}
             size="large"
-            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 border-0 hover:from-blue-600 hover:to-cyan-600 h-12 font-semibold rounded-lg shadow-md"
+            className="w-full h-12 font-semibold border-0 rounded-lg bg-slate-900 hover:!bg-slate-700"
             icon={<ArrowRight className="w-4 h-4" />}
           >
-            {auth?.users === 0 ? 'Crear Cuenta' : 'Ingresar'}
+            {auth?.users === 0 ? 'Crear cuenta' : 'Ingresar'}
           </Button>
         </Form.Item>
       </Form>

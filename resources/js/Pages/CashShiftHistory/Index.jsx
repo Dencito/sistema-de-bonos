@@ -496,13 +496,17 @@ export default function CashShiftHistoryIndex({
             columns={columns}
             dataSource={shifts}
             loading={loading}
+            size="middle"
             scroll={{ x: 1500 }}
+            rowClassName={(record) => (record.is_active ? 'bg-emerald-50/60' : '')}
+            locale={{ emptyText: 'No hay turnos para los filtros aplicados' }}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
               showSizeChanger: true,
               pageSizeOptions: [10, 15, 25, 50, 100],
+              showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} turnos`,
               onChange: (page, pageSize) => fetchShifts(page, pageSize),
             }}
           />

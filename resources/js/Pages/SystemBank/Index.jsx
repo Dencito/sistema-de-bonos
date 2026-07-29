@@ -21,6 +21,8 @@ import {
   Divider,
   Upload,
   Alert,
+  Spin,
+  Skeleton,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -34,6 +36,7 @@ import {
 } from '@ant-design/icons';
 import { Switch } from 'antd';
 import axios from 'axios';
+import { formatDateTimeCL } from '@/Utils/date';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -69,8 +72,13 @@ export default function SystemBank({
     delete: (url, config) => axios.delete(url, withBranch(config)),
   };
 
+  // Cambiar o recuperar la sucursal implica una navegación de Inertia: sin esto
+  // la pantalla queda vacía hasta que responde el servidor.
+  const [switchingBranch, setSwitchingBranch] = useState(false);
+
   const handleBranchChange = (value) => {
     setBranchId(value);
+    setSwitchingBranch(Boolean(value));
     if (value) {
       localStorage.setItem(BRANCH_STORAGE_KEY, String(value));
     } else {
@@ -87,6 +95,7 @@ export default function SystemBank({
 
     const stored = localStorage.getItem(BRANCH_STORAGE_KEY);
     if (stored && branches.some((b) => String(b.id) === stored)) {
+      setSwitchingBranch(true);
       router.get('/cash-management', { branch_id: stored }, { preserveState: false });
     }
   }, []);
@@ -129,6 +138,9 @@ export default function SystemBank({
   const [totalTickets, setTotalTickets] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // Con turno activo la página se pinta con los props de Inertia y recién
+  // después llegan transacciones y tickets por axios, así que arranca cargando.
+  const [initialLoading, setInitialLoading] = useState(Boolean(activeShift));
 
   // Estados para conteo de apertura
   const [opening20000, setOpening20000] = useState(0);
@@ -175,9 +187,8 @@ export default function SystemBank({
   const [addBalancePasilleraName, setAddBalancePasilleraName] = useState('');
 
   useEffect(() => {
-    if (activeShift) {
-      fetchShiftStatus();
-    }
+    if (!activeShift) return;
+    fetchShiftStatus().finally(() => setInitialLoading(false));
   }, []);
 
   const fetchShiftStatus = async () => {
@@ -658,7 +669,7 @@ export default function SystemBank({
       title: 'Fecha',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (date) => new Date(date).toLocaleString('es-CL'),
+      render: (date) => formatDateTimeCL(date, { seconds: true }),
     },
     {
       title: 'Tipo',
@@ -1031,6 +1042,45 @@ export default function SystemBank({
     </Select>
   );
 
+  // Mientras se resuelve la sucursal o llega la primera tanda de datos se
+  // muestra el esqueleto de la pantalla, no una versión vacía de la real.
+  if (switchingBranch || initialLoading) {
+    return (
+      <AuthenticatedLayout auth={auth} user={auth.user} role={auth.role}>
+        <Head title="Sistema de Caja" />
+
+        <div className="p-4 mx-auto space-y-4 max-w-[1600px] sm:p-6">
+          <PageHeader
+            title="Sistema de Gestión de Caja"
+            icon={BankOutlined}
+            subtitle={switchingBranch ? 'Cambiando de sucursal…' : 'Cargando la caja…'}
+          />
+
+          <Row gutter={[16, 16]}>
+            {[0, 1, 2].map((i) => (
+              <Col xs={24} lg={8} key={i}>
+                <Card>
+                  <Skeleton active paragraph={{ rows: 1 }} title={{ width: '60%' }} />
+                </Card>
+              </Col>
+            ))}
+          </Row>
+
+          <Card>
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <Spin size="large" />
+              <Text type="secondary">
+                {switchingBranch
+                  ? 'Buscando el turno de la sucursal seleccionada…'
+                  : 'Cargando movimientos y pasilleras…'}
+              </Text>
+            </div>
+          </Card>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
   // Un rol superior todavía no eligió sucursal: no hay nada que mostrar
   if (canSelectBranch && !branchId) {
     return (
@@ -1105,7 +1155,7 @@ export default function SystemBank({
           icon={BankOutlined}
           subtitle={
             shift?.is_active
-              ? `Turno abierto${shift.started_at ? ` · ${new Date(shift.started_at).toLocaleString('es-CL')}` : ''}`
+              ? `Turno abierto${shift.started_at ? ` · desde ${formatDateTimeCL(shift.started_at)} hrs` : ''}`
               : 'Sin turno abierto'
           }
           actions={
@@ -1215,9 +1265,8 @@ export default function SystemBank({
                   <p className="mt-1 text-base font-semibold text-slate-900">
                     Abierto por {getUserLabel(shift.user) || 'usuario'}
                   </p>
-                  <p className="text-sm text-slate-500">
-                    Desde{' '}
-                    {shift.started_at ? new Date(shift.started_at).toLocaleString('es-CL') : '-'}
+                  <p className="text-sm text-slate-500 tabular-nums">
+                    Desde {formatDateTimeCL(shift.started_at)} hrs
                   </p>
                 </>
               ) : (
@@ -1902,16 +1951,7 @@ export default function SystemBank({
             )}
 
             {(() => {
-              const fmtTs = (ts) =>
-                ts
-                  ? new Date(ts).toLocaleString('es-CL', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : '-';
+              const fmtTs = (ts) => formatDateTimeCL(ts);
 
               const grouped = {};
               pasilleras.forEach((p) => {
@@ -2172,7 +2212,9 @@ export default function SystemBank({
                                             </span>
                                           </span>
                                           <span style={{ color: '#8c8c8c', fontSize: 11 }}>
-                                            {new Date(registro.created_at).toLocaleString('es-CL')}
+                                            {formatDateTimeCL(registro.created_at, {
+                                              seconds: true,
+                                            })}
                                           </span>
                                         </div>
                                         {details.length > 0 && (

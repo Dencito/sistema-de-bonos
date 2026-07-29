@@ -1,4 +1,74 @@
 /**
+ * El sistema opera en Chile, pero el backend serializa las fechas en UTC y los
+ * metodos nativos (getHours, toLocaleString) usan la zona del navegador: una
+ * maquina en Argentina muestra los turnos una hora adelantados. Todo lo que se
+ * muestre al usuario tiene que pasar por los helpers *CL.
+ */
+export const CHILE_TIMEZONE = 'America/Santiago';
+
+const chileFormatter = (options) =>
+  new Intl.DateTimeFormat('es-CL', { timeZone: CHILE_TIMEZONE, ...options });
+
+const parseDate = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+// es-CL separa la fecha con guiones (28-07-2026) y mete una coma antes de la
+// hora. El sistema las muestra con barra y sin coma: 28/07/2026 19:42.
+const withSlashes = (formatted) => formatted.replace(/-/g, '/').replace(',', '');
+
+/**
+ * Format a date in Chilean time as "DD/MM/YYYY HH:mm" ("28/07/2026 19:42").
+ * @param {Date | string} date - The date to format.
+ * @param {{ seconds?: boolean }} [options] - Include seconds in the output.
+ * @returns {string} The formatted date string, or "—" if the date is invalid.
+ */
+export const formatDateTimeCL = (date, { seconds = false } = {}) => {
+  const d = parseDate(date);
+  if (!d) return '—';
+
+  return withSlashes(
+    chileFormatter({
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(seconds ? { second: '2-digit' } : {}),
+      hourCycle: 'h23',
+    }).format(d),
+  );
+};
+
+/**
+ * Format a date in Chilean time as "DD/MM/YYYY".
+ * @param {Date | string} date - The date to format.
+ * @returns {string} The formatted date string, or "—" if the date is invalid.
+ */
+export const formatDateCL = (date) => {
+  const d = parseDate(date);
+  if (!d) return '—';
+
+  return withSlashes(
+    chileFormatter({ day: '2-digit', month: '2-digit', year: 'numeric' }).format(d),
+  );
+};
+
+/**
+ * Format a date in Chilean time as "HH:mm".
+ * @param {Date | string} date - The date to format.
+ * @returns {string} The formatted time string, or "—" if the date is invalid.
+ */
+export const formatTimeCL = (date) => {
+  const d = parseDate(date);
+  if (!d) return '—';
+
+  return chileFormatter({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+};
+
+/**
  * Format a date as "DD-MM-YYYY"
  * @param {Date | string} date - The date to format.
  * @returns {string} The formatted date string.

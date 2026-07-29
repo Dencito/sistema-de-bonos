@@ -86,9 +86,9 @@ export default function ShiftsPage({ auth, shifts }) {
       }
     >
       <Head title="Registro de Turnos" />
-      <header className="flex items-center justify-between bg-white p-4 shadow-sm">
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
-        <h1 className="text-4xl font-bold">Registro de Turnos</h1>
+        <h1 className="min-w-0 text-2xl font-bold sm:text-3xl lg:text-4xl">Registro de Turnos</h1>
       </header>
       <div className="flex-1 overflow-auto p-4 z-10">
         <div className="w-full">

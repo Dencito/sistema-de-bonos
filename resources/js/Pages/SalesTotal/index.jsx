@@ -58,9 +58,9 @@ export default function SalesTotalPage({ auth, salesData, branches, userHasBranc
     >
       <Head title="Total de Ventas" />
 
-      <header className="flex justify-between items-center p-4 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
-        <h1 className="text-4xl font-bold">Total de Ventas</h1>
+        <h1 className="min-w-0 text-2xl font-bold sm:text-3xl lg:text-4xl">Total de Ventas</h1>
         <div className="w-16"></div>
       </header>
 

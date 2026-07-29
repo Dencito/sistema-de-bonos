@@ -264,9 +264,9 @@ export default function TicketPage({ auth, tickets, users, branches, filters }) 
       header={<h2 className="z-10 text-xl font-semibold leading-tight text-gray-800">Tickets</h2>}
     >
       <Head title="Tickets" />
-      <header className="flex justify-between items-center p-4 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
-        <h1 className="text-4xl font-bold">
+        <h1 className="min-w-0 text-2xl font-bold sm:text-3xl lg:text-4xl">
           Tickets
           {loadingTotals ? (
             <span className="text-sm"> (Cargando...)</span>
@@ -335,17 +335,19 @@ export default function TicketPage({ auth, tickets, users, branches, filters }) 
                       onChange={(value) => setData('user_id', value)}
                       filterOption={(input, option) => {
                         const searchStr = input.toLowerCase();
-                        const user = users?.find(u => u.id === option.value);
+                        const user = users?.find((u) => u.id === option.value);
                         if (!user) return false;
-                        
-                        const searchableStr = `${user.first_name || ''} ${user.second_name || ''} ${user.first_last_name || ''} ${user.second_last_name || ''} ${user.username || ''} ${user.rutNumbers || ''}-${user.rutDv || ''} ${user.email || ''}`.toLowerCase();
+
+                        const searchableStr =
+                          `${user.first_name || ''} ${user.second_name || ''} ${user.first_last_name || ''} ${user.second_last_name || ''} ${user.username || ''} ${user.rutNumbers || ''}-${user.rutDv || ''} ${user.email || ''}`.toLowerCase();
                         return searchableStr.includes(searchStr);
                       }}
                       allowClear
                     >
                       {users?.map((user) => (
                         <Select.Option key={user.id} value={user.id}>
-                          {user.first_name} {user.first_last_name} {user.username ? `(${user.username})` : ''}
+                          {user.first_name} {user.first_last_name}{' '}
+                          {user.username ? `(${user.username})` : ''}
                         </Select.Option>
                       ))}
                     </Select>

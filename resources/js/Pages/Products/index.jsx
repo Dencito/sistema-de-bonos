@@ -84,9 +84,9 @@ export default function ProductPage({ auth, products, branches }) {
       header={<h2 className="z-10 text-xl font-semibold leading-tight text-gray-800">Productos</h2>}
     >
       <Head title="Productos" />
-      <header className="flex justify-between items-center p-4 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
-        <h1 className="text-4xl font-bold">Productos</h1>
+        <h1 className="min-w-0 text-2xl font-bold sm:text-3xl lg:text-4xl">Productos</h1>
         <div className="text-right">
           <div className="text-sm text-gray-600">Cantidad Total</div>
           <div className="text-2xl font-bold text-blue-600">

@@ -283,16 +283,17 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${branch?.status?.name === 'Activo'
-              ? 'bg-green-300'
-              : branch?.status?.name === 'Inactivo'
-                ? 'bg-red-200'
-                : branch?.status?.name === 'En revisión'
-                  ? 'bg-orange-300'
-                  : branch?.status?.name === 'Borrado'
-                    ? 'bg-red-400'
-                    : ''
-              } 
+            className={`${
+              branch?.status?.name === 'Activo'
+                ? 'bg-green-300'
+                : branch?.status?.name === 'Inactivo'
+                  ? 'bg-red-200'
+                  : branch?.status?.name === 'En revisión'
+                    ? 'bg-orange-300'
+                    : branch?.status?.name === 'Borrado'
+                      ? 'bg-red-400'
+                      : ''
+            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -390,16 +391,17 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${branch?.status?.name === 'Activo'
-              ? 'bg-green-300'
-              : branch?.status?.name === 'Inactivo'
-                ? 'bg-red-200'
-                : branch?.status?.name === 'En revisión'
-                  ? 'bg-orange-300'
-                  : branch?.status?.name === 'Borrado'
-                    ? 'bg-red-400'
-                    : ''
-              } 
+            className={`${
+              branch?.status?.name === 'Activo'
+                ? 'bg-green-300'
+                : branch?.status?.name === 'Inactivo'
+                  ? 'bg-red-200'
+                  : branch?.status?.name === 'En revisión'
+                    ? 'bg-orange-300'
+                    : branch?.status?.name === 'Borrado'
+                      ? 'bg-red-400'
+                      : ''
+            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -495,16 +497,17 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${branch?.status?.name === 'Activo'
-              ? 'bg-green-300'
-              : branch?.status?.name === 'Inactivo'
-                ? 'bg-red-200'
-                : branch?.status?.name === 'En revisión'
-                  ? 'bg-orange-300'
-                  : branch?.status?.name === 'Borrado'
-                    ? 'bg-red-400'
-                    : ''
-              } 
+            className={`${
+              branch?.status?.name === 'Activo'
+                ? 'bg-green-300'
+                : branch?.status?.name === 'Inactivo'
+                  ? 'bg-red-200'
+                  : branch?.status?.name === 'En revisión'
+                    ? 'bg-orange-300'
+                    : branch?.status?.name === 'Borrado'
+                      ? 'bg-red-400'
+                      : ''
+            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -536,8 +539,9 @@ export default function UserPage({
           if (!type) return <span className="text-gray-400">-</span>;
           return (
             <span
-              className={`px-2 py-1 rounded-full text-xs font-semibold ${type === 'Entrada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}
+              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                type === 'Entrada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}
             >
               {type}
             </span>
@@ -580,20 +584,20 @@ export default function UserPage({
       },
       ...(data.role === 'trabajador'
         ? [
-          {
-            title: 'Huella Digital',
-            key: 'has_fingerprint',
-            render: (_, user) => (
-              <span
-                style={{
-                  color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
-                }}
-              >
-                <FingerprintIcon />
-              </span>
-            ),
-          },
-        ]
+            {
+              title: 'Huella Digital',
+              key: 'has_fingerprint',
+              render: (_, user) => (
+                <span
+                  style={{
+                    color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
+                  }}
+                >
+                  <FingerprintIcon />
+                </span>
+              ),
+            },
+          ]
         : []),
     ],
     jugador: [
@@ -660,16 +664,17 @@ export default function UserPage({
         key: 'status',
         render: (_, branch) => (
           <div
-            className={`${branch?.status?.name === 'Activo'
-              ? 'bg-green-300'
-              : branch?.status?.name === 'Inactivo'
-                ? 'bg-red-200'
-                : branch?.status?.name === 'En revisión'
-                  ? 'bg-orange-300'
-                  : branch?.status?.name === 'Borrado'
-                    ? 'bg-red-400'
-                    : ''
-              } 
+            className={`${
+              branch?.status?.name === 'Activo'
+                ? 'bg-green-300'
+                : branch?.status?.name === 'Inactivo'
+                  ? 'bg-red-200'
+                  : branch?.status?.name === 'En revisión'
+                    ? 'bg-orange-300'
+                    : branch?.status?.name === 'Borrado'
+                      ? 'bg-red-400'
+                      : ''
+            } 
                                 font-bold rounded-full text-center p-1 w-6 h-6`}
           ></div>
         ),
@@ -732,20 +737,20 @@ export default function UserPage({
       },
       ...(data.role === 'jugador'
         ? [
-          {
-            title: 'Huella Digital',
-            key: 'has_fingerprint',
-            render: (_, user) => (
-              <span
-                style={{
-                  color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
-                }}
-              >
-                <FingerprintIcon />
-              </span>
-            ),
-          },
-        ]
+            {
+              title: 'Huella Digital',
+              key: 'has_fingerprint',
+              render: (_, user) => (
+                <span
+                  style={{
+                    color: user.has_fingerprint ? '#52c41a' : '#ff4d4f',
+                  }}
+                >
+                  <FingerprintIcon />
+                </span>
+              ),
+            },
+          ]
         : []),
     ],
   };
@@ -785,26 +790,26 @@ export default function UserPage({
       if (startDate && !endDate) {
         return now < startDate
           ? {
-            text: 'Pendiente de activación',
-            class: 'bg-yellow-100 text-yellow-800',
-          }
+              text: 'Pendiente de activación',
+              class: 'bg-yellow-100 text-yellow-800',
+            }
           : {
-            text: 'Activo sin vencimiento',
-            class: 'bg-blue-100 text-blue-800',
-          };
+              text: 'Activo sin vencimiento',
+              class: 'bg-blue-100 text-blue-800',
+            };
       }
 
       // Solo tiene fecha de fin
       if (!startDate && endDate) {
         return now > endDate
           ? {
-            text: 'Vencido',
-            class: 'bg-red-100 text-red-800',
-          }
+              text: 'Vencido',
+              class: 'bg-red-100 text-red-800',
+            }
           : {
-            text: 'Activo',
-            class: 'bg-green-100 text-green-800',
-          };
+              text: 'Activo',
+              class: 'bg-green-100 text-green-800',
+            };
       }
 
       // Tiene ambas fechas
@@ -935,9 +940,9 @@ export default function UserPage({
       header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Panel</h2>}
     >
       <Head title={`Usuarios ${data.role || 'todos'}`} />
-      <header className="flex items-center p-4 shadow-sm justify-betwee">
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
-        <h1 className="text-4xl font-bold">
+        <h1 className="min-w-0 text-2xl font-bold sm:text-3xl lg:text-4xl">
           {roleDisplayNames[data?.role] || 'Todos los usuarios'}
         </h1>
       </header>
@@ -985,11 +990,7 @@ export default function UserPage({
                 <Button type="primary" onClick={handleSearch}>
                   Buscar
                 </Button>
-                <Button
-                  type="default"
-                  icon={<DownloadOutlined />}
-                  onClick={exportToExcel}
-                >
+                <Button type="default" icon={<DownloadOutlined />} onClick={exportToExcel}>
                   Exportar
                 </Button>
               </div>

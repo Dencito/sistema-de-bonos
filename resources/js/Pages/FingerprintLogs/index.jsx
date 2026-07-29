@@ -235,9 +235,9 @@ export default function FingerprintLogPage({
       }
     >
       <Head title="Registros de Huella" />
-      <header className="flex justify-between items-center p-4 bg-white shadow-sm">
+      <header className="flex items-center justify-between gap-3 p-4 bg-white shadow-sm">
         <MobileButton role={auth.role} roles={auth.roles} />
-        <h1 className="text-4xl font-bold">Registros de Huella</h1>
+        <h1 className="min-w-0 text-2xl font-bold sm:text-3xl lg:text-4xl">Registros de Huella</h1>
       </header>
       <div className="overflow-auto z-10 flex-1 p-4">
         <div className="w-full">

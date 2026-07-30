@@ -86,6 +86,8 @@ class SetTenantSessionCookie
             'login', 'logout', 'register', 'password', 'email', 'profile',
             'build', 'storage', 'api', 'broadcasting', 'livewire', 'up',
             'verify-email', 'forgot-password', 'reset-password', 'assets',
+            // Consola de plataforma: está por encima de los tenants
+            'create-company', 'platform',
         ];
         return !in_array(strtolower($seg), $reserved, true);
     }

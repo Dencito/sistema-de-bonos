@@ -20,7 +20,9 @@ use App\Http\Controllers\Statuses\StatusController;
 use App\Http\Controllers\Tickets\TicketController;
 use App\Http\Controllers\Totems\TotemController;
 use App\Http\Controllers\Users\UserController;
+use App\Http\Controllers\Platform\PlatformConsoleController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Mail\RequestMoreBranchesMail;
 use App\Models\CategoryBonus;
 use App\Models\Company;
@@ -30,6 +32,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+/*
+|--------------------------------------------------------------------------
+| Consola de plataforma
+|--------------------------------------------------------------------------
+| Vive fuera de cualquier tenant: no lleva el prefijo /{empresa} y no depende
+| de las tablas de ninguna empresa. Se autentica contra
+| storage/app/platform-admins.json, no contra la tabla users.
+|
+| Los segmentos 'create-company' y 'platform' estan en la lista de reservados
+| de SetTenantSessionCookie, asi que nunca se confunden con un tenant.
+*/
+Route::get('/create-company', [PlatformConsoleController::class, 'showLogin'])->name('platform.login');
+Route::post('/create-company/login', [PlatformConsoleController::class, 'login'])->name('platform.login.attempt');
+
+Route::middleware(EnsurePlatformAdmin::class)->group(function () {
+    Route::get('/create-company/console', [PlatformConsoleController::class, 'console'])->name('platform.companies.create');
+    Route::post('/create-company/console', [PlatformConsoleController::class, 'storeCompany'])->name('platform.companies.store');
+    Route::post('/create-company/logout', [PlatformConsoleController::class, 'logout'])->name('platform.logout');
+});
 
 Route::get('/', function () {
     return Inertia::render('Dashboard');

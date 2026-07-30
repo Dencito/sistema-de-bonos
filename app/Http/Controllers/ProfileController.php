@@ -6,7 +6,6 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -118,30 +117,10 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * No existe autoborrado de cuenta a proposito: User no usa SoftDeletes, asi
+     * que seria un borrado fisico irreversible. Las bajas las hace un rol
+     * superior desde Usuarios.
      */
-    public function destroy(Request $request): RedirectResponse
-    {
-        try {
-            $request->validate([
-                'password' => ['required', 'current_password'],
-            ]);
-
-            $user = $request->user();
-
-            Auth::logout();
-
-            $user->delete();
-
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return Redirect::to('/');
-        } catch (\Throwable $exception) {
-            $this->logError($exception, 'profile.destroy');
-            throw $exception;
-        }
-    }
 
     protected function logError(Throwable $exception, string $context = '', array $extraData = []): void
     {

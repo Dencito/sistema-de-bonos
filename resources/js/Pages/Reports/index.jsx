@@ -69,6 +69,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
 
       const response = await axios.get('/api/reports/players', {
         params,
+        baseURL: '',
       });
       setReportData(response.data);
     } catch {
@@ -90,6 +91,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
 
       const response = await axios.get(`/api/reports/shift/${id}`, {
         params,
+        baseURL: '',
       });
       setReportData(response.data);
     } catch {
@@ -133,6 +135,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
 
       const response = await axios.get('/api/reports/fingerprint-logs', {
         params,
+        baseURL: '',
       });
       setReportData(response.data);
     } catch {
@@ -171,6 +174,7 @@ export default function Reports({ auth, branches, shifts, filters }) {
 
       const response = await axios.get('/api/reports/fingerprint-logs', {
         params,
+        baseURL: '',
       });
       setReportData(response.data);
     } catch {

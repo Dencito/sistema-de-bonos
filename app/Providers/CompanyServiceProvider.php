@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\CompanyDatabaseService;
+use App\Support\TenantResolver;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -38,26 +39,18 @@ class CompanyServiceProvider extends ServiceProvider
     {
         try {
             $request = request();
-            $host = $request->getHost();
-            $subdomain;
-            Log::info('Host original: ' . $host);
 
-            if ($this->isLocalEnvironment($host)) {
-                $subdomain = $request->header('X-Company-Prefix', '888spa');
-                Log::info('Usando entorno local, subdomain desde header: ' . $subdomain);
-            } else {
-                if (empty($host)) {
-                    throw new \Exception('Host no válido: está vacío');
-                }
+            // TenantResolver mira, en orden: header X-Company-Prefix, primer
+            // segmento del path (/nanu/login) y subdominio. Devuelve null
+            // cuando no hay empresa, que es el modo tickets: tablas sin prefijo.
+            $subdomain = TenantResolver::fromRequest($request);
 
-                $subdomain = $this->getSubdomainFromHost($host);
-                if (empty($subdomain)) {
-                    throw new \Exception('No se pudo extraer el subdominio del host');
-                }
+            // En local, sin nada que resolver, se opera sobre 888spa
+            if (!$subdomain && $this->isLocalEnvironment($request->getHost())) {
+                $subdomain = TenantResolver::fromPath($request) ? null : '888spa';
             }
 
-            Log::info('APP_PRIMARY_SUBDOMAIN: ' . env('APP_PRIMARY_SUBDOMAIN'));
-            if ($subdomain === 'tickets') {
+            if (!$subdomain) {
                 Config::set('company.prefix', null);
                 return;
             }

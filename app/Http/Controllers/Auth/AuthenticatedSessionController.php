@@ -45,7 +45,10 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        // route() ya devuelve la URL con el prefijo de la empresa, a diferencia
+        // de RouteServiceProvider::HOME que es '/' absoluto y sacaba al usuario
+        // de su empresa al entrar.
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
@@ -58,6 +61,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Vuelve al login DE LA EMPRESA: route() lleva el prefijo, '/' no.
+        return redirect()->route('login');
     }
 }

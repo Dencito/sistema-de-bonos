@@ -16,6 +16,10 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        {{-- Empresa del request. Se lee desde bootstrap.js para configurar axios
+             antes de que corra cualquier componente. Vacio = modo tickets. --}}
+        <meta name="tenant" content="{{ config('company.prefix') ?? '' }}">
+
         <!-- Scripts -->
         @routes
         @viteReactRefresh

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\TenantResolver;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -43,52 +44,15 @@ class SetTenantSessionCookie
     }
 
     /**
-     * Resuelve el tenant en este orden:
-     *  1. Header X-Company-Prefix (usado en dev/localhost).
-     *  2. Primer segmento del path URL (path-based tenancy).
-     *  3. Subdominio del host (legacy).
-     *  4. config('company.prefix') ya resuelto por el ServiceProvider.
+     * Delega en TenantResolver, que es el único lugar donde se decide de qué
+     * empresa es un request. Antes este middleware tenía su propia copia de la
+     * lógica y podía discrepar del CompanyServiceProvider.
+     *
+     * config('company.prefix') queda como último recurso porque el provider ya
+     * corrió cuando este middleware se ejecuta.
      */
     protected function resolveTenant(Request $request): ?string
     {
-        $header = $request->header('X-Company-Prefix');
-        if (!empty($header)) {
-            return $header;
-        }
-
-        $segment = $request->segment(1);
-        if ($segment && $this->looksLikeTenantSegment($segment)) {
-            return $segment;
-        }
-
-        $host = $request->getHost();
-        if ($host && !in_array($host, ['localhost', '127.0.0.1'], true)) {
-            $parts = explode('.', str_replace('www.', '', $host));
-            if (count($parts) >= 3) {
-                return $parts[0];
-            }
-        }
-
-        $fromConfig = config('company.prefix');
-        if (!empty($fromConfig)) {
-            return $fromConfig;
-        }
-
-        return null;
-    }
-
-    /**
-     * Evita tomar rutas estáticas/asset/etc como tenant.
-     */
-    protected function looksLikeTenantSegment(string $seg): bool
-    {
-        $reserved = [
-            'login', 'logout', 'register', 'password', 'email', 'profile',
-            'build', 'storage', 'api', 'broadcasting', 'livewire', 'up',
-            'verify-email', 'forgot-password', 'reset-password', 'assets',
-            // Consola de plataforma: está por encima de los tenants
-            'create-company', 'platform',
-        ];
-        return !in_array(strtolower($seg), $reserved, true);
+        return TenantResolver::fromRequest($request) ?: (config('company.prefix') ?: null);
     }
 }

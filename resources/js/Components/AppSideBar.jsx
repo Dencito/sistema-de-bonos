@@ -23,6 +23,7 @@ import {
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
 import ChangePasswordModal from '@/Components/ChangePasswordModal';
+import { IS_TICKETS_MODE, TENANT, tenantPath } from '@/Utils/tenant';
 
 /* global route */
 
@@ -47,25 +48,17 @@ export function AppSidebar({ role, roles, user }) {
       displayName: roleDisplayNames[role.name] || role.name,
     })) || [];
 
-  function getSubdomain() {
-    var host = document.location.host;
-    var partes = host.split('.');
-    var subdominio = partes[0];
-
-    if (subdominio === 'www') {
-      subdominio = '';
-    }
-
-    return subdominio;
-  }
-
-  const isTickets = getSubdomain() === 'tickets';
+  // La empresa la resuelve el backend, no se deduce del host: ver Utils/tenant
+  const isTickets = IS_TICKETS_MODE;
   const path = window.location.pathname;
   const [isOpen, setIsOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Marca activo también las subrutas, p. ej. /users/3 dentro de /users
-  const isActive = (link) => (link === '/' ? path === '/' : path.startsWith(link));
+  const isActive = (link) => {
+    const target = tenantPath(link);
+    return link === '/' ? path === target : path.startsWith(target);
+  };
 
   const initials = (user?.username || '?')
     .split(/[\s._-]+/)
@@ -194,7 +187,10 @@ export function AppSidebar({ role, roles, user }) {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-slate-200 bg-white">
-        <Link href="/" className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-slate-50">
+        <Link
+          href={tenantPath('/')}
+          className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-slate-50"
+        >
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-900 shrink-0">
             <Banknote className="w-5 h-5 text-white" />
           </div>
@@ -202,7 +198,9 @@ export function AppSidebar({ role, roles, user }) {
             <p className="text-[11px] font-medium tracking-wide uppercase text-slate-400">
               Empresa
             </p>
-            <p className="text-sm font-bold uppercase truncate text-slate-900">{getSubdomain()}</p>
+            <p className="text-sm font-bold uppercase truncate text-slate-900">
+              {TENANT || 'tickets'}
+            </p>
           </div>
         </Link>
       </SidebarHeader>
@@ -231,7 +229,7 @@ export function AppSidebar({ role, roles, user }) {
                       return (
                         <SidebarMenuItem key={item.key}>
                           <SidebarMenuButton asChild tooltip={item.label} className={itemClass}>
-                            <Link href={item.link}>
+                            <Link href={tenantPath(item.link)}>
                               <item.icon className="w-4 h-4 shrink-0" />
                               <span>{item.label}</span>
                             </Link>
@@ -264,7 +262,7 @@ export function AppSidebar({ role, roles, user }) {
                                   asChild
                                   className="text-slate-600 hover:bg-slate-100"
                                 >
-                                  <Link href={`${item.link}?role=${subItem.name}`}>
+                                  <Link href={`${tenantPath(item.link)}?role=${subItem.name}`}>
                                     <span className="text-sm">{subItem.displayName}</span>
                                   </Link>
                                 </SidebarMenuButton>

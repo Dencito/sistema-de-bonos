@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
 use App\Services\CompanyDatabaseService;
 use App\Services\PlatformAdminService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -77,7 +77,8 @@ class PlatformConsoleController extends Controller
     public function console()
     {
         return Inertia::render('Platform/Console', [
-            'companies' => Company::query()
+            // Tabla sin prefijo a proposito: ver el comentario en storeCompany()
+            'companies' => DB::table('companies')
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug', 'domain', 'is_active', 'created_at']),
             'baseUrl' => rtrim(config('app.url'), '/'),
@@ -105,7 +106,7 @@ class PlatformConsoleController extends Controller
                 'max:60',
                 // El slug es el prefijo de las tablas y el segmento de la URL
                 'regex:/^[a-z][a-z0-9]*$/',
-                Rule::unique(Company::class, 'slug'),
+                Rule::unique('companies', 'slug'),
             ],
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
@@ -122,7 +123,11 @@ class PlatformConsoleController extends Controller
             ]);
         }
 
-        $company = Company::create([
+        // El registro de plataforma es la tabla companies SIN prefijo: ahi estan
+        // todos los tenants. No se usa el modelo Company porque lleva el trait
+        // CompanyScope y terminaria escribiendo en {prefijo}_companies, o sea
+        // dentro del tenant que resolvio este request.
+        $row = [
             'name' => $data['name'],
             'slug' => $data['slug'],
             'schema_name' => $data['slug'],
@@ -132,14 +137,39 @@ class PlatformConsoleController extends Controller
             'status_id' => 1,
             'is_active' => true,
             'settings' => json_encode([]),
-        ]);
+            'creationDate' => now()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
 
-        // createCompanyTables lee $request->slug para armar los nombres
-        $databases->createCompanyTables(new Request(['slug' => $data['slug']]));
+        $companyId = DB::table('companies')->insertGetId($row);
+
+        try {
+            // createCompanyTables crea las tablas del tenant y ademas siembra la
+            // copia de la empresa en {slug}_companies, donde name es NOT NULL:
+            // por eso necesita los datos y no solo el slug.
+            $databases->createCompanyTables(new Request([
+                'slug' => $data['slug'],
+                'name' => $data['name'],
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'max_branches' => $data['max_branches'],
+            ]));
+        } catch (\Throwable $e) {
+            // El CREATE TABLE no es transaccional en MySQL, asi que las tablas
+            // que se hayan alcanzado a crear quedan. Al menos no dejamos la
+            // empresa a medias en el registro, que es lo que se lista.
+            DB::table('companies')->where('id', $companyId)->delete();
+
+            throw ValidationException::withMessages([
+                'slug' => 'No se pudieron crear las tablas: ' . $e->getMessage()
+                    . ' Revisá si quedaron tablas ' . $data['slug'] . '_* a medio crear.',
+            ]);
+        }
 
         return redirect()
             ->route('platform.companies.create')
-            ->with('status', "Empresa {$company->name} creada. Ya podés entrar en /{$company->slug}/login");
+            ->with('status', "Empresa {$data['name']} creada. Ya podés entrar en /{$data['slug']}/login");
     }
 
     public function logout(Request $request)

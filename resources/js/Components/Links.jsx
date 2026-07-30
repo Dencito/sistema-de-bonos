@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
+import { IS_TICKETS_MODE, tenantPath } from '@/Utils/tenant';
 
 export const Links = ({ role, roles }) => {
   const formattedRoles = roles.map((role) => ({
@@ -19,19 +20,8 @@ export const Links = ({ role, roles }) => {
     displayName: roleDisplayNames[role.name] || role.name,
   }));
 
-  function getSubdomain() {
-    var host = document.location.host;
-    var partes = host.split('.');
-    var subdominio = partes[0];
-
-    if (subdominio === 'www') {
-      subdominio = '';
-    }
-
-    return subdominio;
-  }
-
-  const isTickets = getSubdomain() === 'tickets';
+  // La empresa la resuelve el backend, no se deduce del host: ver Utils/tenant
+  const isTickets = IS_TICKETS_MODE;
 
   const path = window.location.pathname;
   const [isOpen, setIsOpen] = useState(false);
@@ -115,7 +105,7 @@ export const Links = ({ role, roles }) => {
           {item.autorized && item?.link !== '/users' && (
             <Link
               className={`transition-all duration-300 my-2 ${path === item?.link ? 'bg-cyan-300' : 'hover:bg-cyan-300'} flex gap-2 rounded-lg py-3 ps-3 text-lg items-center space-x-2`}
-              href={item?.link}
+              href={tenantPath(item?.link)}
               selected
             >
               {item.icon}{' '}
@@ -154,7 +144,7 @@ export const Links = ({ role, roles }) => {
                     <Link
                       key={subItem?.name}
                       className="flex gap-2 items-center py-1 space-x-2 text-base rounded-lg transition-all duration-300 hover:bg-cyan-300 ps-12"
-                      href={`${item.link}?role=${subItem?.name}`}
+                      href={`${tenantPath(item.link)}?role=${subItem?.name}`}
                     >
                       <span className="text-sm font-normal">
                         {subItem?.displayName} {/* Usa displayName en lugar de name */}

@@ -148,6 +148,7 @@ export default function CashShiftHistoryIndex({
     sorteo: 'Sorteo',
     bonus_especial: 'Bono Especial',
     prestamo: 'Préstamo',
+    tragados: 'Tragados',
     deposit: 'Agregar Dinero',
     withdrawal: 'Quitar Dinero',
   };
@@ -162,6 +163,9 @@ export default function CashShiftHistoryIndex({
     sorteo: 'cyan',
     bonus_especial: 'magenta',
     prestamo: 'volcano',
+    // Los 11 colores preset de antd ya estaban tomados: este es un violeta más
+    // oscuro que el de payment, para que se lean como parientes pero distintos.
+    tragados: '#391085',
     deposit: 'lime',
     withdrawal: 'red',
   };
@@ -607,6 +611,12 @@ export default function CashShiftHistoryIndex({
                               total: shift.total_prestamo,
                               caja: shift.total_prestamo_caja,
                               pasillera: shift.total_prestamo_pasillera,
+                            },
+                            {
+                              title: 'Tragados',
+                              total: shift.total_tragados,
+                              caja: shift.total_tragados_caja,
+                              pasillera: shift.total_tragados_pasillera,
                             },
                             {
                               title: 'Depósitos',

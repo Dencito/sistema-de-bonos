@@ -11,6 +11,7 @@ class TransactionType
     const SORTEO = 'sorteo';
     const BONUS_ESPECIAL = 'bonus_especial';
     const PRESTAMO = 'prestamo';
+    const TRAGADOS = 'tragados';
     const DEPOSIT = 'deposit';
     const WITHDRAWAL = 'withdrawal';
     const PASILLERA_PAYMENT = 'pasillera_payment';
@@ -24,6 +25,7 @@ class TransactionType
         self::SORTEO,
         self::BONUS_ESPECIAL,
         self::PRESTAMO,
+        self::TRAGADOS,
         self::DEPOSIT,
         self::WITHDRAWAL,
         self::PASILLERA_PAYMENT,
@@ -38,6 +40,7 @@ class TransactionType
         self::SORTEO,
         self::BONUS_ESPECIAL,
         self::PRESTAMO,
+        self::TRAGADOS,
         self::DEPOSIT,
         self::WITHDRAWAL,
     ];
@@ -61,6 +64,7 @@ class TransactionType
         self::SORTEO,
         self::BONUS_ESPECIAL,
         self::PRESTAMO,
+        self::TRAGADOS,
     ];
 
     const TYPES_THAT_REDUCE_BALANCE = [
@@ -71,6 +75,7 @@ class TransactionType
         self::SORTEO,
         self::BONUS_ESPECIAL,
         self::PRESTAMO,
+        self::TRAGADOS,
         self::WITHDRAWAL,
         self::PASILLERA_PAYMENT,
     ];
@@ -83,6 +88,7 @@ class TransactionType
         self::SORTEO => 'Sorteo',
         self::BONUS_ESPECIAL => 'Bono Especial',
         self::PRESTAMO => 'Préstamo',
+        self::TRAGADOS => 'Tragados',
         self::DEPOSIT => 'Agregar Dinero',
         self::WITHDRAWAL => 'Quitar Dinero',
         self::PASILLERA_PAYMENT => 'Pago Pasillera',
@@ -99,6 +105,7 @@ class TransactionType
         self::SORTEO => 'total_sorteo',
         self::BONUS_ESPECIAL => 'total_bonus_especial',
         self::PRESTAMO => 'total_prestamo',
+        self::TRAGADOS => 'total_tragados',
         self::DEPOSIT => 'total_deposit',
         self::WITHDRAWAL => 'total_withdrawal',
     ];
@@ -112,6 +119,7 @@ class TransactionType
         self::SORTEO => 'total_sorteo_pasillera',
         self::BONUS_ESPECIAL => 'total_bonus_especial_pasillera',
         self::PRESTAMO => 'total_prestamo_pasillera',
+        self::TRAGADOS => 'total_tragados_pasillera',
         self::DEPOSIT => 'total_deposit_pasillera',
         self::WITHDRAWAL => 'total_withdrawal_pasillera',
     ];

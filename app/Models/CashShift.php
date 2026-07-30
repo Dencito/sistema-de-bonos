@@ -24,6 +24,7 @@ class CashShift extends Model
         'total_sorteo',
         'total_bonus_especial',
         'total_prestamo',
+        'total_tragados',
         'total_deposit',
         'total_withdrawal',
         'total_transfers_pasillera',
@@ -33,6 +34,7 @@ class CashShift extends Model
         'total_sorteo_pasillera',
         'total_bonus_especial_pasillera',
         'total_prestamo_pasillera',
+        'total_tragados_pasillera',
         'total_deposit_pasillera',
         'total_withdrawal_pasillera',
         'is_active',
@@ -71,6 +73,7 @@ class CashShift extends Model
         'total_sorteo' => 'decimal:2',
         'total_bonus_especial' => 'decimal:2',
         'total_prestamo' => 'decimal:2',
+        'total_tragados' => 'decimal:2',
         'total_deposit' => 'decimal:2',
         'total_withdrawal' => 'decimal:2',
         'total_transfers_pasillera' => 'decimal:2',
@@ -80,6 +83,7 @@ class CashShift extends Model
         'total_sorteo_pasillera' => 'decimal:2',
         'total_bonus_especial_pasillera' => 'decimal:2',
         'total_prestamo_pasillera' => 'decimal:2',
+        'total_tragados_pasillera' => 'decimal:2',
         'total_deposit_pasillera' => 'decimal:2',
         'total_withdrawal_pasillera' => 'decimal:2',
         'is_active' => 'boolean',
@@ -137,6 +141,7 @@ class CashShift extends Model
         'total_sorteo_caja',
         'total_bonus_especial_caja',
         'total_prestamo_caja',
+        'total_tragados_caja',
         'total_deposit_caja',
         'total_withdrawal_caja',
     ];
@@ -175,6 +180,11 @@ class CashShift extends Model
     public function getTotalPrestamoCajaAttribute(): float
     {
         return (float) $this->total_prestamo - (float) $this->total_prestamo_pasillera;
+    }
+
+    public function getTotalTragadosCajaAttribute(): float
+    {
+        return (float) $this->total_tragados - (float) $this->total_tragados_pasillera;
     }
 
     public function getTotalDepositCajaAttribute(): float

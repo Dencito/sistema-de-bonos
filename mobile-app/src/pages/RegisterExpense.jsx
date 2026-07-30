@@ -30,6 +30,7 @@ export default function RegisterExpense() {
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
     { value: 'prestamo', label: 'Préstamo', requiresClient: true },
+    { value: 'tragados', label: 'Tragados', requiresMachine: true },
   ];
 
   const commonExpenses = [

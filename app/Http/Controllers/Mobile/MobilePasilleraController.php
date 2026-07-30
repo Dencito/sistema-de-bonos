@@ -90,8 +90,8 @@ class MobilePasilleraController extends Controller
      */
     private function checkTypeRequirements(string $type, Request $request): ?string
     {
-        if (in_array($type, [TransactionType::PASILLERA_PAYMENT, TransactionType::PAYMENT]) && empty($request->machine)) {
-            return 'Debe indicar el número de máquina para el pago';
+        if (in_array($type, [TransactionType::PASILLERA_PAYMENT, TransactionType::PAYMENT, TransactionType::TRAGADOS]) && empty($request->machine)) {
+            return 'Debe indicar el número de máquina para ' . (TransactionType::LABELS[$type] ?? 'el pago');
         }
 
         if ($type === TransactionType::OTHER && empty($request->expense_type)) {

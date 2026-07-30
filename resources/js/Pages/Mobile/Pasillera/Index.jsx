@@ -55,6 +55,7 @@ export default function MobilePasillera({ auth }) {
     { value: 'sorteo', label: 'Sorteo' },
     { value: 'bonus_especial', label: 'Bono Especial' },
     { value: 'prestamo', label: 'Préstamo' },
+    { value: 'tragados', label: 'Tragados' },
   ];
 
   const showMachine = transactionType === 'payment';
@@ -110,7 +111,7 @@ export default function MobilePasillera({ auth }) {
       return;
     }
 
-    if (transactionType === 'payment' && !machine) {
+    if (['payment', 'tragados'].includes(transactionType) && !machine) {
       message.error('Seleccione una máquina');
       return;
     }

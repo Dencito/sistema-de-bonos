@@ -389,6 +389,7 @@ class CompanyDatabaseService
                     $table->decimal('total_sorteo', 15, 2)->default(0);
                     $table->decimal('total_bonus_especial', 15, 2)->default(0);
                     $table->decimal('total_prestamo', 15, 2)->default(0);
+                    $table->decimal('total_tragados', 15, 2)->default(0);
                     $table->decimal('total_deposit', 15, 2)->default(0);
                     $table->decimal('total_withdrawal', 15, 2)->default(0);
                     // Totales separados por Pasillera
@@ -399,6 +400,7 @@ class CompanyDatabaseService
                     $table->decimal('total_sorteo_pasillera', 15, 2)->default(0);
                     $table->decimal('total_bonus_especial_pasillera', 15, 2)->default(0);
                     $table->decimal('total_prestamo_pasillera', 15, 2)->default(0);
+                    $table->decimal('total_tragados_pasillera', 15, 2)->default(0);
                     $table->decimal('total_deposit_pasillera', 15, 2)->default(0);
                     $table->decimal('total_withdrawal_pasillera', 15, 2)->default(0);
                     $table->boolean('is_active')->default(true);

@@ -69,6 +69,7 @@ export default function Dashboard() {
     { value: 'sorteo', label: 'Sorteo', requiresClient: true },
     { value: 'bonus_especial', label: 'Bono Especial', requiresClient: true },
     { value: 'prestamo', label: 'Préstamo', requiresClient: true },
+    { value: 'tragados', label: 'Tragados', requiresMachine: true },
   ];
 
   // Reconstruye el prefijo que arma el backend en buildDescription() para poder
@@ -793,6 +794,7 @@ export default function Dashboard() {
                 sorteo: 'Sorteo',
                 bonus_especial: 'Bono Especial',
                 prestamo: 'Préstamo',
+                tragados: 'Tragados',
                 deposit: 'Agregar Dinero',
                 withdrawal: 'Quitar Dinero',
                 pasillera_payment: 'Pago Máquina',

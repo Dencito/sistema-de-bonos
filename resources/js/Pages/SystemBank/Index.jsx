@@ -43,6 +43,26 @@ const { Option } = Select;
 
 const BRANCH_STORAGE_KEY = 'systembank:branch_id';
 
+// Espejo de TransactionType::LABELS del backend. Estaba repetido en tres mapas
+// dentro del componente, cada uno con su propio subconjunto.
+const TYPE_LABELS = {
+  transfer: 'Transferencia',
+  giro: 'Giro',
+  payment: 'Pago por Caja',
+  tragados: 'Tragados',
+  other: 'Otro Gasto',
+  pasillera_payment: 'Pago Pasillera',
+  pasillera_return: 'Reintegro Pasillera',
+  sorteo: 'Sorteo',
+  bonus_especial: 'Bono Especial',
+  prestamo: 'Préstamo',
+  deposit: 'Agregar Dinero',
+  withdrawal: 'Quitar Dinero',
+};
+
+// Tipos que se registran contra una máquina: abren el modal que la pide.
+const MACHINE_TYPES = ['payment', 'tragados'];
+
 export default function SystemBank({
   auth,
   activeShift,
@@ -109,6 +129,8 @@ export default function SystemBank({
   const [machine, setMachine] = useState('');
   const [expenseType, setExpenseType] = useState('');
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  // Pago por Caja y Tragados comparten el modal que pide la máquina
+  const [machineTransactionType, setMachineTransactionType] = useState('payment');
   const [otherModalVisible, setOtherModalVisible] = useState(false);
   const [clientModalVisible, setClientModalVisible] = useState(false);
   const [clientTransactionType, setClientTransactionType] = useState('');
@@ -391,8 +413,8 @@ export default function SystemBank({
     }
 
     // Validaciones específicas por tipo
-    if (type === 'payment' && !machine) {
-      message.error('Debe indicar el número de máquina para Pago por Caja');
+    if (MACHINE_TYPES.includes(type) && !machine) {
+      message.error(`Debe indicar el número de máquina para ${TYPE_LABELS[type]}`);
       return;
     }
     const effectiveExpenseType = overrideExpenseType || expenseType;
@@ -679,20 +701,7 @@ export default function SystemBank({
         if (record.source === 'ticket') {
           return <Tag color="blue">Ticket</Tag>;
         }
-        const types = {
-          transfer: 'Transferencia',
-          giro: 'Giro',
-          payment: 'Pago por Caja',
-          other: 'Otro Gasto',
-          pasillera_payment: 'Pago Pasillera',
-          pasillera_return: 'Reintegro Pasillera',
-          sorteo: 'Sorteo',
-          bonus_especial: 'Bono Especial',
-          prestamo: 'Préstamo',
-          deposit: 'Agregar Dinero',
-          withdrawal: 'Quitar Dinero',
-        };
-        const label = types[type] || type;
+        const label = TYPE_LABELS[type] || type;
         const sourceLabel = record.source === 'pasillera' ? ' (Pasillera)' : '';
         return label + sourceLabel;
       },
@@ -1135,6 +1144,11 @@ export default function SystemBank({
     fn();
   };
 
+  const openMachineModal = (type) => {
+    setMachineTransactionType(type);
+    setPaymentModalVisible(true);
+  };
+
   const openClientModal = (type) => {
     setClientTransactionType(type);
     setClientModalVisible(true);
@@ -1372,6 +1386,12 @@ export default function SystemBank({
                   pasillera: shift?.total_payments_pasillera,
                 },
                 {
+                  title: 'Tragados',
+                  total: shift?.total_tragados,
+                  caja: shift?.total_tragados_caja,
+                  pasillera: shift?.total_tragados_pasillera,
+                },
+                {
                   title: 'Otros Gastos',
                   total: shift?.total_other,
                   caja: shift?.total_other_caja,
@@ -1517,9 +1537,15 @@ export default function SystemBank({
                   </Button>
                   <Button
                     size="large"
-                    onClick={() => withAmount(() => setPaymentModalVisible(true))}
+                    onClick={() => withAmount(() => openMachineModal('payment'))}
                   >
                     Pago por Caja
+                  </Button>
+                  <Button
+                    size="large"
+                    onClick={() => withAmount(() => openMachineModal('tragados'))}
+                  >
+                    Tragados
                   </Button>
                   <Button size="large" onClick={() => withAmount(() => setOtherModalVisible(true))}>
                     Otro Gasto
@@ -1567,15 +1593,15 @@ export default function SystemBank({
           )}
         </Card>
 
-        {/* Modal Pago por Caja - pedir máquina */}
+        {/* Modal de Pago por Caja y Tragados - pedir máquina */}
         <Modal
-          title="Pago por Caja"
+          title={TYPE_LABELS[machineTransactionType] || 'Pago por Caja'}
           open={paymentModalVisible}
           onCancel={() => {
             setPaymentModalVisible(false);
             setMachine('');
           }}
-          onOk={() => handleTransaction('payment')}
+          onOk={() => handleTransaction(machineTransactionType)}
           confirmLoading={loading}
           okText="Registrar"
           cancelText="Cancelar"
@@ -1824,15 +1850,7 @@ export default function SystemBank({
         {/* Modal Editar Transacción */}
         <Modal
           title={`Editar Transacción${
-            editingTx
-              ? ' · ' +
-                ({
-                  transfer: 'Transferencia',
-                  giro: 'Giro',
-                  payment: 'Pago por Caja',
-                  other: 'Otro Gasto',
-                }[editingTx.type] || editingTx.type)
-              : ''
+            editingTx ? ' · ' + (TYPE_LABELS[editingTx.type] || editingTx.type) : ''
           }`}
           open={editModalVisible}
           onCancel={() => {
@@ -2137,18 +2155,12 @@ export default function SystemBank({
                                 </Text>
                                 <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 6 }}>
                                   {pasillera.transactions.map((registro, index) => {
+                                    // Dentro de la pasillera estos dos tipos se
+                                    // nombran distinto que en la tabla general
                                     const typeLabels = {
+                                      ...TYPE_LABELS,
                                       pasillera_payment: 'Pago Máquina',
                                       pasillera_return: 'Reintegro',
-                                      transfer: 'Transferencia',
-                                      giro: 'Giro',
-                                      payment: 'Pago por Caja',
-                                      other: 'Otro Gasto',
-                                      sorteo: 'Sorteo',
-                                      bonus_especial: 'Bono Especial',
-                                      prestamo: 'Préstamo',
-                                      deposit: 'Agregar Dinero',
-                                      withdrawal: 'Quitar Dinero',
                                     };
                                     const label = typeLabels[registro.type] || registro.type;
                                     const isPositive = ['deposit', 'pasillera_return'].includes(

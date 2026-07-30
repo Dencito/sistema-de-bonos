@@ -433,11 +433,11 @@ class CashManagementController extends Controller
             'admin_user_id' => 'nullable|integer',
         ]);
 
-        // Para 'payment' requerimos máquina
-        if ($request->type === TransactionType::PAYMENT && empty($request->machine)) {
+        // 'payment' y 'tragados' se registran siempre contra una máquina
+        if (in_array($request->type, [TransactionType::PAYMENT, TransactionType::TRAGADOS]) && empty($request->machine)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Debe indicar el número de máquina para el pago por caja'
+                'message' => 'Debe indicar el número de máquina para ' . TransactionType::LABELS[$request->type]
             ], 422);
         }
 
@@ -618,7 +618,7 @@ class CashManagementController extends Controller
             ], 400);
         }
 
-        if ($transaction->type === TransactionType::PAYMENT && empty($request->machine)) {
+        if (in_array($transaction->type, [TransactionType::PAYMENT, TransactionType::TRAGADOS]) && empty($request->machine)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Debe indicar el número de máquina'

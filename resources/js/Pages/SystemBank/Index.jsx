@@ -121,7 +121,10 @@ export default function SystemBank({
   }, []);
 
   const [shift, setShift] = useState(activeShift);
-  const [prevBalance, setPrevBalance] = useState(previousBalance || 0);
+  // Number() no es opcional: el backend castea los montos con decimal:2 y Laravel
+  // los serializa como STRING ("9900000.00"). Sin convertir, prevBalance + monto
+  // concatena en vez de sumar y el total queda en el saldo anterior.
+  const [prevBalance, setPrevBalance] = useState(Number(previousBalance) || 0);
   const [initialBalance, setInitialBalance] = useState('');
   const [initialBalanceMode, setInitialBalanceMode] = useState('total');
   const [amount, setAmount] = useState('');
@@ -218,7 +221,7 @@ export default function SystemBank({
       const response = await api.get('/cash-management/shift-status');
       if (response.data.success) {
         setShift(response.data.data.activeShift);
-        setPrevBalance(response.data.data.previousBalance);
+        setPrevBalance(Number(response.data.data.previousBalance) || 0);
         setTotalTickets(response.data.data.totalTickets || 0);
         setPasilleras(response.data.data.activeShift?.pasilleras || []);
         setTransactions(response.data.data.activeShift?.transactions || []);
@@ -279,45 +282,65 @@ export default function SystemBank({
     ...tickets.map((t) => ({ ...t, source: 'ticket' })),
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const handleStartShift = async () => {
-    // Calculate the actual initial_balance to send based on mode
-    let initialBalanceToSend = Number(initialBalance) || 0;
-    if (initialBalanceMode === 'total') {
-      // If total mode, subtract previous balance
-      initialBalanceToSend = initialBalanceToSend - prevBalance;
-    }
+  // Cuánto dinero debería haber en la caja al abrir, según el modo elegido.
+  // Esta cuenta estaba repetida seis veces dentro del modal de apertura.
+  // Dejar el monto vacío significa "arrancar con el saldo anterior". Es lo que
+  // permite abrir contando solo los billetes, sin declarar un monto aparte.
+  const openingAmountEmpty =
+    initialBalance === '' || initialBalance === null || initialBalance === undefined;
 
-    if (initialBalanceToSend < 0) {
+  const openingExpectedTotal = (() => {
+    // Number() en los dos lados: el input tambien puede traer string
+    const amount = Number(initialBalance) || 0;
+    const prev = Number(prevBalance) || 0;
+
+    // Sin monto, o 'previous': se arrastra lo que quedó del turno anterior
+    if (openingAmountEmpty || initialBalanceMode === 'previous') return prev;
+    // 'total': el usuario declara el total que hay en la caja
+    if (initialBalanceMode === 'total') return amount;
+    // 'additional': el usuario declara solo lo que agrega
+    return prev + amount;
+  })();
+
+  // Lo que se agrega sobre el saldo anterior, que es lo que el backend espera en
+  // initial_balance. Puede dar negativo si en modo total se declara un total
+  // menor al saldo anterior, y eso se valida abajo.
+  const openingAddedAmount = openingExpectedTotal - (Number(prevBalance) || 0);
+
+  // La trampa que hizo que una cajera abriera con el doble: elegir "Monto
+  // Adicional" y escribir ahi el saldo anterior, creyendo que asi lo arrastraba.
+  // El sistema lo suma, como dice la etiqueta, y el total queda en el saldo
+  // anterior dos veces. Se avisa en vez de bloquear, porque puede ser a proposito.
+  const openingLooksDuplicated =
+    initialBalanceMode === 'additional' &&
+    prevBalance > 0 &&
+    Number(initialBalance) === prevBalance;
+
+  const handleStartShift = async () => {
+    if (openingAddedAmount < 0) {
       message.error('El monto total no puede ser menor al saldo anterior');
       return;
     }
 
-    if (initialBalanceToSend <= 0) {
-      message.error('Ingrese un saldo válido (mayor a 0)');
+    // En modo simple vale el total declarado; en desglose, la suma de billetes
+    const effectiveTotal = openingSimpleMode ? openingExpectedTotal : calculateOpeningTotal();
+
+    // Se valida el TOTAL, no lo agregado: abrir arrastrando solo el saldo
+    // anterior es válido y agrega 0.
+    if (effectiveTotal <= 0) {
+      message.error(
+        openingSimpleMode ? 'La caja no puede abrir en 0' : 'El conteo de billetes no puede ser 0',
+      );
       return;
     }
 
-    // In simple mode use the direct total; in denomination mode use the calculated sum
-    const effectiveTotal = openingSimpleMode
-      ? initialBalanceMode === 'total'
-        ? Number(initialBalance)
-        : prevBalance + Number(initialBalance)
-      : calculateOpeningTotal();
-
-    if (!openingSimpleMode && effectiveTotal <= 0) {
-      message.error('El conteo de billetes no puede ser 0');
-      return;
-    }
+    const initialBalanceToSend = openingAddedAmount;
 
     setLoading(true);
     try {
       const response = await api.post('/cash-management/shift/start', {
         initial_balance: initialBalanceToSend,
-        opening_total: openingSimpleMode
-          ? initialBalanceMode === 'total'
-            ? Number(initialBalance)
-            : prevBalance + Number(initialBalance)
-          : calculateOpeningTotal(),
+        opening_total: effectiveTotal,
         opening_20000: openingSimpleMode ? 0 : opening20000,
         opening_10000: openingSimpleMode ? 0 : opening10000,
         opening_5000: openingSimpleMode ? 0 : opening5000,
@@ -1314,21 +1337,33 @@ export default function SystemBank({
                 >
                   <Option value="total">Monto Total (incluye saldo anterior)</Option>
                   <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                  <Option value="previous" disabled={prevBalance <= 0}>
+                    {prevBalance > 0
+                      ? `Solo el saldo anterior (${formatCurrency(prevBalance)})`
+                      : 'Solo el saldo anterior (no hay saldo anterior)'}
+                  </Option>
                 </Select>
               </Col>
               <Col xs={24} md={7}>
                 <Text strong>
-                  {initialBalanceMode === 'total' ? 'Monto Total en Caja' : 'Monto a Agregar'}
+                  {initialBalanceMode === 'previous'
+                    ? 'Sin monto a ingresar'
+                    : initialBalanceMode === 'total'
+                      ? 'Monto Total en Caja'
+                      : 'Monto a Agregar'}
                 </Text>
                 <InputNumber
                   style={{ width: '100%', marginTop: 8 }}
                   value={initialBalance}
                   onChange={setInitialBalance}
+                  disabled={initialBalanceMode === 'previous'}
                   size="large"
                   placeholder={
-                    initialBalanceMode === 'total'
-                      ? 'Ingrese el monto total'
-                      : 'Ingrese monto a agregar'
+                    prevBalance > 0
+                      ? 'Opcional: vacío = usar saldo anterior'
+                      : initialBalanceMode === 'total'
+                        ? 'Ingrese el monto total'
+                        : 'Ingrese monto a agregar'
                   }
                   min={0}
                   precision={2}
@@ -1337,11 +1372,19 @@ export default function SystemBank({
               <Col xs={24} md={4}>
                 <p className="text-xs font-medium text-slate-500">Saldo Inicial Total</p>
                 <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
-                  {formatCurrency(
-                    initialBalanceMode === 'total'
-                      ? Number(initialBalance) || 0
-                      : prevBalance + (Number(initialBalance) || 0),
-                  )}
+                  {formatCurrency(openingExpectedTotal)}
+                </p>
+                {/* De dónde sale ese número. Sin esto no se ve si el monto se
+                    está sumando al saldo anterior o reemplazándolo, que es
+                    justo lo que confundió y termino abriendo una caja al doble. */}
+                <p className="text-[11px] leading-tight text-slate-500 tabular-nums">
+                  {prevBalance > 0 && openingAddedAmount > 0
+                    ? `${formatCurrency(prevBalance)} anterior + ${formatCurrency(openingAddedAmount)} que agregás`
+                    : prevBalance > 0 && openingAddedAmount === 0
+                      ? `${formatCurrency(prevBalance)} del turno anterior · no agregás nada`
+                      : openingAddedAmount < 0
+                        ? 'El total no puede ser menor al saldo anterior'
+                        : 'Sin saldo anterior'}
                 </p>
               </Col>
               <Col xs={24} md={4}>
@@ -1350,13 +1393,22 @@ export default function SystemBank({
                   size="large"
                   block
                   onClick={() => setOpeningModalVisible(true)}
-                  disabled={!initialBalance}
                   loading={loading}
                 >
                   Abrir Caja
                 </Button>
               </Col>
             </Row>
+
+            {openingLooksDuplicated && (
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginTop: 16 }}
+                message="Estás sumando un monto igual al saldo anterior"
+                description={`El total quedaría en ${formatCurrency(openingExpectedTotal)}, que es el saldo anterior dos veces. Si lo que querés es arrancar con el saldo anterior, elegí "Solo el saldo anterior".`}
+              />
+            )}
           </Card>
         )}
 
@@ -2338,27 +2390,51 @@ export default function SystemBank({
                   >
                     <Option value="total">Monto Total (incluye saldo anterior)</Option>
                     <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                    <Option value="previous" disabled={prevBalance <= 0}>
+                      {prevBalance > 0
+                        ? `Solo el saldo anterior (${formatCurrency(prevBalance)})`
+                        : 'Solo el saldo anterior (no hay saldo anterior)'}
+                    </Option>
                   </Select>
                 </div>
                 <Text strong>
-                  {initialBalanceMode === 'total'
-                    ? 'Total en caja al abrir *'
-                    : 'Monto a Agregar *'}
+                  {initialBalanceMode === 'previous'
+                    ? 'Sin monto a ingresar'
+                    : initialBalanceMode === 'total'
+                      ? 'Total en caja al abrir *'
+                      : 'Monto a Agregar *'}
                 </Text>
                 <InputNumber
                   style={{ width: '100%', marginTop: 8 }}
                   value={initialBalance}
                   onChange={setInitialBalance}
-                  placeholder={initialBalanceMode === 'total' ? 'Ej: 150000' : 'Ej: 100000'}
-                  min={1}
+                  disabled={initialBalanceMode === 'previous'}
+                  placeholder={
+                    prevBalance > 0
+                      ? 'Opcional: vacío = usar saldo anterior'
+                      : initialBalanceMode === 'total'
+                        ? 'Ej: 150000'
+                        : 'Ej: 100000'
+                  }
+                  min={0}
                   precision={0}
                   size="large"
                 />
-                {initialBalance > 0 && (
+                {openingLooksDuplicated && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    style={{ marginTop: 12 }}
+                    message="Ojo: el total queda en el saldo anterior dos veces"
+                    description={`Estás agregando ${formatCurrency(prevBalance)} sobre un saldo anterior de ${formatCurrency(prevBalance)}. Si querías arrancar con el saldo anterior, elegí "Solo el saldo anterior".`}
+                  />
+                )}
+                {openingExpectedTotal > 0 && (
                   <Text type="secondary" style={{ fontSize: 13 }}>
-                    {initialBalanceMode === 'total'
-                      ? `Total en caja: $${new Intl.NumberFormat('es-CL').format(initialBalance)}`
-                      : `Total en caja: $${new Intl.NumberFormat('es-CL').format(prevBalance + Number(initialBalance))} (Saldo anterior: $${new Intl.NumberFormat('es-CL').format(prevBalance)})`}
+                    {`Total en caja: $${new Intl.NumberFormat('es-CL').format(openingExpectedTotal)}`}
+                    {initialBalanceMode !== 'total' &&
+                      ` (Saldo anterior: $${new Intl.NumberFormat('es-CL').format(prevBalance)})`}
+                    {initialBalanceMode === 'previous' && ' · No se agrega dinero'}
                   </Text>
                 )}
               </div>
@@ -2374,20 +2450,32 @@ export default function SystemBank({
                   >
                     <Option value="total">Monto Total (incluye saldo anterior)</Option>
                     <Option value="additional">Monto Adicional (a sumar al saldo anterior)</Option>
+                    <Option value="previous" disabled={prevBalance <= 0}>
+                      {prevBalance > 0
+                        ? `Solo el saldo anterior (${formatCurrency(prevBalance)})`
+                        : 'Solo el saldo anterior (no hay saldo anterior)'}
+                    </Option>
                   </Select>
                 </div>
                 <div>
                   <Text strong>
-                    {initialBalanceMode === 'total' ? 'Monto Total en Caja' : 'Monto a Agregar'}
+                    {initialBalanceMode === 'previous'
+                      ? 'Sin monto a ingresar'
+                      : initialBalanceMode === 'total'
+                        ? 'Monto Total en Caja'
+                        : 'Monto a Agregar'}
                   </Text>
                   <InputNumber
                     style={{ width: '100%', marginTop: 8 }}
                     value={initialBalance}
                     onChange={setInitialBalance}
+                    disabled={initialBalanceMode === 'previous'}
                     placeholder={
-                      initialBalanceMode === 'total'
-                        ? 'Ingrese el monto total'
-                        : 'Ingrese monto a agregar'
+                      prevBalance > 0
+                        ? 'Opcional: vacío = usar saldo anterior'
+                        : initialBalanceMode === 'total'
+                          ? 'Ingrese el monto total'
+                          : 'Ingrese monto a agregar'
                     }
                     min={0}
                     precision={2}
@@ -2397,11 +2485,7 @@ export default function SystemBank({
                   <Col span={12}>
                     <Statistic
                       title="Saldo Esperado"
-                      value={
-                        initialBalanceMode === 'total'
-                          ? Number(initialBalance) || 0
-                          : prevBalance + (Number(initialBalance) || 0)
-                      }
+                      value={openingExpectedTotal}
                       precision={0}
                       prefix="$"
                       valueStyle={{ color: '#3f8600' }}
@@ -2421,42 +2505,21 @@ export default function SystemBank({
                 <div>
                   <Statistic
                     title="Diferencia"
-                    value={
-                      calculateOpeningTotal() -
-                      (initialBalanceMode === 'total'
-                        ? Number(initialBalance) || 0
-                        : prevBalance + (Number(initialBalance) || 0))
-                    }
+                    value={calculateOpeningTotal() - openingExpectedTotal}
                     precision={0}
                     prefix="$"
                     valueStyle={{
                       color:
-                        calculateOpeningTotal() -
-                          (initialBalanceMode === 'total'
-                            ? Number(initialBalance) || 0
-                            : prevBalance + (Number(initialBalance) || 0)) ===
-                        0
+                        calculateOpeningTotal() - openingExpectedTotal === 0
                           ? '#3f8600'
-                          : calculateOpeningTotal() -
-                                (initialBalanceMode === 'total'
-                                  ? Number(initialBalance) || 0
-                                  : prevBalance + (Number(initialBalance) || 0)) >
-                              0
+                          : calculateOpeningTotal() - openingExpectedTotal > 0
                             ? '#1890ff'
                             : '#cf1322',
                     }}
                     suffix={
-                      calculateOpeningTotal() -
-                        (initialBalanceMode === 'total'
-                          ? Number(initialBalance) || 0
-                          : prevBalance + (Number(initialBalance) || 0)) ===
-                      0
+                      calculateOpeningTotal() - openingExpectedTotal === 0
                         ? '(Exacto)'
-                        : calculateOpeningTotal() -
-                              (initialBalanceMode === 'total'
-                                ? Number(initialBalance) || 0
-                                : prevBalance + (Number(initialBalance) || 0)) >
-                            0
+                        : calculateOpeningTotal() - openingExpectedTotal > 0
                           ? '(Sobrante)'
                           : '(Faltante)'
                     }

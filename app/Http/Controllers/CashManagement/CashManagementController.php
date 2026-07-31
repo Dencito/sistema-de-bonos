@@ -50,36 +50,47 @@ class CashManagementController extends Controller
     }
 
     /**
-     * Turno activo sobre el que se trabaja.
-     *
-     * Un rol superior ve y opera sobre el turno abierto de la sucursal, sea de quien
-     * sea, para poder acompañar lo que está haciendo el trabajador. El resto solo
-     * accede al suyo.
+     * Turno activo de la sucursal, sea de quien sea.
      */
     private function findActiveShift(int $branchId, array $with = []): ?CashShift
     {
-        $user = Auth::user();
-
-        $query = CashShift::with($with)
+        // Sin filtrar por usuario: hay un solo cajón de dinero por sucursal, así
+        // que el turno abierto es el de la sucursal y lo tiene que ver cualquiera
+        // que trabaje ahí, sea suyo o no. Si se filtrara por usuario, una cajera
+        // no vería el turno que dejó abierto su compañera y no podría cerrarlo.
+        //
+        // resolveBranch() ya limita a la sucursal del usuario, así que esto no
+        // expone turnos de otras sucursales.
+        //
+        // Se ordena por id y no por started_at porque started_at viene siendo
+        // reescrito por la base en cada update (ver fix_cash_shifts_started_at.sql).
+        return CashShift::with($with)
             ->where('branch_id', $branchId)
-            ->where('is_active', true);
-
-        if (!RoleId::canSelectBranch($user->role_id)) {
-            $query->where('user_id', $user->id);
-        }
-
-        return $query->orderByDesc('started_at')->first();
+            ->where('is_active', true)
+            ->orderByDesc('id')
+            ->first();
     }
 
     /**
-     * ¿El usuario puede intervenir este turno? Los roles superiores pueden operar
-     * sobre turnos ajenos dentro de la sucursal que eligieron.
+     * ¿El usuario puede intervenir este turno?
+     *
+     * Como el cajón es uno por sucursal, quien esté atendiendo opera el turno
+     * abierto aunque lo haya abierto otra persona: si no, la que quedó de turno
+     * no podría registrar movimientos ni cerrar la caja que le dejaron abierta.
+     * Cada movimiento igual queda registrado a nombre de quien lo hace
+     * (admin_user_id), así que la trazabilidad no se pierde.
+     *
+     * Los roles superiores además pueden operar sobre la sucursal que eligieron.
      */
     private function canOperateShift(CashShift $shift): bool
     {
         $user = Auth::user();
 
-        return $shift->user_id === $user->id || RoleId::canSelectBranch($user->role_id);
+        if ($shift->user_id === $user->id || RoleId::canSelectBranch($user->role_id)) {
+            return true;
+        }
+
+        return $user->branch_id !== null && $shift->branch_id === $user->branch_id;
     }
 
     /**
@@ -260,13 +271,21 @@ class CashManagementController extends Controller
 
         $branchId = $branch->id;
 
-        // Check if there's an active shift
-        $activeShift = $this->findActiveShift($branchId);
+        // La guarda mira TODA la sucursal, no solo los turnos del usuario: hay un
+        // solo cajón de dinero por sucursal y hasta que no se cierre el turno
+        // abierto no se puede abrir otro, aunque lo haya abierto otra persona.
+        $activeShift = $this->findActiveShift($branchId, ['user']);
 
         if ($activeShift) {
+            $owner = $activeShift->user
+                ? trim($activeShift->user->first_name . ' ' . $activeShift->user->first_last_name)
+                : null;
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ya existe un turno activo'
+                'message' => $owner && $activeShift->user_id !== $user->id
+                    ? "La caja de {$branch->name} ya tiene un turno abierto por {$owner}. Hay que cerrarlo antes de abrir otro."
+                    : 'Ya existe un turno activo',
             ], 400);
         }
 

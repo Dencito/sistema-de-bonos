@@ -837,7 +837,14 @@ class UserController extends Controller
         
         try {
 
-        // Si los tickets estan desactivados para esta sucursal, solo marcar asistencia
+        // Sucursal con los tickets desactivados: se marca la asistencia y se
+        // devuelve un ticket en $0 para que el totem tenga algo que imprimir.
+        //
+        // Ese ticket es SOLO de la respuesta: no se guarda en la tabla tickets y
+        // no incrementa branch->ticketNumber, asi que no consume correlativo ni
+        // aparece en reportes. Lo unico que queda registrado es la marca de
+        // asistencia. Antes se devolvia 'tickets' => [] y el totem se quedaba sin
+        // nada que imprimir.
         if (!$ticketsEnabled) {
             Log::info('Tickets desactivados para esta sucursal, solo marcando asistencia', [
                 'user_id' => $user->id,
@@ -854,7 +861,9 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Asistencia registrada. Los tickets no estan habilitados para esta sucursal.',
                 'data' => [
-                    'tickets' => [],
+                    // Misma forma que el camino normal, para que el totem no
+                    // tenga que distinguir entre un caso y el otro
+                    'tickets' => [$this->emptyTicketPayload($now)],
                     'attendance_marked' => true,
                 ],
             ]);
@@ -1044,12 +1053,30 @@ class UserController extends Controller
             $tickets[] = $ticket;
         }
 
-        // verifica si esta vacio
+        // No corresponde ningun bono: no es un error. Se marca la asistencia y se
+        // devuelve un ticket en $0, igual que en la sucursal con los tickets
+        // deshabilitados.
+        //
+        // Antes hacia DB::rollBack() y devolvia 409 ANTES de llamar a
+        // markFingerprint, asi que el dia no quedaba registrado. Eso rompia el
+        // bono por asistencia: de domingo a jueves no se entrega bono a
+        // proposito, con lo cual caia siempre en este 409 y los fingerprint_logs
+        // de esos dias nunca se creaban, y el dia de cobro el conteo no llegaba.
         if ($tickets === []) {
-            DB::rollBack();
+            $this->markFingerprint(new Request([
+                'user_id' => $user->id,
+                'branch_id' => $branch->id,
+            ]), true);
+
+            DB::commit();
+
             return response()->json([
-                'message' => 'No tienes bonos disponibles'
-            ], 409);
+                'message' => 'Asistencia registrada. No hay bonos disponibles.',
+                'data' => [
+                    'tickets' => [$this->emptyTicketPayload($now)],
+                    'attendance_marked' => true,
+                ],
+            ]);
         }
 
         Log::info('Llamando a markFingerprint para jugador', [
@@ -1096,6 +1123,30 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Ticket en $0 para cuando no corresponde ningun bono, ya sea porque la
+     * sucursal tiene los tickets deshabilitados o porque el jugador no tiene
+     * bonos disponibles.
+     *
+     * Es solo de la respuesta: NO se guarda en la tabla tickets y NO incrementa
+     * branch->ticketNumber, asi que no consume correlativo ni aparece en
+     * reportes. Lo unico que queda registrado es la marca de asistencia.
+     *
+     * Mantiene la misma forma que un ticket real para que el totem no tenga que
+     * distinguir entre un caso y el otro.
+     */
+    private function emptyTicketPayload($now): array
+    {
+        return [
+            'totalAmount' => 0,
+            'type' => 'Asistencia',
+            'createdAt' => $now,
+            // Fijo en 1: no se emitio un ticket de verdad, pero el totem
+            // necesita un numero para imprimir.
+            'ticketNumber' => 1,
+        ];
     }
 
     public function markFingerprint(Request $request, $isMarkPlayer = false)

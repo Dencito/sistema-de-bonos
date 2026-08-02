@@ -439,9 +439,27 @@ class MobilePasilleraController extends Controller
         $user = Auth::user();
         $limit = $request->input('limit', 50);
 
-        $transactions = CashTransaction::whereHas('pasillera', function($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
+        // Solo el turno de caja abierto: al cerrarse la caja la pasillera arranca
+        // con el historial limpio. Antes filtraba unicamente por usuario, asi que
+        // le mostraba todo lo que habia gastado en todos los turnos anteriores.
+        //
+        // Los movimientos viejos no se borran: siguen en la base y en el historial
+        // de cajas, solo dejan de mostrarse acá.
+        $activePasillera = Pasillera::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->whereHas('cashShift', fn($q) => $q->where('is_active', true))
+            ->latest('id')
+            ->first();
+
+        if (!$activePasillera) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+            ]);
+        }
+
+        $transactions = CashTransaction::where('pasillera_id', $activePasillera->id)
+            ->where('cash_shift_id', $activePasillera->cash_shift_id)
             ->with(['pasillera', 'cashShift'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)

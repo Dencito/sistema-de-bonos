@@ -423,7 +423,8 @@ export default function SystemBank({
         fetchShiftStatus();
       }
     } catch (error) {
-      message.error(error.response?.data?.message || 'Error al cerrar turno');
+      // 6 segundos: el backend puede devolver la lista de pasilleras sin rendir
+      message.error(error.response?.data?.message || 'Error al cerrar turno', 6);
     } finally {
       setLoading(false);
     }

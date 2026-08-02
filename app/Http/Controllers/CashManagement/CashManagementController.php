@@ -387,6 +387,39 @@ class CashManagementController extends Controller
             ], 400);
         }
 
+        // No se puede cerrar con plata en la calle: cada pasillera tiene que
+        // rendir antes. El saldo que se le asigno ya salio del saldo del turno,
+        // asi que si se cierra sin rendir, esa plata queda contada en el cajon
+        // pero no en current_balance y el cierre muestra un sobrante fantasma.
+        $pendientes = Pasillera::with('user')
+            ->where('cash_shift_id', $activeShift->id)
+            ->where('is_active', true)
+            ->where('current_balance', '>', 0)
+            ->get();
+
+        if ($pendientes->isNotEmpty()) {
+            $detalle = $pendientes->map(function ($p) {
+                $nombre = $p->user
+                    ? trim($p->user->first_name . ' ' . $p->user->first_last_name)
+                    : 'Pasillera #' . $p->id;
+
+                return $nombre . ' ($' . number_format($p->current_balance, 0, ',', '.') . ')';
+            })->implode(', ');
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede cerrar la caja: hay pasilleras con saldo sin rendir: ' . $detalle
+                    . '. Tienen que devolver el saldo antes de cerrar.',
+                'pasilleras_pendientes' => $pendientes->map(fn($p) => [
+                    'id' => $p->id,
+                    'name' => $p->user
+                        ? trim($p->user->first_name . ' ' . $p->user->first_last_name)
+                        : null,
+                    'current_balance' => $p->current_balance,
+                ])->values(),
+            ], 422);
+        }
+
         $simpleMode = filter_var($request->simple_mode, FILTER_VALIDATE_BOOLEAN);
 
         if ($simpleMode) {

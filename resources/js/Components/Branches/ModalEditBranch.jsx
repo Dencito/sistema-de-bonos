@@ -21,6 +21,8 @@ export default function ModalEditBranch({ data, statuses }) {
   const [attendanceDays, setAttendanceDays] = useState([]);
   const [categoryPayoutDay, setCategoryPayoutDay] = useState(null);
   const [ticketsEnabled, setTicketsEnabled] = useState(true);
+  // Usuarios que igual reciben tickets cuando la sucursal los tiene apagados
+  const [ticketsAllowedUsers, setTicketsAllowedUsers] = useState([]);
   const [form] = Form.useForm();
   const { successMsg, errorMsg } = useMessage();
 
@@ -56,6 +58,7 @@ export default function ModalEditBranch({ data, statuses }) {
       setAttendanceDays(parseSchedules(data.bonus_attendance_days) || []);
       setCategoryPayoutDay(data.bonus_category_payout_day || null);
       setTicketsEnabled(data.tickets_enabled !== false);
+      setTicketsAllowedUsers((data.tickets_allowed_users || []).map(Number));
     }
   }, [data, showModal]);
 
@@ -87,6 +90,8 @@ export default function ModalEditBranch({ data, statuses }) {
         bonus_attendance_days: JSON.stringify(attendanceDays || []),
         bonus_category_payout_day: categoryPayoutDay,
         tickets_enabled: ticketsEnabled,
+        // Solo tiene sentido cuando estan apagados
+        tickets_allowed_users: ticketsEnabled ? [] : ticketsAllowedUsers,
       });
 
       if (response.success) {
@@ -446,10 +451,36 @@ export default function ModalEditBranch({ data, statuses }) {
                 Habilitar generacion de tickets
               </Checkbox>
             </Form.Item>
+            {!ticketsEnabled && (
+              <Form.Item
+                label="Excepciones: usuarios que igual reciben tickets"
+                extra="Si no elegís a nadie, no recibe tickets ninguno."
+              >
+                <Select
+                  mode="multiple"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="Buscar y elegir usuarios"
+                  value={ticketsAllowedUsers}
+                  onChange={setTicketsAllowedUsers}
+                  style={{ width: '100%' }}
+                  options={(data?.users || []).map((u) => ({
+                    value: u.id,
+                    label:
+                      [u.first_name, u.first_last_name].filter(Boolean).join(' ') ||
+                      u.username ||
+                      `Usuario ${u.id}`,
+                  }))}
+                />
+              </Form.Item>
+            )}
+
             <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
               <p>
                 <strong>Nota:</strong> Si los tickets estan desactivados, al marcar la huella solo
-                se registrara la asistencia sin generar tickets de bonos.
+                se registrara la asistencia sin generar tickets de bonos, salvo para los usuarios
+                que elijas como excepcion.
               </p>
             </div>
           </Card>

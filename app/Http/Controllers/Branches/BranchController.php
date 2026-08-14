@@ -239,7 +239,9 @@ class BranchController extends Controller
             'bonus_attendance_enabled' => 'nullable',
             'bonus_attendance_days' => 'nullable',
             'bonus_category_payout_day' => 'nullable',
-            'tickets_enabled' => 'nullable'
+            'tickets_enabled' => 'nullable',
+            'tickets_allowed_users' => 'nullable|array',
+            'tickets_allowed_users.*' => 'integer',
         ]);
 
         if ($validator->fails()) {
@@ -296,7 +298,8 @@ class BranchController extends Controller
             'bonus_attendance_enabled',
             'bonus_attendance_days',
             'bonus_category_payout_day',
-            'tickets_enabled'
+            'tickets_enabled',
+            'tickets_allowed_users'
         ]);
 
         // Detectar cambios

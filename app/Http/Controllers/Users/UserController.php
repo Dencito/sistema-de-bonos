@@ -831,6 +831,25 @@ class UserController extends Controller
 
         $ticketsEnabled = $branch->tickets_enabled ?? true;
 
+        // Excepciones: con los tickets apagados la sucursal no entrega a nadie,
+        // salvo a los usuarios que estén en tickets_allowed_users. Es una lista
+        // de ids que se edita desde la ficha de la sucursal.
+        if (!$ticketsEnabled) {
+            $exceptuados = $branch->tickets_allowed_users ?? [];
+
+            // Los ids pueden venir como texto desde el formulario
+            $exceptuados = array_map('intval', (array) $exceptuados);
+
+            if (in_array((int) $user->id, $exceptuados, true)) {
+                $ticketsEnabled = true;
+
+                Log::info('Usuario exceptuado: recibe tickets con la sucursal apagada', [
+                    'user_id' => $user->id,
+                    'branch_id' => $branch->id,
+                ]);
+            }
+        }
+
         $now = now();
         
         DB::beginTransaction();
@@ -861,9 +880,10 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Asistencia registrada. Los tickets no estan habilitados para esta sucursal.',
                 'data' => [
-                    // Misma forma que el camino normal, para que el totem no
-                    // tenga que distinguir entre un caso y el otro
-                    'tickets' => [$this->emptyTicketPayload($now)],
+                    // Sin tickets: el totem imprime el comprobante de asistencia
+                    // a partir de attendance_marked. Si ademas se manda un ticket
+                    // en $0, imprime DOS comprobantes.
+                    'tickets' => [],
                     'attendance_marked' => true,
                 ],
             ]);
@@ -1073,7 +1093,8 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Asistencia registrada. No hay bonos disponibles.',
                 'data' => [
-                    'tickets' => [$this->emptyTicketPayload($now)],
+                    // Idem: solo la bandera, para que salga un unico comprobante
+                    'tickets' => [],
                     'attendance_marked' => true,
                 ],
             ]);

@@ -468,6 +468,7 @@ class CompanyDatabaseService
                     $table->string('machine')->nullable();
                     $table->string('expense_type')->nullable();
                     $table->text('description')->nullable();
+                    $table->json('edit_history')->nullable();
                     $table->string('image')->nullable();
                     $table->foreignId('admin_user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->timestamps();

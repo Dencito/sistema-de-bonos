@@ -37,6 +37,7 @@ import {
 import { Switch } from 'antd';
 import axios from 'axios';
 import { formatDateTimeCL } from '@/Utils/date';
+import { listarEdiciones, resumenEdiciones } from '@/Utils/editHistory';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -735,7 +736,11 @@ export default function SystemBank({
       dataIndex: 'amount',
       key: 'amount',
       render: (amount, record) => {
-        const value = record.source === 'ticket' ? record.total_amount : amount;
+        // Los tickets vienen con la misma clave 'amount' que las transacciones.
+        // Antes se leia record.total_amount, que no existe en ese payload, y por
+        // eso las filas de ticket salian siempre en $0 aunque el acumulado, que
+        // se calcula aparte en el backend, estuviera bien.
+        const value = amount ?? record.total_amount;
         return formatCurrency(value);
       },
     },
@@ -763,7 +768,13 @@ export default function SystemBank({
       key: 'description',
       render: (desc, record) => {
         if (record.source === 'ticket') {
-          return `Ticket #${record.ticket_number} - ${record.user?.first_name} ${record.user?.first_last_name || ''}`;
+          const nombre = [record.user?.first_name, record.user?.first_last_name]
+            .filter(Boolean)
+            .join(' ');
+          // ticket_number no se guarda en la base, asi que suele venir null:
+          // sin este chequeo se imprimia literalmente "Ticket #null".
+          const numero = record.ticket_number ? ` #${record.ticket_number}` : '';
+          return `Ticket${numero}${nombre ? ` - ${nombre}` : ''}`;
         }
         const parts = [];
         if (record.type === 'deposit') parts.push('Agregar Dinero');
@@ -777,7 +788,27 @@ export default function SystemBank({
             `Autorizado por: ${[u.first_name, u.first_last_name].filter(Boolean).join(' ')}`,
           );
         }
-        return parts.length ? parts.join(' | ') : desc || '-';
+        const texto = parts.length ? parts.join(' | ') : desc || '-';
+        const ediciones = listarEdiciones(record.edit_history);
+
+        if (!ediciones.length) return texto;
+
+        // Una edicion pisa el valor viejo: si no se muestra acá, no queda a la
+        // vista en ningún lado que el movimiento fue corregido.
+        return (
+          <div>
+            <div>{texto}</div>
+            <div className="mt-0.5 text-[11px] leading-tight text-amber-600">
+              {resumenEdiciones(record.edit_history)}
+              {ediciones.map((e, i) => (
+                <div key={i}>
+                  {e.cambios.join(' · ')}
+                  <span className="text-amber-500"> — {e.atLabel}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
       },
     },
     {
@@ -2282,6 +2313,23 @@ export default function SystemBank({
                                             })}
                                           </span>
                                         </div>
+                                        {listarEdiciones(registro.edit_history).length > 0 && (
+                                          <div
+                                            style={{
+                                              color: '#d48806',
+                                              fontSize: 11,
+                                              marginTop: 2,
+                                            }}
+                                          >
+                                            <div>{resumenEdiciones(registro.edit_history)}</div>
+                                            {listarEdiciones(registro.edit_history).map((e, i) => (
+                                              <div key={i}>
+                                                {e.cambios.join(' · ')}
+                                                {e.atLabel ? ` — ${e.atLabel}` : ''}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
                                         {details.length > 0 && (
                                           <div
                                             style={{ color: '#595959', fontSize: 11, marginTop: 2 }}

@@ -22,11 +22,13 @@ class CashTransaction extends Model
         'client',
         'machine',
         'description',
+        'edit_history',
         'image',
         'admin_user_id',
     ];
 
     protected $casts = [
+        'edit_history' => 'array',
         'amount' => 'decimal:2',
     ];
 

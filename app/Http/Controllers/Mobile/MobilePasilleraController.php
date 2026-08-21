@@ -126,6 +126,57 @@ class MobilePasilleraController extends Controller
     }
 
     /**
+     * Devuelve el edit_history del movimiento con una entrada nueva por esta
+     * edicion, o el historial intacto si no cambio nada.
+     *
+     * Solo se anotan los campos que realmente cambiaron: editar sin tocar nada
+     * no ensucia el historial. La descripcion no se anota porque se arma sola a
+     * partir de los otros campos, seria ruido repetido.
+     */
+    private function registrarEdicion(CashTransaction $transaction, array $nuevos): array
+    {
+        $user = Auth::user();
+        $seguir = ['amount', 'client', 'machine', 'expense_type'];
+        $cambios = [];
+
+        foreach ($seguir as $campo) {
+            $antes = $transaction->getOriginal($campo);
+            $despues = $nuevos[$campo] ?? null;
+
+            // Comparacion floja a proposito: el monto viene como string
+            // "1000.00" desde la base y como float desde el request.
+            if ($campo === 'amount') {
+                if (abs((float) $antes - (float) $despues) < 0.01) {
+                    continue;
+                }
+            } elseif ((string) $antes === (string) $despues) {
+                continue;
+            }
+
+            $cambios[$campo] = ['from' => $antes, 'to' => $despues];
+        }
+
+        $historial = $transaction->edit_history ?? [];
+
+        if (!$cambios) {
+            return $historial;
+        }
+
+        $historial[] = [
+            // Con zona horaria, como el resto de las fechas de la app.
+            // toDateTimeString() devuelve "2026-08-21 08:35:12" sin zona, y el
+            // navegador lo interpreta como hora LOCAL suya: despues formatearlo
+            // en horario de Chile lo corria una hora hacia atras.
+            'at' => now()->toIso8601String(),
+            'user_id' => $user?->id,
+            'user' => $user ? trim($user->first_name . ' ' . $user->first_last_name) : null,
+            'changes' => $cambios,
+        ];
+
+        return $historial;
+    }
+
+    /**
      * Aplica un monto a los totales del turno y al saldo propio de la pasillera.
      * $delta positivo suma gasto, negativo lo revierte.
      *
@@ -313,13 +364,20 @@ class MobilePasilleraController extends Controller
         try {
             $this->applyAmount($cashShift, $pasillera, $transaction->type, $delta);
 
-            $transaction->update([
+            $nuevos = [
                 'amount' => (float) $request->amount,
                 'client' => $request->client,
                 'machine' => $request->machine,
                 'expense_type' => $request->expense_type,
                 'description' => $this->buildDescription($transaction->type, $request),
-            ]);
+            ];
+
+            // Antes de pisar los valores se anota que cambio, para que quede el
+            // rastro de la correccion: sin esto el monto viejo desaparecia y no
+            // habia forma de saber que se habia editado, ni quien ni cuando.
+            $nuevos['edit_history'] = $this->registrarEdicion($transaction, $nuevos);
+
+            $transaction->update($nuevos);
 
             DB::commit();
 

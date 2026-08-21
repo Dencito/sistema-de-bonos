@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { formatDateTimeCL } from '@/Utils/date';
+import { listarEdiciones, resumenEdiciones } from '@/Utils/editHistory';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -344,7 +345,27 @@ export default function CashShiftHistoryIndex({
         if (record.type === 'pasillera_payment' && record.machine) {
           parts.push(`Pago Pasillera - Máquina: ${record.machine}`);
         }
-        return parts.length ? parts.join(' | ') : desc || '-';
+
+        const texto = parts.length ? parts.join(' | ') : desc || '-';
+        const ediciones = listarEdiciones(record.edit_history);
+
+        if (!ediciones.length) return texto;
+
+        // El turno ya está cerrado: acá es donde se audita qué se corrigió
+        return (
+          <div>
+            <div>{texto}</div>
+            <div className="mt-0.5 text-[11px] leading-tight text-amber-600">
+              {resumenEdiciones(record.edit_history)}
+              {ediciones.map((e, i) => (
+                <div key={i}>
+                  {e.cambios.join(' · ')}
+                  {e.atLabel ? ` — ${e.atLabel}` : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
       },
     },
   ];

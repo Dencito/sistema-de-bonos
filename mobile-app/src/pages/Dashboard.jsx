@@ -20,10 +20,12 @@ import {
   Image,
 } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { listarEdiciones } from '../utils/editHistory';
 
-// Editar/eliminar transacciones desde la app está oculto. La lógica sigue
-// implementada (acá y en /pasillera/transaction): cambiar a true para reactivarlo.
-const ALLOW_EDIT_TRANSACTIONS = false;
+// La pasillera puede corregir lo que registró ella misma (monto, máquina,
+// cliente, tipo de gasto). Cada edición queda anotada en edit_history del
+// movimiento, con qué cambió, quién y cuándo, así la corrección es auditable.
+const ALLOW_EDIT_TRANSACTIONS = true;
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -822,6 +824,14 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500 truncate">
                         {transaction.description || transaction.client || transaction.machine || transaction.expense_type || '-'}
                       </p>
+                      {/* Que cambio, no solo que se edito: el valor viejo se pisa
+                          y sin esto no queda a la vista en ningun lado. */}
+                      {listarEdiciones(transaction.edit_history).map((e, i) => (
+                        <p key={i} className="text-xs text-amber-600">
+                          {e.cambios.join(' · ')}
+                          {e.user ? ` — ${e.user}` : ''}
+                        </p>
+                      ))}
                       <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-400">
                           {new Date(transaction.created_at).toLocaleString('es-CL')}

@@ -883,7 +883,7 @@ class UserController extends Controller
                     // Sin tickets: el totem imprime el comprobante de asistencia
                     // a partir de attendance_marked. Si ademas se manda un ticket
                     // en $0, imprime DOS comprobantes.
-                    'tickets' => [],
+                    'tickets' => [$this->emptyTicketPayload($now)],
                     'attendance_marked' => true,
                 ],
             ]);

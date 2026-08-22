@@ -41,7 +41,8 @@ class Branch extends Model
         'bonus_attendance_days',
         'bonus_category_payout_day',
         'tickets_enabled',
-        'tickets_allowed_users'
+        'tickets_allowed_users',
+        'has_cash_register'
     ];
 
     /**
@@ -56,6 +57,7 @@ class Branch extends Model
         'bonus_attendance_enabled' => 'boolean',
         'bonus_attendance_days' => 'array',
         'tickets_enabled' => 'boolean',
+        'has_cash_register' => 'boolean',
         'tickets_allowed_users' => 'array',
     ];
 

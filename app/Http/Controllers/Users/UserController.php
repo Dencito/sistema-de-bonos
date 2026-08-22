@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Users;
 use App\Http\Controllers\Controller;
 use App\Models\Bonus;
 use App\Models\Branch;
+use App\Models\CashShift;
 use App\Models\CategoryBonus;
 use App\Models\Company;
 use App\Models\FingerprintLog;
@@ -24,6 +25,17 @@ use Carbon\Carbon;
 
 class UserController extends Controller
 {
+    /**
+     * Ventana en la que un jugador que vuelve a apoyar el dedo NO genera un
+     * registro nuevo ni otro comprobante impreso. Cubre el doble toque y el dedo
+     * apoyado de mas, sin impedirle marcar otra vez mas tarde en el dia.
+     *
+     * Son 2 minutos porque es lo que dice el mensaje que ve el jugador: si se
+     * cambia este valor hay que cambiar tambien ese texto, o va a estar pidiendo
+     * esperar un tiempo que no es el real.
+     */
+    private const FINGERPRINT_DEBOUNCE_SECONDS = 120;
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -814,6 +826,29 @@ class UserController extends Controller
             ], 403);
         }
 
+        // Toque repetido: se corta ACA, antes de hacer nada.
+        //
+        // No alcanza con no duplicar el registro de huella mas abajo: si el flujo
+        // sigue, la respuesta vuelve con attendance_marked y el totem imprime otro
+        // comprobante. Se nota sobre todo en las sucursales con los tickets
+        // apagados, donde no hay ningun otro limite (no hay bono que ya se haya
+        // entregado hoy) y el jugador puede apoyar el dedo indefinidamente.
+        $huellaReciente = FingerprintLog::where('user_id', $user->id)
+            ->where('branch_id', $branch->id)
+            ->where('created_at', '>=', now()->subSeconds(self::FINGERPRINT_DEBOUNCE_SECONDS))
+            ->exists();
+
+        if ($huellaReciente) {
+            Log::info('Toque repetido: no se imprime otro comprobante', [
+                'user_id' => $user->id,
+                'branch_id' => $branch->id,
+            ]);
+
+            return response()->json([
+                'message' => 'Aguarde un momento estamos en cambio de turno. Intente nuevamente en 2 minutos'
+            ], 409);
+        }
+
         $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
             ->where('status', 'open')
             ->first();
@@ -823,6 +858,34 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'La sucursal no tiene turnos abiertos, comuniquese con un trabajador.'
             ], 409);
+        }
+
+        // Sucursal que opera con caja: sin caja abierta no se entregan bonos.
+        //
+        // El ticket descuenta del saldo del turno de caja (ver el boot() del
+        // modelo Ticket). Si no hay turno abierto, ese descuento no ocurre y la
+        // plata sale del cajon sin quedar registrada en ningun lado.
+        //
+        // Ojo: el turno validado arriba es el de TRABAJO (ShiftRecord), que es
+        // otra cosa. Puede haber turno de trabajo abierto y la caja cerrada.
+        //
+        // Las sucursales con has_cash_register en false no usan caja y siguen
+        // entregando bonos como siempre.
+        if ($branch->has_cash_register) {
+            $cajaAbierta = CashShift::where('branch_id', $branch->id)
+                ->where('is_active', true)
+                ->exists();
+
+            if (!$cajaAbierta) {
+                Log::warning('Bonos rechazados: la sucursal opera con caja y no hay ninguna abierta', [
+                    'user_id' => $user->id,
+                    'branch_id' => $branch->id,
+                ]);
+
+                return response()->json([
+                    'message' => 'La caja de la sucursal no esta abierta. Comuniquese con un trabajador.'
+                ], 409);
+            }
         }
 
         $SumaBonosAdditionals = 0;
@@ -1249,6 +1312,34 @@ class UserController extends Controller
                         'message' => 'No puedes registrar tu salida hasta que finalices tu turno como pasillera y devuelvas el saldo correspondiente.'
                     ], 400);
                 }
+            }
+        }
+
+        // Anti rebote: un jugador que apoya el dedo varias veces seguidas generaba
+        // un registro por toque, alternando Entrada/Salida con segundos de
+        // diferencia y ensuciando el historial.
+        //
+        // El cooldown de arriba (una hora) solo corre para trabajadores, porque a
+        // un jugador hay que dejarlo marcar de nuevo mas tarde en el dia. Asi que
+        // para jugadores se usa una ventana corta: si ya marco hace menos de
+        // FINGERPRINT_DEBOUNCE_SECONDS, se devuelve ese mismo registro en vez de
+        // crear otro. La operacion queda idempotente y el totem no ve un error.
+        if ($isMarkPlayer) {
+            $reciente = FingerprintLog::where('user_id', $user->id)
+                ->where('branch_id', $branch->id)
+                ->where('created_at', '>=', now()->subSeconds(self::FINGERPRINT_DEBOUNCE_SECONDS))
+                ->latest('id')
+                ->first();
+
+            if ($reciente) {
+                Log::info('Huella repetida dentro de la ventana: no se crea otro registro', [
+                    'user_id' => $user->id,
+                    'branch_id' => $branch->id,
+                    'fingerprint_log_id' => $reciente->id,
+                    'hace_segundos' => $reciente->created_at->diffInSeconds(now()),
+                ]);
+
+                return $reciente;
             }
         }
 

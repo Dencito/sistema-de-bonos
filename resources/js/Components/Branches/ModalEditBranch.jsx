@@ -21,6 +21,8 @@ export default function ModalEditBranch({ data, statuses }) {
   const [attendanceDays, setAttendanceDays] = useState([]);
   const [categoryPayoutDay, setCategoryPayoutDay] = useState(null);
   const [ticketsEnabled, setTicketsEnabled] = useState(true);
+  // Si la sucursal opera con caja, no se entregan bonos sin caja abierta
+  const [hasCashRegister, setHasCashRegister] = useState(false);
   // Usuarios que igual reciben tickets cuando la sucursal los tiene apagados
   const [ticketsAllowedUsers, setTicketsAllowedUsers] = useState([]);
   const [form] = Form.useForm();
@@ -58,6 +60,7 @@ export default function ModalEditBranch({ data, statuses }) {
       setAttendanceDays(parseSchedules(data.bonus_attendance_days) || []);
       setCategoryPayoutDay(data.bonus_category_payout_day || null);
       setTicketsEnabled(data.tickets_enabled !== false);
+      setHasCashRegister(data.has_cash_register === true);
       setTicketsAllowedUsers((data.tickets_allowed_users || []).map(Number));
     }
   }, [data, showModal]);
@@ -90,6 +93,7 @@ export default function ModalEditBranch({ data, statuses }) {
         bonus_attendance_days: JSON.stringify(attendanceDays || []),
         bonus_category_payout_day: categoryPayoutDay,
         tickets_enabled: ticketsEnabled,
+        has_cash_register: hasCashRegister,
         // Solo tiene sentido cuando estan apagados
         tickets_allowed_users: ticketsEnabled ? [] : ticketsAllowedUsers,
       });
@@ -443,6 +447,19 @@ export default function ModalEditBranch({ data, statuses }) {
 
           <Divider orientation="left">Configuracion de Tickets</Divider>
           <Card size="small">
+            <Form.Item label="Esta sucursal opera con caja">
+              <Checkbox
+                checked={hasCashRegister}
+                onChange={(e) => setHasCashRegister(e.target.checked)}
+              >
+                Tiene caja
+              </Checkbox>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                Si esta marcado, no se entregan bonos mientras la caja este cerrada: el ticket
+                descuenta del saldo del turno, y sin turno abierto ese dinero no queda registrado.
+              </div>
+            </Form.Item>
+
             <Form.Item label="Habilitar tickets de bonos">
               <Checkbox
                 checked={ticketsEnabled}

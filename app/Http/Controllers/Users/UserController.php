@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Constants\FingerprintOrigin;
 use App\Models\Bonus;
 use App\Models\Branch;
 use App\Models\CashShift;
@@ -936,7 +937,7 @@ class UserController extends Controller
             $fingerprintResult = $this->markFingerprint(new Request([
                 'user_id' => $user->id,
                 'branch_id' => $branch->id,
-            ]), true);
+            ]), true, FingerprintOrigin::TICKETS_OFF);
 
             DB::commit();
 
@@ -1149,7 +1150,7 @@ class UserController extends Controller
             $this->markFingerprint(new Request([
                 'user_id' => $user->id,
                 'branch_id' => $branch->id,
-            ]), true);
+            ]), true, FingerprintOrigin::SIN_BONO);
 
             DB::commit();
 
@@ -1172,7 +1173,7 @@ class UserController extends Controller
         $fingerprintResult = $this->markFingerprint(new Request([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
-        ]), true);
+        ]), true, FingerprintOrigin::BONO);
 
         Log::info('Resultado de markFingerprint', [
             'result' => $fingerprintResult ? $fingerprintResult->toArray() : null,
@@ -1233,7 +1234,12 @@ class UserController extends Controller
         ];
     }
 
-    public function markFingerprint(Request $request, $isMarkPlayer = false)
+    /**
+     * @param string|null $origin Por que se registra. Ver FingerprintOrigin.
+     *                            Por defecto asistencia, que es como entra por
+     *                            la ruta POST /api/attendance.
+     */
+    public function markFingerprint(Request $request, $isMarkPlayer = false, $origin = null)
     {
         $validated = $request->validate([
             'user_id' => 'required',
@@ -1346,6 +1352,7 @@ class UserController extends Controller
         $fingerprintLog = FingerprintLog::create([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
+            'origin' => $origin ?? FingerprintOrigin::ASISTENCIA,
         ]);
 
         Log::info('FingerprintLog creado', [

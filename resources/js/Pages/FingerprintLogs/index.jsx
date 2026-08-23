@@ -37,6 +37,37 @@ const columns = [
     ),
   },
   {
+    // Distinto de 'Tipo': ese dice Entrada/Salida y sale de la posicion del
+    // registro. Este dice POR QUE se registro la huella.
+    title: 'Motivo',
+    key: 'origin',
+    dataIndex: 'origin',
+    render: (origin) => {
+      if (!origin) return <span className="text-gray-400">-</span>;
+
+      const labels = {
+        bono: 'Con bono',
+        sin_bono: 'Sin bono',
+        tickets_off: 'Tickets desactivados',
+        asistencia: 'Asistencia',
+      };
+      const colors = {
+        bono: 'bg-emerald-100 text-emerald-800',
+        sin_bono: 'bg-slate-100 text-slate-700',
+        tickets_off: 'bg-amber-100 text-amber-800',
+        asistencia: 'bg-blue-100 text-blue-800',
+      };
+
+      return (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${colors[origin] || 'bg-slate-100 text-slate-700'}`}
+        >
+          {labels[origin] || origin}
+        </span>
+      );
+    },
+  },
+  {
     title: 'Sucursal',
     key: 'branch',
     render: (_, record) => record.branch?.name || 'N/A',
@@ -175,6 +206,7 @@ export default function FingerprintLogPage({
         Usuario: `${log.user?.first_name || ''} ${log.user?.first_last_name || ''}`,
         Rol: log.user?.role?.name || 'N/A',
         Tipo: log.type || 'N/A',
+        Motivo: log.origin || '-',
         Tótem: log.totem?.name || 'N/A',
         Sucursal: log?.branch?.name || 'N/A',
         'Fecha y Hora': formatDateTimeCL(log.created_at, { seconds: true }),

@@ -340,6 +340,8 @@ class CompanyDatabaseService
                     $table->id();
                     $table->foreignId('user_id')->nullable()->constrained($usersTable)->onDelete('set null');
                     $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
+                    // Por que se registro: ver App\Constants\FingerprintOrigin
+                    $table->string('origin', 30)->nullable();
                     $table->timestamp('created_at')->useCurrent();
                     $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
                 });

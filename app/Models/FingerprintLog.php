@@ -14,6 +14,7 @@ class FingerprintLog extends Model
     protected $fillable = [
         'user_id',
         'branch_id',
+        'origin',
     ];
 
     /**

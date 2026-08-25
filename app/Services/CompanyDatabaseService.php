@@ -29,6 +29,7 @@ class CompanyDatabaseService
             $cashShiftsTable = $request->slug . '_cash_shifts';
             $cashTransactionsTable = $request->slug . '_cash_transactions';
             $pasillerasTable = $request->slug . '_pasilleras';
+            $ghostTicketsTable = $request->slug . '_ghost_tickets';
 
             // 1. Crear tabla de estados (no tiene dependencias)
             if (!Schema::hasTable($statusesTable)) {
@@ -317,6 +318,19 @@ class CompanyDatabaseService
                 });
                 
                 DB::statement("ALTER TABLE `{$ticketsTable}` ADD UNIQUE KEY `{$ticketsTable}_user_type_date_unique` (`user_id`, `type`, (CAST(`created_at` AS DATE)))");
+            }
+
+            // 10b. Crear tabla de tickets fantasma (depende de tickets, sucursales y turnos de caja)
+            if (!Schema::hasTable($ghostTicketsTable)) {
+                Schema::create($ghostTicketsTable, function ($table) use ($ticketsTable, $branchesTable, $cashShiftsTable) {
+                    $table->id();
+                    $table->foreignId('ticket_id')->constrained($ticketsTable)->onDelete('cascade');
+                    $table->foreignId('branch_id')->nullable()->constrained($branchesTable)->onDelete('set null');
+                    $table->foreignId('cash_shift_id')->nullable()->constrained($cashShiftsTable)->onDelete('set null');
+                    $table->timestamp('assigned_at')->nullable();
+                    $table->timestamp('created_at')->useCurrent();
+                    $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable();
+                });
             }
 
             // 11. Crear tabla de turnos (depende de usuarios y sucursales)

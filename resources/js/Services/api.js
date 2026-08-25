@@ -114,3 +114,19 @@ export const authService = {
     return handleResponse(axios.post('/login', values));
   },
 };
+
+export const ghostTicketService = {
+  assign: (ghostTicketId, branchId) =>
+    handleResponse(
+      axios.post('/cash-management/ghost-ticket/assign', {
+        ghost_ticket_id: ghostTicketId,
+        branch_id: branchId,
+      }),
+    ),
+  assignAll: (branchId) =>
+    handleResponse(
+      axios.post('/cash-management/ghost-ticket/assign-all', {
+        branch_id: branchId,
+      }),
+    ),
+};

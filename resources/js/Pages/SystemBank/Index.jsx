@@ -74,6 +74,7 @@ export default function SystemBank({
   canSelectBranch = false,
   error: serverError = null,
   tickets: initialTickets = [],
+  ghostTickets: initialGhostTickets = [],
 }) {
   // Los roles superiores no tienen sucursal asignada: eligen sobre cual operar y
   // ese id viaja en todas las peticiones.
@@ -161,6 +162,7 @@ export default function SystemBank({
   const [pasilleraInitialBalance, setPasilleraInitialBalance] = useState('');
   const [transactions, setTransactions] = useState(activeShift?.transactions || []);
   const [tickets, setTickets] = useState(initialTickets);
+  const [ghostTickets, setGhostTickets] = useState(initialGhostTickets);
   const [totalTickets, setTotalTickets] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -226,6 +228,7 @@ export default function SystemBank({
         setTotalTickets(response.data.data.totalTickets || 0);
         setPasilleras(response.data.data.activeShift?.pasilleras || []);
         setTransactions(response.data.data.activeShift?.transactions || []);
+        setGhostTickets(response.data.data.ghostTickets || []);
       }
       // Cargar transacciones y tickets del turno activo
       const txResponse = await api.get('/cash-management/transactions');
@@ -1561,6 +1564,126 @@ export default function SystemBank({
                 </div>
               </Col>
             </Row>
+          </Card>
+        )}
+
+        {/* Tickets Fantasmas */}
+        {shift?.is_active && ghostTickets.length > 0 && (
+          <Card
+            title={
+              <span className="flex items-center gap-2">
+                <span className="text-orange-500">&#128123;</span>
+                Tickets Fantasmas
+                <Tag color="orange">{ghostTickets.length}</Tag>
+              </span>
+            }
+            extra={
+              <Button
+                type="primary"
+                size="small"
+                onClick={async () => {
+                  try {
+                    const response = await api.post('/cash-management/ghost-ticket/assign-all', {
+                      branch_id: branchId,
+                    });
+                    if (response.data.success) {
+                      message.success(response.data.message);
+                      fetchShiftStatus();
+                    } else {
+                      message.error(response.data.message);
+                    }
+                  } catch {
+                    message.error('Error al asignar tickets fantasmas');
+                  }
+                }}
+              >
+                Agregar todos a esta caja
+              </Button>
+            }
+            className="border-orange-200 bg-orange-50/30"
+          >
+            <Alert
+              type="warning"
+              showIcon
+              message="Estos tickets se generaron sin caja abierta. Asignalos a esta caja para descontar del saldo."
+              className="mb-4"
+            />
+            <Table
+              dataSource={ghostTickets}
+              rowKey="id"
+              size="small"
+              pagination={false}
+              columns={[
+                {
+                  title: '#',
+                  dataIndex: 'ticket_number',
+                  key: 'ticket_number',
+                  width: 80,
+                  render: (val) => (val ? `#${val}` : '-'),
+                },
+                {
+                  title: 'Tipo',
+                  dataIndex: 'type',
+                  key: 'type',
+                  render: (val) => <Tag color="orange">{val}</Tag>,
+                },
+                {
+                  title: 'Jugador',
+                  key: 'player',
+                  render: (_, record) =>
+                    record.user
+                      ? `${record.user.first_name || ''} ${record.user.first_last_name || ''}`.trim()
+                      : '-',
+                },
+                {
+                  title: 'Monto',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                  align: 'right',
+                  render: (val) => (
+                    <span className="font-semibold text-orange-600">
+                      {formatCurrency(Number(val) || 0)}
+                    </span>
+                  ),
+                },
+                {
+                  title: 'Fecha',
+                  dataIndex: 'created_at',
+                  key: 'created_at',
+                  render: (val) => formatDateTimeCL(val),
+                },
+                {
+                  title: 'Acción',
+                  key: 'action',
+                  width: 120,
+                  align: 'center',
+                  render: (_, record) => (
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={async () => {
+                        try {
+                          const response = await api.post('/cash-management/ghost-ticket/assign', {
+                            ghost_ticket_id: record.id,
+                            branch_id: branchId,
+                          });
+                          if (response.data.success) {
+                            message.success(response.data.message);
+                            fetchShiftStatus();
+                          } else {
+                            message.error(response.data.message);
+                          }
+                        } catch {
+                          message.error('Error al asignar el ticket fantasma');
+                        }
+                      }}
+                    >
+                      Agregar a esta caja
+                    </Button>
+                  ),
+                },
+              ]}
+            />
           </Card>
         )}
 

@@ -11,6 +11,7 @@ use App\Models\CategoryBonus;
 use App\Models\Company;
 use App\Models\FingerprintLog;
 use App\Models\Role;
+use App\Models\GhostTicket;
 use App\Models\ShiftRecord;
 use App\Models\Status;
 use App\Models\Ticket;
@@ -850,42 +851,21 @@ class UserController extends Controller
             ], 409);
         }
 
-        $isOpenTurn = ShiftRecord::where('branch_id', $branch->id)
-            ->where('status', 'open')
-            ->first();
-
-
-        if (!$isOpenTurn) {
-            return response()->json([
-                'message' => 'La sucursal no tiene turnos abiertos, comuniquese con un trabajador.'
-            ], 409);
-        }
-
-        // Sucursal que opera con caja: sin caja abierta no se entregan bonos.
-        //
-        // El ticket descuenta del saldo del turno de caja (ver el boot() del
-        // modelo Ticket). Si no hay turno abierto, ese descuento no ocurre y la
-        // plata sale del cajon sin quedar registrada en ningun lado.
-        //
-        // Ojo: el turno validado arriba es el de TRABAJO (ShiftRecord), que es
-        // otra cosa. Puede haber turno de trabajo abierto y la caja cerrada.
-        //
-        // Las sucursales con has_cash_register en false no usan caja y siguen
-        // entregando bonos como siempre.
+        // Determinar si la sucursal opera con caja y si hay una abierta.
+        // Si NO hay caja abierta, los tickets se crean como "fantasmas" y se
+        // asignarán a una caja cuando esta se abra.
+        $isGhostTicket = false;
         if ($branch->has_cash_register) {
-            $cajaAbierta = CashShift::where('branch_id', $branch->id)
+            $activeCashShift = CashShift::where('branch_id', $branch->id)
                 ->where('is_active', true)
-                ->exists();
+                ->first();
 
-            if (!$cajaAbierta) {
-                Log::warning('Bonos rechazados: la sucursal opera con caja y no hay ninguna abierta', [
+            if (!$activeCashShift) {
+                $isGhostTicket = true;
+                Log::info('No hay caja abierta: los tickets serán fantasmas', [
                     'user_id' => $user->id,
                     'branch_id' => $branch->id,
                 ]);
-
-                return response()->json([
-                    'message' => 'La caja de la sucursal no esta abierta. Comuniquese con un trabajador.'
-                ], 409);
             }
         }
 
@@ -1135,6 +1115,16 @@ class UserController extends Controller
 
             $ticket->ticket_number = $branch->ticketNumber;
             $tickets[] = $ticket;
+        }
+
+        // Si no hay caja abierta, registrar cada ticket como fantasma
+        if ($isGhostTicket && !empty($tickets)) {
+            foreach ($tickets as $ticket) {
+                GhostTicket::create([
+                    'ticket_id' => $ticket->id,
+                    'branch_id' => $branch->id,
+                ]);
+            }
         }
 
         // No corresponde ningun bono: no es un error. Se marca la asistencia y se

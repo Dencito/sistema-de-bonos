@@ -203,6 +203,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/pasillera/{pasilleraId}/add-balance', [CashManagementController::class, 'addBalanceToPasillera'])->name('cash-management.pasillera.add-balance');
         Route::put('/pasillera/{pasilleraId}/reset', [CashManagementController::class, 'resetPasillera'])->name('cash-management.pasillera.reset');
         Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
+        Route::post('/ghost-ticket/assign', [CashManagementController::class, 'assignGhostTicket'])->name('cash-management.ghost-ticket.assign');
+        Route::post('/ghost-ticket/assign-all', [CashManagementController::class, 'assignAllGhostTickets'])->name('cash-management.ghost-ticket.assign-all');
     });
 
     // Cash Shift History - role 1 sees all, others filtered by their branch

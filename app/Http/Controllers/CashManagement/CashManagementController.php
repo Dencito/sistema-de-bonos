@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\CashShift;
 use App\Models\CashTransaction;
+use App\Models\GhostTicket;
 use App\Models\Pasillera;
 use App\Models\User;
 use App\Events\CashTransactionAdded;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class CashManagementController extends Controller
@@ -139,7 +141,7 @@ class CashManagementController extends Controller
             'user:id,username,first_name,second_name,first_last_name',
         ]);
 
-        // Get tickets for the active shift period
+        // Get tickets for the active shift period + ghost tickets assigned to this shift
         $tickets = [];
         if ($activeShift) {
             $shiftStart = $activeShift->started_at;
@@ -147,7 +149,17 @@ class CashManagementController extends Controller
 
             $tickets = \App\Models\Ticket::with(['user', 'branch'])
                 ->where('branch_id', $branchId)
-                ->whereBetween('created_at', [$shiftStart, $shiftEnd])
+                ->where(function ($query) use ($shiftStart, $shiftEnd, $activeShift) {
+                    // Normal tickets created during the shift
+                    $query->whereBetween('created_at', [$shiftStart, $shiftEnd]);
+                    // Ghost tickets assigned to this shift (created_at may be before shift)
+                    $ghostTable = (new GhostTicket())->getTable();
+                    $query->orWhereIn('id', function ($sub) use ($activeShift, $ghostTable) {
+                        $sub->select('ticket_id')
+                            ->from($ghostTable)
+                            ->where('cash_shift_id', $activeShift->id);
+                    });
+                })
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function($ticket) {
@@ -166,6 +178,27 @@ class CashManagementController extends Controller
                     ];
                 });
         }
+
+        // Get ghost tickets (unassigned) for this branch
+        $ghostTickets = GhostTicket::with(['ticket.user', 'ticket.branch'])
+            ->where('branch_id', $branchId)
+            ->whereNull('cash_shift_id')
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($ghost) {
+                return [
+                    'id' => $ghost->id,
+                    'ticket_id' => $ghost->ticket_id,
+                    'ticket_number' => $ghost->ticket->ticket_number ?? null,
+                    'amount' => $ghost->ticket->total_amount ?? 0,
+                    'type' => $ghost->ticket->type ?? 'Desconocido',
+                    'created_at' => $ghost->created_at,
+                    'user' => [
+                        'first_name' => $ghost->ticket->user->first_name ?? '',
+                        'first_last_name' => $ghost->ticket->user->first_last_name ?? '',
+                    ],
+                ];
+            });
 
         // Get previous shift balance (from any user in the branch)
         $previousShift = CashShift::where('branch_id', $branchId)
@@ -194,6 +227,7 @@ class CashManagementController extends Controller
             'branches' => $branches,
             'canSelectBranch' => RoleId::canSelectBranch($user->role_id),
             'tickets' => $tickets,
+            'ghostTickets' => $ghostTickets,
         ]);
     }
 
@@ -225,6 +259,7 @@ class CashManagementController extends Controller
             ->first();
 
         // Calculate total tickets for the active shift
+        // Include: tickets created during the shift + ghost tickets assigned to this shift
         $totalTickets = 0;
         if ($activeShift) {
             $shiftStart = $activeShift->started_at;
@@ -233,7 +268,39 @@ class CashManagementController extends Controller
             $totalTickets = \App\Models\Ticket::where('branch_id', $branchId)
                 ->whereBetween('created_at', [$shiftStart, $shiftEnd])
                 ->sum('total_amount');
+
+            // Add ghost tickets assigned to this shift (their created_at may be before the shift)
+            $ghostTableName = (new GhostTicket())->getTable();
+            $ticketTableName = (new \App\Models\Ticket())->getTable();
+
+            $ghostAssignedTotal = GhostTicket::where('cash_shift_id', $activeShift->id)
+                ->where("{$ghostTableName}.branch_id", $branchId)
+                ->join($ticketTableName, "{$ghostTableName}.ticket_id", '=', "{$ticketTableName}.id")
+                ->sum("{$ticketTableName}.total_amount");
+
+            $totalTickets += $ghostAssignedTotal;
         }
+
+        // Get ghost tickets count and total for this branch
+        $ghostTickets = GhostTicket::with(['ticket.user'])
+            ->where('branch_id', $branchId)
+            ->whereNull('cash_shift_id')
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($ghost) {
+                return [
+                    'id' => $ghost->id,
+                    'ticket_id' => $ghost->ticket_id,
+                    'ticket_number' => $ghost->ticket->ticket_number ?? null,
+                    'amount' => $ghost->ticket->total_amount ?? 0,
+                    'type' => $ghost->ticket->type ?? 'Desconocido',
+                    'created_at' => $ghost->created_at,
+                    'user' => [
+                        'first_name' => $ghost->ticket->user->first_name ?? '',
+                        'first_last_name' => $ghost->ticket->user->first_last_name ?? '',
+                    ],
+                ];
+            });
 
         return response()->json([
             'success' => true,
@@ -241,6 +308,7 @@ class CashManagementController extends Controller
                 'activeShift' => $activeShift,
                 'previousBalance' => $previousShift ? $previousShift->current_balance : 0,
                 'totalTickets' => $totalTickets,
+                'ghostTickets' => $ghostTickets,
             ]
         ]);
     }
@@ -1213,13 +1281,21 @@ class CashManagementController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Obtener tickets del turno activo (entre apertura y cierre)
+        // Obtener tickets del turno activo + tickets fantasmas asignados a este turno
+        $ghostTable = (new GhostTicket())->getTable();
         $tickets = \App\Models\Ticket::where('branch_id', $branchId)
-            ->where('created_at', '>=', $activeShift->started_at)
-            ->where(function ($query) use ($activeShift) {
+            ->where(function ($query) use ($activeShift, $ghostTable) {
+                // Normal tickets created during the shift
+                $query->where('created_at', '>=', $activeShift->started_at);
                 if ($activeShift->ended_at) {
                     $query->where('created_at', '<=', $activeShift->ended_at);
                 }
+                // Ghost tickets assigned to this shift (created_at may be before shift)
+                $query->orWhereIn('id', function ($sub) use ($activeShift, $ghostTable) {
+                    $sub->select('ticket_id')
+                        ->from($ghostTable)
+                        ->where('cash_shift_id', $activeShift->id);
+                });
             })
             ->with('user:id,first_name,first_last_name')
             ->orderBy('created_at', 'desc')
@@ -1375,5 +1451,190 @@ class CashManagementController extends Controller
             'message' => 'Valor inicial establecido correctamente',
             'data' => $shift
         ]);
+    }
+
+    /**
+     * Assign a ghost ticket to the active cash shift.
+     * POST /cash-management/ghost-ticket/assign
+     */
+    public function assignGhostTicket(Request $request)
+    {
+        $request->validate([
+            'ghost_ticket_id' => 'required|integer',
+        ]);
+
+        $user = Auth::user();
+        $branch = $this->resolveBranch($request);
+
+        if (!$branch) {
+            return $this->noBranchResponse();
+        }
+
+        $ghostTicket = GhostTicket::with('ticket')->find($request->ghost_ticket_id);
+
+        if (!$ghostTicket) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ticket fantasma no encontrado'
+            ], 404);
+        }
+
+        // Verificar que el ghost ticket pertenece a esta sucursal
+        if ($ghostTicket->branch_id !== $branch->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El ticket fantasma no pertenece a esta sucursal'
+            ], 403);
+        }
+
+        // Verificar que no esté ya asignado
+        if ($ghostTicket->cash_shift_id !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El ticket fantasma ya fue asignado a una caja'
+            ], 400);
+        }
+
+        // Buscar turno de caja activo
+        $activeShift = $this->findActiveShift($branch->id);
+
+        if (!$activeShift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay turno de caja activo para asignar el ticket'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Asignar el ghost ticket al turno activo
+            $ghostTicket->update([
+                'cash_shift_id' => $activeShift->id,
+                'assigned_at' => now(),
+            ]);
+
+            // Descontar el monto del ticket del saldo del turno
+            $ticket = $ghostTicket->ticket;
+            $activeShift->current_balance -= $ticket->total_amount;
+            $activeShift->save();
+
+            DB::commit();
+
+            Log::info('Ticket fantasma asignado a caja', [
+                'ghost_ticket_id' => $ghostTicket->id,
+                'ticket_id' => $ticket->id,
+                'cash_shift_id' => $activeShift->id,
+                'amount' => $ticket->total_amount,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ticket fantasma asignado correctamente a la caja',
+                'data' => [
+                    'ghost_ticket_id' => $ghostTicket->id,
+                    'ticket_number' => $ticket->ticket_number,
+                    'amount' => $ticket->total_amount,
+                    'new_balance' => $activeShift->current_balance,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al asignar ticket fantasma', [
+                'ghost_ticket_id' => $request->ghost_ticket_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar el ticket fantasma'
+            ], 500);
+        }
+    }
+
+    /**
+     * Assign ALL ghost tickets to the active cash shift.
+     * POST /cash-management/ghost-ticket/assign-all
+     */
+    public function assignAllGhostTickets(Request $request)
+    {
+        $user = Auth::user();
+        $branch = $this->resolveBranch($request);
+
+        if (!$branch) {
+            return $this->noBranchResponse();
+        }
+
+        $ghostTickets = GhostTicket::where('branch_id', $branch->id)
+            ->whereNull('cash_shift_id')
+            ->get();
+
+        if ($ghostTickets->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay tickets fantasmas para asignar'
+            ], 400);
+        }
+
+        $activeShift = $this->findActiveShift($branch->id);
+
+        if (!$activeShift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay turno de caja activo para asignar los tickets'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $totalAssigned = 0;
+            $countAssigned = 0;
+
+            foreach ($ghostTickets as $ghostTicket) {
+                $ticket = $ghostTicket->ticket;
+
+                $ghostTicket->update([
+                    'cash_shift_id' => $activeShift->id,
+                    'assigned_at' => now(),
+                ]);
+
+                $activeShift->current_balance -= $ticket->total_amount;
+                $totalAssigned += $ticket->total_amount;
+                $countAssigned++;
+            }
+
+            $activeShift->save();
+
+            DB::commit();
+
+            Log::info('Todos los tickets fantasmas asignados a caja', [
+                'count' => $countAssigned,
+                'total' => $totalAssigned,
+                'cash_shift_id' => $activeShift->id,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$countAssigned} tickets fantasmas asignados correctamente",
+                'data' => [
+                    'count' => $countAssigned,
+                    'total' => $totalAssigned,
+                    'new_balance' => $activeShift->current_balance,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al asignar todos los tickets fantasmas', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar los tickets fantasmas'
+            ], 500);
+        }
     }
 }

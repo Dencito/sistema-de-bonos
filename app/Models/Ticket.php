@@ -86,6 +86,14 @@ class Ticket extends Model
     }
 
     /**
+     * Get the ghost ticket record associated with this ticket.
+     */
+    public function ghostTicket(): BelongsTo
+    {
+        return $this->belongsTo(GhostTicket::class);
+    }
+
+    /**
      * Scope a query to only include tickets created today.
      */
     public function scopeCreatedToday($query)

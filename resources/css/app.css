@@ -10,19 +10,19 @@
         --card-foreground: 240 10% 3.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 240 10% 3.9%;
-        --primary: 240 5.9% 10%;
+        --primary: 217 91% 60%;
         --primary-foreground: 0 0% 98%;
-        --secondary: 240 4.8% 95.9%;
-        --secondary-foreground: 240 5.9% 10%;
-        --muted: 240 4.8% 95.9%;
-        --muted-foreground: 240 3.8% 46.1%;
-        --accent: 240 4.8% 95.9%;
-        --accent-foreground: 240 5.9% 10%;
+        --secondary: 220 14% 96%;
+        --secondary-foreground: 220 9% 46%;
+        --muted: 220 14% 96%;
+        --muted-foreground: 220 9% 46%;
+        --accent: 220 14% 96%;
+        --accent-foreground: 220 9% 46%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
-        --border: 240 5.9% 90%;
-        --input: 240 5.9% 90%;
-        --ring: 240 10% 3.9%;
+        --border: 220 13% 91%;
+        --input: 220 13% 91%;
+        --ring: 217 91% 60%;
         --chart-1: 12 76% 61%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
@@ -31,10 +31,10 @@
         --radius: 0.5rem;
         --sidebar-background: 0 0% 98%;
         --sidebar-foreground: 240 5.3% 26.1%;
-        --sidebar-primary: 240 5.9% 10%;
+        --sidebar-primary: 217 91% 60%;
         --sidebar-primary-foreground: 0 0% 98%;
-        --sidebar-accent: 240 4.8% 95.9%;
-        --sidebar-accent-foreground: 240 5.9% 10%;
+        --sidebar-accent: 220 14% 96%;
+        --sidebar-accent-foreground: 220 9% 46%;
         --sidebar-border: 220 13% 91%;
         --sidebar-ring: 217.2 91.2% 59.8%;
     }
@@ -45,8 +45,8 @@
         --card-foreground: 0 0% 98%;
         --popover: 240 10% 3.9%;
         --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 240 5.9% 10%;
+        --primary: 217 91% 60%;
+        --primary-foreground: 0 0% 98%;
         --secondary: 240 3.7% 15.9%;
         --secondary-foreground: 0 0% 98%;
         --muted: 240 3.7% 15.9%;
@@ -57,7 +57,7 @@
         --destructive-foreground: 0 0% 98%;
         --border: 240 3.7% 15.9%;
         --input: 240 3.7% 15.9%;
-        --ring: 240 4.9% 83.9%;
+        --ring: 217 91% 60%;
         --chart-1: 220 70% 50%;
         --chart-2: 160 60% 45%;
         --chart-3: 30 80% 55%;
@@ -65,7 +65,7 @@
         --chart-5: 340 75% 55%;
         --sidebar-background: 240 5.9% 10%;
         --sidebar-foreground: 240 4.8% 95.9%;
-        --sidebar-primary: 224.3 76.3% 48%;
+        --sidebar-primary: 217 91% 60%;
         --sidebar-primary-foreground: 0 0% 100%;
         --sidebar-accent: 240 3.7% 15.9%;
         --sidebar-accent-foreground: 240 4.8% 95.9%;
@@ -80,5 +80,318 @@
     }
     body {
         @apply bg-background text-foreground;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
+}
+
+/* ============================================
+   MODAL STYLES
+   ============================================ */
+
+.ant-modal-content {
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15), 0 12px 24px -8px rgb(0 0 0 / 0.1) !important;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================
+   SELECT DROPDOWN STYLES
+   ============================================ */
+
+.ant-select-dropdown {
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.08) !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 4px !important;
+}
+
+.ant-select-item {
+    border-radius: 8px !important;
+    margin: 1px 0 !important;
+    padding: 8px 12px !important;
+    transition: all 0.15s ease !important;
+    min-height: 36px !important;
+    line-height: 20px !important;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background-color: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    font-weight: 500 !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled)::after {
+    color: #2563eb !important;
+    font-weight: 600 !important;
+}
+
+.ant-select-selector {
+    transition: all 0.2s ease !important;
+}
+
+.ant-select-focused .ant-select-selector {
+    box-shadow: 0 0 0 2px rgb(37 99 235 / 0.12) !important;
+    border-color: #2563eb !important;
+}
+
+.ant-select:hover .ant-select-selector {
+    border-color: #93c5fd !important;
+}
+
+/* ============================================
+   MULTI-SELECT TAGS (FIXED - light blue, clean)
+   ============================================ */
+
+.ant-select-multiple .ant-select-selection-item {
+    background-color: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #1e40af !important;
+    font-weight: 500 !important;
+    padding: 1px 8px !important;
+    margin: 3px 4px !important;
+    border-radius: 6px !important;
+    line-height: 22px !important;
+    font-size: 13px !important;
+}
+
+.ant-select-multiple .ant-select-selection-item-remove {
+    color: #3b82f6 !important;
+    margin-left: 4px !important;
+    font-size: 12px !important;
+    transition: color 0.15s ease !important;
+}
+
+.ant-select-multiple .ant-select-selection-item-remove:hover {
+    color: #1d4ed8 !important;
+    background-color: #dbeafe !important;
+    border-radius: 4px !important;
+}
+
+/* Placeholder in multiple select */
+.ant-select-multiple .ant-select-selection-placeholder {
+    color: #94a3b8 !important;
+}
+
+/* ============================================
+   FORM FIELD STYLES
+   ============================================ */
+
+.ant-form-item-label > label {
+    color: #475569 !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+}
+
+.ant-form-item-explain-error {
+    font-size: 12px !important;
+    margin-top: 4px !important;
+    color: #ef4444 !important;
+}
+
+/* ============================================
+   INPUT FOCUS & HOVER STATES
+   ============================================ */
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-number:focus,
+.ant-input-number-focused,
+.ant-picker-focused {
+    box-shadow: 0 0 0 2px rgb(37 99 235 / 0.12) !important;
+}
+
+.ant-input:hover:not(:disabled):not(:focus),
+.ant-input-number:hover:not(:disabled):not(:focus) {
+    border-color: #93c5fd !important;
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+
+.ant-btn-primary {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+    transition: all 0.2s ease !important;
+}
+
+.ant-btn-primary:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+    transform: translateY(-1px);
+}
+
+.ant-btn-primary:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+.ant-btn-default {
+    transition: all 0.2s ease !important;
+}
+
+.ant-btn-default:hover {
+    border-color: #93c5fd !important;
+    color: #2563eb !important;
+}
+
+/* ============================================
+   CARD STYLES
+   ============================================ */
+
+.ant-card {
+    transition: box-shadow 0.2s ease !important;
+}
+
+.ant-card:hover {
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.06) !important;
+}
+
+/* ============================================
+   TABLE STYLES
+   ============================================ */
+
+.ant-table-thead > tr > th {
+    font-weight: 600 !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+.ant-table-tbody > tr {
+    transition: background-color 0.15s ease !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+    background-color: #f8fafc !important;
+}
+
+/* ============================================
+   SWITCH & RADIO STYLES
+   ============================================ */
+
+.ant-switch-checked {
+    background-color: #2563eb !important;
+}
+
+.ant-radio-button-wrapper {
+    transition: all 0.2s ease !important;
+}
+
+.ant-radio-button-wrapper-checked {
+    background-color: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   TAG STYLES
+   ============================================ */
+
+.ant-tag {
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    padding: 2px 10px !important;
+}
+
+/* ============================================
+   DATE PICKER STYLES
+   ============================================ */
+
+.ant-picker-dropdown {
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.08) !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 4px !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+    background-color: #2563eb !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+    background-color: #2563eb !important;
+}
+
+/* ============================================
+   CONFIRM MODAL (Modal.confirm)
+   ============================================ */
+
+.ant-modal-confirm .ant-modal-body {
+    padding: 24px !important;
+}
+
+.ant-modal-confirm-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+.ant-modal-confirm-content {
+    color: #64748b !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* ============================================
+   SCROLLBAR STYLES
+   ============================================ */
+
+.ant-select-dropdown ::-webkit-scrollbar,
+.ant-picker-dropdown ::-webkit-scrollbar,
+.ant-modal-body ::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+.ant-select-dropdown ::-webkit-scrollbar-track,
+.ant-picker-dropdown ::-webkit-scrollbar-track,
+.ant-modal-body ::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.ant-select-dropdown ::-webkit-scrollbar-thumb,
+.ant-picker-dropdown ::-webkit-scrollbar-thumb,
+.ant-modal-body ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1 !important;
+    border-radius: 3px !important;
+}
+
+/* ============================================
+   MESSAGE / TOAST STYLES
+   ============================================ */
+
+.ant-message .ant-message-notice-content {
+    border-radius: 10px !important;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.08) !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 12px 20px !important;
+}
+
+/* ============================================
+   PLACEHOLDER STYLES
+   ============================================ */
+
+.ant-select-selection-placeholder,
+.ant-input::placeholder,
+.ant-input-number-input::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* ============================================
+   DISABLED STATE STYLES
+   ============================================ */
+
+.ant-input-disabled,
+.ant-input-number-disabled,
+.ant-select-disabled .ant-select-selector {
+    background-color: #f8fafc !important;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
+    cursor: not-allowed !important;
 }

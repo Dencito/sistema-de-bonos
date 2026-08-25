@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Modal, Form } from 'antd';
 
 export function ModalForm({
@@ -13,21 +14,24 @@ export function ModalForm({
   initialValues = {},
   disabled = false,
 }) {
+  const handleCancel = useCallback(() => {
+    if (loading) return;
+    Modal.confirm({
+      title: '¿Estás seguro de que quieres salir?',
+      content: 'Se borrarán todos los datos no guardados.',
+      okText: 'Sí',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: onClose,
+    });
+  }, [loading, onClose]);
+
   return (
     <Modal
       style={{ top: 20 }}
       title={<p className="text-bold text-3xl">{title}</p>}
       open={showModal}
-      onCancel={() => {
-        Modal.confirm({
-          title: '¿Estás seguro de que quieres salir?',
-          content: 'Se borrarán todos los datos no guardados.',
-          okText: 'Sí',
-          okType: 'danger',
-          cancelText: 'No',
-          onOk: onClose,
-        });
-      }}
+      onCancel={handleCancel}
       okText={okText}
       cancelText={cancelText}
       okButtonProps={{
@@ -37,6 +41,7 @@ export function ModalForm({
       }}
       cancelButtonProps={{ disabled: loading }}
       destroyOnClose
+      afterClose={() => form?.resetFields()}
       modalRender={(dom) => (
         <Form
           layout="vertical"

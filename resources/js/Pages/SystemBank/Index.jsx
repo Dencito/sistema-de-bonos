@@ -727,6 +727,9 @@ export default function SystemBank({
       key: 'type',
       render: (type, record) => {
         if (record.source === 'ticket') {
+          if (record.is_ghost) {
+            return <Tag color="orange">Ticket Fantasma</Tag>;
+          }
           return <Tag color="blue">Ticket</Tag>;
         }
         const label = TYPE_LABELS[type] || type;
@@ -774,10 +777,19 @@ export default function SystemBank({
           const nombre = [record.user?.first_name, record.user?.first_last_name]
             .filter(Boolean)
             .join(' ');
-          // ticket_number no se guarda en la base, asi que suele venir null:
-          // sin este chequeo se imprimia literalmente "Ticket #null".
           const numero = record.ticket_number ? ` #${record.ticket_number}` : '';
-          return `Ticket${numero}${nombre ? ` - ${nombre}` : ''}`;
+          const base = `Ticket${numero}${nombre ? ` - ${nombre}` : ''}`;
+          if (record.is_ghost && record.ghost_assigned_at) {
+            return (
+              <div>
+                <div>{base}</div>
+                <div className="text-[11px] text-orange-500">
+                  Agregado a caja: {formatDateTimeCL(record.ghost_assigned_at)}
+                </div>
+              </div>
+            );
+          }
+          return base;
         }
         const parts = [];
         if (record.type === 'deposit') parts.push('Agregar Dinero');

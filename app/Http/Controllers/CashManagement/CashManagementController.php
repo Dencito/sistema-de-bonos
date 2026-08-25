@@ -147,7 +147,7 @@ class CashManagementController extends Controller
             $shiftStart = $activeShift->started_at;
             $shiftEnd = $activeShift->ended_at ?? now();
 
-            $tickets = \App\Models\Ticket::with(['user', 'branch'])
+            $ticketCollection = \App\Models\Ticket::with(['user', 'branch'])
                 ->where('branch_id', $branchId)
                 ->where(function ($query) use ($shiftStart, $shiftEnd, $activeShift) {
                     // Normal tickets created during the shift
@@ -161,22 +161,31 @@ class CashManagementController extends Controller
                     });
                 })
                 ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'type' => 'ticket',
-                        'source' => 'ticket',
-                        'amount' => $ticket->total_amount,
-                        'ticket_number' => $ticket->ticket_number,
-                        'description' => 'Ticket #' . $ticket->ticket_number,
-                        'created_at' => $ticket->created_at,
-                        'user' => [
-                            'first_name' => $ticket->user->first_name,
-                            'first_last_name' => $ticket->user->first_last_name,
-                        ],
-                    ];
-                });
+                ->get();
+
+            // Build a map of ghost ticket info for this shift
+            $ghostMap = GhostTicket::where('cash_shift_id', $activeShift->id)
+                ->where('branch_id', $branchId)
+                ->pluck('assigned_at', 'ticket_id');
+
+            $tickets = $ticketCollection->map(function($ticket) use ($ghostMap) {
+                $isGhost = $ghostMap->has($ticket->id);
+                return [
+                    'id' => $ticket->id,
+                    'type' => 'ticket',
+                    'source' => 'ticket',
+                    'is_ghost' => $isGhost,
+                    'ghost_assigned_at' => $isGhost ? $ghostMap->get($ticket->id) : null,
+                    'amount' => $ticket->total_amount,
+                    'ticket_number' => $ticket->ticket_number,
+                    'description' => 'Ticket #' . $ticket->ticket_number,
+                    'created_at' => $ticket->created_at,
+                    'user' => [
+                        'first_name' => $ticket->user->first_name,
+                        'first_last_name' => $ticket->user->first_last_name,
+                    ],
+                ];
+            });
         }
 
         // Get ghost tickets (unassigned) for this branch
@@ -1299,22 +1308,31 @@ class CashManagementController extends Controller
             })
             ->with('user:id,first_name,first_last_name')
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function($ticket) {
-                return [
-                    'id' => $ticket->id,
-                    'type' => 'ticket',
-                    'source' => 'ticket',
-                    'amount' => $ticket->total_amount,
-                    'ticket_number' => $ticket->ticket_number,
-                    'description' => 'Ticket #' . $ticket->ticket_number,
-                    'created_at' => $ticket->created_at,
-                    'user' => [
-                        'first_name' => $ticket->user->first_name,
-                        'first_last_name' => $ticket->user->first_last_name,
-                    ],
-                ];
-            });
+            ->get();
+
+        // Build a map of ghost ticket info for this shift
+        $ghostMap = GhostTicket::where('cash_shift_id', $activeShift->id)
+            ->where('branch_id', $branchId)
+            ->pluck('assigned_at', 'ticket_id');
+
+        $tickets = $tickets->map(function($ticket) use ($ghostMap) {
+            $isGhost = $ghostMap->has($ticket->id);
+            return [
+                'id' => $ticket->id,
+                'type' => 'ticket',
+                'source' => 'ticket',
+                'is_ghost' => $isGhost,
+                'ghost_assigned_at' => $isGhost ? $ghostMap->get($ticket->id) : null,
+                'amount' => $ticket->total_amount,
+                'ticket_number' => $ticket->ticket_number,
+                'description' => 'Ticket #' . $ticket->ticket_number,
+                'created_at' => $ticket->created_at,
+                'user' => [
+                    'first_name' => $ticket->user->first_name,
+                    'first_last_name' => $ticket->user->first_last_name,
+                ],
+            ];
+        });
 
         return response()->json([
             'success' => true,

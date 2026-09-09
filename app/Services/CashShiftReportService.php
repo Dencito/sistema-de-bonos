@@ -24,7 +24,7 @@ class CashShiftReportService
     /**
      * Destinatario del reporte. Es fijo a proposito: no se configura por UI.
      */
-    public const REPORT_EMAIL = 'denarpadilla.lionel@gmail.com';
+    public const REPORT_EMAIL = 'Informesquilicura@gmail.com';
 
     /** Campos que la pasillera puede corregir, con su nombre para mostrar. */
     private const CAMPOS_EDITABLES = [

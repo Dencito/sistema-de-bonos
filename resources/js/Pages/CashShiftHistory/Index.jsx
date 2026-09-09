@@ -21,6 +21,7 @@ import {
   message,
   Divider,
   Input,
+  Popconfirm,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -28,6 +29,7 @@ import {
   SearchOutlined,
   ClearOutlined,
   HistoryOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { formatDateTimeCL } from '@/Utils/date';
@@ -59,6 +61,7 @@ export default function CashShiftHistoryIndex({
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState(null);
+  const [sendingReportId, setSendingReportId] = useState(null);
 
   // Detail transaction filters
   const [txTypeFilter, setTxTypeFilter] = useState('all');
@@ -122,6 +125,19 @@ export default function CashShiftHistoryIndex({
       setDetailVisible(false);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  // Reenvía el reporte completo del turno al correo de control.
+  const handleSendReport = async (shiftId) => {
+    setSendingReportId(shiftId);
+    try {
+      const response = await axios.post(`/cash-shift-history/${shiftId}/send-report`);
+      message.success(response.data.message || 'Reporte enviado');
+    } catch (error) {
+      message.error(error.response?.data?.message || 'No se pudo enviar el reporte', 6);
+    } finally {
+      setSendingReportId(null);
     }
   };
 
@@ -249,10 +265,29 @@ export default function CashShiftHistoryIndex({
       title: 'Acciones',
       key: 'actions',
       fixed: 'right',
+      width: 190,
       render: (_, r) => (
-        <Button icon={<EyeOutlined />} size="small" onClick={() => handleViewDetail(r.id)}>
-          Ver
-        </Button>
+        <Space size="small">
+          <Button icon={<EyeOutlined />} size="small" onClick={() => handleViewDetail(r.id)}>
+            Ver
+          </Button>
+          <Popconfirm
+            title="Enviar reporte por correo"
+            description={`Se envía el detalle completo del turno #${r.id}.`}
+            okText="Enviar"
+            cancelText="Cancelar"
+            onConfirm={() => handleSendReport(r.id)}
+          >
+            <Button
+              icon={<MailOutlined />}
+              size="small"
+              loading={sendingReportId === r.id}
+              title="Enviar reporte por correo"
+            >
+              Enviar
+            </Button>
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
@@ -543,7 +578,24 @@ export default function CashShiftHistoryIndex({
           onCancel={() => setDetailVisible(false)}
           title={shift ? `Detalle Turno #${shift.id} - ${shift.branch?.name || ''}` : 'Detalle'}
           width={1100}
-          footer={<Button onClick={() => setDetailVisible(false)}>Cerrar</Button>}
+          footer={
+            <Space>
+              {shift && (
+                <Popconfirm
+                  title="Enviar reporte por correo"
+                  description={`Se envía el detalle completo del turno #${shift.id}.`}
+                  okText="Enviar"
+                  cancelText="Cancelar"
+                  onConfirm={() => handleSendReport(shift.id)}
+                >
+                  <Button icon={<MailOutlined />} loading={sendingReportId === shift.id}>
+                    Enviar por correo
+                  </Button>
+                </Popconfirm>
+              )}
+              <Button onClick={() => setDetailVisible(false)}>Cerrar</Button>
+            </Space>
+          }
           destroyOnClose
         >
           {detailLoading ? (

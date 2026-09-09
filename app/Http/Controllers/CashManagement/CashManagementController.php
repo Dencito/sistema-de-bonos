@@ -13,6 +13,7 @@ use App\Events\CashTransactionAdded;
 use App\Constants\RoleId;
 use App\Constants\TransactionType;
 use App\Constants\TransactionSource;
+use App\Services\CashShiftReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -536,6 +537,14 @@ class CashManagementController extends Controller
         Pasillera::where('cash_shift_id', $activeShift->id)
             ->update(['is_active' => false]);
 
+        // El reporte del cierre se manda solo. Si el correo falla no se
+        // interrumpe el cierre: el service loguea el error y devuelve false.
+        $reportSent = app(CashShiftReportService::class)->send(
+            $activeShift->fresh(),
+            'Cierre de caja',
+            $user
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Turno cerrado correctamente',
@@ -543,8 +552,45 @@ class CashManagementController extends Controller
                 'shift'                 => $activeShift,
                 'difference'            => $difference,
                 'closing_total_counted' => $closingTotalCounted,
+                'report_sent'           => $reportSent,
             ]
         ]);
+    }
+
+    /**
+     * Envía por correo el estado del turno abierto, sin cerrarlo.
+     * Sirve para avisar "cómo va la caja" en cualquier momento.
+     */
+    public function sendReport(Request $request)
+    {
+        $user = Auth::user();
+        $branch = $this->resolveBranch($request);
+
+        if (!$branch) {
+            return $this->noBranchResponse();
+        }
+
+        $activeShift = $this->findActiveShift($branch->id);
+
+        if (!$activeShift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay turno activo para reportar',
+            ], 400);
+        }
+
+        $enviado = app(CashShiftReportService::class)->send(
+            $activeShift,
+            'Envío manual: estado del turno en curso',
+            $user
+        );
+
+        return response()->json([
+            'success' => $enviado,
+            'message' => $enviado
+                ? 'Reporte enviado a ' . CashShiftReportService::REPORT_EMAIL
+                : 'No se pudo enviar el reporte. Revisá la configuración de correo.',
+        ], $enviado ? 200 : 500);
     }
 
     /**

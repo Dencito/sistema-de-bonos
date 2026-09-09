@@ -8,6 +8,7 @@ use App\Http\Controllers\CategoriesBonus\CategoryBonusController;
 use App\Http\Controllers\Companies\CompanyController;
 use App\Http\Controllers\FingerprintLogs\FingerprintLogController;
 use App\Http\Controllers\Mobile\MobilePasilleraController;
+use App\Http\Controllers\Machines\MachineReportController;
 use App\Http\Controllers\Orders\OrdersController;
 use App\Http\Controllers\Products\ProductsController;
 use App\Http\Controllers\Reports\ReportController;
@@ -109,6 +110,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
+    // Consulta por maquina: recaudadores y roles superiores
+    Route::prefix('machines')->group(function () {
+        Route::get('/', [MachineReportController::class, 'index'])->name('machines.index');
+        Route::get('/search', [MachineReportController::class, 'search'])->name('machines.search');
+    });
+
     Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
 
     Route::get('/statuses', [StatusController::class, 'index'])->name('statuses.index');
@@ -205,12 +212,14 @@ Route::middleware('auth')->group(function () {
         Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
         Route::post('/ghost-ticket/assign', [CashManagementController::class, 'assignGhostTicket'])->name('cash-management.ghost-ticket.assign');
         Route::post('/ghost-ticket/assign-all', [CashManagementController::class, 'assignAllGhostTickets'])->name('cash-management.ghost-ticket.assign-all');
+        Route::post('/report/send', [CashManagementController::class, 'sendReport'])->name('cash-management.report.send');
     });
 
     // Cash Shift History - role 1 sees all, others filtered by their branch
     Route::prefix('cash-shift-history')->group(function () {
         Route::get('/', [CashShiftHistoryController::class, 'index'])->name('cash-shift-history.index');
         Route::get('/list', [CashShiftHistoryController::class, 'list'])->name('cash-shift-history.list');
+        Route::post('/{shiftId}/send-report', [CashShiftHistoryController::class, 'sendReport'])->name('cash-shift-history.send-report');
         Route::get('/{shiftId}', [CashShiftHistoryController::class, 'show'])->name('cash-shift-history.show');
     });
 

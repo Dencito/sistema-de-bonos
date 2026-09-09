@@ -33,6 +33,7 @@ import {
   UploadOutlined,
   ShopOutlined,
   BankOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import { Switch } from 'antd';
 import axios from 'axios';
@@ -203,6 +204,7 @@ export default function SystemBank({
   // Modal states
   const [openingModalVisible, setOpeningModalVisible] = useState(false);
   const [closingModalVisible, setClosingModalVisible] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
   const [openingSimpleMode, setOpeningSimpleMode] = useState(true);
   const [openingSimpleTotal, setOpeningSimpleTotal] = useState('');
   const [closingSimpleMode, setClosingSimpleMode] = useState(true);
@@ -404,7 +406,7 @@ export default function SystemBank({
       });
 
       if (response.data.success) {
-        const { difference } = response.data.data;
+        const { difference, report_sent: reportSent } = response.data.data;
 
         let msg = 'Turno cerrado correctamente.';
         if (!closingSimpleMode && difference !== 0) {
@@ -412,6 +414,12 @@ export default function SystemBank({
         }
 
         message.success(msg);
+
+        // El reporte se manda solo al cerrar, pero si el correo falla el cierre
+        // igual se hace: hay que avisarlo o nadie se entera.
+        if (reportSent === false) {
+          message.warning('El turno se cerró, pero no se pudo enviar el reporte por correo.', 6);
+        }
         setShift(null);
         setPasilleras([]);
         setTransactions([]);
@@ -431,6 +439,19 @@ export default function SystemBank({
       message.error(error.response?.data?.message || 'Error al cerrar turno', 6);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manda por correo el estado del turno sin cerrarlo: "cómo va la caja".
+  const handleSendReport = async () => {
+    setSendingReport(true);
+    try {
+      const response = await api.post('/cash-management/report/send');
+      message.success(response.data.message || 'Reporte enviado');
+    } catch (error) {
+      message.error(error.response?.data?.message || 'No se pudo enviar el reporte', 6);
+    } finally {
+      setSendingReport(false);
     }
   };
 
@@ -1308,17 +1329,30 @@ export default function SystemBank({
                 </p>
               )}
               {shift?.is_active && (
-                <Button
-                  danger
-                  type="primary"
-                  size="large"
-                  block
-                  loading={loading}
-                  className="mt-4"
-                  onClick={() => setClosingModalVisible(true)}
-                >
-                  Cerrar Caja
-                </Button>
+                <>
+                  <Button
+                    danger
+                    type="primary"
+                    size="large"
+                    block
+                    loading={loading}
+                    className="mt-4"
+                    onClick={() => setClosingModalVisible(true)}
+                  >
+                    Cerrar Caja
+                  </Button>
+                  <Popconfirm
+                    title="Enviar reporte por correo"
+                    description="Se envía el estado actual del turno, sin cerrarlo."
+                    okText="Enviar"
+                    cancelText="Cancelar"
+                    onConfirm={handleSendReport}
+                  >
+                    <Button icon={<MailOutlined />} block loading={sendingReport} className="mt-2">
+                      Enviar reporte por correo
+                    </Button>
+                  </Popconfirm>
+                </>
               )}
             </div>
           </Col>

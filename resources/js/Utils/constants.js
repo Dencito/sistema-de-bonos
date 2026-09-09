@@ -21,6 +21,9 @@ export const allowedRoles = {
   shifts: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
   createBonus: ['duenio', 'super-admin', 'admin', 'supervisor'],
   systemBank: ['duenio', 'super-admin', 'admin', 'supervisor', 'trabajador'],
+  // Consulta por maquina. Un trabajador entra solo si tiene el cargo
+  // RECAUDADOR, cosa que se chequea aparte porque el cargo no es el rol.
+  machines: ['duenio', 'super-admin', 'admin', 'supervisor'],
   // Roles sin sucursal asignada: eligen una para operar
   branchSelectors: ['duenio', 'super-admin', 'admin'],
 };

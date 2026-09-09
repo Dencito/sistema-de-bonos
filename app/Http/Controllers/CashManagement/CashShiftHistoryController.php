@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Constants\RoleId;
 use App\Models\CashShift;
 use App\Models\Branch;
+use App\Services\CashShiftReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -100,6 +101,44 @@ class CashShiftHistoryController extends Controller
             'success' => true,
             'data' => $shifts,
         ]);
+    }
+
+    /**
+     * Reenvía por correo el reporte completo de un turno del historial.
+     * Sirve tanto para un turno cerrado como para el que está abierto.
+     */
+    public function sendReport(Request $request, $shiftId)
+    {
+        $user = Auth::user();
+        $shift = CashShift::find($shiftId);
+
+        if (!$shift) {
+            return response()->json(['success' => false, 'message' => 'Turno no encontrado'], 404);
+        }
+
+        // Misma regla que el detalle: quien no elige sucursal solo ve la suya
+        if (!RoleId::canSelectBranch($user->role_id) && $shift->branch_id != $user->branch_id) {
+            Log::warning('Unauthorized shift report attempt', [
+                'user_id' => $user->id,
+                'shift_id' => $shiftId,
+            ]);
+            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        $enviado = app(CashShiftReportService::class)->send(
+            $shift,
+            $shift->is_active
+                ? 'Envío manual desde el historial: turno en curso'
+                : 'Envío manual desde el historial',
+            $user
+        );
+
+        return response()->json([
+            'success' => $enviado,
+            'message' => $enviado
+                ? 'Reporte del turno #' . $shift->id . ' enviado a ' . CashShiftReportService::REPORT_EMAIL
+                : 'No se pudo enviar el reporte. Revisá la configuración de correo.',
+        ], $enviado ? 200 : 500);
     }
 
     /**

@@ -18,6 +18,7 @@ import {
   ShoppingBasket,
   Settings,
   LayoutGrid,
+  MonitorSmartphone,
   UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -186,6 +187,15 @@ export function AppSidebar({ role, roles, user }) {
           label: 'Historial Cajas',
           link: '/cash-shift-history',
           autorized: allowedRoles.systemBank.includes(role),
+        },
+        {
+          key: '16',
+          icon: MonitorSmartphone,
+          label: 'Consulta Máquina',
+          link: '/machines',
+          // El cargo RECAUDADOR habilita a un trabajador que por rol no entraria
+          autorized:
+            allowedRoles.machines.includes(role) || (user?.cargo || []).includes('RECAUDADOR'),
         },
       ],
     },

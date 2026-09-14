@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Banks\BankClientController;
+use App\Http\Controllers\Banks\BankController;
+use App\Http\Controllers\Banks\BankImportController;
+use App\Http\Controllers\Banks\BankShiftController;
 use App\Http\Controllers\Bonuses\BonusController;
 use App\Http\Controllers\Branches\BranchController;
 use App\Http\Controllers\CashManagement\CashManagementController;
@@ -213,6 +217,40 @@ Route::middleware('auth')->group(function () {
         Route::post('/ghost-ticket/assign', [CashManagementController::class, 'assignGhostTicket'])->name('cash-management.ghost-ticket.assign');
         Route::post('/ghost-ticket/assign-all', [CashManagementController::class, 'assignAllGhostTickets'])->name('cash-management.ghost-ticket.assign-all');
         Route::post('/report/send', [CashManagementController::class, 'sendReport'])->name('cash-management.report.send');
+    });
+
+    // Bancos Online - solo roles superiores a trabajador.
+    // Las cuentas son de la empresa entera: aca no se elige sucursal.
+    Route::prefix('banks')->group(function () {
+        Route::get('/', [BankController::class, 'index'])->name('banks.index');
+        Route::get('/summary', [BankController::class, 'summary'])->name('banks.summary');
+        Route::post('/accounts', [BankController::class, 'storeAccount'])->name('banks.accounts.store');
+        Route::put('/accounts/{id}', [BankController::class, 'updateAccount'])->name('banks.accounts.update');
+        Route::post('/kinds', [BankController::class, 'storeKind'])->name('banks.kinds.store');
+        Route::get('/movements', [BankController::class, 'movements'])->name('banks.movements');
+        Route::post('/movements', [BankController::class, 'store'])->name('banks.movements.store');
+        Route::put('/movements/{id}', [BankController::class, 'update'])->name('banks.movements.update');
+        Route::delete('/movements/{id}', [BankController::class, 'destroy'])->name('banks.movements.destroy');
+
+        Route::get('/shifts', [BankShiftController::class, 'index'])->name('banks.shifts.index');
+        Route::get('/shifts/current', [BankShiftController::class, 'current'])->name('banks.shifts.current');
+        Route::get('/shifts/list', [BankShiftController::class, 'list'])->name('banks.shifts.list');
+        Route::get('/shifts/proposed', [BankShiftController::class, 'proposed'])->name('banks.shifts.proposed');
+        Route::post('/shifts/open', [BankShiftController::class, 'open'])->name('banks.shifts.open');
+        Route::post('/shifts/close', [BankShiftController::class, 'close'])->name('banks.shifts.close');
+        Route::get('/shifts/{id}', [BankShiftController::class, 'show'])->name('banks.shifts.show');
+
+        Route::get('/clients', [BankClientController::class, 'index'])->name('banks.clients.index');
+        Route::get('/clients/list', [BankClientController::class, 'list'])->name('banks.clients.list');
+        Route::get('/clients/duplicates', [BankClientController::class, 'duplicates'])->name('banks.clients.duplicates');
+        Route::post('/clients', [BankClientController::class, 'store'])->name('banks.clients.store');
+        Route::put('/clients/{id}', [BankClientController::class, 'update'])->name('banks.clients.update');
+        Route::post('/clients/merge', [BankClientController::class, 'merge'])->name('banks.clients.merge');
+
+        Route::get('/imports', [BankImportController::class, 'index'])->name('banks.imports.index');
+        Route::post('/imports/preview', [BankImportController::class, 'preview'])->name('banks.imports.preview');
+        Route::post('/imports', [BankImportController::class, 'store'])->name('banks.imports.store');
+        Route::delete('/imports/{id}', [BankImportController::class, 'destroy'])->name('banks.imports.destroy');
     });
 
     // Cash Shift History - role 1 sees all, others filtered by their branch

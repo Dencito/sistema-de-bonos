@@ -20,8 +20,24 @@ class RoleId
         self::ADMIN,
     ];
 
+    /**
+     * Roles superiores a trabajador. Son los unicos que entran al modulo de
+     * bancos online: las cuentas son de la empresa entera, no de una sucursal.
+     */
+    const BANK_MANAGERS = [
+        self::DUENIO,
+        self::SUPER_ADMIN,
+        self::ADMIN,
+        self::SUPERVISOR,
+    ];
+
     public static function canSelectBranch(?int $roleId): bool
     {
         return in_array($roleId, self::BRANCH_SELECTORS, true);
+    }
+
+    public static function canManageBanks(?int $roleId): bool
+    {
+        return in_array($roleId, self::BANK_MANAGERS, true);
     }
 }

@@ -18,11 +18,12 @@ import {
   ShoppingBasket,
   Settings,
   LayoutGrid,
+  Landmark,
   MonitorSmartphone,
   UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
-import { roleDisplayNames, allowedRoles } from '@/Utils/constants';
+import { roleDisplayNames, allowedRoles, BANK_CARGOS } from '@/Utils/constants';
 import ChangePasswordModal from '@/Components/ChangePasswordModal';
 
 /* global route */
@@ -196,6 +197,17 @@ export function AppSidebar({ role, roles, user }) {
           // El cargo RECAUDADOR habilita a un trabajador que por rol no entraria
           autorized:
             allowedRoles.machines.includes(role) || (user?.cargo || []).includes('RECAUDADOR'),
+        },
+        {
+          key: '17',
+          icon: Landmark,
+          label: 'Bancos Online',
+          link: '/banks',
+          // Los cargos CAJER@ y RECAUDADOR entran aunque por rol no entrarian:
+          // son los que abren y cierran el turno. Espeja BankAccess::CARGOS.
+          autorized:
+            allowedRoles.banks.includes(role) ||
+            (user?.cargo || []).some((c) => BANK_CARGOS.includes(c)),
         },
       ],
     },

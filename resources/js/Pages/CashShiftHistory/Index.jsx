@@ -34,6 +34,7 @@ import {
 import axios from 'axios';
 import { formatDateTimeCL } from '@/Utils/date';
 import { listarEdiciones, resumenEdiciones } from '@/Utils/editHistory';
+import { MODAL_SCROLL_BODY } from '@/Utils/constants';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -578,6 +579,8 @@ export default function CashShiftHistoryIndex({
           onCancel={() => setDetailVisible(false)}
           title={shift ? `Detalle Turno #${shift.id} - ${shift.branch?.name || ''}` : 'Detalle'}
           width={1100}
+          centered
+          styles={MODAL_SCROLL_BODY}
           footer={
             <Space>
               {shift && (

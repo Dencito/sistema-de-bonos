@@ -68,32 +68,71 @@ class BankController extends Controller
         ]);
 
         $todos = collect($this->store->all(BankStore::MOVEMENTS));
-        $enPeriodo = $this->filtrarPorFecha($todos, $request)->groupBy('bank_account_id');
 
-        // Lo acumulado hasta el final del periodo define el saldo de cierre
-        $hasta = $todos
-            ->when($request->filled('end_date'), fn ($c) => $c->filter(fn ($m) => $m['date'] <= $request->end_date))
-            ->groupBy('bank_account_id')
-            ->map(fn ($items) => $this->sumar($items));
+        // Con un turno abierto, la tabla tiene que hablar del turno igual que
+        // las tarjetas de arriba: el saldo de inicio es el que se declaro al
+        // abrirlo, no el initial_balance de la cuenta. Si no, quien carga los
+        // saldos en la apertura los ve en las tarjetas y en cero en la tabla.
+        $turno = BankShiftController::abiertoDe($this->store);
 
-        $filas = $this->cuentas()->map(function ($cuenta) use ($enPeriodo, $hasta) {
-            $movs = $enPeriodo->get($cuenta['id'], collect());
-            $neto = $this->sumar($movs);
-            $saldoFinal = (float) $cuenta['initial_balance'] + (float) $hasta->get($cuenta['id'], 0);
+        if ($turno) {
+            $delTurno = $todos
+                ->filter(fn ($m) => (int) ($m['bank_shift_id'] ?? 0) === (int) $turno['id'])
+                ->groupBy('bank_account_id');
 
-            return [
-                'id' => $cuenta['id'],
-                'name' => $cuenta['name'],
-                'slug' => $cuenta['slug'],
-                'initial_balance' => (float) $cuenta['initial_balance'],
-                'movs' => $movs->count(),
-                'cargas' => $this->sumar($movs->filter(fn ($m) => $m['amount'] > 0)),
-                'retiros' => $this->sumar($movs->filter(fn ($m) => $m['amount'] < 0)),
-                'neto' => $neto,
-                'saldo_inicio_periodo' => $saldoFinal - $neto,
-                'saldo_actual' => $saldoFinal,
-            ];
-        })->values();
+            $apertura = collect($turno['opening_balances'] ?? []);
+
+            $filas = $this->cuentas()->map(function ($cuenta) use ($delTurno, $apertura) {
+                $movs = $delTurno->get($cuenta['id'], collect());
+                $neto = $this->sumar($movs);
+                // Una cuenta creada despues de abrir el turno no figura en la
+                // apertura: para esas vale su saldo inicial, si no se perderia.
+                $inicio = (float) $apertura->get(
+                    (string) $cuenta['id'],
+                    $apertura->get($cuenta['id'], (float) $cuenta['initial_balance'])
+                );
+
+                return [
+                    'id' => $cuenta['id'],
+                    'name' => $cuenta['name'],
+                    'slug' => $cuenta['slug'],
+                    'initial_balance' => (float) $cuenta['initial_balance'],
+                    'movs' => $movs->count(),
+                    'cargas' => $this->sumar($movs->filter(fn ($m) => $m['amount'] > 0)),
+                    'retiros' => $this->sumar($movs->filter(fn ($m) => $m['amount'] < 0)),
+                    'neto' => $neto,
+                    'saldo_inicio_periodo' => $inicio,
+                    'saldo_actual' => round($inicio + $neto, 2),
+                ];
+            })->values();
+        } else {
+            $enPeriodo = $this->filtrarPorFecha($todos, $request)->groupBy('bank_account_id');
+
+            // Lo acumulado hasta el final del periodo define el saldo de cierre
+            $hasta = $todos
+                ->when($request->filled('end_date'), fn ($c) => $c->filter(fn ($m) => $m['date'] <= $request->end_date))
+                ->groupBy('bank_account_id')
+                ->map(fn ($items) => $this->sumar($items));
+
+            $filas = $this->cuentas()->map(function ($cuenta) use ($enPeriodo, $hasta) {
+                $movs = $enPeriodo->get($cuenta['id'], collect());
+                $neto = $this->sumar($movs);
+                $saldoFinal = (float) $cuenta['initial_balance'] + (float) $hasta->get($cuenta['id'], 0);
+
+                return [
+                    'id' => $cuenta['id'],
+                    'name' => $cuenta['name'],
+                    'slug' => $cuenta['slug'],
+                    'initial_balance' => (float) $cuenta['initial_balance'],
+                    'movs' => $movs->count(),
+                    'cargas' => $this->sumar($movs->filter(fn ($m) => $m['amount'] > 0)),
+                    'retiros' => $this->sumar($movs->filter(fn ($m) => $m['amount'] < 0)),
+                    'neto' => $neto,
+                    'saldo_inicio_periodo' => $saldoFinal - $neto,
+                    'saldo_actual' => $saldoFinal,
+                ];
+            })->values();
+        }
 
         $porDia = $this->filtrarPorFecha($todos, $request)
             ->groupBy('date')

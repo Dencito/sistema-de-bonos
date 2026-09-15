@@ -338,23 +338,56 @@ class BankShiftController extends Controller
     }
 
     /**
-     * Saldo de cada cuenta hoy: saldo inicial mas todo lo que se movio.
-     * Nunca se guarda un total: siempre se recalcula.
+     * Saldo de cada cuenta hoy. Nunca se guarda un total: siempre se recalcula.
+     *
+     * La plata arranca en el ultimo turno, no en initial_balance: quien abre
+     * declara con cuanto arranca cada cuenta, y eso pisa lo que diga la ficha
+     * de la cuenta. Sin esto, cerrar un turno y abrir el siguiente perdia los
+     * saldos declarados y el turno nuevo arrancaba en cero.
+     *
+     * initial_balance queda como punto de partida del primer turno, cuando
+     * todavia no hay ninguno del cual heredar.
      */
     private function saldosActuales(): Collection
     {
-        $porCuenta = collect($this->store->all(BankStore::MOVEMENTS))
-            ->groupBy('bank_account_id')
-            ->map(fn ($items) => $this->sumar($items));
+        $movimientos = collect($this->store->all(BankStore::MOVEMENTS));
+        $ultimo = collect($this->store->all(BankStore::SHIFTS))->sortByDesc('id')->first();
+
+        if ($ultimo && isset($ultimo['opening_balances'])) {
+            // El turno mas nuevo ya trae adentro todo lo anterior: su apertura
+            // fue el cierre del que vino antes.
+            $base = collect($ultimo['opening_balances']);
+            $desde = $movimientos
+                ->filter(fn ($m) => (int) ($m['bank_shift_id'] ?? 0) === (int) $ultimo['id'])
+                ->groupBy('bank_account_id')
+                ->map(fn ($items) => $this->sumar($items));
+        } else {
+            $base = collect();
+            $desde = $movimientos
+                ->groupBy('bank_account_id')
+                ->map(fn ($items) => $this->sumar($items));
+        }
 
         return collect($this->store->all(BankStore::ACCOUNTS))
             ->sortBy([['sort_order', 'asc'], ['name', 'asc']])
-            ->map(fn ($c) => [
-                'id' => $c['id'],
-                'name' => $c['name'],
-                'slug' => $c['slug'],
-                'saldo' => round((float) $c['initial_balance'] + (float) $porCuenta->get($c['id'], 0), 2),
-            ])
+            ->map(function ($c) use ($base, $desde, $ultimo) {
+                // El JSON puede traer la clave como string o como int. Y una
+                // cuenta creada despues de abrir el turno no esta en la
+                // apertura: para esa vale su saldo inicial.
+                $arranque = $ultimo && isset($ultimo['opening_balances'])
+                    ? (float) $base->get(
+                        (string) $c['id'],
+                        $base->get($c['id'], (float) $c['initial_balance'])
+                    )
+                    : (float) $c['initial_balance'];
+
+                return [
+                    'id' => $c['id'],
+                    'name' => $c['name'],
+                    'slug' => $c['slug'],
+                    'saldo' => round($arranque + (float) $desde->get($c['id'], 0), 2),
+                ];
+            })
             ->values();
     }
 

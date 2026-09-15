@@ -114,9 +114,11 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
     [rango, cuentaId, tipo, busqueda],
   );
 
+  // `silencioso` evita prender los loaders: lo usa el refresco automatico,
+  // que si no haria parpadear la pantalla cada 20 segundos.
   const cargar = useCallback(
-    async (page = 1, pageSize = paginacion.pageSize) => {
-      setCargando(true);
+    async (page = 1, pageSize = paginacion.pageSize, silencioso = false) => {
+      if (!silencioso) setCargando(true);
       try {
         const [s, m] = await Promise.all([
           axios.get('/banks/summary', { params: filtros() }),
@@ -132,9 +134,12 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
           });
         }
       } catch (error) {
-        message.error(error.response?.data?.message || 'Error al cargar los bancos');
+        // En el refresco automatico no molestamos con un cartel de error
+        if (!silencioso) {
+          message.error(error.response?.data?.message || 'Error al cargar los bancos');
+        }
       } finally {
-        setCargando(false);
+        if (!silencioso) setCargando(false);
       }
     },
     [filtros, paginacion.pageSize],
@@ -145,21 +150,59 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rango, cuentaId, tipo]);
 
-  const cargarTurno = useCallback(async () => {
-    setCargandoTurno(true);
+  const cargarTurno = useCallback(async (silencioso = false) => {
+    if (!silencioso) setCargandoTurno(true);
     try {
       const res = await axios.get('/banks/shifts/current');
       if (res.data.success) setTurno(res.data.data);
     } catch {
       // el error de permisos ya se ve en el resto de la pantalla
     } finally {
-      setCargandoTurno(false);
+      if (!silencioso) setCargandoTurno(false);
     }
   }, []);
 
   useEffect(() => {
     cargarTurno();
   }, [cargarTurno]);
+
+  /**
+   * Refresca todo lo que puede haber cambiado: la tabla, el resumen por cuenta
+   * y el turno. Las tarjetas de arriba salen del turno, asi que si solo se
+   * refresca la tabla quedan con los numeros viejos.
+   */
+  const refrescar = useCallback(
+    (page = paginacion.current, silencioso = false) =>
+      Promise.all([cargar(page, paginacion.pageSize, silencioso), cargarTurno(silencioso)]),
+    [cargar, cargarTurno, paginacion.current, paginacion.pageSize],
+  );
+
+  // Mientras la pantalla esta a la vista se refresca sola, asi lo que carga
+  // otro usuario aparece sin tener que apretar nada. Se frena si la pestaña
+  // no esta visible o si hay un modal abierto, para no pisar lo que se escribe.
+  useEffect(() => {
+    const ocupado = () => modalMov || modalImport || modalTurno || nuevoTipo;
+
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible' && !ocupado()) {
+        refrescar(paginacion.current, true);
+      }
+    }, 20000);
+
+    // Al volver a la pestaña no esperamos al proximo tick: se refresca ya.
+    const alVolver = () => {
+      if (document.visibilityState === 'visible' && !ocupado()) {
+        refrescar(paginacion.current, true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', alVolver);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', alVolver);
+    };
+  }, [refrescar, paginacion.current, modalMov, modalImport, modalTurno, nuevoTipo]);
 
   // Los clientes se piden una sola vez para el selector del formulario
   useEffect(() => {
@@ -200,7 +243,7 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
         : await axios.post('/banks/movements', payload);
       message.success(res.data.message);
       setModalMov(false);
-      cargar(paginacion.current);
+      refrescar();
     } catch (error) {
       message.error(error.response?.data?.message || 'No se pudo guardar');
     } finally {
@@ -212,7 +255,7 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
     try {
       const res = await axios.delete(`/banks/movements/${id}`);
       message.success(res.data.message);
-      cargar(paginacion.current);
+      refrescar();
     } catch (error) {
       message.error(error.response?.data?.message || 'No se pudo eliminar');
     }
@@ -248,7 +291,7 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
       setModalImport(false);
       setPreview(null);
       setArchivo(null);
-      cargar(1);
+      refrescar(1);
     } catch (error) {
       message.error(error.response?.data?.message || 'No se pudo importar', 6);
     } finally {
@@ -667,11 +710,7 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
             <Link href="/banks/clients">
               <Button icon={<TeamOutlined />}>Clientes</Button>
             </Link>
-            <Button
-              icon={<ReloadOutlined />}
-              loading={cargando}
-              onClick={() => cargar(paginacion.current)}
-            >
+            <Button icon={<ReloadOutlined />} loading={cargando} onClick={() => refrescar()}>
               Actualizar
             </Button>
           </div>
@@ -745,7 +784,10 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
         )}
 
         {resumen && (
-          <Card title="Saldo por cuenta" size="small">
+          <Card
+            title={turno ? `Saldo por cuenta — turno #${turno.id}` : 'Saldo por cuenta'}
+            size="small"
+          >
             <Table
               rowKey="id"
               size="small"

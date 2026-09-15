@@ -114,11 +114,9 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
     [rango, cuentaId, tipo, busqueda],
   );
 
-  // `silencioso` evita prender los loaders: lo usa el refresco automatico,
-  // que si no haria parpadear la pantalla cada 20 segundos.
   const cargar = useCallback(
-    async (page = 1, pageSize = paginacion.pageSize, silencioso = false) => {
-      if (!silencioso) setCargando(true);
+    async (page = 1, pageSize = paginacion.pageSize) => {
+      setCargando(true);
       try {
         const [s, m] = await Promise.all([
           axios.get('/banks/summary', { params: filtros() }),
@@ -134,12 +132,9 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
           });
         }
       } catch (error) {
-        // En el refresco automatico no molestamos con un cartel de error
-        if (!silencioso) {
-          message.error(error.response?.data?.message || 'Error al cargar los bancos');
-        }
+        message.error(error.response?.data?.message || 'Error al cargar los bancos');
       } finally {
-        if (!silencioso) setCargando(false);
+        setCargando(false);
       }
     },
     [filtros, paginacion.pageSize],
@@ -150,6 +145,9 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rango, cuentaId, tipo]);
 
+  // `silencioso` no prende el esqueleto de la barra: lo usan los refrescos que
+  // vienen despues de guardar algo, donde la barra ya esta en pantalla y hacerla
+  // desaparecer y volver cada vez molesta.
   const cargarTurno = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargandoTurno(true);
     try {
@@ -170,39 +168,15 @@ export default function BanksIndex({ auth, accounts = [], kinds = [] }) {
    * Refresca todo lo que puede haber cambiado: la tabla, el resumen por cuenta
    * y el turno. Las tarjetas de arriba salen del turno, asi que si solo se
    * refresca la tabla quedan con los numeros viejos.
+   *
+   * Lo llaman todas las operaciones (cargar, editar, borrar, importar) y el
+   * boton Actualizar. El turno se pide en silencio: mostrarle el esqueleto a
+   * la barra en cada guardado la haria desaparecer y volver a cada rato.
    */
   const refrescar = useCallback(
-    (page = paginacion.current, silencioso = false) =>
-      Promise.all([cargar(page, paginacion.pageSize, silencioso), cargarTurno(silencioso)]),
-    [cargar, cargarTurno, paginacion.current, paginacion.pageSize],
+    (page = paginacion.current) => Promise.all([cargar(page), cargarTurno(true)]),
+    [cargar, cargarTurno, paginacion.current],
   );
-
-  // Mientras la pantalla esta a la vista se refresca sola, asi lo que carga
-  // otro usuario aparece sin tener que apretar nada. Se frena si la pestaña
-  // no esta visible o si hay un modal abierto, para no pisar lo que se escribe.
-  useEffect(() => {
-    const ocupado = () => modalMov || modalImport || modalTurno || nuevoTipo;
-
-    const id = setInterval(() => {
-      if (document.visibilityState === 'visible' && !ocupado()) {
-        refrescar(paginacion.current, true);
-      }
-    }, 20000);
-
-    // Al volver a la pestaña no esperamos al proximo tick: se refresca ya.
-    const alVolver = () => {
-      if (document.visibilityState === 'visible' && !ocupado()) {
-        refrescar(paginacion.current, true);
-      }
-    };
-
-    document.addEventListener('visibilitychange', alVolver);
-
-    return () => {
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', alVolver);
-    };
-  }, [refrescar, paginacion.current, modalMov, modalImport, modalTurno, nuevoTipo]);
 
   // Los clientes se piden una sola vez para el selector del formulario
   useEffect(() => {

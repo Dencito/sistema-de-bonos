@@ -721,11 +721,9 @@ class CashManagementController extends Controller
 
             DB::commit();
 
-            // Dispatch broadcasting event
-            broadcast(new CashTransactionAdded($transaction, $activeShift, [
-                'id' => $user->id,
-                'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name)
-            ]));
+            // No se avisa por websocket: este movimiento es de la caja
+            // (pasillera_id null) y no le corresponde a ninguna pasillera. Antes
+            // salia por un canal compartido y le llegaba a todas.
 
             return response()->json([
                 'success' => true,
@@ -974,6 +972,29 @@ class CashManagementController extends Controller
             ], 400);
         }
 
+        // Dos pasilleras activas del mismo usuario en el mismo turno rompen la
+        // app: la pantalla muestra una y los pagos se registran contra la otra,
+        // asi que el saldo nunca coincide y los pagos fallan por "saldo
+        // insuficiente" contra una pasillera que la usuaria no ve.
+        $yaTiene = Pasillera::with('user')
+            ->where('cash_shift_id', $activeShift->id)
+            ->where('user_id', $request->user_id)
+            ->where('is_active', true)
+            ->first();
+
+        if ($yaTiene) {
+            $nombre = $yaTiene->user
+                ? trim($yaTiene->user->first_name . ' ' . $yaTiene->user->first_last_name)
+                : 'Esa persona';
+
+            return response()->json([
+                'success' => false,
+                'message' => $nombre . ' ya tiene una pasillera abierta en este turno'
+                    . ' (saldo $' . number_format($yaTiene->current_balance, 0, ',', '.') . ').'
+                    . ' Usá "Agregar saldo" en vez de crear otra.',
+            ], 422);
+        }
+
         DB::beginTransaction();
         try {
             $pasillera = Pasillera::create([
@@ -1161,6 +1182,19 @@ class CashManagementController extends Controller
 
             DB::commit();
 
+            // Este si le corresponde: la cajera le cargo saldo. Va al canal
+            // propio de esta pasillera, no al de todas.
+            broadcast(new CashTransactionAdded(
+                $transaction,
+                $activeShift->fresh(),
+                [
+                    'id' => $user->id,
+                    'name' => trim($user->first_name . ' ' . ($user->second_name ?? '') . ' ' . $user->first_last_name),
+                ],
+                $pasillera->id,
+                'Te cargaron $' . number_format($request->amount, 0, ',', '.') . ' de saldo'
+            ));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Saldo agregado correctamente a la pasillera',
@@ -1221,6 +1255,15 @@ class CashManagementController extends Controller
             'initial_balance' => $request->new_balance,
             'total_payments' => 0,
             'current_balance' => $request->new_balance,
+            // Arranca de nuevo: el cierre anterior ya no aplica y dejarlo
+            // mostraria una devolucion vieja en la ficha.
+            'expected_return' => null,
+            'returned_amount' => null,
+            'return_difference' => null,
+            'return_note' => null,
+            'closed_by' => null,
+            'closed_at' => null,
+            'return_history' => null,
         ]);
 
         return response()->json([
@@ -1228,6 +1271,170 @@ class CashManagementController extends Controller
             'message' => 'Pasillera reiniciada correctamente',
             'data' => $pasillera
         ]);
+    }
+
+    /**
+     * La cajera corrige cuánto entregó realmente una pasillera al cerrar.
+     *
+     * Pasa seguido: la pasillera declara $250 y después aparecen $50 más, o al
+     * revés. Corregirlo mueve el saldo de la caja por la diferencia y reescribe
+     * el faltante, y cada corrección queda anotada en return_history con quién
+     * la hizo, cuándo, y de cuánto a cuánto.
+     */
+    public function updatePasilleraReturn(Request $request, $pasilleraId)
+    {
+        $request->validate([
+            'returned_amount' => 'required|numeric|min:0',
+            'return_note' => 'nullable|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $branch = $this->resolveBranch($request);
+
+        if (!$branch) {
+            return $this->noBranchResponse();
+        }
+
+        $activeShift = $this->findActiveShift($branch->id);
+
+        if (!$activeShift) {
+            return response()->json(['success' => false, 'message' => 'No hay turno activo'], 400);
+        }
+
+        $pasillera = Pasillera::with('user')
+            ->where('id', $pasilleraId)
+            ->where('cash_shift_id', $activeShift->id)
+            ->first();
+
+        if (!$pasillera) {
+            return response()->json(['success' => false, 'message' => 'Pasillera no encontrada en este turno'], 404);
+        }
+
+        if ($pasillera->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La pasillera todavía no cerró su turno: no hay devolución que corregir.',
+            ], 422);
+        }
+
+        // Las que se cerraron antes de que existiera este registro no tienen
+        // contra que comparar: corregirlas mostraria una diferencia inventada.
+        if ($pasillera->returned_amount === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Esta pasillera se cerró antes de que se registrara la devolución, así que no hay monto que corregir.',
+            ], 422);
+        }
+
+        $anterior = (float) $pasillera->returned_amount;
+        $nuevo = (float) $request->returned_amount;
+        $delta = round($nuevo - $anterior, 2);
+
+        if (abs($delta) < 0.01) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El monto es el mismo que ya estaba registrado.',
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // La caja se mueve solo por la diferencia: lo anterior ya entró
+            $activeShift->current_balance += $delta;
+            $activeShift->save();
+
+            // El movimiento de devolución tiene que reflejar lo corregido
+            $devolucion = CashTransaction::where('pasillera_id', $pasillera->id)
+                ->where('cash_shift_id', $activeShift->id)
+                ->where('type', TransactionType::PASILLERA_RETURN)
+                ->orderByDesc('id')
+                ->first();
+
+            $nombre = $pasillera->user
+                ? trim($pasillera->user->first_name . ' ' . $pasillera->user->first_last_name)
+                : 'Pasillera #' . $pasillera->id;
+
+            $esperadoPrevio = (float) $pasillera->expected_return;
+
+            if ($devolucion) {
+                // También el texto: si solo se actualiza el monto, la
+                // descripción sigue contando la diferencia vieja y contradice
+                // lo que muestra la ficha justo arriba.
+                $difNueva = round($nuevo - $esperadoPrevio, 2);
+                $texto = 'Devolución de saldo al finalizar turno - Pasillera: ' . $nombre;
+
+                if (abs($difNueva) >= 0.01) {
+                    $texto .= sprintf(
+                        ' · Esperado $%s, entregó $%s (%s $%s)',
+                        number_format($esperadoPrevio, 0, ',', '.'),
+                        number_format($nuevo, 0, ',', '.'),
+                        $difNueva < 0 ? 'faltan' : 'sobran',
+                        number_format(abs($difNueva), 0, ',', '.')
+                    );
+                }
+
+                $texto .= ' · Corregido por caja';
+
+                $devolucion->update(['amount' => $nuevo, 'description' => $texto]);
+            } elseif ($nuevo > 0) {
+                // Cerró sin entregar nada y ahora aparece plata
+                $devolucion = CashTransaction::create([
+                    'cash_shift_id' => $activeShift->id,
+                    'pasillera_id' => $pasillera->id,
+                    'type' => TransactionType::PASILLERA_RETURN,
+                    'source' => TransactionSource::PASILLERA,
+                    'amount' => $nuevo,
+                    'description' => 'Devolución corregida por caja - Pasillera: ' . $nombre,
+                    'admin_user_id' => $user->id,
+                ]);
+            }
+
+            $esperado = (float) $pasillera->expected_return;
+            $historial = $pasillera->return_history ?? [];
+            $historial[] = [
+                'at' => now()->toIso8601String(),
+                'user_id' => $user->id,
+                'user' => trim($user->first_name . ' ' . $user->first_last_name) ?: $user->username,
+                'from' => $anterior,
+                'to' => $nuevo,
+                'note' => $request->return_note,
+            ];
+
+            $pasillera->update([
+                'returned_amount' => $nuevo,
+                'return_difference' => round($nuevo - $esperado, 2),
+                'return_note' => $request->return_note ?? $pasillera->return_note,
+                'return_history' => $historial,
+            ]);
+
+            DB::commit();
+
+            $diferencia = round($nuevo - $esperado, 2);
+
+            return response()->json([
+                'success' => true,
+                'message' => sprintf(
+                    'Devolución de %s corregida a $%s. %s',
+                    $nombre,
+                    number_format($nuevo, 0, ',', '.'),
+                    abs($diferencia) < 0.01
+                        ? 'Queda justo.'
+                        : ($diferencia < 0 ? 'Faltan' : 'Sobran') . ' $' . number_format(abs($diferencia), 0, ',', '.') . '.'
+                ),
+                'data' => [
+                    'pasillera' => $pasillera->fresh(['user']),
+                    'shift' => $activeShift->fresh(),
+                    'transaction' => $devolucion,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al corregir la devolución: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -1284,9 +1491,20 @@ class CashManagementController extends Controller
                 $activeShift->save();
             }
 
-            // Marcar como inactiva y force_closed
+            // Marcar como inactiva y force_closed.
+            // El cierre forzado devuelve todo el saldo a la caja, asi que lo
+            // esperado y lo entregado coinciden. Se guardan igual para que toda
+            // pasillera cerrada tenga el mismo registro y la pantalla no tenga
+            // que adivinar de donde sacar los datos.
+            $saldo = (float) $pasillera->current_balance;
             $pasillera->is_active = false;
             $pasillera->force_closed = true;
+            $pasillera->expected_return = $saldo;
+            $pasillera->returned_amount = $saldo;
+            $pasillera->return_difference = 0;
+            $pasillera->closed_by = $user->id;
+            $pasillera->closed_at = now();
+            $pasillera->current_balance = 0;
             $pasillera->save();
 
             // Soft delete (no borrar físicamente)

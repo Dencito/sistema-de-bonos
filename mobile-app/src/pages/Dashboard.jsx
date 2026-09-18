@@ -46,6 +46,11 @@ export default function Dashboard() {
   const [otherExpenseCustom, setOtherExpenseCustom] = useState('');
   const [expenseImage, setExpenseImage] = useState(null);
   const [currentTime, setCurrentTime] = useState('');
+  // Aviso de la cajera, en pantalla y sin bloquear. Reemplaza el alert().
+  const [avisoCajera, setAvisoCajera] = useState(null);
+  // Cierre de turno: cuanto entrega de verdad y por que
+  const [montoDevuelto, setMontoDevuelto] = useState('');
+  const [notaDevolucion, setNotaDevolucion] = useState('');
   const [editingTx, setEditingTx] = useState(null);
   const [editAmount, setEditAmount] = useState('');
   const [editMachine, setEditMachine] = useState('');
@@ -113,15 +118,30 @@ export default function Dashboard() {
     // Actualizar hora cada segundo
     const timeInterval = setInterval(updateTime, 1000);
 
-    const channel = window.Echo.channel('pasillera-updates');
-    channel.listen('.cashtransaction.added', (e) => {
-      alert('Nueva transacción registrada por la cajera: ' + e.user.name + '\nMonto: $' + e.transaction.amount);
-    });
-    return () => {
-      clearInterval(timeInterval);
-      window.Echo.leave('pasillera-updates');
-    };
+    return () => clearInterval(timeInterval);
   }, []);
+
+  // Cada pasillera escucha SU canal. Antes era uno compartido: cada movimiento
+  // que registraba la cajera le llegaba a todas, y encima como alert(), que
+  // bloquea la app hasta que lo tocás. Con varias transacciones seguidas
+  // quedaban apiladas y la pasillera no podía trabajar.
+  useEffect(() => {
+    if (!pasillera?.id) return;
+
+    const nombre = `pasillera.${pasillera.id}`;
+    const channel = window.Echo.channel(nombre);
+
+    channel.listen('.cashtransaction.added', (e) => {
+      setAvisoCajera({
+        texto: e.message || 'La cajera registró un movimiento en tu pasillera',
+        quien: e.user?.name,
+      });
+      loadPasillera();
+    });
+
+    return () => window.Echo.leave(nombre);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pasillera?.id]);
 
   const updateTime = () => {
     const now = new Date();
@@ -189,7 +209,13 @@ export default function Dashboard() {
     }
 
     try {
-      const response = await pasilleraService.finalizeShift();
+      // Si no tocó el campo se asume que entrega justo lo que dice el sistema
+      const entregado = montoDevuelto === '' ? Number(pasillera?.current_balance) || 0 : Number(montoDevuelto) || 0;
+
+      const response = await pasilleraService.finalizeShift({
+        returned_amount: entregado,
+        return_note: notaDevolucion || undefined,
+      });
 
       if (response.success) {
         try {
@@ -204,10 +230,14 @@ export default function Dashboard() {
         // Reload data
         await loadPasillera();
         setShowFinalizeConfirm(false);
+        setMontoDevuelto('');
+        setNotaDevolucion('');
       } else {
         alert(response.message || 'Error al finalizar el turno');
       }
-    } catch {
+    } catch (err) {
+      // Antes el catch no declaraba `err` pero lo usaba: reventaba acá adentro
+      // y el motivo real del fallo nunca llegaba a verse.
       alert(err.response?.data?.message || 'Error al finalizar el turno');
     } finally {
       setFinalizing(false);
@@ -510,8 +540,114 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Aviso de la cajera: se muestra, no interrumpe, y se cierra tocándolo */}
+      {avisoCajera && (
+        <div className="px-6 mb-4">
+          <button
+            onClick={() => setAvisoCajera(null)}
+            className="flex items-start w-full p-4 text-left bg-emerald-50 border border-emerald-200 rounded-2xl"
+          >
+            <CheckCircle className="w-5 h-5 mr-3 text-emerald-600 shrink-0 mt-0.5" />
+            <span className="flex-1">
+              <span className="block font-semibold text-emerald-900">{avisoCajera.texto}</span>
+              {avisoCajera.quien && (
+                <span className="block text-xs text-emerald-700">por {avisoCajera.quien}</span>
+              )}
+              <span className="block mt-1 text-xs text-emerald-600">Tocá para cerrar</span>
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Turno ya cerrado: cuánto tenía que devolver y cuánto entregó.
+          Es lo primero que quiere ver cuando termina. */}
+      {pasillera &&
+        pasillera.is_active === false &&
+        pasillera.returned_amount !== null &&
+        pasillera.returned_amount !== undefined && (
+          <div className="px-6 mb-4">
+            <div
+              className={`p-4 rounded-2xl border ${
+                Number(pasillera.return_difference) < 0
+                  ? 'bg-red-50 border-red-200'
+                  : Number(pasillera.return_difference) > 0
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-green-50 border-green-200'
+              }`}
+            >
+              <p className="mb-1 font-bold text-zinc-900">
+                {pasillera.force_closed ? 'Turno cerrado por la caja' : 'Turno cerrado'}
+              </p>
+
+              {/* Que sepa si lo cerró ella o se lo cerraron */}
+              {pasillera.force_closed && (
+                <p className="mb-3 text-sm text-red-700">
+                  Lo cerró la cajera y el saldo volvió automáticamente a la caja.
+                </p>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <p className="text-xs text-zinc-500">Debías devolver</p>
+                  <p className="font-bold text-zinc-900">
+                    {formatCurrency(pasillera.expected_return)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500">Entregaste</p>
+                  <p className="font-bold text-zinc-900">
+                    {formatCurrency(pasillera.returned_amount)}
+                  </p>
+                </div>
+              </div>
+
+              {Math.abs(Number(pasillera.return_difference)) < 0.01 ? (
+                <p className="text-sm font-semibold text-green-800">Entregaste justo</p>
+              ) : (
+                <p
+                  className={`text-sm font-semibold ${
+                    Number(pasillera.return_difference) < 0 ? 'text-red-800' : 'text-amber-800'
+                  }`}
+                >
+                  {Number(pasillera.return_difference) < 0 ? 'Quedaron faltando ' : 'Entregaste de más '}
+                  {formatCurrency(Math.abs(Number(pasillera.return_difference)))}
+                </p>
+              )}
+
+              {pasillera.return_note && (
+                <p className="mt-1 text-sm text-zinc-600">Nota: {pasillera.return_note}</p>
+              )}
+
+              {/* Si la cajera lo corrigió después, que lo vea */}
+              {(pasillera.return_history || []).map((h, i) => (
+                <p key={i} className="mt-1 text-xs text-amber-700">
+                  Corregido a {formatCurrency(h.to)} por {h.user || 'la caja'}
+                  {h.note ? ` · ${h.note}` : ''}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+      {/* Sin carga: no puede registrar nada hasta que la cajera le asigne saldo.
+          Solo mientras el turno sigue abierto: si ya cerró, el saldo en cero es
+          lo normal y el cartel confundiría. */}
+      {pasillera && pasillera.is_active !== false && Number(pasillera.current_balance) <= 0 && (
+        <div className="px-6 mb-4">
+          <div className="flex items-start p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+            <AlertCircle className="w-5 h-5 mr-3 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-900">No tenés carga</p>
+              <p className="mt-0.5 text-sm text-amber-700">
+                Pedile a la cajera que te asigne saldo para poder registrar pagos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Actions & Quick Register */}
-      {pasillera && (
+      {pasillera && Number(pasillera.current_balance) > 0 && (
         <div className="px-6 space-y-4">
           {/* Quick Register Expense Form */}
           <div className="p-6 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-zinc-100">
@@ -758,7 +894,11 @@ export default function Dashboard() {
             </button>
 
             <button
-              onClick={() => setShowFinalizeConfirm(true)}
+              onClick={() => {
+                setMontoDevuelto(String(Math.round(Number(pasillera?.current_balance) || 0)));
+                setNotaDevolucion('');
+                setShowFinalizeConfirm(true);
+              }}
               className="flex justify-center items-center py-3 w-full font-semibold text-white bg-green-600 rounded-xl shadow-sm transition hover:bg-green-700"
             >
               <CheckCircle className="mr-2 w-4 h-4" />
@@ -1041,20 +1181,77 @@ export default function Dashboard() {
               <div className="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-900">Finalizar Turno</h3>
+              <h3 className="mb-2 text-xl font-bold text-gray-900">Devolver plata</h3>
               <p className="mb-4 text-gray-600">
-                ¿Estás seguro que deseas finalizar tu turno?
+                ¿Cuánto le estás entregando a la cajera?
               </p>
+
               {pasillera && (
-                <div className="p-4 mb-4 bg-blue-50 rounded-xl">
-                  <p className="mb-1 text-sm text-gray-600">Saldo a devolver:</p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {formatCurrency(pasillera.current_balance)}
-                  </p>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Este saldo será devuelto al banco y tu turno será cerrado.
-                  </p>
-                </div>
+                <>
+                  <div className="p-4 mb-3 bg-blue-50 rounded-xl">
+                    <p className="mb-1 text-sm text-gray-600">Según el sistema tenés que devolver:</p>
+                    <p className="text-2xl font-bold text-blue-900">
+                      {formatCurrency(pasillera.current_balance)}
+                    </p>
+                  </div>
+
+                  <div className="mb-3 text-left">
+                    <label className="block mb-1 text-sm font-semibold text-gray-700">
+                      Entregás de verdad
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={montoDevuelto}
+                      onChange={(e) => setMontoDevuelto(e.target.value)}
+                      className="px-4 py-3 w-full text-lg font-bold rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  {/* Le decimos en el momento si va justo, le falta o le sobra */}
+                  {(() => {
+                    const esperado = Number(pasillera.current_balance) || 0;
+                    const entregado = montoDevuelto === '' ? esperado : Number(montoDevuelto) || 0;
+                    const dif = Math.round((entregado - esperado) * 100) / 100;
+
+                    if (Math.abs(dif) < 0.01) {
+                      return (
+                        <div className="p-3 mb-4 text-sm font-semibold text-green-800 bg-green-50 rounded-xl">
+                          Va justo
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        className={`p-3 mb-4 text-sm font-semibold rounded-xl ${
+                          dif < 0 ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'
+                        }`}
+                      >
+                        {dif < 0 ? 'Van a quedar faltando ' : 'Estás entregando de más '}
+                        {formatCurrency(Math.abs(dif))}
+                        <span className="block mt-1 font-normal">
+                          Queda registrado como diferencia. La cajera lo puede corregir después.
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="mb-2 text-left">
+                    <label className="block mb-1 text-sm font-semibold text-gray-700">
+                      Nota (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={notaDevolucion}
+                      onChange={(e) => setNotaDevolucion(e.target.value)}
+                      maxLength={255}
+                      className="px-4 py-2 w-full rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Ej: le debo 50 y se los doy mañana"
+                    />
+                  </div>
+                </>
               )}
             </div>
 

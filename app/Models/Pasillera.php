@@ -21,6 +21,14 @@ class Pasillera extends Model
         'current_balance',
         'is_active',
         'force_closed',
+        // Cierre: lo que el sistema esperaba vs lo que entrego de verdad
+        'expected_return',
+        'returned_amount',
+        'return_difference',
+        'return_note',
+        'closed_by',
+        'closed_at',
+        'return_history',
     ];
 
     protected $casts = [
@@ -29,6 +37,11 @@ class Pasillera extends Model
         'current_balance' => 'decimal:2',
         'is_active' => 'boolean',
         'force_closed' => 'boolean',
+        'expected_return' => 'decimal:2',
+        'returned_amount' => 'decimal:2',
+        'return_difference' => 'decimal:2',
+        'closed_at' => 'datetime',
+        'return_history' => 'array',
     ];
 
     protected $attributes = [
@@ -50,5 +63,10 @@ class Pasillera extends Model
     public function transactions()
     {
         return $this->hasMany(CashTransaction::class);
+    }
+
+    public function closedBy()
+    {
+        return $this->belongsTo(User::class, 'closed_by');
     }
 }

@@ -27,7 +27,9 @@ class PasilleraDataUpdated implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new Channel('dashboard-updates');
+        // Por pasillera, no compartido: el payload trae su saldo y sus
+        // movimientos, y en el canal comun lo recibian todas las demas.
+        return new Channel('pasillera.' . ($this->pasillera->id ?? 0));
     }
 
     public function broadcastAs()

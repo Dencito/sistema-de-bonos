@@ -52,18 +52,8 @@ export default function RegisterExpense() {
     // Actualizar hora cada segundo
     const timeInterval = setInterval(updateTime, 1000);
 
-    // Escuchar eventos de actualización de datos
-    const channel = window.Echo.channel('dashboard-updates');
-    channel.listen('.data.updated', () => {
-      // Aquí puedes mostrar notificaciones o actualizar estado
-      // Por ejemplo, mostrar una notificación de que la transacción fue registrada
-    });
-
     // Cleanup
-    return () => {
-      clearInterval(timeInterval);
-      window.Echo.leave('dashboard-updates');
-    };
+    return () => clearInterval(timeInterval);
   }, []);
 
   const updateTime = () => {

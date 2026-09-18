@@ -213,6 +213,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/pasillera/{pasilleraId}/payment', [CashManagementController::class, 'addPasilleraPayment'])->name('cash-management.pasillera.payment');
         Route::post('/pasillera/{pasilleraId}/add-balance', [CashManagementController::class, 'addBalanceToPasillera'])->name('cash-management.pasillera.add-balance');
         Route::put('/pasillera/{pasilleraId}/reset', [CashManagementController::class, 'resetPasillera'])->name('cash-management.pasillera.reset');
+        Route::put('/pasillera/{pasilleraId}/return', [CashManagementController::class, 'updatePasilleraReturn'])->name('cash-management.pasillera.return');
         Route::delete('/pasillera/{pasilleraId}', [CashManagementController::class, 'deletePasillera'])->name('cash-management.pasillera.delete');
         Route::post('/ghost-ticket/assign', [CashManagementController::class, 'assignGhostTicket'])->name('cash-management.ghost-ticket.assign');
         Route::post('/ghost-ticket/assign-all', [CashManagementController::class, 'assignAllGhostTickets'])->name('cash-management.ghost-ticket.assign-all');

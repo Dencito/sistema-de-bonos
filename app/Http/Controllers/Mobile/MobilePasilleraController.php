@@ -31,18 +31,31 @@ class MobilePasilleraController extends Controller
     {
         $user = Auth::user();
 
-        // Get active pasillera for this user, or force closed pasillera (withTrashed)
-        $pasillera = Pasillera::with(['cashShift', 'transactions' => function($query) {
-                $query->orderBy('created_at', 'desc');
-            }])
+        $con = ['cashShift', 'transactions' => fn ($q) => $q->orderBy('created_at', 'desc')];
+
+        // La del turno de caja abierto, esté abierta o ya cerrada.
+        //
+        // Antes buscaba "activa O cerrada a la fuerza", y una pasillera que
+        // cerraba normal no cumplía ninguna de las dos: la consulta se la
+        // salteaba y le mostraba una pasillera forzada de un turno viejo, con
+        // el saldo y los movimientos de otro día. Justo después de cerrar,
+        // que es cuando quiere ver cuánto entregó, veía lo que no era.
+        $pasillera = Pasillera::with($con)
             ->where('user_id', $user->id)
-            ->where(function($query) {
-                $query->where('is_active', true)
-                      ->orWhere('force_closed', true);
-            })
+            ->whereHas('cashShift', fn ($q) => $q->where('is_active', true))
             ->withTrashed()
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('id')
             ->first();
+
+        // Si la caja ya cerró, al menos que vea la suya si quedó abierta
+        if (!$pasillera) {
+            $pasillera = Pasillera::with($con)
+                ->where('user_id', $user->id)
+                ->where('is_active', true)
+                ->withTrashed()
+                ->orderByDesc('id')
+                ->first();
+        }
 
         if (!$pasillera) {
             return response()->json([
@@ -70,8 +83,12 @@ class MobilePasilleraController extends Controller
      */
     private function resolveActiveContext(): array
     {
+        // El mismo criterio que getMyActivePasillera: la ultima. Si quedaron dos
+        // activas por error, la pantalla mostraba una y los pagos se registraban
+        // contra la otra, asi que el saldo no coincidia y fallaban.
         $pasillera = Pasillera::where('user_id', Auth::id())
             ->where('is_active', true)
+            ->orderByDesc('id')
             ->first();
 
         if (!$pasillera) {
@@ -256,11 +273,23 @@ class MobilePasilleraController extends Controller
         }
 
         $amount = (float) $request->amount;
+        $disponible = (float) $pasillera->current_balance;
 
-        if ($amount > (float) $pasillera->current_balance) {
+        // Sin saldo no es lo mismo que saldo corto: si no le cargaron nada,
+        // decirle "insuficiente, disponible $0" no explica que tiene que hacer.
+        if ($disponible <= 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Saldo insuficiente en pasillera. Disponible: $' . number_format($pasillera->current_balance, 0, ',', '.')
+                'message' => 'No tenés carga. Pedile a la cajera que te asigne saldo para poder registrar pagos.',
+                'sin_carga' => true,
+            ], 422);
+        }
+
+        if ($amount > $disponible) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo insuficiente. Te queda $' . number_format($disponible, 0, ',', '.')
+                    . ' y estás cargando $' . number_format($amount, 0, ',', '.') . '.',
             ], 422);
         }
 
@@ -356,7 +385,9 @@ class MobilePasilleraController extends Controller
         if ($delta > (float) $pasillera->current_balance) {
             return response()->json([
                 'success' => false,
-                'message' => 'Saldo insuficiente en la pasillera. Disponible: $' . number_format($pasillera->current_balance, 0, ',', '.')
+                'message' => 'Saldo insuficiente. Te queda $'
+                    . number_format($pasillera->current_balance, 0, ',', '.')
+                    . ' y el cambio necesita $' . number_format($delta, 0, ',', '.') . ' más.',
             ], 422);
         }
 
@@ -506,7 +537,7 @@ class MobilePasilleraController extends Controller
         $activePasillera = Pasillera::where('user_id', $user->id)
             ->where('is_active', true)
             ->whereHas('cashShift', fn($q) => $q->where('is_active', true))
-            ->latest('id')
+            ->orderByDesc('id')
             ->first();
 
         if (!$activePasillera) {
@@ -564,6 +595,7 @@ class MobilePasilleraController extends Controller
 
         $pasillera = Pasillera::where('user_id', $user->id)
             ->where('is_active', true)
+            ->orderByDesc('id')
             ->first();
 
         if (!$pasillera) {
@@ -587,14 +619,30 @@ class MobilePasilleraController extends Controller
     /**
      * Finalize shift and return remaining balance to bank
      */
+    /**
+     * Cierra el turno de la pasillera devolviendo la plata a la caja.
+     *
+     * `returned_amount` es lo que efectivamente le entrega a la cajera, que no
+     * siempre es lo que dice el sistema: puede decir $300 y entregar $250. Lo
+     * que entra a la caja es lo entregado, y la diferencia queda anotada como
+     * faltante (o sobrante) en vez de desaparecer.
+     *
+     * Si no se manda el monto, se asume que entregó justo lo que decía el
+     * sistema: así las versiones viejas de la app siguen funcionando igual.
+     */
     public function finalizeShift(Request $request)
     {
+        $request->validate([
+            'returned_amount' => 'nullable|numeric|min:0',
+            'return_note' => 'nullable|string|max:255',
+        ]);
+
         $user = Auth::user();
 
-        // Get active pasillera
         $pasillera = Pasillera::with('cashShift')
             ->where('user_id', $user->id)
             ->where('is_active', true)
+            ->orderByDesc('id')
             ->first();
 
         if (!$pasillera) {
@@ -604,43 +652,58 @@ class MobilePasilleraController extends Controller
             ], 400);
         }
 
-        $remainingBalance = $pasillera->current_balance;
+        $esperado = (float) $pasillera->current_balance;
+        $entregado = $request->filled('returned_amount')
+            ? (float) $request->returned_amount
+            : $esperado;
+        $diferencia = round($entregado - $esperado, 2);
 
         DB::beginTransaction();
         try {
-            // Create return transaction (devolución de saldo al banco)
-            if ($remainingBalance > 0) {
+            $transaction = null;
+
+            // A la caja entra lo que entregó, no lo que el sistema esperaba
+            if ($entregado > 0) {
                 $transaction = CashTransaction::create([
                     'cash_shift_id' => $pasillera->cash_shift_id,
                     'pasillera_id' => $pasillera->id,
                     'type' => TransactionType::PASILLERA_RETURN,
                     'source' => TransactionSource::PASILLERA,
-                    'amount' => $remainingBalance,
-                    'description' => 'Devolución de saldo al finalizar turno - Pasillera: ' . $user->first_name . ' ' . $user->first_last_name,
+                    'amount' => $entregado,
+                    'description' => $this->descripcionDevolucion($user, $esperado, $entregado, $diferencia),
                 ]);
 
-                // Update cash shift: add returned balance to current balance
                 $cashShift = CashShift::find($pasillera->cash_shift_id);
                 if ($cashShift) {
-                    $cashShift->current_balance += $remainingBalance;
+                    $cashShift->current_balance += $entregado;
                     $cashShift->save();
                 }
             }
 
-            // El saldo volvió a la caja: la pasillera queda en cero.
-            // initial_balance y total_payments se conservan como historial de lo asignado y gastado.
-            $pasillera->current_balance = 0;
-            $pasillera->is_active = false;
-            $pasillera->save();
+            // La pasillera queda cerrada en cero: el faltante no vuelve a su
+            // saldo, queda registrado en return_difference.
+            // initial_balance y total_payments se conservan como historial.
+            $pasillera->update([
+                'current_balance' => 0,
+                'is_active' => false,
+                'expected_return' => $esperado,
+                'returned_amount' => $entregado,
+                'return_difference' => $diferencia,
+                'return_note' => $request->return_note,
+                'closed_by' => $user->id,
+                'closed_at' => now(),
+            ]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Turno finalizado correctamente. Saldo devuelto: $' . number_format($remainingBalance, 0, ',', '.'),
+                'message' => $this->mensajeDevolucion($esperado, $entregado, $diferencia),
                 'data' => [
-                    'returned_balance' => $remainingBalance,
-                    'transaction' => $transaction ?? null
+                    'returned_balance' => $entregado,
+                    'expected_return' => $esperado,
+                    'difference' => $diferencia,
+                    'transaction' => $transaction,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -650,5 +713,44 @@ class MobilePasilleraController extends Controller
                 'message' => 'Error al finalizar el turno: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Descripción de la devolución, con la diferencia si la hubo. Es lo que se
+     * ve en el historial de caja, así que tiene que contar la historia sola.
+     */
+    private function descripcionDevolucion($user, float $esperado, float $entregado, float $diferencia): string
+    {
+        $nombre = trim($user->first_name . ' ' . $user->first_last_name);
+        $texto = 'Devolución de saldo al finalizar turno - Pasillera: ' . $nombre;
+
+        if (abs($diferencia) >= 0.01) {
+            $texto .= sprintf(
+                ' · Esperado $%s, entregó $%s (%s $%s)',
+                number_format($esperado, 0, ',', '.'),
+                number_format($entregado, 0, ',', '.'),
+                $diferencia < 0 ? 'faltan' : 'sobran',
+                number_format(abs($diferencia), 0, ',', '.')
+            );
+        }
+
+        return $texto;
+    }
+
+    private function mensajeDevolucion(float $esperado, float $entregado, float $diferencia): string
+    {
+        $entregadoTxt = '$' . number_format($entregado, 0, ',', '.');
+
+        if (abs($diferencia) < 0.01) {
+            return 'Turno finalizado. Entregaste ' . $entregadoTxt . ', justo lo que correspondía.';
+        }
+
+        return sprintf(
+            'Turno finalizado. Entregaste %s de %s: quedan %s $%s registrados.',
+            $entregadoTxt,
+            '$' . number_format($esperado, 0, ',', '.'),
+            $diferencia < 0 ? 'faltando' : 'sobrando',
+            number_format(abs($diferencia), 0, ',', '.')
+        );
     }
 }

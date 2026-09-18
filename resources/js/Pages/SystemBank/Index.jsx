@@ -205,6 +205,12 @@ export default function SystemBank({
   const [openingModalVisible, setOpeningModalVisible] = useState(false);
   const [closingModalVisible, setClosingModalVisible] = useState(false);
   const [sendingReport, setSendingReport] = useState(false);
+
+  // Correccion de la devolucion de una pasillera
+  const [returnPasillera, setReturnPasillera] = useState(null);
+  const [returnAmount, setReturnAmount] = useState(0);
+  const [returnNote, setReturnNote] = useState('');
+  const [savingReturn, setSavingReturn] = useState(false);
   const [openingSimpleMode, setOpeningSimpleMode] = useState(true);
   const [openingSimpleTotal, setOpeningSimpleTotal] = useState('');
   const [closingSimpleMode, setClosingSimpleMode] = useState(true);
@@ -654,6 +660,36 @@ export default function SystemBank({
     setAddBalancePasilleraName(`${pasillera.user?.first_name} ${pasillera.user?.first_last_name}`);
     setAddBalanceAmount('');
     setAddBalanceModalVisible(true);
+  };
+
+  // Corregir cuánto entregó de verdad una pasillera al cerrar. Pasa seguido:
+  // declara $250 y después aparecen $50 más, o al revés.
+  const openReturnModal = (pasillera) => {
+    setReturnPasillera(pasillera);
+    setReturnAmount(Number(pasillera.returned_amount) || 0);
+    setReturnNote('');
+  };
+
+  const handleSaveReturn = async () => {
+    if (returnAmount === null || returnAmount === undefined || returnAmount < 0) {
+      message.error('Ingresá cuánto entregó');
+      return;
+    }
+
+    setSavingReturn(true);
+    try {
+      const res = await api.put(`/cash-management/pasillera/${returnPasillera.id}/return`, {
+        returned_amount: returnAmount,
+        return_note: returnNote || undefined,
+      });
+      message.success(res.data.message, 6);
+      setReturnPasillera(null);
+      fetchShiftStatus();
+    } catch (error) {
+      message.error(error.response?.data?.message || 'No se pudo corregir la devolución', 6);
+    } finally {
+      setSavingReturn(false);
+    }
   };
 
   const getUserLabel = (u) =>
@@ -2260,9 +2296,14 @@ export default function SystemBank({
                       const reintegroTx = pasillera.transactions?.find(
                         (t) => t.type === 'pasillera_return',
                       );
-                      const isBalanceZero =
-                        Number(pasillera.current_balance) === 0 && !hasReintegro;
                       const isForceClosed = pasillera.force_closed;
+                      // Cerrada = ya rindio. No depende de que exista el
+                      // movimiento de reintegro: si entrego $0 no hay movimiento
+                      // y antes la tarjeta la seguia mostrando como abierta.
+                      const estaCerrada = pasillera.is_active === false;
+                      const rindio = estaCerrada || hasReintegro;
+                      const isBalanceZero =
+                        !estaCerrada && Number(pasillera.current_balance) === 0 && !hasReintegro;
 
                       return (
                         <Col xs={24} md={12} key={pasillera.id}>
@@ -2271,11 +2312,7 @@ export default function SystemBank({
                             title={
                               <span
                                 style={{
-                                  color: isForceClosed
-                                    ? '#cf1322'
-                                    : hasReintegro
-                                      ? '#389e0d'
-                                      : undefined,
+                                  color: isForceClosed ? '#cf1322' : rindio ? '#389e0d' : undefined,
                                 }}
                               >
                                 {`Turno #${pasillera.id} - ${user?.first_name} ${user?.first_last_name}`}
@@ -2284,9 +2321,9 @@ export default function SystemBank({
                                     ⚠ Cierre Forzado
                                   </Tag>
                                 )}
-                                {hasReintegro && !isForceClosed && (
+                                {rindio && !isForceClosed && (
                                   <Tag color="success" style={{ marginLeft: 8, fontSize: 11 }}>
-                                    ✓ Reintegrado
+                                    ✓ Turno cerrado
                                   </Tag>
                                 )}
                                 {isBalanceZero && !isForceClosed && (
@@ -2299,24 +2336,24 @@ export default function SystemBank({
                             style={{
                               borderColor: isForceClosed
                                 ? '#ffccc7'
-                                : hasReintegro
+                                : rindio
                                   ? '#b7eb8f'
                                   : undefined,
                               background: isForceClosed
                                 ? '#fff1f0'
-                                : hasReintegro
+                                : rindio
                                   ? '#f6ffed'
                                   : undefined,
                             }}
                             headStyle={{
                               background: isForceClosed
                                 ? '#ffccc7'
-                                : hasReintegro
+                                : rindio
                                   ? '#d9f7be'
                                   : undefined,
                             }}
                             extra={
-                              !hasReintegro &&
+                              !rindio &&
                               !isForceClosed && (
                                 <Space size="small">
                                   <RefreshBtn tooltip={`Actualizar datos de ${user?.first_name}`} />
@@ -2361,7 +2398,7 @@ export default function SystemBank({
                                 <Text
                                   strong
                                   style={{
-                                    color: hasReintegro
+                                    color: rindio
                                       ? '#52c41a'
                                       : isBalanceZero
                                         ? '#fa8c16'
@@ -2372,6 +2409,108 @@ export default function SystemBank({
                                 </Text>
                               </Col>
                             </Row>
+
+                            {/* Cierre: lo que el sistema esperaba vs lo que entregó.
+                                La diferencia queda a la vista y la cajera la corrige. */}
+                            {pasillera.returned_amount !== null &&
+                              pasillera.returned_amount !== undefined && (
+                                <>
+                                  <Divider style={{ margin: '10px 0' }} />
+                                  <div
+                                    style={{
+                                      padding: 10,
+                                      borderRadius: 8,
+                                      background:
+                                        Number(pasillera.return_difference) < 0
+                                          ? '#fff1f0'
+                                          : Number(pasillera.return_difference) > 0
+                                            ? '#fffbe6'
+                                            : '#f6ffed',
+                                    }}
+                                  >
+                                    <Row gutter={[8, 4]}>
+                                      <Col span={12}>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                          Debía devolver:
+                                        </Text>
+                                        <br />
+                                        <Text style={{ fontSize: 13 }}>
+                                          {formatCurrency(pasillera.expected_return)}
+                                        </Text>
+                                      </Col>
+                                      <Col span={12}>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                          Entregó:
+                                        </Text>
+                                        <br />
+                                        <Text strong style={{ fontSize: 13 }}>
+                                          {formatCurrency(pasillera.returned_amount)}
+                                        </Text>
+                                      </Col>
+                                    </Row>
+
+                                    <div style={{ marginTop: 6, fontSize: 12 }}>
+                                      {Math.abs(Number(pasillera.return_difference)) < 0.01 ? (
+                                        <Text style={{ color: '#389e0d', fontSize: 12 }}>
+                                          ✓ Entregó justo
+                                        </Text>
+                                      ) : (
+                                        <Text
+                                          strong
+                                          style={{
+                                            fontSize: 12,
+                                            color:
+                                              Number(pasillera.return_difference) < 0
+                                                ? '#cf1322'
+                                                : '#d48806',
+                                          }}
+                                        >
+                                          {Number(pasillera.return_difference) < 0
+                                            ? 'Faltan '
+                                            : 'Sobran '}
+                                          {formatCurrency(
+                                            Math.abs(Number(pasillera.return_difference)),
+                                          )}
+                                        </Text>
+                                      )}
+                                    </div>
+
+                                    {pasillera.return_note && (
+                                      <div style={{ marginTop: 4, fontSize: 12, color: '#595959' }}>
+                                        Nota: {pasillera.return_note}
+                                      </div>
+                                    )}
+
+                                    {pasillera.closed_at && (
+                                      <div style={{ marginTop: 4, fontSize: 11, color: '#8c8c8c' }}>
+                                        Cerrado el {fmtTs(pasillera.closed_at)}
+                                      </div>
+                                    )}
+
+                                    {/* Cada corrección de la cajera queda anotada */}
+                                    {(pasillera.return_history || []).map((h, i) => (
+                                      <div
+                                        key={i}
+                                        style={{ marginTop: 4, fontSize: 11, color: '#d48806' }}
+                                      >
+                                        Corregido de {formatCurrency(h.from)} a{' '}
+                                        {formatCurrency(h.to)} — {h.user || 'usuario desconocido'},{' '}
+                                        {fmtTs(h.at)}
+                                        {h.note ? ` · ${h.note}` : ''}
+                                      </div>
+                                    ))}
+
+                                    <Button
+                                      size="small"
+                                      icon={<EditOutlined />}
+                                      style={{ marginTop: 8 }}
+                                      onClick={() => openReturnModal(pasillera)}
+                                    >
+                                      Corregir lo entregado
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
 
                             <Divider style={{ margin: '10px 0' }} />
 
@@ -2430,8 +2569,16 @@ export default function SystemBank({
                                       'prestamo',
                                       'withdrawal',
                                     ].includes(registro.type);
-                                    const color =
-                                      registro.type === 'pasillera_return'
+                                    // Un cierre forzado no es una devolución
+                                    // normal: lo cerró la cajera, no la
+                                    // pasillera. Va en rojo para que salte.
+                                    const esCierreForzado = (registro.description || '').startsWith(
+                                      'Cierre forzado',
+                                    );
+
+                                    const color = esCierreForzado
+                                      ? '#cf1322'
+                                      : registro.type === 'pasillera_return'
                                         ? '#52c41a'
                                         : isNegative
                                           ? '#cf1322'
@@ -2455,8 +2602,9 @@ export default function SystemBank({
                                           marginBottom: 6,
                                           padding: '4px 6px',
                                           borderRadius: 4,
-                                          background:
-                                            registro.type === 'pasillera_return'
+                                          background: esCierreForzado
+                                            ? '#fff1f0'
+                                            : registro.type === 'pasillera_return'
                                               ? '#f6ffed'
                                               : '#f5f5f5',
                                           borderLeft: `3px solid ${color || '#d9d9d9'}`,
@@ -2501,7 +2649,12 @@ export default function SystemBank({
                                         )}
                                         {details.length > 0 && (
                                           <div
-                                            style={{ color: '#595959', fontSize: 11, marginTop: 2 }}
+                                            style={{
+                                              color: esCierreForzado ? '#cf1322' : '#595959',
+                                              fontWeight: esCierreForzado ? 600 : undefined,
+                                              fontSize: 11,
+                                              marginTop: 2,
+                                            }}
                                           >
                                             {details.join(' · ')}
                                           </div>
@@ -2946,6 +3099,78 @@ export default function SystemBank({
               />
             </div>
           </Space>
+        </Modal>
+
+        {/* Corregir lo que entregó la pasillera al cerrar */}
+        <Modal
+          title={
+            returnPasillera
+              ? `Corregir devolución — ${getUserLabel(returnPasillera.user)}`
+              : 'Corregir devolución'
+          }
+          open={!!returnPasillera}
+          onCancel={() => setReturnPasillera(null)}
+          onOk={handleSaveReturn}
+          confirmLoading={savingReturn}
+          okText="Guardar"
+          cancelText="Cancelar"
+          centered
+          destroyOnClose
+        >
+          {returnPasillera && (
+            <>
+              <p className="mb-3 text-sm text-slate-600">
+                Debía devolver <strong>{formatCurrency(returnPasillera.expected_return)}</strong> y
+                quedó registrado que entregó{' '}
+                <strong>{formatCurrency(returnPasillera.returned_amount)}</strong>.
+              </p>
+
+              <p className="mb-1 text-sm font-medium text-slate-700">Entregó realmente</p>
+              <InputNumber
+                autoFocus
+                className="w-full"
+                size="large"
+                min={0}
+                precision={2}
+                value={returnAmount}
+                onChange={setReturnAmount}
+              />
+
+              {/* La diferencia contra lo esperado, en vivo */}
+              {(() => {
+                const esperado = Number(returnPasillera.expected_return) || 0;
+                const dif = Math.round(((Number(returnAmount) || 0) - esperado) * 100) / 100;
+
+                if (Math.abs(dif) < 0.01) {
+                  return <p className="mt-2 text-sm text-emerald-700">Queda justo.</p>;
+                }
+
+                return (
+                  <p
+                    className="mt-2 text-sm font-medium"
+                    style={{ color: dif < 0 ? '#cf1322' : '#d48806' }}
+                  >
+                    {dif < 0 ? 'Quedan faltando ' : 'Quedan sobrando '}
+                    {formatCurrency(Math.abs(dif))}
+                  </p>
+                );
+              })()}
+
+              <p className="mt-4 mb-1 text-sm font-medium text-slate-700">Motivo (opcional)</p>
+              <Input.TextArea
+                rows={2}
+                maxLength={255}
+                value={returnNote}
+                onChange={(e) => setReturnNote(e.target.value)}
+                placeholder="Ej: entregó los $50 que faltaban"
+              />
+
+              <p className="mt-3 text-xs text-slate-500">
+                El saldo de la caja se ajusta por la diferencia, y queda registrado que lo
+                corregiste vos.
+              </p>
+            </>
+          )}
         </Modal>
 
         {/* Modal Agregar Saldo a Pasillera */}

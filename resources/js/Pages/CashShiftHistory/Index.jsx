@@ -385,12 +385,21 @@ export default function CashShiftHistoryIndex({
         const texto = parts.length ? parts.join(' | ') : desc || '-';
         const ediciones = listarEdiciones(record.edit_history);
 
-        if (!ediciones.length) return texto;
+        // Un cierre forzado lo hizo la cajera, no la pasillera: en rojo para
+        // que se distinga de una devolución normal al revisar el turno.
+        const esCierreForzado = (desc || '').startsWith('Cierre forzado');
+        const cuerpo = esCierreForzado ? (
+          <span className="font-semibold text-red-600">{texto}</span>
+        ) : (
+          texto
+        );
+
+        if (!ediciones.length) return cuerpo;
 
         // El turno ya está cerrado: acá es donde se audita qué se corrigió
         return (
           <div>
-            <div>{texto}</div>
+            <div>{cuerpo}</div>
             <div className="mt-0.5 text-[11px] leading-tight text-amber-600">
               {resumenEdiciones(record.edit_history)}
               {ediciones.map((e, i) => (

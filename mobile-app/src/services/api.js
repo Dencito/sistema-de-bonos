@@ -148,10 +148,13 @@ export const pasilleraService = {
     return response.data;
   },
 
-  finalizeShift: async () => {
-    const response = await api.post('/pasillera/finalize-shift');
+  // `payload` lleva lo que la pasillera entrega de verdad, que no siempre es
+  // lo que dice el sistema. Sin payload devuelve todo, como antes.
+  finalizeShift: async (payload = {}) => {
+    const response = await api.post('/pasillera/finalize-shift', payload);
     return response.data;
   },
+
 };
 
 export default api;

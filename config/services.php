@@ -55,4 +55,21 @@ return [
         'domain' => env('CPANEL_DOMAIN'),
         'host' => env('CPANEL_HOST'),
     ],
+
+    /*
+     * Reporte de casinos online (miadmin.cc).
+     *
+     * La cookie es de sesión y caduca: cuando pase, el reporte avisa y se
+     * cambia acá sin tocar código. Nunca va al front: la petición sale del
+     * servidor, así la credencial no llega al navegador.
+     */
+    'miadmin' => [
+        'url' => env('MIADMIN_URL', 'https://miadmin.cc'),
+        'cookie' => env('MIADMIN_COOKIE'),
+        'accounts' => env('MIADMIN_ACCOUNTS'),
+        'tz' => env('MIADMIN_TZ', '-3'),
+        // Solo para entornos sin curl.cainfo configurado (Windows). En el
+        // servidor se deja vacío y la verificación SSL queda activa.
+        'ca_bundle' => env('MIADMIN_CA_BUNDLE'),
+    ],
 ];

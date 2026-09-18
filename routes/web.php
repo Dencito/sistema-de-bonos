@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Reports\OnlineCasinoReportController;
 use App\Http\Controllers\Banks\BankClientController;
 use App\Http\Controllers\Banks\BankController;
 use App\Http\Controllers\Banks\BankImportController;
@@ -218,6 +219,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/ghost-ticket/assign', [CashManagementController::class, 'assignGhostTicket'])->name('cash-management.ghost-ticket.assign');
         Route::post('/ghost-ticket/assign-all', [CashManagementController::class, 'assignAllGhostTickets'])->name('cash-management.ghost-ticket.assign-all');
         Route::post('/report/send', [CashManagementController::class, 'sendReport'])->name('cash-management.report.send');
+    });
+
+    // Reporte de casinos online: se lee de miadmin.cc, no escribe nada
+    Route::prefix('online-casinos')->group(function () {
+        Route::get('/', [OnlineCasinoReportController::class, 'index'])->name('online-casinos.index');
+        Route::get('/report', [OnlineCasinoReportController::class, 'report'])->name('online-casinos.report');
     });
 
     // Bancos Online - solo roles superiores a trabajador.

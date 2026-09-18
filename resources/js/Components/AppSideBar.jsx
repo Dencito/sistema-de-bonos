@@ -19,6 +19,7 @@ import {
   Settings,
   LayoutGrid,
   Landmark,
+  Globe,
   MonitorSmartphone,
   UserRound,
 } from 'lucide-react';
@@ -197,6 +198,15 @@ export function AppSidebar({ role, roles, user }) {
           // El cargo RECAUDADOR habilita a un trabajador que por rol no entraria
           autorized:
             allowedRoles.machines.includes(role) || (user?.cargo || []).includes('RECAUDADOR'),
+        },
+        {
+          key: '18',
+          icon: Globe,
+          label: 'Reporte Casinos Online',
+          link: '/online-casinos',
+          autorized:
+            allowedRoles.banks.includes(role) ||
+            (user?.cargo || []).some((c) => BANK_CARGOS.includes(c)),
         },
         {
           key: '17',
